@@ -3,7 +3,7 @@ import "./tc-icons.css";
 
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { TournamentClashApp } from "./App.jsx";
+import TournamenSportApp from "./App.jsx";
 
 const hasSupabaseConfig =
   Boolean(import.meta.env.VITE_SUPABASE_URL) &&
@@ -30,6 +30,6 @@ function SetupRequired() {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    {hasSupabaseConfig ? <TournamentClashApp /> : <SetupRequired />}
+    {hasSupabaseConfig ? <TournamenSportApp /> : <SetupRequired />}
   </React.StrictMode>
 );
