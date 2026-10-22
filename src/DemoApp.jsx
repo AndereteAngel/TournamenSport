@@ -11,7 +11,7 @@ const sportImages = {
   "Rugby": "https://images.unsplash.com/photo-1518604666860-9ed391f76460?auto=format&fit=crop&w=1000&q=85",
   "Hockey": "https://images.unsplash.com/photo-1580748141549-71748dbe0b1b?auto=format&fit=crop&w=1000&q=85",
   "eSports": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=85",
-  "Otro": "https://images.unsplash.com/photo-1461896836934- voices?auto=format&fit=crop&w=1000&q=85"
+  "Otro": "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&w=1000&q=85"
 };
 const initialTournaments = [
   { id: 1, name: "Copa de Campeones", game: "Fútbol", format: "Liga", players: 8, status: "En curso", progress: 68, image: sportImages["Fútbol"] },
