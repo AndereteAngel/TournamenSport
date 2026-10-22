@@ -99,7 +99,7 @@ export function Navbar({
               lineHeight: "1.1",
             }}
           >
-            {currentTitle || "TournamentClash"}
+            {currentTitle || "TournamenSport"}
           </span>
 
           <span
