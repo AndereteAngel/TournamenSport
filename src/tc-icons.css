@@ -1,0 +1,96 @@
+/* =========================================================
+   TOURNAMENTCLASH — SISTEMA VISUAL DE ICONOS
+   Una única identidad para todos los TCIcon de la app.
+========================================================= */
+
+.tc-icon-frame {
+  --tc-icon-size: 1.65em;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--tc-icon-size);
+  height: var(--tc-icon-size);
+  min-width: var(--tc-icon-size);
+  vertical-align: -0.22em;
+  color: #d9f4ff;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.55));
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.tc-icon-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(24% 3%, 76% 3%, 97% 24%, 97% 76%, 76% 97%, 24% 97%, 3% 76%, 3% 24%);
+  background: linear-gradient(145deg, rgba(59, 130, 246, 0.9), rgba(20, 35, 72, 0.95) 55%, rgba(250, 204, 21, 0.65));
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.28);
+}
+
+.tc-icon-frame::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  clip-path: polygon(24% 3%, 76% 3%, 97% 24%, 97% 76%, 76% 97%, 24% 97%, 3% 76%, 3% 24%);
+  background: linear-gradient(145deg, #111d3a, #090d1d 68%, #151021);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.13);
+}
+
+.tc-icon-core {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 76%;
+  height: 76%;
+  color: #eaf8ff;
+}
+
+.tc-icon-core svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.45));
+}
+
+.tc-icon-bolt .tc-icon-core,
+.tc-icon-trophy .tc-icon-core,
+.tc-icon-crown .tc-icon-core,
+.tc-icon-medal .tc-icon-core {
+  color: #ffd84a;
+  filter: drop-shadow(0 0 5px rgba(255, 216, 74, 0.38));
+}
+
+.tc-icon-frame:hover {
+  transform: translateY(-1px) rotate(-2deg) scale(1.07);
+  filter: drop-shadow(0 4px 7px rgba(0, 0, 0, 0.65));
+}
+
+button .tc-icon-frame,
+a .tc-icon-frame {
+  margin-right: 0.28em;
+}
+
+/* Íconos dentro de zonas compactas */
+.tc-navbar .tc-icon-frame {
+  --tc-icon-size: 1.55em;
+}
+
+.tc-auth-field-icon {
+  position: relative;
+  overflow: visible !important;
+}
+
+@media (max-width: 600px) {
+  .tc-icon-frame {
+    --tc-icon-size: 1.58em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-icon-frame {
+    transition: none;
+  }
+}
