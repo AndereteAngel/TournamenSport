@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 440" role="img" aria-labelledby="title desc">
+<title id="title">TournamentClash — La arena de los campeones</title><desc id="desc">Escenario fantástico de esports con castillos, guerreros, corona y escudo originales.</desc>
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#07152f"/><stop offset=".55" stop-color="#102f66"/><stop offset="1" stop-color="#050914"/></linearGradient>
+ <linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fff2a6"/><stop offset=".45" stop-color="#ffc32b"/><stop offset="1" stop-color="#a75b08"/></linearGradient>
+ <linearGradient id="blue" x2="1" y2="1"><stop stop-color="#38bdf8"/><stop offset="1" stop-color="#123a92"/></linearGradient>
+ <linearGradient id="red" x2="1" y2="1"><stop stop-color="#ff6464"/><stop offset="1" stop-color="#8b1028"/></linearGradient>
+ <radialGradient id="glow"><stop stop-color="#2d8fff" stop-opacity=".8"/><stop offset="1" stop-color="#2d8fff" stop-opacity="0"/></radialGradient>
+ <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M36 0H0V36" fill="none" stroke="#6eb7ff" stroke-opacity=".1"/></pattern>
+</defs>
+<rect width="1200" height="440" fill="url(#sky)"/><rect width="1200" height="440" fill="url(#grid)"/><circle cx="600" cy="180" r="270" fill="url(#glow)"/>
+<!-- distant arena -->
+<path d="M0 260L100 220 160 255 250 195 340 252 430 214 510 255 600 200 690 255 780 214 870 252 960 195 1040 250 1120 220 1200 260V440H0Z" fill="#08152d"/>
+<g fill="#162d52" stroke="#3b82f6" stroke-opacity=".6" stroke-width="3">
+<path d="M40 305V160H75V125H102V160H130V305Z"/><path d="M160 320V215H190V180H215V215H245V320Z"/><path d="M955 320V215H985V180H1010V215H1040V320Z"/><path d="M1070 305V160H1098V125H1125V160H1160V305Z"/>
+</g>
+<g fill="#fbbf24" opacity=".9"><path d="M74 130l14-24 14 24Z"/><path d="M188 185l14-24 14 24Z"/><path d="M983 185l14-24 14 24Z"/><path d="M1097 130l14-24 14 24Z"/></g>
+<!-- crowd and arena floor -->
+<path d="M0 340Q300 290 600 340T1200 340V440H0Z" fill="#050914"/><path d="M130 440L600 315 1070 440Z" fill="#10264c" stroke="#2563eb" stroke-width="3"/><path d="M260 440L600 315 940 440" fill="none" stroke="#38bdf8" stroke-opacity=".55" stroke-width="3"/>
+<g fill="#e0f2fe" opacity=".75"><circle cx="130" cy="280" r="3"/><circle cx="240" cy="300" r="3"/><circle cx="350" cy="278" r="3"/><circle cx="850" cy="278" r="3"/><circle cx="970" cy="300" r="3"/><circle cx="1080" cy="280" r="3"/></g>
+<!-- left warrior silhouette -->
+<g transform="translate(62 120)"><path d="M20 120L35 60 80 38 126 62 145 138 112 178 20 170Z" fill="url(#blue)" stroke="#8bdcff" stroke-width="4"/><path d="M34 68L28 24 66 0 108 22 100 66 74 85Z" fill="#17345b" stroke="#ffc94d" stroke-width="5"/><path d="M28 24L16 0 47 13 66 0 85 14 108 22" fill="none" stroke="url(#gold)" stroke-width="10"/><path d="M51 45L87 43 80 64 58 67Z" fill="#f8fafc"/><path d="M48 98L114 95 105 139 59 145Z" fill="#0b1d3a" stroke="#60a5fa" stroke-width="3"/><path d="M30 153L7 203 45 212 67 171M110 158L140 201 172 184 139 133" fill="#17345b" stroke="#38bdf8" stroke-width="6"/></g>
+<!-- right warrior silhouette -->
+<g transform="translate(930 115)"><path d="M30 120L45 60 90 38 136 62 155 138 122 178 30 170Z" fill="url(#red)" stroke="#ffb0b0" stroke-width="4"/><path d="M43 68L36 24 76 0 118 22 110 66 84 85Z" fill="#321827" stroke="#ff6868" stroke-width="5"/><path d="M36 24L25 0 56 13 76 0 95 14 118 22" fill="none" stroke="#f8fafc" stroke-width="9"/><path d="M60 45L96 43 89 64 67 67Z" fill="#f8fafc"/><path d="M58 98L124 95 115 139 69 145Z" fill="#250d1c" stroke="#fb7185" stroke-width="3"/><path d="M40 153L17 203 55 212 77 171M120 158L150 201 182 184 149 133" fill="#321827" stroke="#fb7185" stroke-width="6"/></g>
+<!-- central crest -->
+<g transform="translate(520 42)">
+<path d="M80 0L150 24 146 118Q138 166 80 199Q22 166 14 118L10 24Z" fill="#07101f" stroke="url(#gold)" stroke-width="8"/>
+<path d="M80 15L135 34 130 112Q121 150 80 175Q39 150 30 112L25 34Z" fill="url(#blue)" stroke="#eaf6ff" stroke-width="3"/>
+<path d="M43 100L47 60 70 82 80 39 94 82 117 60 121 100Z" fill="url(#gold)" stroke="#fff0a6" stroke-width="3"/><path d="M49 107H115L106 124H58Z" fill="#f59e0b"/>
+<path d="M17 42L-4 27 4 70 25 81M143 42L164 27 156 70 135 81" fill="#e11d48" stroke="#ffc94d" stroke-width="4"/>
+</g>
+<text x="600" y="305" fill="#fff" font-family="Arial,Helvetica,sans-serif" font-size="42" font-weight="900" text-anchor="middle" letter-spacing="2" stroke="#061126" stroke-width="5" paint-order="stroke">TOURNAMENT<tspan fill="#ff3e54">CLASH</tspan></text>
+<text x="600" y="337" fill="#dbeafe" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" text-anchor="middle" letter-spacing="5">COMPETÍ · JUGÁ · CONQUISTÁ LA ARENA</text>
+<path d="M370 356H830" stroke="url(#gold)" stroke-width="2" opacity=".9"/>
+</svg>
