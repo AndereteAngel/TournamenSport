@@ -1,10 +1,22 @@
 import { useState } from "react";
 import "./demo.css";
 
+const sports = ["Fútbol", "Básquet", "Tenis", "Vóley", "Pádel", "Rugby", "Hockey", "eSports", "Otro"];
+const sportImages = {
+  "Fútbol": "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1000&q=85",
+  "Básquet": "https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&w=1000&q=85",
+  "Tenis": "https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?auto=format&fit=crop&w=1000&q=85",
+  "Vóley": "https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?auto=format&fit=crop&w=1000&q=85",
+  "Pádel": "https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?auto=format&fit=crop&w=1000&q=85",
+  "Rugby": "https://images.unsplash.com/photo-1518604666860-9ed391f76460?auto=format&fit=crop&w=1000&q=85",
+  "Hockey": "https://images.unsplash.com/photo-1580748141549-71748dbe0b1b?auto=format&fit=crop&w=1000&q=85",
+  "eSports": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1000&q=85",
+  "Otro": "https://images.unsplash.com/photo-1461896836934- voices?auto=format&fit=crop&w=1000&q=85"
+};
 const initialTournaments = [
-  { id: 1, name: "Copa de Campeones", game: "Fútbol", format: "Liga", players: 8, status: "En curso", progress: 68, image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1000&q=85" },
-  { id: 2, name: "Desafío de Amigos", game: "Fútbol", format: "Todos contra todos", players: 6, status: "Inscripciones", progress: 20, image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1000&q=85" },
-  { id: 3, name: "Copa Relámpago", game: "Fútbol", format: "Eliminación", players: 16, status: "Finalizado", progress: 100, image: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?auto=format&fit=crop&w=1000&q=85" },
+  { id: 1, name: "Copa de Campeones", game: "Fútbol", format: "Liga", players: 8, status: "En curso", progress: 68, image: sportImages["Fútbol"] },
+  { id: 2, name: "Desafío de la Cancha", game: "Básquet", format: "Todos contra todos", players: 6, status: "Inscripciones", progress: 20, image: sportImages["Básquet"] },
+  { id: 3, name: "Open de Amigos", game: "Tenis", format: "Eliminación", players: 16, status: "Finalizado", progress: 100, image: sportImages["Tenis"] },
 ];
 const players = [
   { name: "Angel10", country: "🇦🇷", pts: 18, played: 7 },
@@ -24,13 +36,14 @@ export default function DemoApp() {
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [format, setFormat] = useState("Liga");
+  const [sport, setSport] = useState("Fútbol");
   const [notice, setNotice] = useState("");
   const active = tournaments.find(t => t.id === selected) || tournaments[0];
   const nav = ["Inicio", "Torneos", "Clasificación", "Partidos"];
   function createTournament(e) {
     e.preventDefault();
     if (!name.trim()) return;
-    const item = { id: Date.now(), name: name.trim(), game: "Fútbol", format, players: 1, status: "Inscripciones", progress: 5, image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1000&q=85" };
+    const item = { id: Date.now(), name: name.trim(), game: sport, format, players: 1, status: "Inscripciones", progress: 5, image: sportImages[sport] || sportImages["Otro"] };
     setTournaments(prev => [item, ...prev]);
     setSelected(item.id); setSection("Torneos"); setShowCreate(false); setName("");
     setNotice("Torneo de demostración creado. No se guardó en una base de datos.");
@@ -45,10 +58,10 @@ export default function DemoApp() {
     <main className="sport-main">
       {notice && <div className="demo-notice">{notice}<button onClick={() => setNotice("")}>×</button></div>}
       {section === "Inicio" && <>
-        <section className="sport-hero"><div className="hero-copy"><span className="eyebrow">TU PRÓXIMO DESAFÍO EMPIEZA ACÁ</span><h1>EL JUEGO<br/>SE GANA <em>JUGANDO.</em></h1><p>Creá torneos, competí con amigos y seguí cada resultado en un solo lugar.</p><button className="primary-btn" onClick={() => setShowCreate(true)}>＋ CREAR TORNEO</button></div><div className="hero-art"><img src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1100&q=90" alt="Estadio de fútbol iluminado"/><div className="hero-shade"/><div className="hero-tag">TU CANCHA. TUS REGLAS.</div></div></section>
+        <section className="sport-hero"><div className="hero-copy"><span className="eyebrow">TODOS LOS DEPORTES. UNA SOLA CANCHA.</span><h1>LOS TORNEOS<br/>LOS ARMÁS <em>VOS.</em></h1><p>Organizá competencias de tu deporte, reuní participantes y seguí partidos, resultados y posiciones desde un solo lugar.</p><button className="primary-btn" onClick={() => setShowCreate(true)}>＋ CREAR TORNEO</button></div><div className="hero-art"><img src="https://images.unsplash.com/photo-1522778119026-d647f0596c20?auto=format&fit=crop&w=1100&q=90" alt="Estadio de fútbol iluminado"/><div className="hero-shade"/><div className="hero-tag">TU DEPORTE. TU TORNEO.</div></div></section>
         <div className="section-heading"><div><span className="eyebrow">CENTRO DE COMPETENCIA</span><h2>Tu actividad</h2></div><button className="text-btn" onClick={() => setSection("Torneos")}>Ver todos →</button></div>
         <div className="stat-grid"><div className="stat-card"><span>TORNEOS</span><b>{tournaments.length.toString().padStart(2,"0")}</b><small>En tu espacio</small></div><div className="stat-card"><span>EN CURSO</span><b>{tournaments.filter(t=>t.status==="En curso").length.toString().padStart(2,"0")}</b><small>Competencias activas</small></div><div className="stat-card"><span>PARTIDOS</span><b>07</b><small>Jugados en la demo</small></div><div className="stat-card"><span>POSICIÓN</span><b>#01</b><small>Clasificación de prueba</small></div></div>
-        <div className="section-heading"><div><span className="eyebrow">ELEGÍ TU RETO</span><h2>Torneos destacados</h2></div><button className="text-btn" onClick={() => setSection("Torneos")}>Explorar →</button></div>
+        <div className="section-heading"><div><span className="eyebrow">DE LA CANCHA A LA COMPETENCIA</span><h2>Torneos de todos los deportes</h2></div><button className="text-btn" onClick={() => setSection("Torneos")}>Explorar →</button></div>
         <TournamentCards tournaments={tournaments.slice(0,3)} onSelect={t=>{setSelected(t.id);setSection("Torneos")}}/>
       </>}
       {section === "Torneos" && <><div className="page-heading"><span className="eyebrow">COMPETENCIAS</span><h1>Torneos</h1><p>Explorá competencias de ejemplo o creá la tuya.</p><button className="primary-btn" onClick={()=>setShowCreate(true)}>＋ CREAR TORNEO</button></div><TournamentCards tournaments={tournaments} onSelect={t=>setSelected(t.id)}/><section className="detail-panel"><div className="detail-title"><div><span className="eyebrow">DETALLE DEL TORNEO</span><h2>{active.name}</h2></div><span className="status-pill">{active.status}</span></div><div className="detail-meta"><span>⚽ {active.game}</span><span>♟ {active.players} participantes</span><span>▤ {active.format}</span></div><div className="progress-track"><span style={{width:active.progress+"%"}}/></div><small>{active.progress}% de progreso de ejemplo</small><h3>Tabla de posiciones</h3><Standings/></section></>}
@@ -56,7 +69,7 @@ export default function DemoApp() {
       {section === "Partidos" && <><div className="page-heading"><span className="eyebrow">CALENDARIO</span><h1>Partidos</h1><p>Resultados de muestra para recorrer la experiencia.</p></div><div className="match-list">{matches.map((m,i)=><div className="match-row" key={i}><span className="match-state">{m.state}</span><b>{m.a}</b><strong>{m.score}</strong><b>{m.b}</b></div>)}</div></>}
     </main>
     <footer className="sport-footer"><span>TOURNAMENSPORT</span><span>Una nueva forma de vivir la competencia.</span><span>DEMO · 2026</span></footer>
-    {showCreate && <div className="modal-backdrop" onClick={()=>setShowCreate(false)}><form className="create-modal" onSubmit={createTournament} onClick={e=>e.stopPropagation()}><button type="button" className="modal-close" onClick={()=>setShowCreate(false)}>×</button><span className="eyebrow">NUEVA COMPETENCIA</span><h2>Crear torneo</h2><label>Nombre del torneo<input autoFocus value={name} onChange={e=>setName(e.target.value)} placeholder="Ej. Copa de los Amigos" maxLength={60} required/></label><label>Formato<select value={format} onChange={e=>setFormat(e.target.value)}><option>Liga</option><option>Todos contra todos</option><option>Eliminación</option></select></label><p>En esta demo, el torneo solo existe durante esta sesión.</p><button className="primary-btn" type="submit">CREAR TORNEO DE PRUEBA</button></form></div>}
+    {showCreate && <div className="modal-backdrop" onClick={()=>setShowCreate(false)}><form className="create-modal" onSubmit={createTournament} onClick={e=>e.stopPropagation()}><button type="button" className="modal-close" onClick={()=>setShowCreate(false)}>×</button><span className="eyebrow">NUEVA COMPETENCIA</span><h2>Crear torneo</h2><label>Deporte<select value={sport} onChange={e=>setSport(e.target.value)}>{sports.map(item=><option key={item}>{item}</option>)}</select></label><label>Nombre del torneo<input autoFocus value={name} onChange={e=>setName(e.target.value)} placeholder="Ej. Copa de los Amigos" maxLength={60} required/></label><label>Formato<select value={format} onChange={e=>setFormat(e.target.value)}><option>Liga</option><option>Todos contra todos</option><option>Eliminación</option></select></label><p>Elegí el deporte y el formato. En esta demo, el torneo solo existe durante esta sesión.</p><button className="primary-btn" type="submit">CREAR TORNEO DE PRUEBA</button></form></div>}
   </div>;
 }
 function TournamentCards({tournaments,onSelect}) {
