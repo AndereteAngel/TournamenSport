@@ -2250,11 +2250,11 @@ export function TournamenSportApp() {
       ) : activeView === "home" ? (
         <div className="tc-home-screen">
         <section className="tc-arena-hero" aria-label="Bienvenido a la arena de TournamenSport">
-          <img src="https://cdn.wallpapersafari.com/57/78/NM76Ts.jpg" alt="Arena legendaria de Clash Royale con islas flotantes y torres" />
+          <img src="/tournament-join.svg" alt="Ilustración deportiva de equipos listos para competir" />
           <div className="tc-home-hero-overlay">
             <span className="tc-home-eyebrow">LA COMPETENCIA EMPIEZA ACÁ</span>
-            <h1>TOURNAMENT<span>CLASH</span></h1>
-            <p>Competí. Superate. Conquistá la arena.</p>
+            <h1>TOURNAMEN<span>SPORT</span></h1>
+            <p>Viví el deporte. Competí. Ganá.</p>
             <div className="tc-home-hero-tag"><span></span> TU PRÓXIMA VICTORIA TE ESPERA</div>
           </div>
         </section>
