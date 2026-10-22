@@ -354,7 +354,7 @@ function AdminStats({ onBack }) {
                 fontSize: "0.8rem",
               }}
             >
-              Panel privado de TournamentClash
+              Panel privado de TournamenSport
             </p>
           </div>
 
@@ -988,7 +988,7 @@ function AdminStats({ onBack }) {
   );
 }
 
-export function TournamentClashApp() {
+export function TournamenSportApp() {
   const {
     notice,
     showNotice,
@@ -1268,7 +1268,7 @@ export function TournamentClashApp() {
     const confirmar = await confirmTournament(
       `⚠️ ELIMINAR TORNEO\n\n` +
         `"${tournament.title}"\n\n` +
-        `Esta acción eliminará el torneo de TournamentClash.\n\n` +
+        `Esta acción eliminará el torneo de TournamenSport.\n\n` +
         `¿Estás seguro de que querés continuar?`
     );
 
@@ -2098,12 +2098,12 @@ export function TournamentClashApp() {
           >
             <img
               src="/tc-crest.svg"
-              alt="Escudo original de TournamentClash"
+              alt="Escudo original de TournamenSport"
               className="tc-login-crest"
             />
 
             <div className="tc-auth-kicker"><span></span> ARENA COMPETITIVA ONLINE <span></span></div>
-            <h1 className="cr-logo-title">TournamentClash</h1>
+            <h1 className="cr-logo-title">TournamenSport</h1>
             <p className="tc-auth-tagline">{authMode === "login" ? "Tu próxima victoria empieza acá." : "Creá tu perfil. Entrá en la leyenda."}</p>
           </div>
 
@@ -2249,7 +2249,7 @@ export function TournamentClashApp() {
         </div>
       ) : activeView === "home" ? (
         <div className="tc-home-screen">
-        <section className="tc-arena-hero" aria-label="Bienvenido a la arena de TournamentClash">
+        <section className="tc-arena-hero" aria-label="Bienvenido a la arena de TournamenSport">
           <img src="https://cdn.wallpapersafari.com/57/78/NM76Ts.jpg" alt="Arena legendaria de Clash Royale con islas flotantes y torres" />
           <div className="tc-home-hero-overlay">
             <span className="tc-home-eyebrow">LA COMPETENCIA EMPIEZA ACÁ</span>
@@ -2778,7 +2778,7 @@ export function TournamentClashApp() {
       ) : activeView === "join" ? (
         <div className="tc-form-screen tc-join-screen">
         <div className="tc-join-artwork">
-          <img src="/tournament-join.svg" alt="Arena esports de TournamentClash para unirse a una competencia" />
+          <img src="/tournament-join.svg" alt="Arena esports de TournamenSport para unirse a una competencia" />
         </div>
         <div
           className="cr-card"
@@ -3084,4 +3084,4 @@ export function TournamentClashApp() {
   );
 }
 
-export default TournamentClashApp;
+export default TournamenSportApp;
