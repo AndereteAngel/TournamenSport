@@ -2652,19 +2652,43 @@ export function TournamenSportApp() {
                         </span>
                       </div>
 
-                      <h4
+                      <div
                         style={{
-                          fontWeight: 900,
-                          fontSize: "0.85rem",
-                          margin: 0,
-                          color: "#fff",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
+                          display: "flex",
+                          alignItems: "center",
+                          flexWrap: "wrap",
+                          gap: "0.45rem",
+                          minWidth: 0,
                         }}
                       >
-                        {t.title}
-                      </h4>
+                        <h4
+                          style={{
+                            fontWeight: 900,
+                            fontSize: "0.85rem",
+                            margin: 0,
+                            color: "#fff",
+                            overflowWrap: "anywhere",
+                          }}
+                        >
+                          {t.title}
+                        </h4>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "3px 7px",
+                            borderRadius: "5px",
+                            background: "rgba(249, 115, 22, 0.14)",
+                            border: "1px solid rgba(249, 115, 22, 0.55)",
+                            color: "#fdba74",
+                            fontSize: "0.65rem",
+                            fontWeight: 800,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {t.category_detail || t.category_type || "Sin categoría"}
+                        </span>
+                      </div>
                     </div>
 
                     <div
