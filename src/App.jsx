@@ -15,6 +15,24 @@ import { supabase } from "./supabaseClient";
 
 const ADMIN_UID = import.meta.env.VITE_ADMIN_USER_ID || "c2089fce-5fb1-430a-8abc-89f5b762b69a";
 
+// La categoría se guarda dentro de "game" al crear el torneo (ej.: "Fútbol · 2012").
+// También leemos las columnas específicas si existen en torneos anteriores/nuevos.
+const getTournamentCategory = (tournament) => {
+  const explicitCategory = String(
+    tournament?.category_detail || tournament?.category_type || ""
+  ).trim();
+  if (explicitCategory) return explicitCategory;
+
+  const game = String(tournament?.game || "");
+  const separatorIndex = game.lastIndexOf(" · ");
+  if (separatorIndex >= 0) {
+    const categoryFromGame = game.slice(separatorIndex + 3).trim();
+    if (categoryFromGame) return categoryFromGame;
+  }
+
+  return "Sin categoría";
+};
+
 const adminTournamentButtonStyle = {
   width: "auto",
   maxWidth: "fit-content",
@@ -2026,7 +2044,7 @@ export function TournamenSportApp() {
   const isAdmin = currentUser?.id === ADMIN_UID;
   const tournamentCategories = [...new Set(
     tournaments.map((tournament) =>
-      String(tournament.category_detail || tournament.category_type || "Sin categoría").trim()
+      getTournamentCategory(tournament)
     ).filter(Boolean)
   )].sort((a, b) => a.localeCompare(b, "es"));
 
@@ -2686,7 +2704,7 @@ export function TournamenSportApp() {
                             lineHeight: 1.3,
                           }}
                         >
-                          {t.category_detail || t.category_type || "Sin categoría"}
+                          {getTournamentCategory(t)}
                         </span>
                       </div>
                     </div>
