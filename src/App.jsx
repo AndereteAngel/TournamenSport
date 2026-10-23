@@ -2075,6 +2075,8 @@ export function TournamenSportApp() {
           tournamentCode={activeTournament?.code}
           currentUser={currentUser}
           tournaments={tournaments}
+          isAdmin={isAdmin}
+          onGoStats={() => setActiveView("stats")}
         />
       )}
 
@@ -2840,7 +2842,7 @@ export function TournamenSportApp() {
                   marginBottom: "4px",
                 }}
               >
-                Código de Invitación
+                Buscá tu torneo por código de invitación
               </label>
 
               <input
@@ -2866,7 +2868,7 @@ export function TournamenSportApp() {
                 marginTop: "0.5rem",
               }}
             >
-              <TCIcon name="sword" /> Ingresar a la Batalla
+              <TCIcon name="search" /> Buscar torneo
             </button>
           </form>
         </div>
