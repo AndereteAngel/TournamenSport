@@ -8,6 +8,8 @@ export function Navbar({
   tournamentCode,
   currentUser,
   tournaments = [],
+  isAdmin = false,
+  onGoStats,
 }) {
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -194,6 +196,12 @@ export function Navbar({
           <TCIcon name="medal" size={19} /> <span>Medallero</span> <span className="tc-medal-total">{medals.gold + medals.silver + medals.bronze}</span>
         </button>
 
+        {isAdmin && (
+          <button type="button" onClick={onGoStats} style={medalButtonStyle}>
+            <TCIcon name="chart" size={17} /> <span>Estadísticas</span>
+          </button>
+        )}
+
         <button
           onClick={onGoHome}
           style={{
@@ -309,6 +317,12 @@ export function Navbar({
           >
             <TCIcon name="medal" size={19} /> <span>Mi medallero</span> <span className="tc-medal-total">{medals.gold + medals.silver + medals.bronze}</span>
           </button>
+
+          {isAdmin && (
+            <button type="button" onClick={() => { setMenuOpen(false); onGoStats?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem" }}>
+              <TCIcon name="chart" size={17} /> <span>Estadísticas</span>
+            </button>
+          )}
 
           <button
             onClick={() => {
