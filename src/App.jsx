@@ -1009,6 +1009,7 @@ export function TournamenSportApp() {
   const [showChampionCard, setShowChampionCard] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
   const [tournaments, setTournaments] = useState([]);
+  const [tournamentCategoryFilter, setTournamentCategoryFilter] = useState("Todas");
   const [loading, setLoading] = useState(false);
   const [editingTournament, setEditingTournament] = useState(false);
   const [deletingTournamentId, setDeletingTournamentId] = useState(null);
@@ -2023,6 +2024,18 @@ export function TournamenSportApp() {
   };
 
   const isAdmin = currentUser?.id === ADMIN_UID;
+  const tournamentCategories = [...new Set(
+    tournaments.map((tournament) =>
+      String(tournament.category_detail || tournament.category_type || "Sin categoría").trim()
+    ).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "es"));
+
+  const filteredTournaments = tournamentCategoryFilter === "Todas"
+    ? tournaments
+    : tournaments.filter((tournament) =>
+        String(tournament.category_detail || tournament.category_type || "Sin categoría").trim() === tournamentCategoryFilter
+      );
+
 
   const handleAdminForceFinishTournament = async () => {
     if (!isAdmin || !activeTournament?.id) {
@@ -2499,6 +2512,34 @@ export function TournamenSportApp() {
               </button>
             </div>
 
+            <div style={{ marginBottom: "0.75rem" }}>
+              <label
+                htmlFor="tournament-category-filter"
+                style={{
+                  display: "block",
+                  marginBottom: "0.35rem",
+                  color: "#d1d5db",
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                }}
+              >
+                Buscar torneos por categoría
+              </label>
+              <select
+                id="tournament-category-filter"
+                value={tournamentCategoryFilter}
+                onChange={(e) => setTournamentCategoryFilter(e.target.value)}
+                className="cr-input"
+                style={{ width: "100%" }}
+              >
+                <option value="Todas">Todas las categorías</option>
+                {tournamentCategories.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+
             {loading ? (
               <p
                 style={{
@@ -2509,7 +2550,7 @@ export function TournamenSportApp() {
               >
                 Cargando torneos...
               </p>
-            ) : tournaments.length === 0 ? (
+            ) : filteredTournaments.length === 0 ? (
               <p
                 style={{
                   textAlign: "center",
@@ -2529,7 +2570,7 @@ export function TournamenSportApp() {
                   overflowY: "auto",
                 }}
               >
-                {tournaments.map((t) => (
+                {filteredTournaments.map((t) => (
                   <div
                     className="tc-home-tournament-item"
                     key={t.id}
