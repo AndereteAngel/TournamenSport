@@ -703,6 +703,7 @@ export function GroupStageView({
                   overflowWrap: "anywhere",
                 }}
               >
+                <span style={{ display: "block", color: "#4ade80", fontSize: "0.58rem", fontWeight: 900, letterSpacing: "0.05em", marginBottom: "3px" }}>LOCAL</span>
                 {match.team1}
               </span>
 
@@ -788,6 +789,7 @@ export function GroupStageView({
                   overflowWrap: "anywhere",
                 }}
               >
+                <span style={{ display: "block", color: "#93c5fd", fontSize: "0.58rem", fontWeight: 900, letterSpacing: "0.05em", marginBottom: "3px" }}>VISITANTE</span>
                 {match.team2}
               </span>
             </div>
