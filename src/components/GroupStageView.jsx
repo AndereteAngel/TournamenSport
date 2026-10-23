@@ -9,6 +9,7 @@ export function GroupStageView({
   currentUser,
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
+  const [selectedRound, setSelectedRound] = useState("all");
 
   const currentGroup = tournament.groups[activeGroupIndex];
 
@@ -97,9 +98,15 @@ export function GroupStageView({
   );
 
   const isLeague = String(tournament.format || "").trim().toLowerCase() === "league";
-  const displayMatches = [...currentGroup.matches].sort((a, b) =>
+  const allMatchesSorted = [...currentGroup.matches].sort((a, b) =>
     isLeague ? (Number(a.round || 1) - Number(b.round || 1)) : 0
   );
+  const availableRounds = isLeague
+    ? [...new Set(allMatchesSorted.map((match) => Number(match.round || 1)))].sort((a, b) => a - b)
+    : [];
+  const displayMatches = isLeague && selectedRound !== "all"
+    ? allMatchesSorted.filter((match) => Number(match.round || 1) === Number(selectedRound))
+    : allMatchesSorted;
 
   return (
     <div
@@ -589,6 +596,24 @@ export function GroupStageView({
           </span>
         </div>
 
+        {isLeague && (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+            <label htmlFor="filtro-fecha-torneo" style={{ color: "#d1d5db", fontSize: "0.78rem", fontWeight: 700 }}>
+              Filtrar por fecha
+            </label>
+            <select
+              id="filtro-fecha-torneo"
+              value={selectedRound}
+              onChange={(e) => setSelectedRound(e.target.value)}
+              style={{ padding: "0.55rem 0.7rem", borderRadius: "8px", border: "1px solid rgba(250,204,21,0.4)", background: "#15141c", color: "#fff", fontSize: "0.8rem" }}
+            >
+              <option value="all">Todas las fechas</option>
+              {availableRounds.map((round) => (
+                <option key={round} value={String(round)}>Fecha {round}</option>
+              ))}
+            </select>
+          </div>
+        )}
         <div
           style={{
             display: "flex",
