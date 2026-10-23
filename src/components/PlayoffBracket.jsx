@@ -117,7 +117,7 @@ export function PlayoffBracket({
             textAlign: "center",
           }}
         >
-          {tournament.game}
+          {String(tournament.game || "").split(" · ")[0]}
         </div>
 
         {/* TÍTULO */}
@@ -132,6 +132,11 @@ export function PlayoffBracket({
         >
           {tournament.title} - Playoffs
         </h2>
+        {tournament.category_detail || (String(tournament.game || "").includes(" · ") ? String(tournament.game).split(" · ").slice(1).join(" · ") : "") && (
+          <div style={{ marginTop: "0.45rem", color: "#f3a847", fontSize: "0.85rem", fontWeight: 800, textAlign: "center" }}>
+            Categoría: {tournament.category_detail || (String(tournament.game || "").includes(" · ") ? String(tournament.game).split(" · ").slice(1).join(" · ") : "")}
+          </div>
+        )}
 
         {/* FASE */}
         <div
