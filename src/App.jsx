@@ -2102,9 +2102,9 @@ export function TournamenSportApp() {
               className="tc-login-crest"
             />
 
-            <div className="tc-auth-kicker"><span></span> ARENA COMPETITIVA ONLINE <span></span></div>
+            <div className="tc-auth-kicker"><span></span> PLATAFORMA DE TORNEOS DEPORTIVOS <span></span></div>
             <h1 className="cr-logo-title">TournamenSport</h1>
-            <p className="tc-auth-tagline">{authMode === "login" ? "Tu próxima victoria empieza acá." : "Creá tu perfil. Entrá en la leyenda."}</p>
+            <p className="tc-auth-tagline">{authMode === "login" ? "Organizá y seguí tus competencias deportivas." : "Creá tu cuenta y participá en torneos deportivos."}</p>
           </div>
 
           <form
@@ -2128,12 +2128,12 @@ export function TournamenSportApp() {
                     marginBottom: "4px",
                   }}
                 >
-                  <span className="tc-auth-field-icon" aria-hidden="true">♛</span> Alias
+                  <span className="tc-auth-field-icon" aria-hidden="true">●</span> Nombre de usuario
                 </label>
 
                 <input
                   type="text"
-                  placeholder="Ej: ReyAzul99"
+                  placeholder="Ej.: Juan Pérez"
                   value={authInput.username}
                   onChange={(e) =>
                     setAuthInput({
@@ -2212,7 +2212,7 @@ export function TournamenSportApp() {
                 marginTop: "0.5rem",
               }}
             >
-              {authMode === "login" ? <><TCIcon name="sword" size={17} /> Entrar a la Arena</> : <><TCIcon name="shield" size={17} /> Registrarse</>}
+              {authMode === "login" ? <><TCIcon name="user" size={17} /> Iniciar sesión</> : <><TCIcon name="shield" size={17} /> Registrarse</>}
             </button>
 
             <div
@@ -2252,9 +2252,9 @@ export function TournamenSportApp() {
         <section className="tc-arena-hero" aria-label="Bienvenido a la arena de TournamenSport">
           <img src="/tournament-join.svg" alt="Ilustración deportiva de equipos listos para competir" />
           <div className="tc-home-hero-overlay">
-            <span className="tc-home-eyebrow">LA COMPETENCIA EMPIEZA ACÁ</span>
+            <span className="tc-home-eyebrow">TORNEOS Y COMPETENCIAS DEPORTIVAS</span>
             <h1>TOURNAMEN<span>SPORT</span></h1>
-            <p>Viví el deporte. Competí. Ganá.</p>
+            <p>Organizá. Competí. Compartí el deporte.</p>
             <div className="tc-home-hero-tag"><span></span> TU PRÓXIMA VICTORIA TE ESPERA</div>
           </div>
         </section>
@@ -2309,7 +2309,7 @@ export function TournamenSportApp() {
                     display: "block",
                   }}
                 >
-                  Competidor Online
+                  Participante
                 </span>
 
                 <h2
@@ -2388,7 +2388,7 @@ export function TournamenSportApp() {
               }}
             >
               <div className="tc-home-action-icon">
-                <TCIcon name="sword" size={25} />
+                <TCIcon name="trophy" size={25} />
               </div>
 
               <h3
@@ -2755,8 +2755,8 @@ export function TournamenSportApp() {
       ) : activeView === "create" ? (
         <div className="tc-form-screen tc-create-screen">
         <div className="tc-create-artwork">
-          <img src="https://cdn.wallpapersafari.com/57/78/NM76Ts.jpg" alt="Arena legendaria de videojuego con torres, puentes y estatuas" />
-          <div><strong>PREPARÁ TU TORNEO</strong><span>La arena está lista. Que empiece la competencia.</span></div>
+          <img src="/tournament-join.svg" alt="Equipos deportivos preparados para una competencia" />
+          <div><strong>ORGANIZÁ TU TORNEO</strong><span>Elegí el deporte, definí la categoría y prepará la competencia.</span></div>
         </div>
         <CreateTournament
           onSave={handleCreateTournamentSubmit}
@@ -2778,7 +2778,7 @@ export function TournamenSportApp() {
       ) : activeView === "join" ? (
         <div className="tc-form-screen tc-join-screen">
         <div className="tc-join-artwork">
-          <img src="/tournament-join.svg" alt="Arena esports de TournamenSport para unirse a una competencia" />
+          <img src="/tournament-join.svg" alt="Ilustración de una competencia deportiva" />
         </div>
         <div
           className="cr-card"
@@ -2845,7 +2845,7 @@ export function TournamenSportApp() {
 
               <input
                 type="text"
-                placeholder="Ej: CR-4829"
+                placeholder="Ej.: TS-4829"
                 value={joinCodeInput}
                 onChange={(e) => setJoinCodeInput(e.target.value)}
                 required
