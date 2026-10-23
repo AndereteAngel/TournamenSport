@@ -1772,7 +1772,7 @@ export function TournamenSportApp() {
         });
 
         let consecutiveRepeats = 0;
-        let imbalance = 0;
+        let imbalancePenalty = 0;
         let longestStreakPenalty = 0;
         venuesByTeam.forEach((venues) => {
           venues.sort((a, b) => a.round - b.round);
@@ -1790,11 +1790,20 @@ export function TournamenSportApp() {
               streak = 1;
             }
           }
-          imbalance += Math.abs(local - visitor);
+
+          // Prioridad absoluta al reparto más equilibrado posible:
+          // con 7 equipos cada uno juega 6 partidos y debe quedar 3L/3V.
+          // Con cantidad impar de partidos, la diferencia mínima posible es 1.
+          const minimumPossibleDifference = venues.length % 2;
+          imbalancePenalty += Math.max(
+            0,
+            Math.abs(local - visitor) - minimumPossibleDifference
+          );
         });
 
-        // Primero evitamos rachas de local/visitante; luego equilibramos el total.
-        return consecutiveRepeats * 1000 + longestStreakPenalty * 150 + imbalance * 20;
+        // El equilibrio de localías es una restricción prioritaria.
+        // Solo después optimizamos las rachas consecutivas.
+        return imbalancePenalty * 100000 + consecutiveRepeats * 100 + longestStreakPenalty * 20;
       };
 
       // Búsqueda global con reinicios y movimientos aleatorios. A diferencia de
