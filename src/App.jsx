@@ -1762,31 +1762,89 @@ export function TournamenSportApp() {
           }))
       );
 
-      // Asignación circular de localías. Con 7 equipos, cada uno queda
-      // exactamente con 3 partidos de local y 3 de visitante, sin depender
-      // de una búsqueda heurística que pueda dejar a un equipo con 5 localías.
-      const teamIndex = new Map(participants.map((team, index) => [team, index]));
-      const teamCount = participants.length;
-      const balancedOrientation = fixtures.map((match) => {
-        const firstIndex = teamIndex.get(match.team1);
-        const secondIndex = teamIndex.get(match.team2);
-        const forwardDistance = (secondIndex - firstIndex + teamCount) % teamCount;
+      // Buscamos alternar localía en los partidos consecutivos que juega cada
+      // equipo, manteniendo el reparto total lo más equilibrado posible.
+      const evaluateOrientation = (orientation) => {
+        const venuesByTeam = new Map(participants.map((team) => [team, []]));
+        fixtures.forEach((match, index) => {
+          const home = orientation[index] ? match.team2 : match.team1;
+          const away = orientation[index] ? match.team1 : match.team2;
+          venuesByTeam.get(home)?.push({ round: match.round, venue: "L" });
+          venuesByTeam.get(away)?.push({ round: match.round, venue: "V" });
+        });
 
-        if (teamCount % 2 === 1) {
-          // En ligas con cantidad impar de equipos, cada participante tiene
-          // la misma cantidad de localías y visitas.
-          return forwardDistance > Math.floor(teamCount / 2);
+        let imbalance = 0;
+        let repeats = 0;
+        let longRuns = 0;
+        venuesByTeam.forEach((venues) => {
+          venues.sort((a, b) => a.round - b.round);
+          let local = 0;
+          let visitor = 0;
+          let streak = 1;
+          for (let i = 0; i < venues.length; i++) {
+            if (venues[i].venue === "L") local++;
+            else visitor++;
+            if (i > 0) {
+              if (venues[i].venue === venues[i - 1].venue) {
+                repeats++;
+                streak++;
+                if (streak >= 3) longRuns++;
+              } else {
+                streak = 1;
+              }
+            }
+          }
+          const minimumDifference = venues.length % 2;
+          imbalance += Math.max(0, Math.abs(local - visitor) - minimumDifference);
+        });
+        return imbalance * 100000 + repeats * 1000 + longRuns * 100;
+      };
+
+      let seed = participants.reduce((sum, name, index) => {
+        for (let i = 0; i < name.length; i++) sum = (sum * 31 + name.charCodeAt(i)) >>> 0;
+        return (sum + index + 1) >>> 0;
+      }, 20261023);
+      const random = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+
+      let bestOrientation = fixtures.map(() => false);
+      let bestScore = evaluateOrientation(bestOrientation);
+      const iterations = Math.max(2500, fixtures.length * fixtures.length * 20);
+
+      // Reinicios deterministas y búsqueda global aproximada: prioriza que
+      // cada equipo alterne local/visitante y evita desequilibrios como 5-1.
+      for (let attempt = 0; attempt < 48; attempt++) {
+        let orientation = fixtures.map(() => random() < 0.5);
+        let currentScore = evaluateOrientation(orientation);
+        let temperature = 1500;
+
+        for (let step = 0; step < iterations; step++) {
+          const candidate = [...orientation];
+          const first = Math.floor(random() * fixtures.length);
+          candidate[first] = !candidate[first];
+          if (fixtures.length > 1 && random() < 0.3) {
+            let second = Math.floor(random() * fixtures.length);
+            if (second === first) second = (second + 1) % fixtures.length;
+            candidate[second] = !candidate[second];
+          }
+
+          const candidateScore = evaluateOrientation(candidate);
+          const delta = candidateScore - currentScore;
+          if (delta < 0 || random() < Math.exp(-delta / temperature)) {
+            orientation = candidate;
+            currentScore = candidateScore;
+          }
+          temperature *= 0.996;
+          if (currentScore < bestScore) {
+            bestScore = currentScore;
+            bestOrientation = [...orientation];
+          }
+          if (bestScore === 0) break;
         }
-
-        // En ligas con cantidad par de equipos, los partidos se orientan de
-        // forma circular; la diferencia de localías no puede superar 1.
-        if (forwardDistance === teamCount / 2) {
-          return match.round % 2 === 0;
-        }
-        return forwardDistance > teamCount / 2;
-      });
-
-      const bestOrientation = balancedOrientation;
+        if (bestScore === 0) break;
+      }
 
       const matches = fixtures.map((match, index) => {
         const shouldReverse = bestOrientation[index];
