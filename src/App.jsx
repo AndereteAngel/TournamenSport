@@ -1752,11 +1752,20 @@ export function TournamenSportApp() {
             const firstB = Math.min(participantOrder.get(b.team1) ?? 0, participantOrder.get(b.team2) ?? 0);
             return firstA - firstB;
           })
-          .map((match, matchIndex) => ({
-            ...match,
-            id: `fecha-${roundIndex + 1}-partido-${matchIndex + 1}`,
-            round: roundIndex + 1,
-          }))
+          .map((match, matchIndex) => {
+            // Alternar la localía por fecha: en fechas pares se invierte el cruce
+            // respecto de la orientación base del calendario.
+            const shouldReverse = (roundIndex + 1) % 2 === 0;
+            return {
+              ...match,
+              team1: shouldReverse ? match.team2 : match.team1,
+              team2: shouldReverse ? match.team1 : match.team2,
+              id: `fecha-${roundIndex + 1}-partido-${matchIndex + 1}`,
+              round: roundIndex + 1,
+              homeTeam: shouldReverse ? match.team2 : match.team1,
+              awayTeam: shouldReverse ? match.team1 : match.team2,
+            };
+          })
       );
       groups = [{
         id: 1,
