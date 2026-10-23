@@ -13,7 +13,7 @@ import { TournamentNotice, useTournamentNotice } from "./components/TournamentNo
 import { PlayoffBracket } from "./components/PlayoffBracket";
 import { supabase } from "./supabaseClient";
 
-const ADMIN_UID = "c2089fce-5fb1-430a-8abc-89f5b762b69a";
+const ADMIN_UID = import.meta.env.VITE_ADMIN_USER_ID || "c2089fce-5fb1-430a-8abc-89f5b762b69a";
 
 const adminTournamentButtonStyle = {
   width: "auto",
