@@ -1776,6 +1776,8 @@ export function TournamenSportApp() {
         let imbalance = 0;
         let repeats = 0;
         let longRuns = 0;
+        let localRepeatRuns = 0;
+        let visitorRepeatRuns = 0;
         venuesByTeam.forEach((venues) => {
           venues.sort((a, b) => a.round - b.round);
           let local = 0;
@@ -1788,6 +1790,8 @@ export function TournamenSportApp() {
               if (venues[i].venue === venues[i - 1].venue) {
                 repeats++;
                 streak++;
+                if (venues[i].venue === "L") localRepeatRuns++;
+                else visitorRepeatRuns++;
                 if (streak >= 3) longRuns++;
               } else {
                 streak = 1;
@@ -1797,7 +1801,11 @@ export function TournamenSportApp() {
           const minimumDifference = venues.length % 2;
           imbalance += Math.max(0, Math.abs(local - visitor) - minimumDifference);
         });
-        return imbalance * 100000 + repeats * 1000 + longRuns * 100;
+        // Una repetición de local se compensa con una repetición de visitante.
+        // Es preferible alternar, pero si no se puede, evitamos que los
+        // equipos acumulen rachas de un solo tipo de localía.
+        const repeatImbalance = Math.abs(localRepeatRuns - visitorRepeatRuns);
+        return imbalance * 100000 + repeatImbalance * 5000 + repeats * 1000 + longRuns * 100;
       };
 
       let seed = participants.reduce((sum, name, index) => {
