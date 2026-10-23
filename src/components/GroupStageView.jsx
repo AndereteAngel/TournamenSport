@@ -132,7 +132,7 @@ export function GroupStageView({
               marginBottom: "0.3rem",
             }}
           >
-            {tournament.game}
+            {String(tournament.game || "").split(" · ")[0]}
           </span>
 
           <h2
@@ -156,6 +156,11 @@ export function GroupStageView({
           >
             {tournament.title}
           </h2>
+          {tournament.category_detail || (String(tournament.game || "").includes(" · ") ? String(tournament.game).split(" · ").slice(1).join(" · ") : "") && (
+            <div style={{ marginTop: "0.45rem", marginLeft: "0.75rem", color: "#f3a847", fontSize: "0.88rem", fontWeight: 800 }}>
+              Categoría: {tournament.category_detail || (String(tournament.game || "").includes(" · ") ? String(tournament.game).split(" · ").slice(1).join(" · ") : "")}
+            </div>
+          )}
         </div>
 
         <span
