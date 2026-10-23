@@ -6,6 +6,14 @@ export function ChampionCelebration({ tournament, onClose }) {
   if (!podium?.champion) return null;
 
   const stats = getPlayerTournamentStats(tournament, podium.champion);
+  const medalists = [
+    { place: "1.º", medal: "🥇", name: podium.champion, color: "#facc15" },
+    { place: "2.º", medal: "🥈", name: podium.runnerUp, color: "#d1d5db" },
+    ...(Array.isArray(podium.bronze) ? podium.bronze : []).map((name) => ({
+      place: "3.º", medal: "🥉", name, color: "#d97706",
+    })),
+    ...(podium.fourth ? [{ place: "4.º", medal: "🏅", name: podium.fourth, color: "#c4b5fd" }] : []),
+  ].filter((item) => item.name);
 
   return (
     <div
@@ -111,6 +119,38 @@ export function ChampionCelebration({ tournament, onClose }) {
             <div style={{ color: "#a1a1aa", fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>{label}</div>
           </div>
         ))}
+      </div>
+      <div style={{ marginTop: "1.2rem", textAlign: "left" }}>
+        <h3 style={{ margin: "0 0 0.65rem", color: "#fff", textAlign: "center", fontSize: "1rem", letterSpacing: "0.08em" }}>
+          MEDALLISTAS DEL TORNEO
+        </h3>
+        <div style={{ display: "grid", gap: "0.45rem" }}>
+          {medalists.map((item, index) => (
+            <div
+              key={`${item.place}-${item.name}-${index}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.7rem",
+                padding: "0.65rem 0.8rem",
+                borderRadius: "10px",
+                background: "rgba(255,255,255,0.055)",
+                border: `1px solid ${item.color}55`,
+              }}
+            >
+              <span style={{ fontSize: "1.35rem" }}>{item.medal}</span>
+              <span style={{ minWidth: "2.3rem", color: item.color, fontWeight: 900 }}>{item.place}</span>
+              <span style={{ color: "#fff", fontWeight: 800, overflowWrap: "anywhere" }}>{item.name}</span>
+            </div>
+          ))}
+        </div>
+        {medalists.length < 4 && (
+          <p style={{ color: "#a1a1aa", fontSize: "0.75rem", textAlign: "center", margin: "0.65rem 0 0" }}>
+            {medalists.length === 3
+              ? "El 3.º puesto puede ser compartido si no se disputó un partido por el tercer lugar."
+              : "No hay resultados suficientes para definir los cuatro puestos."}
+          </p>
+        )}
       </div>
       <p style={{ color: "#facc15", fontSize: "0.7rem", fontWeight: 800, margin: "1rem 0 0.8rem" }}>
         <TCIcon name="medalGold" size={16} /> TÍTULO REGISTRADO EN EL MEDALLERO
