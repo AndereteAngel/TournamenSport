@@ -96,6 +96,11 @@ export function GroupStageView({
     group.matches.every((m) => m.score1 !== null && m.score2 !== null)
   );
 
+  const isLeague = String(tournament.format || "").trim().toLowerCase() === "league";
+  const displayMatches = [...currentGroup.matches].sort((a, b) =>
+    isLeague ? (Number(a.round || 1) - Number(b.round || 1)) : 0
+  );
+
   return (
     <div
       className="cr-card"
@@ -594,10 +599,15 @@ export function GroupStageView({
             paddingRight: "2px",
           }}
         >
-          {currentGroup.matches.map((match) => (
+          {displayMatches.map((match, index) => (
+            <>
+              {isLeague && (index === 0 || Number(displayMatches[index - 1].round || 1) !== Number(match.round || 1)) && (
+                <div key={"fecha-" + (match.round || 1)} style={{ marginTop: index === 0 ? 0 : "0.65rem", padding: "0.65rem 0.8rem", borderRadius: "9px", background: "linear-gradient(90deg, rgba(250,204,21,0.16), rgba(250,204,21,0.04))", border: "1px solid rgba(250,204,21,0.35)", color: "#facc15", fontSize: "0.8rem", fontWeight: 900, letterSpacing: "0.06em" }}>
+                  FECHA {match.round || 1} <span style={{ color: "#d1d5db", fontWeight: 600, letterSpacing: 0 }}>· Todos contra todos</span>
+                </div>
+              )
             <div
               key={match.id}
-              style={{ position: "relative" }}
               style={{
                 padding: "0.75rem",
                 background: "linear-gradient(135deg, #121019, #0d0c13)",
@@ -609,11 +619,6 @@ export function GroupStageView({
                 gap: "0.6rem",
               }}
             >
-              {String(tournament.format || "").toLowerCase() === "league" && match.round && (
-                <div style={{ gridColumn: "1 / -1", color: "#facc15", fontSize: "0.68rem", fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase", borderBottom: "1px solid rgba(250,204,21,0.18)", paddingBottom: "0.35rem" }}>
-                  FECHA {match.round}
-                </div>
-              )}
               {/* EQUIPO 1 */}
               <span
                 style={{
