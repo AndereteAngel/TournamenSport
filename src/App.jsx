@@ -1762,98 +1762,31 @@ export function TournamenSportApp() {
           }))
       );
 
-      const evaluateOrientation = (orientation) => {
-        const venuesByTeam = new Map(participants.map((team) => [team, []]));
-        fixtures.forEach((match, index) => {
-          const home = orientation[index] ? match.team2 : match.team1;
-          const away = orientation[index] ? match.team1 : match.team2;
-          venuesByTeam.get(home)?.push({ round: match.round, venue: "L" });
-          venuesByTeam.get(away)?.push({ round: match.round, venue: "V" });
-        });
+      // Asignación circular de localías. Con 7 equipos, cada uno queda
+      // exactamente con 3 partidos de local y 3 de visitante, sin depender
+      // de una búsqueda heurística que pueda dejar a un equipo con 5 localías.
+      const teamIndex = new Map(participants.map((team, index) => [team, index]));
+      const teamCount = participants.length;
+      const balancedOrientation = fixtures.map((match) => {
+        const firstIndex = teamIndex.get(match.team1);
+        const secondIndex = teamIndex.get(match.team2);
+        const forwardDistance = (secondIndex - firstIndex + teamCount) % teamCount;
 
-        let consecutiveRepeats = 0;
-        let imbalancePenalty = 0;
-        let longestStreakPenalty = 0;
-        venuesByTeam.forEach((venues) => {
-          venues.sort((a, b) => a.round - b.round);
-          let local = 0;
-          let visitor = 0;
-          let streak = 1;
-          for (let i = 0; i < venues.length; i++) {
-            if (venues[i].venue === "L") local++;
-            else visitor++;
-            if (i > 0 && venues[i - 1].venue === venues[i].venue) {
-              consecutiveRepeats++;
-              streak++;
-              if (streak >= 3) longestStreakPenalty += 1;
-            } else {
-              streak = 1;
-            }
-          }
-
-          // Prioridad absoluta al reparto más equilibrado posible:
-          // con 7 equipos cada uno juega 6 partidos y debe quedar 3L/3V.
-          // Con cantidad impar de partidos, la diferencia mínima posible es 1.
-          const minimumPossibleDifference = venues.length % 2;
-          imbalancePenalty += Math.max(
-            0,
-            Math.abs(local - visitor) - minimumPossibleDifference
-          );
-        });
-
-        // El equilibrio de localías es una restricción prioritaria.
-        // Solo después optimizamos las rachas consecutivas.
-        return imbalancePenalty * 100000 + consecutiveRepeats * 100 + longestStreakPenalty * 20;
-      };
-
-      // Búsqueda global con reinicios y movimientos aleatorios. A diferencia de
-      // alternar por número de fecha, evalúa la secuencia real de cada equipo.
-      // Así ningún equipo queda fijado como local por el orden del calendario.
-      let bestOrientation = fixtures.map((_, index) => index % 2 === 0);
-      let bestScore = evaluateOrientation(bestOrientation);
-      let seed = participants.reduce((sum, name, index) => {
-        for (let i = 0; i < name.length; i++) sum = (sum * 31 + name.charCodeAt(i)) >>> 0;
-        return (sum + index + 1) >>> 0;
-      }, 20261023);
-      const random = () => {
-        seed = (seed * 1664525 + 1013904223) >>> 0;
-        return seed / 4294967296;
-      };
-
-      for (let attempt = 0; attempt < 32; attempt++) {
-        let orientation = fixtures.map(() => random() < 0.5);
-        let currentScore = evaluateOrientation(orientation);
-        let temperature = 120;
-        const iterations = Math.max(1200, fixtures.length * fixtures.length * 8);
-
-        for (let step = 0; step < iterations; step++) {
-          const first = Math.floor(random() * fixtures.length);
-          const candidate = [...orientation];
-          candidate[first] = !candidate[first];
-
-          // A veces cambiamos dos partidos juntos para salir de mínimos locales.
-          if (fixtures.length > 1 && random() < 0.35) {
-            let second = Math.floor(random() * fixtures.length);
-            if (second === first) second = (second + 1) % fixtures.length;
-            candidate[second] = !candidate[second];
-          }
-
-          const candidateScore = evaluateOrientation(candidate);
-          const delta = candidateScore - currentScore;
-          if (delta < 0 || random() < Math.exp(-delta / temperature)) {
-            orientation = candidate;
-            currentScore = candidateScore;
-          }
-          temperature *= 0.997;
-
-          if (currentScore < bestScore) {
-            bestScore = currentScore;
-            bestOrientation = [...orientation];
-          }
-          if (bestScore === 0) break;
+        if (teamCount % 2 === 1) {
+          // En ligas con cantidad impar de equipos, cada participante tiene
+          // la misma cantidad de localías y visitas.
+          return forwardDistance > Math.floor(teamCount / 2);
         }
-        if (bestScore === 0) break;
-      }
+
+        // En ligas con cantidad par de equipos, los partidos se orientan de
+        // forma circular; la diferencia de localías no puede superar 1.
+        if (forwardDistance === teamCount / 2) {
+          return match.round % 2 === 0;
+        }
+        return forwardDistance > teamCount / 2;
+      });
+
+      const bestOrientation = balancedOrientation;
 
       const matches = fixtures.map((match, index) => {
         const shouldReverse = bestOrientation[index];
