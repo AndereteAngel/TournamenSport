@@ -1465,7 +1465,7 @@ export function TournamenSportApp() {
       return;
     }
 
-    const randomCode = "CR-" + Math.floor(1000 + Math.random() * 9000);
+    const randomCode = "TS-" + Math.floor(1000 + Math.random() * 9000);
     const registrationGroup = {
       id: 0,
       name: "__INSCRIPCIONES__",
