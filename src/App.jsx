@@ -1479,8 +1479,6 @@ export function TournamenSportApp() {
       code: randomCode,
       title: config.title,
       game: config.game,
-      category_type: config.category_type,
-      category_detail: config.category_detail,
       format: config.format,
       qualifiers_per_group: config.qualifiersPerGroup,
       is_public: config.isPublic,
@@ -1839,8 +1837,6 @@ export function TournamenSportApp() {
       .update({
         title: updatedTournament.title,
         game: updatedTournament.game,
-        category_type: config.category_type,
-        category_detail: config.category_detail,
         format: updatedTournament.format,
         qualifiers_per_group: updatedTournament.qualifiers_per_group,
         is_public: updatedTournament.is_public,
@@ -3068,6 +3064,16 @@ export function TournamenSportApp() {
                   style={adminTournamentButtonStyle}
                 >
                   <TCIcon name="settings" /> Modificar torneo
+                </button>
+              )}
+              {isTournamentAdmin && (
+                <button
+                  type="button"
+                  onClick={handleFinishTournament}
+                  className="cr-btn-gold"
+                  style={adminTournamentButtonStyle}
+                >
+                  <TCIcon name="flag" /> Finalizar campeonato
                 </button>
               )}
               {isAdmin && (
