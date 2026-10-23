@@ -37,7 +37,9 @@ export function CreateTournament({
     if (!isEditing || !initialData) {
       return {
         title: "",
-        game: "Clash Royale 1v1",
+        game: "Fútbol",
+        categoryType: "Año de nacimiento",
+        categoryDetail: "2008",
         format: "groups_playoff",
         numGroups: 2,
         qualifiersPerGroup: 2,
@@ -51,7 +53,9 @@ export function CreateTournament({
 
     return {
       title: initialData.title || "",
-      game: initialData.game || "Clash Royale 1v1",
+      game: ["Fútbol", "Futsal", "Básquet", "Vóley", "Handball", "Hockey", "Rugby", "Tenis", "Atletismo", "Natación", "Otro deporte"].includes(initialData.game) ? initialData.game : "Fútbol",
+      categoryType: initialData.category_type || "Personalizada",
+      categoryDetail: initialData.category_detail || "",
       format: initialData.format || "groups_playoff",
       numGroups:
         initialData.format === "league" ? 1 : initialData.groups?.length || 2,
@@ -146,6 +150,9 @@ export function CreateTournament({
 
     onSave({
       ...formData,
+      game: `${formData.game}${formData.categoryDetail ? ` · ${formData.categoryDetail}` : ""}`,
+      category_type: formData.categoryType,
+      category_detail: formData.categoryDetail,
       maxParticipants: Number(formData.maxParticipants),
       teams,
     });
@@ -154,7 +161,7 @@ export function CreateTournament({
   return (
     <>
       <TournamentNotice notice={notice} onClose={clearNotice} />
-      <div className="cr-card" style={{ maxWidth: "520px" }}>
+      <div className="cr-card sports-card" style={{ maxWidth: "620px" }}>
       <div className="cr-card-glow"></div>
 
       {/* =====================================================
@@ -176,7 +183,7 @@ export function CreateTournament({
             textAlign: "left",
           }}
         >
-          {isEditing ? <><TCIcon name="settings" size={20} /> Modificar Torneo</> : <><TCIcon name="sword" size={20} /> Configurar Torneo</>}
+          {isEditing ? <><TCIcon name="settings" size={20} /> Modificar Torneo</> : <><TCIcon name="trophy" size={20} /> Crear torneo deportivo</>}
         </h2>
 
         <button
@@ -249,7 +256,7 @@ export function CreateTournament({
 
           <input
             type="text"
-            placeholder="Ej: Copa Suprema de Clanes"
+            placeholder="Ej.: Copa Primavera de Fútbol"
             value={formData.title}
             onChange={(e) =>
               setFormData({
@@ -262,92 +269,65 @@ export function CreateTournament({
           />
         </div>
 
-        {/* ===================================================
-            JUEGO + FORMATO
-            =================================================== */}
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "0.75rem",
-          }}
-        >
-          {/* JUEGO */}
-
+        {/* DEPORTE, CATEGORÍA Y FORMATO */}
+        <div className="sports-form-grid">
           <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.75rem",
-                fontWeight: "bold",
-                textTransform: "uppercase",
-                color: "#d1d5db",
-                marginBottom: "4px",
-              }}
-            >
-              Videojuego
-            </label>
-
-            <select
-              value={formData.game}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  game: e.target.value,
-                })
-              }
-              className="cr-input"
-              style={{
-                cursor: "pointer",
-              }}
-            >
-              <option value="Clash Royale 1v1">Clash Royale 1v1</option>
-
-              <option value="Brawl Stars">Brawl Stars</option>
-
-              <option value="EA Sports FC 26">EA Sports FC 26</option>
-
-              <option value="Valorant">Valorant</option>
+            <label className="sports-label">Deporte</label>
+            <select value={formData.game} onChange={(e) => setFormData({ ...formData, game: e.target.value })} className="cr-input sports-input">
+              <option>Fútbol</option>
+              <option>Futsal</option>
+              <option>Básquet</option>
+              <option>Vóley</option>
+              <option>Handball</option>
+              <option>Hockey</option>
+              <option>Rugby</option>
+              <option>Tenis</option>
+              <option>Atletismo</option>
+              <option>Natación</option>
+              <option>Otro deporte</option>
             </select>
           </div>
-
-          {/* FORMATO */}
-
           <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.75rem",
-                fontWeight: "bold",
-                textTransform: "uppercase",
-                color: "#d1d5db",
-                marginBottom: "4px",
-              }}
-            >
-              Formato
-            </label>
-
-            <select
-              value={formData.format}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  format: e.target.value,
-                })
-              }
-              className="cr-input"
-              style={{
-                cursor: "pointer",
-              }}
-            >
-              <option value="groups_playoff">Grupos + Playoffs</option>
-
-              <option value="single_elimination">Playoff</option>
-
-              <option value="league">Todos contra Todos</option>
+            <label className="sports-label">Formato de competencia</label>
+            <select value={formData.format} onChange={(e) => setFormData({ ...formData, format: e.target.value })} className="cr-input sports-input">
+              <option value="groups_playoff">Grupos + eliminatorias</option>
+              <option value="single_elimination">Eliminación directa</option>
+              <option value="league">Todos contra todos</option>
             </select>
           </div>
+        </div>
+
+        <div>
+          <label className="sports-label">Tipo de categoría</label>
+          <select value={formData.categoryType} onChange={(e) => setFormData({ ...formData, categoryType: e.target.value, categoryDetail: "" })} className="cr-input sports-input">
+            <option value="Año de nacimiento">Año de nacimiento</option>
+            <option value="División">División competitiva (Primera, Reserva...)</option>
+            <option value="Formativa">Formativas (Mini, Premini...)</option>
+            <option value="Personalizada">Categoría personalizada</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="sports-label">Categoría / división</label>
+          {formData.categoryType === "Año de nacimiento" ? (
+            <select value={formData.categoryDetail} onChange={(e) => setFormData({ ...formData, categoryDetail: e.target.value })} className="cr-input sports-input" required>
+              <option value="">Seleccioná el año</option>
+              {Array.from({ length: 17 }, (_, index) => 2008 + index).map((year) => <option key={year} value={String(year)}>{year}</option>)}
+            </select>
+          ) : formData.categoryType === "División" ? (
+            <select value={formData.categoryDetail} onChange={(e) => setFormData({ ...formData, categoryDetail: e.target.value })} className="cr-input sports-input" required>
+              <option value="">Seleccioná la división</option>
+              {["Primera", "Reserva", "Tercera", "Cuarta", "Quinta", "Sexta", "Otra división"].map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          ) : formData.categoryType === "Formativa" ? (
+            <select value={formData.categoryDetail} onChange={(e) => setFormData({ ...formData, categoryDetail: e.target.value })} className="cr-input sports-input" required>
+              <option value="">Seleccioná la categoría</option>
+              {["Premini", "Mini", "Infantiles", "Menores", "Cadetes", "Juveniles", "Sub-14", "Sub-16", "Sub-18", "Sub-21", "Otra categoría"].map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          ) : (
+            <input value={formData.categoryDetail} onChange={(e) => setFormData({ ...formData, categoryDetail: e.target.value })} placeholder="Escribí la categoría o división" className="cr-input sports-input" required />
+          )}
+          <span className="sports-help">Las categorías varían según el deporte y la federación. Podés definir una opción propia.</span>
         </div>
 
         {/* ===================================================
@@ -534,7 +514,7 @@ export function CreateTournament({
                 Agregar jugadores manualmente (opcional)
               </label>
               <textarea
-                placeholder={"ReyAzul99\nPrincesaPoder\nPekkaMaster"}
+                placeholder={"Club Atlético Norte\nDeportivo Central\nEscuela Municipal"}
                 rows={4}
                 value={formData.participantsInput}
                 onChange={(e) => setFormData({ ...formData, participantsInput: e.target.value })}
@@ -542,7 +522,7 @@ export function CreateTournament({
                 style={{ resize: "vertical", fontFamily: "inherit" }}
               />
               <span style={{ fontSize: "10px", color: "#9ca3af", marginTop: "4px", display: "block" }}>
-                Escribí un alias por línea. Los duplicados se eliminan automáticamente.
+                Escribí un equipo o participante por línea. Los duplicados se eliminan automáticamente.
               </span>
             </div>
           </>
@@ -567,7 +547,7 @@ export function CreateTournament({
           </label>
 
           <textarea
-            placeholder={"ReyAzul99\nPrincesaPoder\nPekkaMaster\nMontapuercosX"}
+            placeholder={"Club Atlético Norte\nDeportivo Central\nEscuela Municipal\nClub Social"}
             rows={5}
             value={formData.participantsInput}
             onChange={(e) =>
@@ -612,7 +592,7 @@ export function CreateTournament({
         >
           {isEditing
             ? "💾 Guardar modificaciones"
-            : <><TCIcon name="sword" size={16} /> Crear Torneo</>}
+            : <><TCIcon name="trophy" size={16} /> Crear torneo</>}
         </button>
       </form>
       </div>
