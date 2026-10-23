@@ -1745,75 +1745,93 @@ export function TournamenSportApp() {
         return indexA - indexB;
       });
 
-      // Elegir la localía fecha por fecha, mirando el historial de cada equipo.
-      // Primero minimizamos repeticiones consecutivas; luego equilibramos localías.
-      const lastVenue = new Map();
-      const homeCount = new Map(participants.map((name) => [name, 0]));
-      const awayCount = new Map(participants.map((name) => [name, 0]));
-      const matches = [];
-
-      rounds.forEach((roundMatches, roundIndex) => {
-        const sortedRound = [...roundMatches].sort((a, b) => {
-          const firstA = Math.min(participantOrder.get(a.team1) ?? 0, participantOrder.get(a.team2) ?? 0);
-          const firstB = Math.min(participantOrder.get(b.team1) ?? 0, participantOrder.get(b.team2) ?? 0);
-          return firstA - firstB;
-        });
-
-        sortedRound.forEach((match, matchIndex) => {
-          const teamA = match.team1;
-          const teamB = match.team2;
-          let home = teamA;
-          let away = teamB;
-
-          if (roundIndex > 0) {
-            const options = [
-              { home: teamA, away: teamB },
-              { home: teamB, away: teamA },
-            ];
-
-            const scoreOption = (option) => {
-              const venues = [
-                [option.home, "home"],
-                [option.away, "away"],
-              ];
-              let score = 0;
-
-              venues.forEach(([team, venue]) => {
-                // Penalización fuerte si repite localía respecto de la fecha anterior.
-                if (lastVenue.get(team) === venue) score += 100;
-
-                // Como segundo criterio, evitar que un equipo acumule muchas más
-                // localías que visitas (o viceversa).
-                const nextHome = homeCount.get(team) + (venue === "home" ? 1 : 0);
-                const nextAway = awayCount.get(team) + (venue === "away" ? 1 : 0);
-                score += Math.abs(nextHome - nextAway) * 3;
-              });
-
-              return score;
-            };
-
-            const scoreA = scoreOption(options[0]);
-            const scoreB = scoreOption(options[1]);
-            const chosen = scoreA <= scoreB ? options[0] : options[1];
-            home = chosen.home;
-            away = chosen.away;
-          }
-
-          homeCount.set(home, homeCount.get(home) + 1);
-          awayCount.set(away, awayCount.get(away) + 1);
-          lastVenue.set(home, "home");
-          lastVenue.set(away, "away");
-
-          matches.push({
+      // Optimizar la localía sobre el calendario completo, no partido por partido.
+      // Cada partido puede invertir su orientación; buscamos minimizar repeticiones
+      // consecutivas y mantener equilibrados los totales de local/visitante.
+      const fixtures = rounds.flatMap((roundMatches, roundIndex) =>
+        [...roundMatches]
+          .sort((a, b) => {
+            const firstA = Math.min(participantOrder.get(a.team1) ?? 0, participantOrder.get(a.team2) ?? 0);
+            const firstB = Math.min(participantOrder.get(b.team1) ?? 0, participantOrder.get(b.team2) ?? 0);
+            return firstA - firstB;
+          })
+          .map((match, matchIndex) => ({
             ...match,
-            team1: home,
-            team2: away,
-            id: `fecha-${roundIndex + 1}-partido-${matchIndex + 1}`,
             round: roundIndex + 1,
-            homeTeam: home,
-            awayTeam: away,
-          });
+            id: `fecha-${roundIndex + 1}-partido-${matchIndex + 1}`,
+          }))
+      );
+
+      const evaluateOrientation = (orientation) => {
+        const venuesByTeam = new Map(participants.map((team) => [team, []]));
+        fixtures.forEach((match, index) => {
+          const home = orientation[index] ? match.team2 : match.team1;
+          const away = orientation[index] ? match.team1 : match.team2;
+          venuesByTeam.get(home)?.push({ round: match.round, venue: "H" });
+          venuesByTeam.get(away)?.push({ round: match.round, venue: "A" });
         });
+
+        let score = 0;
+        venuesByTeam.forEach((venues) => {
+          venues.sort((a, b) => a.round - b.round);
+          let homeCount = 0;
+          let awayCount = 0;
+          for (let i = 0; i < venues.length; i++) {
+            if (venues[i].venue === "H") homeCount++;
+            else awayCount++;
+
+            // La prioridad principal es no repetir localía en fechas consecutivas
+            // en las que el equipo juega. Los descansos no se cuentan como partido.
+            if (i > 0 && venues[i - 1].venue === venues[i].venue) score += 100;
+          }
+          score += Math.abs(homeCount - awayCount) * 4;
+        });
+        return score;
+      };
+
+      let bestOrientation = fixtures.map((_, index) => index % 2 === 1);
+      let bestScore = evaluateOrientation(bestOrientation);
+
+      // Múltiples puntos de partida para evitar quedarse con una orientación inicial
+      // desfavorable. Es determinista para que el calendario sea reproducible.
+      for (let attempt = 0; attempt < 24; attempt++) {
+        let orientation = fixtures.map((_, index) => ((index + attempt) % (attempt % 2 ? 3 : 2)) === 0);
+        let currentScore = evaluateOrientation(orientation);
+        let improved = true;
+        let passes = 0;
+
+        while (improved && passes < fixtures.length * 2) {
+          improved = false;
+          passes++;
+          for (let index = 0; index < fixtures.length; index++) {
+            orientation[index] = !orientation[index];
+            const flippedScore = evaluateOrientation(orientation);
+            if (flippedScore < currentScore) {
+              currentScore = flippedScore;
+              improved = true;
+            } else {
+              orientation[index] = !orientation[index];
+            }
+          }
+        }
+
+        if (currentScore < bestScore) {
+          bestScore = currentScore;
+          bestOrientation = [...orientation];
+        }
+      }
+
+      const matches = fixtures.map((match, index) => {
+        const shouldReverse = bestOrientation[index];
+        const home = shouldReverse ? match.team2 : match.team1;
+        const away = shouldReverse ? match.team1 : match.team2;
+        return {
+          ...match,
+          team1: home,
+          team2: away,
+          homeTeam: home,
+          awayTeam: away,
+        };
       });
       groups = [{
         id: 1,
