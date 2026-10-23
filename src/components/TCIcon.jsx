@@ -1,5 +1,5 @@
 const paths = {
-  sword: <><path d="m14 7 3-3 3 3-3 3"/><path d="m4 20 8-8"/><path d="m6 14 4 4"/><path d="m12 8 4 4"/><path d="m5 19-1 1"/><path d="m8 5 11 11"/></>,
+  sword: <><circle cx="12" cy="12" r="9"/><path d="m12 6 4 2.5v5L12 17l-4-3.5v-5z"/><path d="m8 8.5 8 5M16 8.5l-8 5"/></>,
   search: <><circle cx="10.8" cy="10.8" r="6.3"/><path d="m16 16 4 4"/></>,
   user: <><path d="M12 12.2a4.15 4.15 0 1 0 0-8.3 4.15 4.15 0 0 0 0 8.3Z"/><path d="M4.2 20c.65-3.65 3.45-5.7 7.8-5.7s7.15 2.05 7.8 5.7" strokeWidth="2.1"/></>,
   key: <><circle cx="8" cy="15" r="4"/><path d="m11 12 8-8 2 2-2 2 2 2-3 3-2-2-2 2"/></>,
