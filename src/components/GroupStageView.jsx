@@ -98,9 +98,59 @@ export function GroupStageView({
   );
 
   const isLeague = String(tournament.format || "").trim().toLowerCase() === "league";
-  const allMatchesSorted = [...currentGroup.matches].sort((a, b) =>
-    isLeague ? (Number(a.round || 1) - Number(b.round || 1)) : 0
-  );
+
+  // Compatibilidad con torneos creados antes de guardar correctamente las fechas.
+  // Si todos los partidos quedaron marcados como Fecha 1, reconstruimos las jornadas
+  // por cruces, conservando los mismos IDs, resultados y partidos guardados.
+  const getRoundRobinSchedule = (teams) => {
+    const rotation = [...teams];
+    if (rotation.length % 2 !== 0) rotation.push(null);
+    const rounds = [];
+    for (let roundIndex = 0; roundIndex < rotation.length - 1; roundIndex++) {
+      const fixtures = [];
+      for (let i = 0; i < rotation.length / 2; i++) {
+        const team1 = rotation[i];
+        const team2 = rotation[rotation.length - 1 - i];
+        if (team1 != null && team2 != null) fixtures.push([team1, team2]);
+      }
+      rounds.push(fixtures);
+      rotation.splice(1, 0, rotation.pop());
+    }
+    const firstTeam = teams[0];
+    rounds.sort((a, b) => {
+      const opponentIndex = (fixtures) => {
+        const match = fixtures.find(([one, two]) => one === firstTeam || two === firstTeam);
+        return teams.indexOf(match?.[0] === firstTeam ? match?.[1] : match?.[0]);
+      };
+      return opponentIndex(a) - opponentIndex(b);
+    });
+    return rounds;
+  };
+
+  const roundsAreMissing = isLeague && currentGroup.matches.length > 1 &&
+    currentGroup.matches.every((match) => Number(match.round || 1) === 1);
+  const inferredRoundByPair = new Map();
+  if (roundsAreMissing) {
+    getRoundRobinSchedule(currentGroup.teams).forEach((fixtures, index) => {
+      fixtures.forEach(([team1, team2]) => {
+        inferredRoundByPair.set([team1, team2].sort().join("::"), index + 1);
+      });
+    });
+  }
+
+  const getMatchRound = (match) => {
+    if (roundsAreMissing) {
+      return inferredRoundByPair.get([match.team1, match.team2].sort().join("::")) || 1;
+    }
+    return Number(match.round || 1);
+  };
+
+  const allMatchesSorted = [...currentGroup.matches].sort((a, b) => {
+    const roundDifference = getMatchRound(a) - getMatchRound(b);
+    if (roundDifference !== 0) return roundDifference;
+    return currentGroup.teams.indexOf(a.team1) - currentGroup.teams.indexOf(b.team1);
+  }).map((match) => ({ ...match, round: getMatchRound(match) }));
+
   const availableRounds = isLeague
     ? [...new Set(allMatchesSorted.map((match) => Number(match.round || 1)))].sort((a, b) => a - b)
     : [];
