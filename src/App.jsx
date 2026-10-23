@@ -1708,18 +1708,20 @@ export function TournamenSportApp() {
       }];
       playoffs = generatePlayoffBrackets(shuffled);
     } else if (isLeague) {
-      // Calendario de todos contra todos por fechas usando el método circular.
-      const scheduleTeams = [...shuffled];
+      // Calendario todos contra todos: cada equipo juega una vez por fecha.
+      // En liga respetamos el orden de inscripción para que el calendario sea previsible.
+      const scheduleTeams = [...participants];
       if (scheduleTeams.length % 2 !== 0) scheduleTeams.push(null);
       const totalRounds = scheduleTeams.length - 1;
-      const matches = [];
+      const rounds = [];
+
       for (let roundIndex = 0; roundIndex < totalRounds; roundIndex++) {
+        const roundMatches = [];
         for (let i = 0; i < scheduleTeams.length / 2; i++) {
           const home = scheduleTeams[i];
           const away = scheduleTeams[scheduleTeams.length - 1 - i];
           if (home && away) {
-            matches.push({
-              id: `fecha-${roundIndex + 1}-partido-${i + 1}`,
+            roundMatches.push({
               round: roundIndex + 1,
               team1: home,
               team2: away,
@@ -1728,8 +1730,34 @@ export function TournamenSportApp() {
             });
           }
         }
+        rounds.push(roundMatches);
         scheduleTeams.splice(1, 0, scheduleTeams.pop());
       }
+
+      // Ordenar las fechas para que el primer participante juegue primero
+      // contra el segundo, luego el tercero, etc. (ej.: 1-2 / 3-4).
+      const participantOrder = new Map(participants.map((name, index) => [name, index]));
+      rounds.sort((a, b) => {
+        const opponentA = a.find((match) => match.team1 === participants[0] || match.team2 === participants[0]);
+        const opponentB = b.find((match) => match.team1 === participants[0] || match.team2 === participants[0]);
+        const indexA = participantOrder.get(opponentA?.team1 === participants[0] ? opponentA.team2 : opponentA?.team1) ?? 0;
+        const indexB = participantOrder.get(opponentB?.team1 === participants[0] ? opponentB.team2 : opponentB?.team1) ?? 0;
+        return indexA - indexB;
+      });
+
+      const matches = rounds.flatMap((roundMatches, roundIndex) =>
+        roundMatches
+          .sort((a, b) => {
+            const firstA = Math.min(participantOrder.get(a.team1) ?? 0, participantOrder.get(a.team2) ?? 0);
+            const firstB = Math.min(participantOrder.get(b.team1) ?? 0, participantOrder.get(b.team2) ?? 0);
+            return firstA - firstB;
+          })
+          .map((match, matchIndex) => ({
+            ...match,
+            id: `fecha-${roundIndex + 1}-partido-${matchIndex + 1}`,
+            round: roundIndex + 1,
+          }))
+      );
       groups = [{
         id: 1,
         name: "Todos contra todos",
