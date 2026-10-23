@@ -32,6 +32,7 @@ export function getTournamentPodium(tournament) {
       champion: standings[0]?.name || null,
       runnerUp: standings[1]?.name || null,
       bronze: standings[2]?.name ? [standings[2].name] : [],
+      fourth: standings[3]?.name || null,
     };
   }
 
@@ -69,7 +70,7 @@ export function getTournamentPodium(tournament) {
       if (loser && loser !== champion && loser !== runnerUp) bronze.push(loser);
     });
   }
-  return { champion, runnerUp: runnerUp || null, bronze: [...new Set(bronze)] };
+  return { champion, runnerUp: runnerUp || null, bronze: [...new Set(bronze)], fourth: null };
 }
 
 export function getPlayerTournamentStats(tournament, playerName) {
@@ -110,7 +111,7 @@ export function getPlayerTournamentStats(tournament, playerName) {
 export function getPlayerMedals(tournaments, playerName) {
   const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
   const target = normalize(playerName);
-  const medals = { gold: 0, silver: 0, bronze: 0, history: [] };
+  const medals = { gold: 0, silver: 0, bronze: 0, diploma: 0, history: [] };
 
   (tournaments || []).forEach((tournament) => {
     const podium = getTournamentPodium(tournament);
@@ -126,6 +127,9 @@ export function getPlayerMedals(tournaments, playerName) {
     } else if (podium.bronze.some((name) => normalize(name) === target)) {
       medals.bronze += 1;
       medal = "bronze";
+    } else if (normalize(podium.fourth) === target) {
+      medals.diploma += 1;
+      medal = "diploma";
     }
 
     if (medal) medals.history.push({
