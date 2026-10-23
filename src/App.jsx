@@ -1745,28 +1745,76 @@ export function TournamenSportApp() {
         return indexA - indexB;
       });
 
-      const matches = rounds.flatMap((roundMatches, roundIndex) =>
-        roundMatches
-          .sort((a, b) => {
-            const firstA = Math.min(participantOrder.get(a.team1) ?? 0, participantOrder.get(a.team2) ?? 0);
-            const firstB = Math.min(participantOrder.get(b.team1) ?? 0, participantOrder.get(b.team2) ?? 0);
-            return firstA - firstB;
-          })
-          .map((match, matchIndex) => {
-            // Alternar la localía por fecha: en fechas pares se invierte el cruce
-            // respecto de la orientación base del calendario.
-            const shouldReverse = (roundIndex + 1) % 2 === 0;
-            return {
-              ...match,
-              team1: shouldReverse ? match.team2 : match.team1,
-              team2: shouldReverse ? match.team1 : match.team2,
-              id: `fecha-${roundIndex + 1}-partido-${matchIndex + 1}`,
-              round: roundIndex + 1,
-              homeTeam: shouldReverse ? match.team2 : match.team1,
-              awayTeam: shouldReverse ? match.team1 : match.team2,
+      // Elegir la localía fecha por fecha, mirando el historial de cada equipo.
+      // Primero minimizamos repeticiones consecutivas; luego equilibramos localías.
+      const lastVenue = new Map();
+      const homeCount = new Map(participants.map((name) => [name, 0]));
+      const awayCount = new Map(participants.map((name) => [name, 0]));
+      const matches = [];
+
+      rounds.forEach((roundMatches, roundIndex) => {
+        const sortedRound = [...roundMatches].sort((a, b) => {
+          const firstA = Math.min(participantOrder.get(a.team1) ?? 0, participantOrder.get(a.team2) ?? 0);
+          const firstB = Math.min(participantOrder.get(b.team1) ?? 0, participantOrder.get(b.team2) ?? 0);
+          return firstA - firstB;
+        });
+
+        sortedRound.forEach((match, matchIndex) => {
+          const teamA = match.team1;
+          const teamB = match.team2;
+          let home = teamA;
+          let away = teamB;
+
+          if (roundIndex > 0) {
+            const options = [
+              { home: teamA, away: teamB },
+              { home: teamB, away: teamA },
+            ];
+
+            const scoreOption = (option) => {
+              const venues = [
+                [option.home, "home"],
+                [option.away, "away"],
+              ];
+              let score = 0;
+
+              venues.forEach(([team, venue]) => {
+                // Penalización fuerte si repite localía respecto de la fecha anterior.
+                if (lastVenue.get(team) === venue) score += 100;
+
+                // Como segundo criterio, evitar que un equipo acumule muchas más
+                // localías que visitas (o viceversa).
+                const nextHome = homeCount.get(team) + (venue === "home" ? 1 : 0);
+                const nextAway = awayCount.get(team) + (venue === "away" ? 1 : 0);
+                score += Math.abs(nextHome - nextAway) * 3;
+              });
+
+              return score;
             };
-          })
-      );
+
+            const scoreA = scoreOption(options[0]);
+            const scoreB = scoreOption(options[1]);
+            const chosen = scoreA <= scoreB ? options[0] : options[1];
+            home = chosen.home;
+            away = chosen.away;
+          }
+
+          homeCount.set(home, homeCount.get(home) + 1);
+          awayCount.set(away, awayCount.get(away) + 1);
+          lastVenue.set(home, "home");
+          lastVenue.set(away, "away");
+
+          matches.push({
+            ...match,
+            team1: home,
+            team2: away,
+            id: `fecha-${roundIndex + 1}-partido-${matchIndex + 1}`,
+            round: roundIndex + 1,
+            homeTeam: home,
+            awayTeam: away,
+          });
+        });
+      });
       groups = [{
         id: 1,
         name: "Todos contra todos",
