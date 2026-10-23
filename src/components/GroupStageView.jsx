@@ -597,6 +597,7 @@ export function GroupStageView({
           {currentGroup.matches.map((match) => (
             <div
               key={match.id}
+              style={{ position: "relative" }}
               style={{
                 padding: "0.75rem",
                 background: "linear-gradient(135deg, #121019, #0d0c13)",
@@ -608,6 +609,11 @@ export function GroupStageView({
                 gap: "0.6rem",
               }}
             >
+              {String(tournament.format || "").toLowerCase() === "league" && match.round && (
+                <div style={{ gridColumn: "1 / -1", color: "#facc15", fontSize: "0.68rem", fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase", borderBottom: "1px solid rgba(250,204,21,0.18)", paddingBottom: "0.35rem" }}>
+                  FECHA {match.round}
+                </div>
+              )}
               {/* EQUIPO 1 */}
               <span
                 style={{
