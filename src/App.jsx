@@ -1695,6 +1695,7 @@ export function TournamenSportApp() {
 
     const shuffled = [...participants].sort(() => Math.random() - 0.5);
     const isDirectElimination = activeTournament.format === "single_elimination";
+    const isLeague = activeTournament.format === "league";
     let groups;
     let playoffs = null;
 
@@ -1706,6 +1707,35 @@ export function TournamenSportApp() {
         matches: [],
       }];
       playoffs = generatePlayoffBrackets(shuffled);
+    } else if (isLeague) {
+      // Calendario de todos contra todos por fechas usando el método circular.
+      const scheduleTeams = [...shuffled];
+      if (scheduleTeams.length % 2 !== 0) scheduleTeams.push(null);
+      const totalRounds = scheduleTeams.length - 1;
+      const matches = [];
+      for (let roundIndex = 0; roundIndex < totalRounds; roundIndex++) {
+        for (let i = 0; i < scheduleTeams.length / 2; i++) {
+          const home = scheduleTeams[i];
+          const away = scheduleTeams[scheduleTeams.length - 1 - i];
+          if (home && away) {
+            matches.push({
+              id: `fecha-${roundIndex + 1}-partido-${i + 1}`,
+              round: roundIndex + 1,
+              team1: home,
+              team2: away,
+              score1: null,
+              score2: null,
+            });
+          }
+        }
+        scheduleTeams.splice(1, 0, scheduleTeams.pop());
+      }
+      groups = [{
+        id: 1,
+        name: "Todos contra todos",
+        teams: shuffled,
+        matches,
+      }];
     } else {
       groups = Array.from({ length: numGroups }, (_, index) => ({
         id: index + 1,
