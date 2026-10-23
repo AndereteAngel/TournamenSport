@@ -1767,58 +1767,83 @@ export function TournamenSportApp() {
         fixtures.forEach((match, index) => {
           const home = orientation[index] ? match.team2 : match.team1;
           const away = orientation[index] ? match.team1 : match.team2;
-          venuesByTeam.get(home)?.push({ round: match.round, venue: "H" });
-          venuesByTeam.get(away)?.push({ round: match.round, venue: "A" });
+          venuesByTeam.get(home)?.push({ round: match.round, venue: "L" });
+          venuesByTeam.get(away)?.push({ round: match.round, venue: "V" });
         });
 
-        let score = 0;
+        let consecutiveRepeats = 0;
+        let imbalance = 0;
+        let longestStreakPenalty = 0;
         venuesByTeam.forEach((venues) => {
           venues.sort((a, b) => a.round - b.round);
-          let homeCount = 0;
-          let awayCount = 0;
+          let local = 0;
+          let visitor = 0;
+          let streak = 1;
           for (let i = 0; i < venues.length; i++) {
-            if (venues[i].venue === "H") homeCount++;
-            else awayCount++;
-
-            // La prioridad principal es no repetir localía en fechas consecutivas
-            // en las que el equipo juega. Los descansos no se cuentan como partido.
-            if (i > 0 && venues[i - 1].venue === venues[i].venue) score += 100;
-          }
-          score += Math.abs(homeCount - awayCount) * 4;
-        });
-        return score;
-      };
-
-      let bestOrientation = fixtures.map((_, index) => index % 2 === 1);
-      let bestScore = evaluateOrientation(bestOrientation);
-
-      // Múltiples puntos de partida para evitar quedarse con una orientación inicial
-      // desfavorable. Es determinista para que el calendario sea reproducible.
-      for (let attempt = 0; attempt < 24; attempt++) {
-        let orientation = fixtures.map((_, index) => ((index + attempt) % (attempt % 2 ? 3 : 2)) === 0);
-        let currentScore = evaluateOrientation(orientation);
-        let improved = true;
-        let passes = 0;
-
-        while (improved && passes < fixtures.length * 2) {
-          improved = false;
-          passes++;
-          for (let index = 0; index < fixtures.length; index++) {
-            orientation[index] = !orientation[index];
-            const flippedScore = evaluateOrientation(orientation);
-            if (flippedScore < currentScore) {
-              currentScore = flippedScore;
-              improved = true;
+            if (venues[i].venue === "L") local++;
+            else visitor++;
+            if (i > 0 && venues[i - 1].venue === venues[i].venue) {
+              consecutiveRepeats++;
+              streak++;
+              if (streak >= 3) longestStreakPenalty += 1;
             } else {
-              orientation[index] = !orientation[index];
+              streak = 1;
             }
           }
-        }
+          imbalance += Math.abs(local - visitor);
+        });
 
-        if (currentScore < bestScore) {
-          bestScore = currentScore;
-          bestOrientation = [...orientation];
+        // Primero evitamos rachas de local/visitante; luego equilibramos el total.
+        return consecutiveRepeats * 1000 + longestStreakPenalty * 150 + imbalance * 20;
+      };
+
+      // Búsqueda global con reinicios y movimientos aleatorios. A diferencia de
+      // alternar por número de fecha, evalúa la secuencia real de cada equipo.
+      // Así ningún equipo queda fijado como local por el orden del calendario.
+      let bestOrientation = fixtures.map((_, index) => index % 2 === 0);
+      let bestScore = evaluateOrientation(bestOrientation);
+      let seed = participants.reduce((sum, name, index) => {
+        for (let i = 0; i < name.length; i++) sum = (sum * 31 + name.charCodeAt(i)) >>> 0;
+        return (sum + index + 1) >>> 0;
+      }, 20261023);
+      const random = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+
+      for (let attempt = 0; attempt < 32; attempt++) {
+        let orientation = fixtures.map(() => random() < 0.5);
+        let currentScore = evaluateOrientation(orientation);
+        let temperature = 120;
+        const iterations = Math.max(1200, fixtures.length * fixtures.length * 8);
+
+        for (let step = 0; step < iterations; step++) {
+          const first = Math.floor(random() * fixtures.length);
+          const candidate = [...orientation];
+          candidate[first] = !candidate[first];
+
+          // A veces cambiamos dos partidos juntos para salir de mínimos locales.
+          if (fixtures.length > 1 && random() < 0.35) {
+            let second = Math.floor(random() * fixtures.length);
+            if (second === first) second = (second + 1) % fixtures.length;
+            candidate[second] = !candidate[second];
+          }
+
+          const candidateScore = evaluateOrientation(candidate);
+          const delta = candidateScore - currentScore;
+          if (delta < 0 || random() < Math.exp(-delta / temperature)) {
+            orientation = candidate;
+            currentScore = candidateScore;
+          }
+          temperature *= 0.997;
+
+          if (currentScore < bestScore) {
+            bestScore = currentScore;
+            bestOrientation = [...orientation];
+          }
+          if (bestScore === 0) break;
         }
+        if (bestScore === 0) break;
       }
 
       const matches = fixtures.map((match, index) => {
