@@ -2647,3 +2647,120 @@ body {
 .sports-form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; }
 .sports-help { display:block; margin-top:6px; color:#9eb4c0; font-size:.72rem; line-height:1.5; }
 @media(max-width:540px) { .sports-form-grid { grid-template-columns:minmax(0,1fr); } }
+
+
+/* =========================================================
+   TOURNAMENTSPORT — TEMA NEGRO + NARANJA, ALTO CONTRASTE
+   Sobrescribe los acentos azul/verde anteriores sin tocar layouts.
+========================================================= */
+:root {
+  color-scheme: dark;
+  --ts-bg: #0b0b0d;
+  --ts-panel: #171719;
+  --ts-panel-soft: #202023;
+  --ts-border: #414146;
+  --ts-orange: #ff7a1a;
+  --ts-orange-bright: #ff9140;
+  --ts-text: #f7f7f8;
+  --ts-muted: #c4c4ca;
+}
+body {
+  background-color: var(--ts-bg) !important;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(255,122,26,.14), transparent 48%),
+    linear-gradient(160deg,#09090b 0%,#141416 58%,#0b0b0d 100%) !important;
+  color: var(--ts-text) !important;
+}
+.cr-card, .sports-card,
+.tc-home-panel,
+.tc-create-screen .cr-card, .tc-edit-screen .cr-card,
+.tc-join-screen > .cr-card, .tc-auth-screen > .cr-card,
+.tc-stats-screen .cr-card, .tc-groups-screen .cr-card,
+.tc-playoffs-screen .cr-card {
+  background: linear-gradient(145deg,#1b1b1e,#111113 82%) !important;
+  border-color: #414146 !important;
+  color: var(--ts-text) !important;
+  box-shadow: 0 16px 38px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.035) !important;
+}
+.cr-card-glow, .tc-form-screen .cr-card-glow,
+.tc-competition-screen .cr-card-glow {
+  background: linear-gradient(90deg,#ff7a1a,#ffb36b,#ff7a1a) !important;
+}
+.cr-title, .cr-logo-title, .tc-home-action h3,
+.tc-home-tournaments-heading {
+  color: #fff !important;
+  text-shadow: none !important;
+}
+.cr-logo-title { text-decoration-color: var(--ts-orange) !important; }
+.cr-btn-gold, .tc-form-screen .cr-btn-gold,
+.tc-competition-screen .cr-btn-gold,
+.tc-auth-submit {
+  background: linear-gradient(135deg,#ff9140 0%,#ff7a1a 58%,#e85d04 100%) !important;
+  color: #17100b !important;
+  border: 1px solid #ffb36b !important;
+  border-bottom: 3px solid #a63c00 !important;
+  text-shadow: none !important;
+  font-weight: 800 !important;
+  box-shadow: 0 5px 15px rgba(255,122,26,.2) !important;
+}
+.cr-btn-gold:hover, .tc-auth-submit:hover { filter: brightness(1.08); }
+.cr-input, .tc-form-screen .cr-input,
+.tc-form-screen input, .tc-form-screen select,
+.tc-form-screen textarea, input, select, textarea {
+  background: #0d0d0f !important;
+  color: #fff !important;
+  border-color: #55555b !important;
+}
+.cr-input::placeholder, input::placeholder, textarea::placeholder {
+  color: #aaaab2 !important;
+  opacity: 1;
+}
+.cr-input:focus, input:focus, select:focus, textarea:focus {
+  border-color: var(--ts-orange) !important;
+  outline: 2px solid rgba(255,122,26,.2) !important;
+}
+.sports-label, .cr-card label, .tc-auth-form label { color: #f0f0f2 !important; }
+.sports-help, .tc-home-action p, .tc-home-enter-link,
+.tc-auth-tagline { color: var(--ts-muted) !important; }
+a { color: #ffad70; }
+a:hover { color: #ffd0ad; }
+.tc-home-action, .tc-home-action-create, .tc-home-action-join,
+.tc-home-tournament-item {
+  background: linear-gradient(145deg,#242427,#151517) !important;
+  border-color: #45454b !important;
+  border-bottom-color: var(--ts-orange) !important;
+}
+.tc-home-action:hover, .tc-home-action-create:hover {
+  border-color: var(--ts-orange) !important;
+  box-shadow: 0 15px 30px rgba(0,0,0,.4),0 0 18px rgba(255,122,26,.1) !important;
+}
+.tc-home-action-icon, .tc-icon-frame {
+  color: #ffad70 !important;
+  border-color: rgba(255,145,64,.45) !important;
+  background: linear-gradient(145deg,rgba(255,122,26,.16),rgba(15,15,17,.95)) !important;
+}
+.tc-icon-crown, .tc-icon-trophy, .tc-icon-medal, .tc-icon-medalGold,
+.tc-medal-gold { color: #ffc247 !important; }
+.tc-icon-medalSilver, .tc-medal-silver { color: #e0e0e5 !important; }
+.tc-icon-medalBronze, .tc-medal-bronze { color: #ffad70 !important; }
+.tc-navbar {
+  background: rgba(15,15,17,.97) !important;
+  border-color: #414146 !important;
+  color: #f7f7f8 !important;
+}
+.tc-navbar button:hover, .tc-navbar a:hover { color: #ff9140 !important; }
+.tc-theme-toggle {
+  background: #ff9140 !important;
+  color: #17100b !important;
+  border-color: #ffb36b !important;
+}
+.tournament-phase-badge {
+  color: #ffb36b !important;
+  background: rgba(255,122,26,.12) !important;
+  border: 1px solid rgba(255,145,64,.48) !important;
+}
+table th { color: #ffb36b !important; }
+table td { color: #f1f1f3 !important; }
+* { scrollbar-color: #6b432d #171719; }
+*::-webkit-scrollbar-thumb { background: #8c4b24; }
+:focus-visible { outline: 2px solid #ff9140 !important; outline-offset: 3px; }
