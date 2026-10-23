@@ -24,7 +24,7 @@ export function Navbar({
 
   const username = currentUser?.username || "Jugador";
   const medals = getPlayerMedals(tournaments, username);
-  const medalButtonStyle = { display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.45rem", padding: "0.45rem 0.7rem", background: "linear-gradient(145deg, #29220f, #0c0a12)", border: "1px solid #b89b45", borderRadius: "9px", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "inset 0 1px rgba(255,255,255,.08), 0 3px 10px rgba(0,0,0,.22)" };
+  const medalButtonStyle = { display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.45rem", padding: "0.45rem 0.7rem", background: "linear-gradient(145deg, #242427, #111113)", border: "1px solid #ff9140", borderRadius: "9px", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "inset 0 1px rgba(255,255,255,.08), 0 3px 10px rgba(0,0,0,.22)" };
 
   return (
     <div
@@ -33,8 +33,8 @@ export function Navbar({
         width: "100%",
         maxWidth: "100%",
         margin: "0 auto",
-        background: "linear-gradient(135deg, #171426 0%, #100e1a 100%)",
-        border: "3px solid #2d2b4e",
+        background: "linear-gradient(135deg, #1b1b1e 0%, #111113 100%)",
+        border: "1px solid #414146",
         borderRadius: "14px",
         padding: "0.6rem 1rem",
         display: "flex",
@@ -54,7 +54,7 @@ export function Navbar({
           left: 0,
           right: 0,
           height: "4px",
-          background: "linear-gradient(90deg, #1b5fa8, #ffd700, #1b5fa8)",
+          background: "linear-gradient(90deg, #ff7a1a, #ffb36b, #ff7a1a)",
           borderTopLeftRadius: "11px",
           borderTopRightRadius: "11px",
         }}
@@ -74,8 +74,8 @@ export function Navbar({
           style={{
             width: "30px",
             height: "30px",
-            backgroundColor: "#1b5fa8",
-            border: "2px solid #ffd700",
+            backgroundColor: "#242427",
+            border: "2px solid #ff9140",
             borderRadius: "7px",
             display: "flex",
             alignItems: "center",
@@ -93,7 +93,7 @@ export function Navbar({
               fontFamily: "'Montserrat', sans-serif",
               fontWeight: 900,
               fontSize: "0.8rem",
-              color: "#ffd700",
+              color: "#ffad70",
               textShadow: "1px 1px 0px #000",
               display: "block",
               lineHeight: "1.1",
@@ -132,11 +132,11 @@ export function Navbar({
               display: "flex",
               alignItems: "center",
               gap: "5px",
-              background: "#0c0a12",
-              border: "2px solid #282442",
+              background: "#0d0d0f",
+              border: "1px solid #55555b",
               borderRadius: "8px",
               padding: "0.3rem 0.6rem",
-              color: "#ffd700",
+              color: "#ffad70",
               fontSize: "10px",
               fontWeight: "bold",
               cursor: "pointer",
@@ -173,10 +173,10 @@ export function Navbar({
             alignItems: "center",
             gap: "5px",
             padding: "0.35rem 0.6rem",
-            background: "#0c0a12",
-            border: "2px solid #282442",
+            background: "#0d0d0f",
+            border: "1px solid #55555b",
             borderRadius: "8px",
-            color: "#ffd700",
+            color: "#ffad70",
             fontSize: "10px",
             fontWeight: "bold",
           }}
@@ -198,9 +198,9 @@ export function Navbar({
           onClick={onGoHome}
           style={{
             padding: "0.4rem 0.75rem",
-            background: "linear-gradient(to bottom, #1b5fa8 0%, #0f3768 100%)",
-            border: "2px solid #3b82f6",
-            borderBottom: "4px solid #1e3a8a",
+            background: "linear-gradient(135deg, #ff9140 0%, #ff7a1a 58%, #e85d04 100%)",
+            border: "1px solid #ffb36b",
+            borderBottom: "3px solid #a63c00",
             borderRadius: "8px",
             color: "#fff",
             fontFamily: "'Montserrat', sans-serif",
@@ -209,7 +209,7 @@ export function Navbar({
             textTransform: "uppercase",
             cursor: "pointer",
             textShadow: "0 1px 0 rgba(0, 0, 0, 0.6)",
-            boxShadow: "0 4px 0 #0f172a, 0 6px 12px rgba(27, 95, 168, 0.4)",
+            boxShadow: "0 4px 12px rgba(255,122,26,.18)",
           }}
         >
           <TCIcon name="home" size={15} /> Inicio
@@ -222,8 +222,8 @@ export function Navbar({
         className="mobile-menu-btn"
         style={{
           display: "none",
-          background: "#0c0a12",
-          border: "2px solid #282442",
+          background: "#0d0d0f",
+          border: "1px solid #55555b",
           borderRadius: "8px",
           padding: "0.4rem 0.6rem",
           color: "#fff",
@@ -242,8 +242,8 @@ export function Navbar({
             top: "110%",
             left: 0,
             right: 0,
-            background: "#171426",
-            border: "3px solid #2d2b4e",
+            background: "#171719",
+            border: "1px solid #414146",
             borderRadius: "12px",
             padding: "1rem",
             display: "flex",
@@ -258,10 +258,10 @@ export function Navbar({
             style={{
               padding: "0.6rem",
               textAlign: "center",
-              background: "#0c0a12",
-              border: "2px solid #282442",
+              background: "#0d0d0f",
+              border: "1px solid #55555b",
               borderRadius: "8px",
-              color: "#ffd700",
+              color: "#ffad70",
               fontSize: "0.8rem",
               fontWeight: "bold",
             }}
@@ -277,11 +277,11 @@ export function Navbar({
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "8px",
-                background: "#0c0a12",
-                border: "2px solid #282442",
+                background: "#0d0d0f",
+                border: "1px solid #55555b",
                 borderRadius: "8px",
                 padding: "0.6rem",
-                color: "#ffd700",
+                color: "#ffad70",
                 fontSize: "0.8rem",
                 fontWeight: "bold",
                 cursor: "pointer",
@@ -319,8 +319,8 @@ export function Navbar({
               padding: "0.7rem",
               background:
                 "linear-gradient(to bottom, #1b5fa8 0%, #0f3768 100%)",
-              border: "2px solid #3b82f6",
-              borderBottom: "4px solid #1e3a8a",
+              border: "1px solid #ffb36b",
+              borderBottom: "3px solid #a63c00",
               borderRadius: "8px",
               color: "#fff",
               fontFamily: "'Montserrat', sans-serif",
@@ -336,9 +336,9 @@ export function Navbar({
       )}
 
       {medalOpen && (
-        <div style={{ position: "absolute", top: "calc(100% + 10px)", right: 0, width: "min(340px, calc(100vw - 32px))", maxHeight: "70vh", overflowY: "auto", padding: "1rem", borderRadius: "14px", border: "2px solid #8b7a39", background: "linear-gradient(145deg, #171426, #090811)", boxShadow: "0 12px 35px rgba(0,0,0,0.8)", zIndex: 200 }}>
+        <div style={{ position: "absolute", top: "calc(100% + 10px)", right: 0, width: "min(340px, calc(100vw - 32px))", maxHeight: "70vh", overflowY: "auto", padding: "1rem", borderRadius: "14px", border: "1px solid #ff9140", background: "linear-gradient(145deg, #1b1b1e, #111113)", boxShadow: "0 12px 35px rgba(0,0,0,0.8)", zIndex: 200 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem", marginBottom: "0.8rem" }}>
-            <strong style={{ color: "#facc15", fontSize: "0.85rem" }}><TCIcon name="medal" size={16} /> MI MEDALLERO</strong>
+            <strong style={{ color: "#ffb36b", fontSize: "0.85rem" }}><TCIcon name="medal" size={16} /> MI MEDALLERO</strong>
             <button type="button" onClick={() => setMedalOpen(false)} aria-label="Cerrar medallero" className="tc-close-button" style={{ background: "transparent", border: 0, color: "#d1d5db", fontSize: "1rem", cursor: "pointer" }}>✕</button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.4rem", marginBottom: "0.9rem" }}>
