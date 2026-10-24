@@ -67,38 +67,28 @@ export function generatePlayoffBrackets(qualifiedTeams) {
     const n = teams.length;
     if (n < 2) return [];
 
-    // Se usa un cuadro de potencia de dos. Los mejores clasificados reciben
-    // los pasajes directos cuando la cantidad de equipos no completa el cuadro.
+    // Orden estándar de cabezas de serie: mantiene al 1 y al 2 en mitades opuestas.
     const bracketSize = 2 ** Math.ceil(Math.log2(n));
-    const byeCount = bracketSize - n;
+    const seedOrder = (size) => {
+        if (size === 1) return [1];
+        return seedOrder(size / 2).flatMap((seed) => [seed, size + 1 - seed]);
+    };
+    const slots = seedOrder(bracketSize).map((seed) => teams[seed - 1] ?? "Pasaje Directo");
     const matches = [];
 
-    for (let i = 0; i < byeCount; i++) {
-        matches.push({
-            id: `r1-m${i + 1}`,
-            team1: teams[i],
-            team2: "Pasaje Directo",
-            score1: 1,
-            score2: 0,
-            winner: teams[i],
-        });
-    }
-
-    // Los cruces restantes enfrentan al mejor clasificado disponible
-    // contra el peor clasificado disponible.
-    let left = byeCount;
-    let right = n - 1;
-    while (left < right) {
+    for (let i = 0; i < slots.length; i += 2) {
+        const team1 = slots[i];
+        const team2 = slots[i + 1];
+        const hasBye = team1 === "Pasaje Directo" || team2 === "Pasaje Directo";
+        const winner = hasBye ? (team1 === "Pasaje Directo" ? team2 : team1) : null;
         matches.push({
             id: `r1-m${matches.length + 1}`,
-            team1: teams[left],
-            team2: teams[right],
-            score1: null,
-            score2: null,
-            winner: null,
+            team1,
+            team2,
+            score1: hasBye ? (winner === team1 ? 1 : 0) : null,
+            score2: hasBye ? (winner === team2 ? 1 : 0) : null,
+            winner,
         });
-        left++;
-        right--;
     }
 
     return [matches];
