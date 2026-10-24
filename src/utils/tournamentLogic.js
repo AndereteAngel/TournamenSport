@@ -67,41 +67,38 @@ export function generatePlayoffBrackets(qualifiedTeams) {
     const n = teams.length;
     if (n < 2) return [];
 
-    // Completa el cuadro hasta la siguiente potencia de dos usando pasajes directos.
+    // Se usa un cuadro de potencia de dos. Los mejores clasificados reciben
+    // los pasajes directos cuando la cantidad de equipos no completa el cuadro.
     const bracketSize = 2 ** Math.ceil(Math.log2(n));
     const byeCount = bracketSize - n;
     const matches = [];
-    let teamIndex = 0;
-    let byeIndex = 0;
 
-    for (let i = 0; i < bracketSize / 2; i++) {
-        const getsBye = byeIndex < byeCount;
-        let team1;
-        let team2;
-        let score1 = null;
-        let score2 = null;
-        let winner = null;
-
-        if (getsBye) {
-            team1 = teams[teamIndex++];
-            team2 = "Pasaje Directo";
-            score1 = 1;
-            score2 = 0;
-            winner = team1;
-            byeIndex++;
-        } else {
-            team1 = teams[teamIndex++];
-            team2 = teams[teamIndex++];
-        }
-
+    for (let i = 0; i < byeCount; i++) {
         matches.push({
             id: `r1-m${i + 1}`,
-            team1,
-            team2,
-            score1,
-            score2,
-            winner,
+            team1: teams[i],
+            team2: "Pasaje Directo",
+            score1: 1,
+            score2: 0,
+            winner: teams[i],
         });
+    }
+
+    // Los cruces restantes enfrentan al mejor clasificado disponible
+    // contra el peor clasificado disponible.
+    let left = byeCount;
+    let right = n - 1;
+    while (left < right) {
+        matches.push({
+            id: `r1-m${matches.length + 1}`,
+            team1: teams[left],
+            team2: teams[right],
+            score1: null,
+            score2: null,
+            winner: null,
+        });
+        left++;
+        right--;
     }
 
     return [matches];
