@@ -36,14 +36,21 @@ export function getTournamentPodium(tournament) {
     };
   }
 
-  // En grupos + playoffs, el campeón y el subcampeón salen de la final.
+  // En eliminación directa, la última ronda contiene la final y, normalmente,
+  // también el partido por el tercer puesto. Buscar por stage evita ocultar el banner.
   const rawPlayoffs = Array.isArray(tournament.playoffs) ? tournament.playoffs : [];
   const rounds = rawPlayoffs.length && !Array.isArray(rawPlayoffs[0]) ? [rawPlayoffs] : rawPlayoffs;
-  const finalRound = rounds[rounds.length - 1];
-  const finalMatch = Array.isArray(finalRound) && finalRound.length === 1 ? finalRound[0] : null;
+  const finalRound = rounds[rounds.length - 1] || [];
+  const finalMatch = Array.isArray(finalRound)
+    ? finalRound.find((match) => match.stage === "final") ||
+      (finalRound.length === 1 ? finalRound[0] : null)
+    : null;
+  const thirdPlaceMatch = Array.isArray(finalRound)
+    ? finalRound.find((match) => match.stage === "third_place")
+    : null;
   const hasScores = (match) => match &&
-    match.score1 !== null && match.score1 !== undefined &&
-    match.score2 !== null && match.score2 !== undefined;
+    match.score1 !== null && match.score1 !== undefined && match.score1 !== "" &&
+    match.score2 !== null && match.score2 !== undefined && match.score2 !== "";
   const winnerOf = (match) => {
     if (!match) return null;
     if (match.winner && match.winner !== "Empate (Definir)") return match.winner;
@@ -52,25 +59,45 @@ export function getTournamentPodium(tournament) {
     if (Number(match.score2) > Number(match.score1)) return match.team2;
     return null;
   };
+  const loserOf = (match) => {
+    const winner = winnerOf(match);
+    if (!winner) return null;
+    return [match.team1, match.team2].find(
+      (name) => name && name !== winner && name !== "Pasaje Directo"
+    ) || null;
+  };
 
   const champion = winnerOf(finalMatch);
   if (!champion) return null;
-  const runnerUp = [finalMatch.team1, finalMatch.team2].find(
-    (name) => name && name !== champion && name !== "Pasaje Directo"
-  );
+  const runnerUp = loserOf(finalMatch);
+
+  // El resultado del partido por el tercer puesto define tanto el bronce como el diploma.
+  if (thirdPlaceMatch) {
+    const third = winnerOf(thirdPlaceMatch);
+    const fourth = loserOf(thirdPlaceMatch);
+    return {
+      champion,
+      runnerUp,
+      bronze: third ? [third] : [],
+      fourth,
+    };
+  }
+
+  // Compatibilidad con torneos antiguos que no guardaban partido por el tercer puesto.
   const semifinalRound = rounds.length >= 2 ? rounds[rounds.length - 2] : [];
-  const bronze = [];
+  const semifinalLosers = [];
   if (Array.isArray(semifinalRound) && semifinalRound.length === 2) {
     semifinalRound.forEach((match) => {
-      const matchWinner = winnerOf(match);
-      if (!matchWinner) return;
-      const loser = [match.team1, match.team2].find(
-        (name) => name && name !== matchWinner && name !== "Pasaje Directo"
-      );
-      if (loser && loser !== champion && loser !== runnerUp) bronze.push(loser);
+      const loser = loserOf(match);
+      if (loser && loser !== champion && loser !== runnerUp) semifinalLosers.push(loser);
     });
   }
-  return { champion, runnerUp: runnerUp || null, bronze: [...new Set(bronze)], fourth: null };
+  return {
+    champion,
+    runnerUp,
+    bronze: semifinalLosers.length ? [semifinalLosers[0]] : [],
+    fourth: semifinalLosers.length > 1 ? semifinalLosers[1] : null,
+  };
 }
 
 export function getPlayerTournamentStats(tournament, playerName) {
