@@ -372,7 +372,7 @@ export function PlayoffBracket({
               margin: "0 0 6px 0",
             }}
           >
-            ¡Tenemos Campeón de la Arena!
+            ¡TENEMOS CAMPEÓN DEL TORNEO!
           </h3>
           <p
             style={{
@@ -382,7 +382,7 @@ export function PlayoffBracket({
               margin: 0,
             }}
           >
-            {champion} se corona como el rey indiscutible.
+            {champion} se consagra campeón de TournamenSport.
           </p>
         </div>
       )}
