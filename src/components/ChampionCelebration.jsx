@@ -46,9 +46,9 @@ export function ChampionCelebration({ tournament, onClose }) {
         padding: "1.25rem",
         position: "relative",
         borderRadius: "18px",
-        border: "2px solid #facc15",
-        background: "radial-gradient(circle at 50% 0%, rgba(250,204,21,0.22), transparent 52%), linear-gradient(145deg, #171426, #080711 80%)",
-        boxShadow: "0 0 28px rgba(250,204,21,0.16), inset 0 1px 0 rgba(255,255,255,0.08)",
+        border: "2px solid #38bdf8",
+        background: "radial-gradient(circle at 50% 0%, rgba(56,189,248,0.20), transparent 52%), linear-gradient(145deg, #10202d, #07111a 80%)",
+        boxShadow: "0 0 28px rgba(56,189,248,0.16), inset 0 1px 0 rgba(255,255,255,0.08)",
         textAlign: "center",
       }}
     >
@@ -76,8 +76,8 @@ export function ChampionCelebration({ tournament, onClose }) {
       >
         ×
       </button>
-      <div style={{ fontSize: "0.7rem", fontWeight: 900, letterSpacing: "0.22em", color: "#facc15" }}>
-        TOURNAMENTCLASH • CAMPEÓN
+      <div style={{ fontSize: "0.7rem", fontWeight: 900, letterSpacing: "0.22em", color: "#7dd3fc" }}>
+        TOURNAMENSPORT • CAMPEÓN
       </div>
       <div
         className="tc-champion-trophy"
@@ -89,22 +89,22 @@ export function ChampionCelebration({ tournament, onClose }) {
           display: "grid",
           placeItems: "center",
           borderRadius: "50%",
-          border: "3px solid #fde68a",
-          background: "radial-gradient(circle, #fef3c7 0%, #f59e0b 42%, #713f12 100%)",
-          boxShadow: "0 0 0 7px rgba(250,204,21,0.09), 0 0 32px rgba(250,204,21,0.35)",
+          border: "3px solid #bae6fd",
+          background: "radial-gradient(circle, #e0f2fe 0%, #38bdf8 42%, #075985 100%)",
+          boxShadow: "0 0 0 7px rgba(56,189,248,0.09), 0 0 32px rgba(56,189,248,0.30)",
           fontSize: "3.5rem",
         }}
       >
         <TCIcon name="trophy" size={46} />
       </div>
       <div style={{ color: "#fef3c7", fontSize: "0.7rem", fontWeight: 800, textTransform: "uppercase" }}>
-        ¡Tenemos campeón!
+        ¡EL TORNEO TIENE CAMPEÓN!
       </div>
       <h2 className="tc-champion-name" style={{ margin: "0.35rem 0", color: "#fff", fontSize: "clamp(1.4rem, 6vw, 2rem)", fontWeight: 900, overflowWrap: "anywhere" }}>
         {podium.champion}
       </h2>
-      <p style={{ margin: "0 auto 1rem", color: "#c4b5fd", fontSize: "0.85rem", overflowWrap: "anywhere" }}>
-        {tournament.title || "Torneo TournamentClash"}
+      <p style={{ margin: "0 auto 1rem", color: "#bae6fd", fontSize: "0.85rem", overflowWrap: "anywhere" }}>
+        {tournament.title || "Torneo TournamenSport"}
       </p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(115px, 1fr))", gap: "0.45rem" }}>
         {[
@@ -152,10 +152,10 @@ export function ChampionCelebration({ tournament, onClose }) {
           </p>
         )}
       </div>
-      <p style={{ color: "#facc15", fontSize: "0.7rem", fontWeight: 800, margin: "1rem 0 0.8rem" }}>
-        <TCIcon name="medalGold" size={16} /> TÍTULO REGISTRADO EN EL MEDALLERO
+      <p style={{ color: "#7dd3fc", fontSize: "0.7rem", fontWeight: 800, margin: "1rem 0 0.8rem" }}>
+        <TCIcon name="medalGold" size={16} /> PODIO OFICIAL • TOURNAMENSPORT
       </p>
-      <button type="button" onClick={onClose} className="cr-btn-gold" style={{ maxWidth: "260px", padding: "0.65rem 1rem", fontSize: "0.8rem" }}>
+      <button type="button" onClick={onClose} className="tc-btn-primary" style={{ maxWidth: "260px", padding: "0.65rem 1rem", fontSize: "0.8rem" }}>
         Ver torneo
       </button>
     </section>
