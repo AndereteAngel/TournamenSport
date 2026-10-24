@@ -2240,7 +2240,7 @@ export function TournamenSportApp() {
   const filteredTournaments = tournamentCategoryFilter === "Todas"
     ? tournaments
     : tournaments.filter((tournament) =>
-        String(tournament.category_detail || tournament.category_type || "Sin categoría").trim() === tournamentCategoryFilter
+        getTournamentCategory(tournament) === tournamentCategoryFilter
       );
 
 
