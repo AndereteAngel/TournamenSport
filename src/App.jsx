@@ -2221,42 +2221,6 @@ export function TournamenSportApp() {
       );
 
 
-  const handleAdminForceFinishTournament = async () => {
-    if (!isAdmin || !activeTournament?.id) {
-      showNotice("❌ Solo el administrador puede finalizar torneos.");
-      return;
-    }
-    if (String(activeTournament.status || "").trim().toLocaleLowerCase("es") === "finalizado") {
-      showNotice("Este torneo ya está finalizado.");
-      return;
-    }
-
-    const confirmar = await confirmTournament(
-      `¿Querés finalizar el torneo "${activeTournament.title}" ahora? Esta acción no requiere cargar todos los resultados.`
-    );
-
-    if (!confirmar) return;
-
-    const { error } = await supabase
-      .from("tournaments")
-      .update({ status: "Finalizado" })
-      .eq("id", activeTournament.id);
-
-    if (error) {
-      console.error("Error al finalizar el torneo:", error);
-      showNotice("❌ No se pudo finalizar el torneo. Intentá nuevamente.");
-      return;
-    }
-
-    const torneoFinalizado = { ...activeTournament, status: "Finalizado" };
-    setActiveTournament(torneoFinalizado);
-    setTournaments((prev) =>
-      prev.map((t) => (t.id === torneoFinalizado.id ? torneoFinalizado : t))
-    );
-    setShowChampionCard(true);
-    showNotice("✅ Torneo finalizado. Si no hay resultados suficientes para calcular el podio, la tarjeta no podrá mostrar un campeón todavía.");
-  };
-
   return (
     <div className="cr-container tc-theme-clash">
       <TournamentNotice
@@ -3244,26 +3208,18 @@ export function TournamenSportApp() {
                   <TCIcon name="settings" /> Modificar torneo
                 </button>
               )}
-              {isTournamentAdmin && String(activeTournament.format || "").trim().toLocaleLowerCase("es") === "league" && (
-                <button
-                  type="button"
-                  onClick={handleFinishTournament}
-                  className="cr-btn-gold"
-                  style={adminTournamentButtonStyle}
-                >
-                  <TCIcon name="flag" /> Finalizar campeonato
-                </button>
-              )}
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={handleAdminForceFinishTournament}
-                  className="cr-btn-gold"
-                  style={adminTournamentButtonStyle}
-                >
-                  <TCIcon name="flag" /> Finalizar torneo
-                </button>
-              )}
+              {(isTournamentAdmin || isAdmin) &&
+                String(activeTournament.status || "").trim().toLocaleLowerCase("es") !== "finalizado" &&
+                String(activeTournament.format || "").trim().toLocaleLowerCase("es") === "league" && (
+                  <button
+                    type="button"
+                    onClick={handleFinishTournament}
+                    className="cr-btn-gold"
+                    style={adminTournamentButtonStyle}
+                  >
+                    <TCIcon name="flag" /> Finalizar torneo
+                  </button>
+                )}
             </div>
           )}
         </div>
@@ -3317,20 +3273,10 @@ export function TournamenSportApp() {
                   <TCIcon name="settings" /> Modificar torneo
                 </button>
               )}
-              {isTournamentAdmin && (
+              {(isTournamentAdmin || isAdmin) && (
                 <button
                   type="button"
                   onClick={handleFinishTournament}
-                  className="cr-btn-gold"
-                  style={adminTournamentButtonStyle}
-                >
-                  <TCIcon name="flag" /> Finalizar campeonato
-                </button>
-              )}
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={handleAdminForceFinishTournament}
                   className="cr-btn-gold"
                   style={adminTournamentButtonStyle}
                 >
