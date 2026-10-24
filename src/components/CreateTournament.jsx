@@ -50,12 +50,27 @@ export function CreateTournament({
     }
 
     const participants = getParticipantsFromTournament();
+    const sports = ["Fútbol", "Futsal", "Básquet", "Vóley", "Handball", "Hockey", "Rugby", "Tenis", "Atletismo", "Natación", "Otro deporte"];
+    const storedGame = String(initialData.game || "Fútbol");
+    const separatorIndex = storedGame.lastIndexOf(" · ");
+    const gameFromStoredValue = separatorIndex >= 0 ? storedGame.slice(0, separatorIndex).trim() : storedGame.trim();
+    const detailFromStoredGame = separatorIndex >= 0 ? storedGame.slice(separatorIndex + 3).trim() : "";
+    const categoryDetail = String(initialData.category_detail || detailFromStoredGame || "").trim();
+    const knownDivisions = ["Primera", "Reserva", "Tercera", "Cuarta", "Quinta", "Sexta", "Otra división"];
+    const knownFormative = ["Premini", "Mini", "Infantiles", "Menores", "Cadetes", "Juveniles", "Sub-14", "Sub-16", "Sub-18", "Sub-21", "Otra categoría"];
+    const inferredCategoryType = /^\\d{4}$/.test(categoryDetail)
+      ? "Año de nacimiento"
+      : knownDivisions.includes(categoryDetail)
+        ? "División"
+        : knownFormative.includes(categoryDetail)
+          ? "Formativa"
+          : "Personalizada";
 
     return {
       title: initialData.title || "",
-      game: ["Fútbol", "Futsal", "Básquet", "Vóley", "Handball", "Hockey", "Rugby", "Tenis", "Atletismo", "Natación", "Otro deporte"].includes(initialData.game) ? initialData.game : "Fútbol",
-      categoryType: initialData.category_type || "Personalizada",
-      categoryDetail: initialData.category_detail || "",
+      game: sports.includes(gameFromStoredValue) ? gameFromStoredValue : "Fútbol",
+      categoryType: initialData.category_type || inferredCategoryType,
+      categoryDetail,
       format: initialData.format || "groups_playoff",
       numGroups:
         initialData.format === "league" ? 1 : initialData.groups?.length || 2,
