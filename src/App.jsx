@@ -2117,19 +2117,38 @@ export function TournamenSportApp() {
   // =========================================================
 
   const handleProceedToPlayoffs = () => {
-    let qualifiedTeams = [];
+    const qualifiedTeams = [];
 
     activeTournament.groups.forEach((group) => {
       const standings = calculateGroupStandings(group.teams, group.matches);
+      const topTeams = standings.slice(
+        0,
+        Number(activeTournament.qualifiers_per_group || 1)
+      );
 
-      const topTeams = standings
-        .slice(0, activeTournament.qualifiers_per_group)
-        .map((s) => s.name);
-
-      qualifiedTeams.push(...topTeams);
+      topTeams.forEach((team) => {
+        qualifiedTeams.push({
+          ...team,
+          groupId: group.id,
+          groupName: group.name,
+          groupPosition: standings.findIndex((entry) => entry.name === team.name) + 1,
+        });
+      });
     });
 
-    const playoffs = generatePlayoffBrackets(qualifiedTeams);
+    // Orden general de los clasificados: puntos, diferencia de gol y goles a favor.
+    // Si siguen igualados, se conserva el orden de grupo y la posición dentro de este.
+    qualifiedTeams.sort((a, b) =>
+      b.points - a.points ||
+      b.goalDifference - a.goalDifference ||
+      b.goalsFor - a.goalsFor ||
+      a.groupId - b.groupId ||
+      a.groupPosition - b.groupPosition
+    );
+
+    const playoffs = generatePlayoffBrackets(
+      qualifiedTeams.map((team) => team.name)
+    );
 
     const updated = {
       ...activeTournament,
