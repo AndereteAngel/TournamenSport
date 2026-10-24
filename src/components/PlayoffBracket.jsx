@@ -69,15 +69,43 @@ export function PlayoffBracket({
           winner: null,
         });
       } else {
-        const winners = currentRound.map((m) => m.winner);
-        for (let i = 0; i < winners.length; i += 2) {
+        // Ranquear a los ganadores de esta ronda por la diferencia de gol
+        // obtenida en su partido: mayor diferencia = mejor rankeado.
+        const rankedWinners = [...currentRound].sort((a, b) => {
+          const diffA = Math.abs((a.score1 ?? 0) - (a.score2 ?? 0));
+          const diffB = Math.abs((b.score1 ?? 0) - (b.score2 ?? 0));
+          if (diffA !== diffB) return diffB - diffA;
+
+          const winnerGoals = (match) =>
+            match.winner === match.team1 ? (match.score1 ?? 0) : (match.score2 ?? 0);
+          return winnerGoals(b) - winnerGoals(a);
+        });
+
+        // El mejor rankeado enfrenta al peor; el segundo al penúltimo, etc.
+        let left = 0;
+        let right = rankedWinners.length - 1;
+        while (left < right) {
+          const best = rankedWinners[left].winner;
+          const worst = rankedWinners[right].winner;
           nextRoundMatches.push({
             id: `r${roundId}-m${nextRoundMatches.length + 1}`,
-            team1: winners[i],
-            team2: winners[i + 1] || "Pasaje Directo",
+            team1: best,
+            team2: worst,
             score1: null,
             score2: null,
             winner: null,
+          });
+          left++;
+          right--;
+        }
+        if (left === right) {
+          nextRoundMatches.push({
+            id: `r${roundId}-m${nextRoundMatches.length + 1}`,
+            team1: rankedWinners[left].winner,
+            team2: "Pasaje Directo",
+            score1: 1,
+            score2: 0,
+            winner: rankedWinners[left].winner,
           });
         }
       }
