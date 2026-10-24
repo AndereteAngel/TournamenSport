@@ -353,23 +353,24 @@ export function PlayoffBracket({
       {isTournamentComplete && (
         <div
           style={{
-            backgroundColor: "rgba(255, 215, 0, 0.15)",
-            border: "3px solid #ffd700",
+            background: "linear-gradient(145deg, #171717 0%, #080808 100%)",
+            border: "2px solid #ff7900",
             borderRadius: "14px",
             padding: "1.5rem",
             textAlign: "center",
             marginBottom: "1rem",
-            boxShadow: "0 0 20px rgba(255, 215, 0, 0.4)",
+            boxShadow: "0 0 22px rgba(255, 121, 0, 0.22), inset 0 0 18px rgba(255, 121, 0, 0.05)",
           }}
         >
-          <div className="tc-playoff-champion-icons"><TCIcon name="crown" size={26} /><TCIcon name="trophy" size={40} /><TCIcon name="crown" size={26} /></div>
+          <div className="tc-playoff-champion-icons" style={{ color: "#ff7900" }}><TCIcon name="crown" size={26} /><TCIcon name="trophy" size={40} /><TCIcon name="crown" size={26} /></div>
           <h3
             style={{
               fontSize: "1.2rem",
               fontWeight: 900,
-              color: "#ffd700",
+              color: "#ff7900",
               textTransform: "uppercase",
-              margin: "0 0 6px 0",
+              margin: "0 0 8px 0",
+              letterSpacing: "0.04em",
             }}
           >
             ¡TENEMOS CAMPEÓN DEL TORNEO!
