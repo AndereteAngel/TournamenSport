@@ -1693,13 +1693,17 @@ export function TournamenSportApp() {
     const confirmar = await confirmTournament(`¿Dar comienzo a "${activeTournament.title}" con ${participants.length} participantes? ${detalleInicio}`);
     if (!confirmar) return;
 
-    const shuffled = [...participants].sort(() => Math.random() - 0.5);
     const isDirectElimination = activeTournament.format === "single_elimination";
     const isLeague = activeTournament.format === "league";
+    const shuffled = isDirectElimination
+      ? [...participants]
+      : [...participants].sort(() => Math.random() - 0.5);
     let groups;
     let playoffs = null;
 
     if (isDirectElimination) {
+      // Sin fase de grupos no hay tabla de posiciones: se respeta el orden
+      // de inscripción como orden inicial y no se mezclan los participantes.
       groups = [{
         id: 1,
         name: "Llaves de eliminación",
