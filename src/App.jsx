@@ -372,7 +372,7 @@ function AdminStats({ onBack }) {
                 fontSize: "0.8rem",
               }}
             >
-              Panel privado de TournamenSport
+              Panel privado de FEFUTIN
             </p>
           </div>
 
@@ -1287,7 +1287,7 @@ export function TournamenSportApp() {
     const confirmar = await confirmTournament(
       `⚠️ ELIMINAR TORNEO\n\n` +
         `"${tournament.title}"\n\n` +
-        `Esta acción eliminará el torneo de TournamenSport.\n\n` +
+        `Esta acción eliminará el torneo de FEFUTIN.\n\n` +
         `¿Estás seguro de que querés continuar?`
     );
 
@@ -2283,13 +2283,13 @@ export function TournamenSportApp() {
             }}
           >
             <img
-              src="/tc-crest.svg"
-              alt="Escudo original de TournamenSport"
+              src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166"
+              alt="Escudo de FEFUTIN"
               className="tc-login-crest"
             />
 
-            <div className="tc-auth-kicker"><span></span> PLATAFORMA DE TORNEOS DEPORTIVOS <span></span></div>
-            <h1 className="cr-logo-title">TournamenSport</h1>
+            <div className="tc-auth-kicker"><span></span> LIGA DE FÚTBOL INFANTIL Y FEMENINO <span></span></div>
+            <h1 className="cr-logo-title">FEFUTIN</h1>
             <p className="tc-auth-tagline">{authMode === "login" ? "Organizá y seguí tus competencias deportivas." : "Creá tu cuenta y participá en torneos deportivos."}</p>
           </div>
 
@@ -2435,7 +2435,7 @@ export function TournamenSportApp() {
         </div>
       ) : activeView === "home" ? (
         <div className="tc-home-screen">
-        <section className="tc-arena-hero" aria-label="Bienvenido a la arena de TournamenSport">
+        <section className="tc-arena-hero" aria-label="Bienvenido a FEFUTIN">
           <img src="/tournament-join.svg" alt="Ilustración deportiva de equipos listos para competir" />
           <div className="tc-home-hero-overlay">
             <span className="tc-home-eyebrow">TORNEOS Y COMPETENCIAS DEPORTIVAS</span>
