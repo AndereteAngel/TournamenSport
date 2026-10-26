@@ -86,7 +86,7 @@ export function Navbar({
             boxShadow: "0 2px 5px rgba(0,0,0,0.5)",
           }}
         >
-          <img src="/tc-crest.svg" alt="" aria-hidden="true" style={{ width: "25px", height: "27px", objectFit: "contain" }} />
+          <img src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166" alt="Logo FEFUTIN" style={{ width: "25px", height: "27px", objectFit: "contain" }} />
         </div>
 
         <div>
@@ -101,7 +101,7 @@ export function Navbar({
               lineHeight: "1.1",
             }}
           >
-            {currentTitle || "TournamenSport"}
+            {currentTitle || "FEFUTIN"}
           </span>
 
           <span
