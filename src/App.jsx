@@ -1017,6 +1017,7 @@ export function TournamenSportApp() {
   } = useTournamentNotice();
   const [currentUser, setCurrentUser] = useState(null);
   const [authMode, setAuthMode] = useState("login");
+  const [showPassword, setShowPassword] = useState(false);
   const [authInput, setAuthInput] = useState({
     username: "",
     email: "",
@@ -2373,11 +2374,30 @@ export function TournamenSportApp() {
                   marginBottom: "4px",
                 }}
               >
-                <span className="tc-auth-field-icon" aria-hidden="true">◆</span> Contraseña
+                <span><span className="tc-auth-field-icon" aria-hidden="true">◆</span> Contraseña</span>
+                {authMode === "login" && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((visible) => !visible)}
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "#60a5fa",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      padding: "2px 0 2px 8px",
+                      textTransform: "none",
+                    }}
+                  >
+                    {showPassword ? "Ocultar" : "Mostrar"}
+                  </button>
+                )}
               </label>
 
               <input
-                type="password"
+                type={authMode === "login" && showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={authInput.password}
                 onChange={(e) =>
