@@ -289,11 +289,7 @@ export function GroupStageView({
             <h3 style={{ margin: 0, color: "#fff", fontSize: "0.95rem", fontWeight: 900 }}>
               <TCIcon name="calendar" size={17} /> Mis partidos
             </h3>
-            {playerGroup && (
-              <span style={{ color: "#93c5fd", fontSize: "0.75rem", fontWeight: 700 }}>
-                {playedMatches.length} jugados de {playerMatches.length}
-              </span>
-            )}
+
           </div>
 
           <label style={{ display: "block", color: "#d1d5db", fontSize: "0.75rem", fontWeight: 700, marginBottom: "0.4rem" }}>
