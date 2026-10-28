@@ -11,6 +11,7 @@ export function GroupStageView({
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
   const [targetMatchId, setTargetMatchId] = useState(null);
+  const [myMatchesView, setMyMatchesView] = useState("pending");
 
   useEffect(() => {
     if (!targetMatchId) return;
@@ -345,109 +346,50 @@ export function GroupStageView({
                 </span>
               </div>
 
-              {playedMatches.length > 0 && (
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem", marginBottom: pendingMatches.length ? "0.9rem" : 0 }}>
-                  <p style={{ margin: "0 0 0.2rem", color: "#d1d5db", fontSize: "0.75rem", fontWeight: 700 }}>
-                    Tus partidos jugados y resultados:
-                  </p>
-                  {playedMatches.map((match) => {
-                    const participantIsTeam1 =
-                      normalizarNombre(match.team1) === normalizarNombre(selectedParticipant);
-                    const myScore = participantIsTeam1 ? match.score1 : match.score2;
-                    const opponentScore = participantIsTeam1 ? match.score2 : match.score1;
-                    const outcome = myScore > opponentScore
-                      ? { label: "GANADO", color: "#4ade80", background: "rgba(34,197,94,0.12)" }
-                      : myScore < opponentScore
-                        ? { label: "PERDIDO", color: "#f87171", background: "rgba(239,68,68,0.12)" }
-                        : { label: "EMPATE", color: "#facc15", background: "rgba(250,204,21,0.12)" };
-
-                    return (
-                      <div
-                        key={match.id}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: "0.6rem",
-                          padding: "0.6rem 0.65rem",
-                          borderRadius: "8px",
-                          background: "rgba(0,0,0,0.2)",
-                          border: "1px solid rgba(255,255,255,0.06)",
-                          color: "#fff",
-                          fontSize: "0.8rem",
-                        }}
-                      >
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ overflowWrap: "anywhere", fontWeight: 700 }}>
-                            {match.team1} <span style={{ color: "#facc15" }}>{match.score1} - {match.score2}</span> {match.team2}
-                          </div>
-                          <div style={{ color: "#9ca3af", fontSize: "0.68rem", marginTop: "3px" }}>
-                            {participantIsTeam1 ? match.team2 : match.team1}
-                          </div>
+              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
+                <button type="button" onClick={() => setMyMatchesView("played")} aria-pressed={myMatchesView === "played"} style={{ padding: "0.45rem 0.7rem", borderRadius: "7px", background: myMatchesView === "played" ? "rgba(34,197,94,0.22)" : "rgba(34,197,94,0.08)", color: "#4ade80", border: myMatchesView === "played" ? "1px solid #4ade80" : "1px solid rgba(34,197,94,0.25)", fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" }}>Ver jugados ({playedMatches.length})</button>
+                <button type="button" onClick={() => setMyMatchesView("pending")} aria-pressed={myMatchesView === "pending"} style={{ padding: "0.45rem 0.7rem", borderRadius: "7px", background: myMatchesView === "pending" ? "rgba(251,191,36,0.2)" : "rgba(251,191,36,0.07)", color: "#fbbf24", border: myMatchesView === "pending" ? "1px solid #fbbf24" : "1px solid rgba(251,191,36,0.25)", fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" }}>Ver pendientes ({pendingMatches.length})</button>
+              </div>
+              {myMatchesView === "played" ? (
+                playedMatches.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem" }}>
+                    <p style={{ margin: "0 0 0.2rem", color: "#d1d5db", fontSize: "0.75rem", fontWeight: 700 }}>Tus partidos jugados y resultados:</p>
+                    {playedMatches.map((match) => {
+                      const participantIsTeam1 = normalizarNombre(match.team1) === normalizarNombre(selectedParticipant);
+                      const myScore = participantIsTeam1 ? match.score1 : match.score2;
+                      const opponentScore = participantIsTeam1 ? match.score2 : match.score1;
+                      const outcome = myScore > opponentScore
+                        ? { label: "GANADO", color: "#4ade80", background: "rgba(34,197,94,0.12)" }
+                        : myScore < opponentScore
+                          ? { label: "PERDIDO", color: "#f87171", background: "rgba(239,68,68,0.12)" }
+                          : { label: "EMPATE", color: "#facc15", background: "rgba(250,204,21,0.12)" };
+                      return (
+                        <div key={match.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.6rem", padding: "0.6rem 0.65rem", borderRadius: "8px", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.06)", color: "#fff", fontSize: "0.8rem" }}>
+                          <div style={{ minWidth: 0, flex: 1, overflowWrap: "anywhere", fontWeight: 700 }}>{match.team1} <span style={{ color: "#facc15" }}>{match.score1} - {match.score2}</span> {match.team2}</div>
+                          <span style={{ color: outcome.color, background: outcome.background, fontSize: "0.65rem", fontWeight: 900, padding: "0.3rem 0.45rem", borderRadius: "6px", flexShrink: 0 }}>{outcome.label}</span>
                         </div>
-                        <span style={{ color: outcome.color, background: outcome.background, fontSize: "0.65rem", fontWeight: 900, padding: "0.3rem 0.45rem", borderRadius: "6px", flexShrink: 0 }}>
-                          {outcome.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {pendingMatches.length > 0 ? (
+                      );
+                    })}
+                  </div>
+                ) : <p style={{ margin: 0, color: "#9ca3af", fontSize: "0.8rem" }}>Todavía no tenés partidos jugados.</p>
+              ) : pendingMatches.length > 0 ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.45rem" }}>
-                  <p style={{ margin: "0 0 0.2rem", color: "#d1d5db", fontSize: "0.75rem", fontWeight: 700 }}>
-                    Te falta jugar contra:
-                  </p>
+                  <p style={{ margin: "0 0 0.2rem", color: "#d1d5db", fontSize: "0.75rem", fontWeight: 700 }}>Te falta jugar contra:</p>
                   {pendingMatches.map((match) => {
-                    const opponent =
-                      normalizarNombre(match.team1) === normalizarNombre(selectedParticipant)
-                        ? match.team2
-                        : match.team1;
-
+                    const opponent = normalizarNombre(match.team1) === normalizarNombre(selectedParticipant) ? match.team2 : match.team1;
                     return (
-                      <button
-                        key={match.id}
-                        type="button"
-                        onClick={() => {
-                          const groupIndex = tournament.groups.findIndex(
-                            (group) => group.id === playerGroup.id
-                          );
-                          if (groupIndex >= 0) setActiveGroupIndex(groupIndex);
-                          setSelectedRound("all");
-                          setTargetMatchId(String(match.id));
-                        }}
-                        aria-label={`Ir al partido contra ${opponent}`}
-                        style={{
-                          display: "flex",
-                          width: "100%",
-                          boxSizing: "border-box",
-                          textAlign: "left",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: "0.5rem",
-                          padding: "0.55rem 0.65rem",
-                          borderRadius: "8px",
-                          background: "rgba(0,0,0,0.2)",
-                          border: "1px solid rgba(255,255,255,0.06)",
-                          color: "#fff",
-                          fontSize: "0.8rem",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <span style={{ overflowWrap: "anywhere" }}>{opponent}</span>
-                        <span style={{ color: "#fbbf24", fontSize: "0.68rem", fontWeight: 800, flexShrink: 0 }}>
-                          PENDIENTE · IR AL PARTIDO →
-                        </span>
+                      <button key={match.id} type="button" onClick={() => {
+                        const groupIndex = tournament.groups.findIndex((group) => group.id === playerGroup.id);
+                        if (groupIndex >= 0) setActiveGroupIndex(groupIndex);
+                        setSelectedRound("all");
+                        setTargetMatchId(String(match.id));
+                      }} aria-label={`Ir al partido contra ${opponent}`} style={{ display: "flex", width: "100%", boxSizing: "border-box", textAlign: "left", alignItems: "center", justifyContent: "space-between", gap: "0.5rem", padding: "0.55rem 0.65rem", borderRadius: "8px", background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.06)", color: "#fff", fontSize: "0.8rem", cursor: "pointer" }}>
+                        <span style={{ overflowWrap: "anywhere" }}>{opponent}</span><span style={{ color: "#fbbf24", fontSize: "0.68rem", fontWeight: 800, flexShrink: 0 }}>PENDIENTE · VER →</span>
                       </button>
                     );
                   })}
                 </div>
-              ) : (
-                <p style={{ margin: 0, color: "#4ade80", fontSize: "0.8rem", fontWeight: 700 }}>
-                  <TCIcon name="trophy" size={17} /> ¡Completaste todos tus partidos de esta fase!
-                </p>
-              )}
+              ) : <p style={{ margin: 0, color: "#4ade80", fontSize: "0.8rem", fontWeight: 700 }}><TCIcon name="trophy" size={17} /> ¡Completaste todos tus partidos de esta fase!</p>}
             </>
           )}
         </section>
