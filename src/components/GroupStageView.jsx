@@ -335,20 +335,15 @@ export function GroupStageView({
                   display: "flex",
                   gap: "0.5rem",
                   flexWrap: "wrap",
-                  marginBottom: pendingMatches.length ? "0.8rem" : 0,
+                  marginBottom: "0.8rem",
                 }}
               >
-                <span style={{ padding: "0.35rem 0.6rem", borderRadius: "7px", background: "rgba(34,197,94,0.12)", color: "#4ade80", fontSize: "0.75rem", fontWeight: 800 }}>
+                <button type="button" onClick={() => setMyMatchesView("played")} aria-pressed={myMatchesView === "played"} style={{ padding: "0.45rem 0.7rem", borderRadius: "7px", background: myMatchesView === "played" ? "rgba(34,197,94,0.22)" : "rgba(34,197,94,0.12)", color: "#4ade80", border: myMatchesView === "played" ? "1px solid #4ade80" : "1px solid rgba(34,197,94,0.25)", fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" }}>
                   ✓ {playedMatches.length} jugados
-                </span>
-                <span style={{ padding: "0.35rem 0.6rem", borderRadius: "7px", background: "rgba(251,191,36,0.12)", color: "#fbbf24", fontSize: "0.75rem", fontWeight: 800 }}>
+                </button>
+                <button type="button" onClick={() => setMyMatchesView("pending")} aria-pressed={myMatchesView === "pending"} style={{ padding: "0.45rem 0.7rem", borderRadius: "7px", background: myMatchesView === "pending" ? "rgba(251,191,36,0.2)" : "rgba(251,191,36,0.12)", color: "#fbbf24", border: myMatchesView === "pending" ? "1px solid #fbbf24" : "1px solid rgba(251,191,36,0.25)", fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" }}>
                   ⏳ {pendingMatches.length} pendientes
-                </span>
-              </div>
-
-              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.8rem" }}>
-                <button type="button" onClick={() => setMyMatchesView("played")} aria-pressed={myMatchesView === "played"} style={{ padding: "0.45rem 0.7rem", borderRadius: "7px", background: myMatchesView === "played" ? "rgba(34,197,94,0.22)" : "rgba(34,197,94,0.08)", color: "#4ade80", border: myMatchesView === "played" ? "1px solid #4ade80" : "1px solid rgba(34,197,94,0.25)", fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" }}>Ver jugados ({playedMatches.length})</button>
-                <button type="button" onClick={() => setMyMatchesView("pending")} aria-pressed={myMatchesView === "pending"} style={{ padding: "0.45rem 0.7rem", borderRadius: "7px", background: myMatchesView === "pending" ? "rgba(251,191,36,0.2)" : "rgba(251,191,36,0.07)", color: "#fbbf24", border: myMatchesView === "pending" ? "1px solid #fbbf24" : "1px solid rgba(251,191,36,0.25)", fontSize: "0.75rem", fontWeight: 800, cursor: "pointer" }}>Ver pendientes ({pendingMatches.length})</button>
+                </button>
               </div>
               {myMatchesView === "played" ? (
                 playedMatches.length > 0 ? (
