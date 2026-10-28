@@ -1,6 +1,6 @@
 import { calculateGroupStandings } from "../utils/tournamentLogic";
 import { TCIcon } from "./TCIcon";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function GroupStageView({
   tournament,
@@ -10,6 +10,25 @@ export function GroupStageView({
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
+  const [targetMatchId, setTargetMatchId] = useState(null);
+
+  useEffect(() => {
+    if (!targetMatchId) return;
+    const timer = window.setTimeout(() => {
+      const matchElement = document.querySelector('[data-match-id="' + targetMatchId + '"]');
+      if (matchElement) {
+        matchElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        matchElement.style.outline = "2px solid #ffd700";
+        matchElement.style.boxShadow = "0 0 18px rgba(255,215,0,0.25)";
+        window.setTimeout(() => {
+          matchElement.style.outline = "";
+          matchElement.style.boxShadow = "";
+        }, 2200);
+      }
+      setTargetMatchId(null);
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [activeGroupIndex, selectedRound, targetMatchId]);
 
   const currentGroup = tournament.groups[activeGroupIndex];
 
@@ -338,10 +357,23 @@ export function GroupStageView({
                         : match.team1;
 
                     return (
-                      <div
+                      <button
                         key={match.id}
+                        type="button"
+                        onClick={() => {
+                          const groupIndex = tournament.groups.findIndex(
+                            (group) => group.id === playerGroup.id
+                          );
+                          if (groupIndex >= 0) setActiveGroupIndex(groupIndex);
+                          setSelectedRound("all");
+                          setTargetMatchId(String(match.id));
+                        }}
+                        aria-label={`Ir al partido contra ${opponent}`}
                         style={{
                           display: "flex",
+                          width: "100%",
+                          boxSizing: "border-box",
+                          textAlign: "left",
                           alignItems: "center",
                           justifyContent: "space-between",
                           gap: "0.5rem",
@@ -351,13 +383,14 @@ export function GroupStageView({
                           border: "1px solid rgba(255,255,255,0.06)",
                           color: "#fff",
                           fontSize: "0.8rem",
+                          cursor: "pointer",
                         }}
                       >
                         <span style={{ overflowWrap: "anywhere" }}>{opponent}</span>
                         <span style={{ color: "#fbbf24", fontSize: "0.68rem", fontWeight: 800, flexShrink: 0 }}>
-                          PENDIENTE
+                          PENDIENTE · IR AL PARTIDO →
                         </span>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -683,6 +716,7 @@ export function GroupStageView({
               )}
               <div
               key={match.id}
+              data-match-id={String(match.id)}
               style={{
                 padding: "0.75rem",
                 background: "linear-gradient(135deg, #121019, #0d0c13)",
