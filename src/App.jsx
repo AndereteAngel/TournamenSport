@@ -1297,20 +1297,34 @@ export function TournamenSportApp() {
     setDeletingTournamentId(tournament.id);
 
     try {
-      const { error } = await supabase
+      // Verificar que Supabase realmente haya eliminado una fila.
+      // Una operación DELETE sin filas devueltas puede indicar que RLS la bloqueó.
+      const { data: deletedRows, error } = await supabase
         .from("tournaments")
         .delete()
-        .eq("id", tournament.id);
+        .eq("id", tournament.id)
+        .select("id");
 
       if (error) {
         console.error("Error al eliminar torneo:", error);
 
         showNotice(
-          `❌ No se pudo eliminar el torneo.\n\n${
-            error.message || "Error desconocido."
+          `❌ Supabase no pudo eliminar el torneo.\n\n${
+            error.message || "Revisá las políticas RLS de DELETE en tournaments."
           }`
         );
 
+        return;
+      }
+
+      if (!deletedRows || deletedRows.length === 0) {
+        console.warn(
+          "No se eliminó ninguna fila. Revisar política RLS DELETE y permisos.",
+          { tournamentId: tournament.id, userId: currentUser.id }
+        );
+        showNotice(
+          "❌ El torneo sigue en la base de datos. Revisá en Supabase la política RLS de DELETE para la tabla tournaments."
+        );
         return;
       }
 
