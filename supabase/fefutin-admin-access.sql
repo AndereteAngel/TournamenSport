@@ -2,6 +2,9 @@
 -- Ejecutar una sola vez en Supabase > SQL Editor.
 -- El UID debe coincidir con VITE_ADMIN_USER_ID en el despliegue.
 
+alter table public.tournaments enable row level security;
+alter table public.visitas enable row level security;
+
 drop policy if exists "tournaments_select_authenticated" on public.tournaments;
 drop policy if exists "tournaments_select_public" on public.tournaments;
 create policy "tournaments_select_public"
