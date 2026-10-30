@@ -2046,6 +2046,11 @@ export function TournamenSportApp() {
 
   const handleJoinTournamentSubmit = (e) => {
     e.preventDefault();
+    if (!isAdmin) {
+      showNotice("⛔ Solo el administrador puede gestionar inscripciones.");
+      setActiveView("home");
+      return;
+    }
 
     const cleanCode = joinCodeInput.trim().toUpperCase();
 
