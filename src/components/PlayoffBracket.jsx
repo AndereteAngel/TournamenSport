@@ -350,7 +350,7 @@ export function PlayoffBracket({
               margin: 0,
             }}
           >
-            {champion} se consagra campeón de TournamenSport.
+            {champion} se consagra campeón de FEFUTIN.
           </p>
         </div>
       )}
