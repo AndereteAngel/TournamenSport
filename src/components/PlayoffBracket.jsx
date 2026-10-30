@@ -279,56 +279,22 @@ export function PlayoffBracket({
                       style={{
                         display: "flex",
                         alignItems: "center",
+                        justifyContent: "center",
                         gap: "6px",
+                        minWidth: "84px",
                       }}
                     >
-                      <input
-                        type="number"
-                        min="0"
-                        disabled={!isAdmin || isFinalized}
-                        value={match.score1 !== null ? match.score1 : ""}
-                        onChange={(e) =>
-                          handleScoreChange(
-                            rIdx,
-                            match.id,
-                            "score1",
-                            e.target.value
-                          )
-                        }
-                        style={{
-                          width: "34px",
-                          textAlign: "center",
-                          backgroundColor: "#1e1b2e",
-                          border: "1px solid #1b5fa8",
-                          color: "#fff",
-                          borderRadius: "4px",
-                          padding: "4px",
-                        }}
-                      />
-                      <span>-</span>
-                      <input
-                        type="number"
-                        min="0"
-                        disabled={!isAdmin || isFinalized}
-                        value={match.score2 !== null ? match.score2 : ""}
-                        onChange={(e) =>
-                          handleScoreChange(
-                            rIdx,
-                            match.id,
-                            "score2",
-                            e.target.value
-                          )
-                        }
-                        style={{
-                          width: "34px",
-                          textAlign: "center",
-                          backgroundColor: "#1e1b2e",
-                          border: "1px solid #1b5fa8",
-                          color: "#fff",
-                          borderRadius: "4px",
-                          padding: "4px",
-                        }}
-                      />
+                      {isAdmin && !isFinalized ? (
+                        <>
+                          <input type="number" min="0" value={match.score1 !== null ? match.score1 : ""} onChange={(e) => handleScoreChange(rIdx, match.id, "score1", e.target.value)} style={{ width: "34px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "4px", padding: "4px" }} />
+                          <span>-</span>
+                          <input type="number" min="0" value={match.score2 !== null ? match.score2 : ""} onChange={(e) => handleScoreChange(rIdx, match.id, "score2", e.target.value)} style={{ width: "34px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "4px", padding: "4px" }} />
+                        </>
+                      ) : (
+                        <strong style={{ color: "#fff", fontSize: "0.9rem", letterSpacing: "0.08em" }}>
+                          {match.score1 !== null ? match.score1 : "–"} - {match.score2 !== null ? match.score2 : "–"}
+                        </strong>
+                      )}
                     </div>
 
                     <span
