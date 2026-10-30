@@ -1019,6 +1019,7 @@ export function TournamenSportApp() {
   const [showPassword, setShowPassword] = useState(false);
   const [authInput, setAuthInput] = useState({ email: "", password: "" });
   const [activeView, setActiveView] = useState("home");
+  const [showWelcome, setShowWelcome] = useState(true);
   const [activeTournament, setActiveTournament] = useState(null);
   const [showChampionCard, setShowChampionCard] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
@@ -2202,6 +2203,17 @@ export function TournamenSportApp() {
 
   return (
     <div className="cr-container tc-theme-clash">
+      {showWelcome && (
+        <section className="fefutin-welcome" aria-label="Bienvenida a FEFUTIN">
+          <div className="fefutin-welcome-panel">
+            <img src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166" alt="Logo histórico de FEFUTIN" className="fefutin-welcome-logo" />
+            <div className="fefutin-welcome-kicker">FEDERACIÓN DE FÚTBOL INFANTIL</div>
+            <h1>FEFUTIN</h1>
+            <p>Pasión, formación y competencia.</p>
+            <button type="button" onClick={() => setShowWelcome(false)}>BIENVENIDOS</button>
+          </div>
+        </section>
+      )}
       <TournamentNotice
         notice={notice}
         onClose={clearNotice}
@@ -2239,7 +2251,7 @@ export function TournamenSportApp() {
             }}
           >
             <img
-              src="/tc-crest.svg"
+              src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166"
               alt="Escudo original de FEFUTIN"
               className="tc-login-crest"
             />
