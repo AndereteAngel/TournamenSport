@@ -2555,7 +2555,7 @@ export function TournamenSportApp() {
             >
               Cerrar Sesión
             </button>
-          </div>
+          </div>}
 
           {/* BOTÓN ADMIN */}
 
@@ -2663,7 +2663,7 @@ export function TournamenSportApp() {
                 Entra con código
               </p>
             </button>
-          </div>
+          </div>}
 
           <div className="tc-home-tournaments">
             <div
