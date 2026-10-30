@@ -2371,15 +2371,6 @@ export function TournamenSportApp() {
         </div>
       ) : activeView === "home" ? (
         <div className="tc-home-screen">
-        <section className="tc-arena-hero" aria-label="Bienvenido a la arena de FEFUTIN">
-          <img src="/tournament-join.svg" alt="Ilustración deportiva de equipos listos para competir" />
-          <div className="tc-home-hero-overlay">
-            <span className="tc-home-eyebrow">TORNEOS Y COMPETENCIAS DEPORTIVAS</span>
-            <h1>FEFUTIN</h1>
-            <p>Organizá. Competí. Compartí el deporte.</p>
-            <div className="tc-home-hero-tag"><span></span> TU PRÓXIMA VICTORIA TE ESPERA</div>
-          </div>
-        </section>
         <div
           className="cr-card tc-home-panel"
           style={{
@@ -2614,15 +2605,11 @@ export function TournamenSportApp() {
 
               <button
                 onClick={fetchTournaments}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#60a5fa",
-                  fontSize: "0.75rem",
-                  cursor: "pointer",
-                }}
+                className="tc-home-refresh"
+                title="Actualizar lista de torneos"
+                aria-label="Actualizar lista de torneos"
               >
-                <TCIcon name="refresh" size={13} /> Recargar
+                <TCIcon name="refresh" size={14} />
               </button>
             </div>
 
