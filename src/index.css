@@ -2924,3 +2924,235 @@ body, body[data-tc-theme="clash"], body[data-tc-theme="arena"] {
 @media (max-width: 600px) {
   .fefutin-welcome-logo { width: 128px; height: 128px; }
 }
+
+
+/* =========================================================
+   FEFUTIN — REDISEÑO INTEGRAL V2
+   Nueva identidad visual para toda la interfaz.
+========================================================= */
+:root {
+  --fefutin-red: #b5122a;
+  --fefutin-red-dark: #780d20;
+  --fefutin-red-soft: #f8e9ec;
+  --fefutin-ink: #202633;
+  --fefutin-muted: #687181;
+  --fefutin-line: #e1e4e9;
+  --fefutin-surface: #ffffff;
+  color-scheme: light;
+}
+html, body, #root {
+  min-height: 100%;
+  background: #eef0f3 !important;
+}
+body, body[data-tc-theme], body[data-tc-theme="clash"], body[data-tc-theme="arena"] {
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(181,18,42,.08), transparent 34%),
+    linear-gradient(180deg,#f7f8fa 0%,#eceef2 100%) !important;
+  color: var(--fefutin-ink) !important;
+}
+.cr-container.tc-theme-clash, .cr-container {
+  width: min(100%, 1440px) !important;
+  margin: 0 auto !important;
+  padding: clamp(12px,2.4vw,30px) !important;
+  gap: 22px !important;
+  color: var(--fefutin-ink) !important;
+}
+.cr-card, .cr-container .cr-card, .tc-home-panel,
+.tc-form-screen .cr-card, .tc-groups-screen .cr-card,
+.tc-playoffs-screen .cr-card, .tc-stats-screen .cr-card {
+  background: var(--fefutin-surface) !important;
+  background-image: none !important;
+  border: 1px solid var(--fefutin-line) !important;
+  border-top: 4px solid var(--fefutin-red) !important;
+  border-radius: 18px !important;
+  color: var(--fefutin-ink) !important;
+  box-shadow: 0 14px 36px rgba(24,32,45,.075) !important;
+}
+.cr-card::before, .cr-card::after { box-shadow: none !important; }
+.cr-card-glow, .tc-form-screen .cr-card-glow {
+  height: 4px !important;
+  background: linear-gradient(90deg,var(--fefutin-red-dark),var(--fefutin-red),#e5a0aa) !important;
+}
+.cr-title, .cr-logo-title, .cr-card h1, .cr-card h2, .cr-card h3,
+.tc-home-panel h1, .tc-home-panel h2, .tc-home-panel h3 {
+  color: var(--fefutin-ink) !important;
+  text-shadow: none !important;
+  font-family: 'Montserrat',sans-serif !important;
+  letter-spacing: -.025em !important;
+}
+.cr-card p, .cr-card label, .cr-card span, .cr-card strong,
+.cr-card td, .cr-card th, .tc-home-panel p {
+  text-shadow: none !important;
+}
+.cr-card p, .tc-home-panel p { color: var(--fefutin-muted); }
+.cr-btn-gold, .cr-card button, .tc-home-panel button,
+.tc-form-screen button, .tc-auth-submit {
+  background: var(--fefutin-red) !important;
+  background-image: none !important;
+  color: #fff !important;
+  border: 1px solid var(--fefutin-red-dark) !important;
+  border-bottom: 3px solid var(--fefutin-red-dark) !important;
+  border-radius: 9px !important;
+  text-shadow: none !important;
+  box-shadow: 0 5px 12px rgba(181,18,42,.16) !important;
+}
+.cr-card button:hover, .tc-home-panel button:hover,
+.tc-form-screen button:hover { background: var(--fefutin-red-dark) !important; }
+.cr-input, .cr-card input, .cr-card select, .cr-card textarea,
+.tc-form-screen input, .tc-form-screen select, .tc-form-screen textarea {
+  background: #fff !important;
+  color: var(--fefutin-ink) !important;
+  border: 1px solid #cbd0d8 !important;
+  border-radius: 9px !important;
+  box-shadow: none !important;
+}
+.cr-input:focus, .cr-card input:focus, .cr-card select:focus,
+.cr-card textarea:focus { border-color: var(--fefutin-red) !important; }
+a { color: var(--fefutin-red) !important; }
+
+/* Home: hero editorial y paneles de navegación */
+.tc-home-screen { width: 100% !important; display:flex; flex-direction:column; gap:22px; }
+.tc-arena-hero {
+  min-height: clamp(230px,32vw,360px) !important;
+  border-radius: 20px !important;
+  overflow:hidden !important;
+  border: 1px solid rgba(32,38,51,.1) !important;
+  box-shadow: 0 18px 40px rgba(24,32,45,.12) !important;
+  background: linear-gradient(105deg,rgba(23,28,39,.94),rgba(23,28,39,.45)), linear-gradient(135deg,#303846,#171c27) !important;
+}
+.tc-arena-hero img { opacity:.34 !important; filter:grayscale(1) contrast(1.08) !important; }
+.tc-home-hero-overlay { padding:clamp(24px,5vw,58px) !important; }
+.tc-home-hero-overlay h1 {
+  color:#fff !important; font-size:clamp(2.4rem,7vw,5rem) !important;
+  font-weight:900 !important; letter-spacing:.04em !important;
+  text-shadow:none !important;
+}
+.tc-home-hero-overlay p { color:rgba(255,255,255,.82) !important; font-size:clamp(.95rem,2vw,1.15rem) !important; }
+.tc-home-eyebrow, .tc-home-hero-tag { color:#fff !important; letter-spacing:.14em !important; }
+.tc-home-hero-tag { background:var(--fefutin-red) !important; border:0 !important; }
+.tc-home-panel {
+  max-width:1100px !important;
+  padding:clamp(18px,3vw,34px) !important;
+}
+.tc-home-action, .tc-home-action-create, .tc-home-action-join,
+.tc-home-tournament-item {
+  background:#fff !important;
+  background-image:none !important;
+  color:var(--fefutin-ink) !important;
+  border:1px solid var(--fefutin-line) !important;
+  border-bottom:3px solid var(--fefutin-red) !important;
+  border-radius:14px !important;
+  box-shadow:0 8px 20px rgba(24,32,45,.055) !important;
+}
+.tc-home-action h3, .tc-home-action p { color:var(--fefutin-ink) !important; }
+.tc-home-action p { color:var(--fefutin-muted) !important; }
+.tc-home-action-icon {
+  color:var(--fefutin-red) !important;
+  background:var(--fefutin-red-soft) !important;
+  border:1px solid #edc5cc !important;
+  box-shadow:none !important;
+}
+
+/* Navbar: nuevo bloque institucional claro y rojo */
+.tc-navbar {
+  padding:12px 16px !important;
+  background:#fff !important;
+  background-image:none !important;
+  border:1px solid var(--fefutin-line) !important;
+  border-top:4px solid var(--fefutin-red) !important;
+  border-radius:14px !important;
+  color:var(--fefutin-ink) !important;
+  box-shadow:0 8px 24px rgba(24,32,45,.07) !important;
+}
+.tc-navbar > div:first-child {
+  background:var(--fefutin-red) !important;
+  height:4px !important;
+}
+.tc-navbar > div:nth-of-type(2) > div:first-child {
+  background:var(--fefutin-red-soft) !important;
+  border:1px solid #edc5cc !important;
+  border-radius:9px !important;
+  box-shadow:none !important;
+}
+.tc-navbar > div:nth-of-type(2) span,
+.tc-navbar > div:nth-of-type(2) span:first-child {
+  color:var(--fefutin-ink) !important;
+  text-shadow:none !important;
+}
+.tc-navbar > div:nth-of-type(2) span:last-child { color:var(--fefutin-muted) !important; }
+.tc-navbar .desktop-nav-actions > div,
+.tc-navbar .desktop-nav-actions > button,
+.tc-navbar .mobile-admin-btn,
+.tc-navbar .mobile-menu-btn {
+  background:#f5f6f8 !important;
+  background-image:none !important;
+  color:var(--fefutin-ink) !important;
+  border:1px solid #dfe2e7 !important;
+  border-radius:9px !important;
+  box-shadow:none !important;
+  text-shadow:none !important;
+}
+.tc-navbar .desktop-nav-actions > button:last-child,
+.tc-navbar .mobile-admin-btn {
+  background:var(--fefutin-red) !important;
+  color:#fff !important;
+  border-color:var(--fefutin-red-dark) !important;
+}
+.tc-navbar .desktop-nav-actions > button:hover,
+.tc-navbar .mobile-menu-btn:hover { background:var(--fefutin-red-soft) !important; color:var(--fefutin-red) !important; }
+.tc-navbar .tc-medal-total { background:var(--fefutin-red) !important; color:#fff !important; }
+
+/* Iconografía: fuera placas azules, doradas y estética de videojuego */
+.tc-icon-frame {
+  color:var(--fefutin-red) !important;
+  filter:none !important;
+  background:transparent !important;
+  border:0 !important;
+  box-shadow:none !important;
+}
+.tc-icon-frame::before, .tc-icon-frame::after {
+  content:none !important;
+  display:none !important;
+}
+.tc-icon-core, .tc-icon-core svg {
+  color:var(--fefutin-red) !important;
+  filter:none !important;
+}
+.tc-icon-crown .tc-icon-core, .tc-icon-trophy .tc-icon-core,
+.tc-icon-medal .tc-icon-core, .tc-icon-medalGold .tc-icon-core,
+.tc-icon-medalSilver .tc-icon-core, .tc-icon-medalBronze .tc-icon-core {
+  color:var(--fefutin-red) !important;
+  filter:none !important;
+}
+.tc-icon-user, .tc-icon-user .tc-icon-core { color:#687181 !important; }
+.tc-icon-trash, .tc-icon-lock, .tc-icon-shield { color:var(--fefutin-red) !important; }
+.tc-stat-icon .tc-icon-frame { animation:none !important; }
+.tournament-phase-badge {
+  color:var(--fefutin-red) !important;
+  background:var(--fefutin-red-soft) !important;
+  border:1px solid #edc5cc !important;
+}
+table th { color:var(--fefutin-red) !important; }
+table td { color:var(--fefutin-ink) !important; }
+* { scrollbar-color:#b9bec8 #eef0f3 !important; }
+*::-webkit-scrollbar-thumb { background:#b9bec8 !important; }
+
+/* Pantallas de torneo y formularios con fondo claro consistente */
+.tc-form-screen, .tc-groups-screen, .tc-playoffs-screen,
+.tc-stats-screen, .tc-competition-screen {
+  color:var(--fefutin-ink) !important;
+}
+.tc-form-screen .cr-card *, .tc-groups-screen .cr-card *,
+.tc-playoffs-screen .cr-card *, .tc-stats-screen .cr-card * {
+  text-shadow:none !important;
+}
+.tc-home-action:hover, .tc-home-action-create:hover,
+.tc-home-action-join:hover, .tc-home-tournament-item:hover {
+  transform:translateY(-2px);
+  border-color:#d9a0a9 !important;
+  box-shadow:0 14px 28px rgba(24,32,45,.09) !important;
+}
+@media(max-width:640px) {
+  .tc-navbar { gap:8px !important; }
+  .tc-navbar .mobile-menu-btn { background:#f5f6f8 !important; color:var(--fefutin-ink) !important; }
+}
