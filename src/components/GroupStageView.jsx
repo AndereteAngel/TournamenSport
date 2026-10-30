@@ -7,6 +7,7 @@ export function GroupStageView({
   onUpdateTournament,
   onProceedToPlayoffs,
   currentUser,
+  isAdmin = false,
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
@@ -38,9 +39,9 @@ export function GroupStageView({
     currentGroup.matches
   );
 
-  // Solo el creador del torneo puede cargar/modificar resultados
+  // Solo la cuenta administradora puede cargar/modificar resultados.
   const isFinalized = String(tournament.status || "").trim().toLocaleLowerCase("es") === "finalizado";
-  const isCreator = currentUser?.id === tournament.created_by_user_id && !isFinalized;
+  const canEditResults = isAdmin && !isFinalized;
 
   // El resumen se calcula según el participante elegido en el torneo,
   // que puede tener un nombre distinto al usuario con el que inició sesión.
@@ -85,7 +86,7 @@ export function GroupStageView({
 
   const handleScoreChange = (matchId, field, value) => {
     // Seguridad adicional en la interfaz
-    if (!isCreator || isFinalized) return;
+    if (!canEditResults || isFinalized) return;
 
     const numValue = value === "" ? null : Number(value);
 
@@ -392,18 +393,18 @@ export function GroupStageView({
           marginBottom: "1.2rem",
           padding: "0.75rem 0.9rem",
           borderRadius: "10px",
-          background: isCreator
+          background: canEditResults
             ? "rgba(255,215,0,0.07)"
             : "rgba(96,165,250,0.07)",
-          border: isCreator
+          border: canEditResults
             ? "1px solid rgba(255,215,0,0.2)"
             : "1px solid rgba(96,165,250,0.2)",
-          color: isCreator ? "#facc15" : "#93c5fd",
+          color: canEditResults ? "#facc15" : "#93c5fd",
           fontSize: "0.75rem",
           lineHeight: 1.4,
         }}
       >
-        {isCreator ? (
+        {canEditResults ? (
           <>
             <TCIcon name="shield" size={15} /> <strong>Organizador:</strong> sos el responsable de cargar y
             validar los resultados.
@@ -738,7 +739,7 @@ export function GroupStageView({
                   type="number"
                   min="0"
                   value={match.score1 !== null ? match.score1 : ""}
-                  disabled={!isCreator}
+                  disabled={!canEditResults}
                   onChange={(e) =>
                     handleScoreChange(match.id, "score1", e.target.value)
                   }
@@ -746,8 +747,8 @@ export function GroupStageView({
                     width: "34px",
                     height: "30px",
                     textAlign: "center",
-                    backgroundColor: isCreator ? "#1e1b2e" : "#15141c",
-                    border: isCreator
+                    backgroundColor: canEditResults ? "#1e1b2e" : "#15141c",
+                    border: canEditResults
                       ? "1px solid #1b5fa8"
                       : "1px solid #272532",
                     color: "#fff",
@@ -755,8 +756,8 @@ export function GroupStageView({
                     padding: "2px",
                     fontWeight: "bold",
                     boxSizing: "border-box",
-                    cursor: isCreator ? "text" : "not-allowed",
-                    opacity: isCreator ? 1 : 0.8,
+                    cursor: canEditResults ? "text" : "not-allowed",
+                    opacity: canEditResults ? 1 : 0.8,
                   }}
                 />
 
@@ -773,7 +774,7 @@ export function GroupStageView({
                   type="number"
                   min="0"
                   value={match.score2 !== null ? match.score2 : ""}
-                  disabled={!isCreator}
+                  disabled={!canEditResults}
                   onChange={(e) =>
                     handleScoreChange(match.id, "score2", e.target.value)
                   }
@@ -781,8 +782,8 @@ export function GroupStageView({
                     width: "34px",
                     height: "30px",
                     textAlign: "center",
-                    backgroundColor: isCreator ? "#1e1b2e" : "#15141c",
-                    border: isCreator
+                    backgroundColor: canEditResults ? "#1e1b2e" : "#15141c",
+                    border: canEditResults
                       ? "1px solid #1b5fa8"
                       : "1px solid #272532",
                     color: "#fff",
@@ -790,8 +791,8 @@ export function GroupStageView({
                     padding: "2px",
                     fontWeight: "bold",
                     boxSizing: "border-box",
-                    cursor: isCreator ? "text" : "not-allowed",
-                    opacity: isCreator ? 1 : 0.8,
+                    cursor: canEditResults ? "text" : "not-allowed",
+                    opacity: canEditResults ? 1 : 0.8,
                   }}
                 />
               </div>
@@ -815,7 +816,7 @@ export function GroupStageView({
       </div>
 
       {/* AVANZAR */}
-      {allGroupsFinished && isCreator && (
+      {allGroupsFinished && canEditResults && (
         <button
           onClick={onProceedToPlayoffs}
           className="cr-btn-gold"
