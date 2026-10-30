@@ -235,6 +235,29 @@ export function Navbar({
         </button>
       </div>
 
+      <button
+        type="button"
+        className="mobile-admin-btn"
+        onClick={isAdmin ? onLogout : onAdminClick}
+        style={{
+          display: "none",
+          alignItems: "center",
+          gap: "5px",
+          padding: "0.42rem 0.55rem",
+          background: "linear-gradient(145deg, #242427, #111113)",
+          border: "1px solid #d1d5db",
+          borderRadius: "8px",
+          color: "#fff",
+          fontSize: "0.68rem",
+          fontWeight: 900,
+          cursor: "pointer",
+          whiteSpace: "nowrap",
+        }}
+      >
+        <TCIcon name={isAdmin ? "log-out" : "shield"} size={15} />
+        {isAdmin ? "SALIR" : "ADMIN"}
+      </button>
+
       {/* HAMBURGUESA */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
@@ -336,19 +359,6 @@ export function Navbar({
           )}
 
           <button
-            type="button"
-            onClick={() => {
-              setMenuOpen(false);
-              if (isAdmin) onLogout?.();
-              else onAdminClick?.();
-            }}
-            style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem", borderColor: isAdmin ? "#b5122a" : "#d1d5db" }}
-          >
-            <TCIcon name={isAdmin ? "log-out" : "shield"} size={16} />
-            <span>{isAdmin ? "Salir ADMIN" : "Ingresar como ADMIN"}</span>
-          </button>
-
-          <button
             onClick={() => {
               setMenuOpen(false);
               onGoHome();
@@ -373,7 +383,7 @@ export function Navbar({
         </div>
       )}
 
-      {medalOpen && (
+      {currentUser && medalOpen && (
         <div style={{ position: "absolute", top: "calc(100% + 10px)", right: 0, width: "min(340px, calc(100vw - 32px))", maxHeight: "70vh", overflowY: "auto", padding: "1rem", borderRadius: "14px", border: "1px solid #ff9140", background: "linear-gradient(145deg, #1b1b1e, #111113)", boxShadow: "0 12px 35px rgba(0,0,0,0.8)", zIndex: 200 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem", marginBottom: "0.8rem" }}>
             <strong style={{ color: "#ffb36b", fontSize: "0.85rem" }}><TCIcon name="medal" size={16} /> MI MEDALLERO</strong>
@@ -421,6 +431,10 @@ export function Navbar({
 
           .mobile-menu-btn {
             display: flex !important;
+          }
+
+          .mobile-admin-btn {
+            display: inline-flex !important;
           }
         }
       `}</style>
