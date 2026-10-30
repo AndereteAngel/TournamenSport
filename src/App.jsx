@@ -2287,7 +2287,7 @@ export function TournamenSportApp() {
                 }}
               >
                 <span><span className="tc-auth-field-icon" aria-hidden="true">◆</span> Contraseña</span>
-                {authMode === "login" && (
+                {true && (
                   <button
                     type="button"
                     onClick={() => setShowPassword((visible) => !visible)}
