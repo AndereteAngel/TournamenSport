@@ -1036,6 +1036,7 @@ export function TournamenSportApp() {
   const [loadingRegisteredProfiles, setLoadingRegisteredProfiles] = useState(false);
   const [registeredProfilesSearch, setRegisteredProfilesSearch] = useState("");
   const [selectedRegisteredProfileIds, setSelectedRegisteredProfileIds] = useState([]);
+  const isAdmin = currentUser?.id === ADMIN_UID;
 
   useEffect(() => {
     document.documentElement.dataset.tcTheme = "clash";
@@ -1242,8 +1243,7 @@ export function TournamenSportApp() {
   }, [currentUser]);
 
   useEffect(() => {
-    if (currentUser) fetchTournaments();
-    else setTournaments([]);
+    fetchTournaments();
   }, [currentUser]);
 
   const fetchTournaments = async () => {
@@ -1494,8 +1494,9 @@ export function TournamenSportApp() {
   // =========================================================
 
   const handleCreateTournamentSubmit = async (config) => {
-    if (!currentUser) {
-      showNotice("❌ Tenés que iniciar sesión para crear un torneo.");
+    if (!isAdmin) {
+      showNotice("❌ Solo el administrador puede crear torneos.");
+      setActiveView("home");
       return;
     }
 
@@ -1622,10 +1623,8 @@ export function TournamenSportApp() {
 
   const handleAddSelectedRegisteredProfiles = async () => {
     if (!activeTournament?.id || !currentUser) return;
-    const isOwner = activeTournament.created_by_user_id === currentUser.id ||
-      (!activeTournament.created_by_user_id && currentUser.username === activeTournament.created_by);
-    if (!isOwner && currentUser.id !== ADMIN_UID) {
-      showNotice("Solo el creador o administrador puede agregar participantes.");
+    if (!isAdmin) {
+      showNotice("Solo el administrador puede agregar participantes.");
       return;
     }
     const { data: latest, error: fetchError } = await supabase.from("tournaments")
@@ -1682,12 +1681,8 @@ export function TournamenSportApp() {
   const handleStartRegistrationTournament = async () => {
     if (!activeTournament?.id) return;
 
-    const isOwner =
-      currentUser &&
-      (activeTournament.created_by_user_id === currentUser.id ||
-        (!activeTournament.created_by_user_id && currentUser.username === activeTournament.created_by));
-    if (!isOwner && currentUser?.id !== ADMIN_UID) {
-      showNotice("Solo el creador del torneo puede dar comienzo.");
+    if (!isAdmin) {
+      showNotice("Solo el administrador puede dar comienzo al torneo.");
       return;
     }
 
@@ -1957,12 +1952,7 @@ export function TournamenSportApp() {
     );
   };
 
-  const isTournamentAdmin =
-    currentUser &&
-    activeTournament &&
-    (activeTournament.created_by_user_id === currentUser.id ||
-      (!activeTournament.created_by_user_id &&
-        currentUser.username === activeTournament.created_by));
+  const isTournamentAdmin = isAdmin;
 
   const handleEditTournamentSubmit = async (config) => {
     if (!activeTournament) return;
@@ -2077,6 +2067,10 @@ export function TournamenSportApp() {
   };
 
   const handleUpdateTournamentInSupabase = async (updatedTournament) => {
+    if (!isAdmin) {
+      showNotice("❌ Solo el administrador puede modificar torneos y resultados.");
+      return;
+    }
     const currentStatus = String(activeTournament?.status || updatedTournament?.status || "")
       .trim()
       .toLocaleLowerCase("es");
@@ -2136,6 +2130,7 @@ export function TournamenSportApp() {
   // =========================================================
 
   const handleProceedToPlayoffs = () => {
+    if (!isAdmin) return;
     const qualifiedTeams = [];
 
     activeTournament.groups.forEach((group) => {
@@ -2180,6 +2175,7 @@ export function TournamenSportApp() {
   };
 
   const handleFinishTournament = async () => {
+    if (!isAdmin || !activeTournament) return;
     const format = String(activeTournament?.format || "").trim().toLocaleLowerCase("es");
 
     if (format === "league") {
@@ -2245,7 +2241,6 @@ export function TournamenSportApp() {
     showNotice("🏆 ¡Torneo finalizado! El campeón quedó registrado.");
   };
 
-  const isAdmin = currentUser?.id === ADMIN_UID;
   const tournamentCategories = [...new Set(
     tournaments.map((tournament) =>
       getTournamentCategory(tournament)
