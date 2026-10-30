@@ -84,7 +84,7 @@ set search_path = ''
 as $$
   select p.id, p.username
   from public.profiles p
-  where auth.uid() is not null
+  where auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid
   order by lower(p.username);
 $$;
 
@@ -95,12 +95,16 @@ alter table public.profiles enable row level security;
 alter table public.tournaments enable row level security;
 alter table public.visitas enable row level security;
 
--- Perfiles: usuarios autenticados pueden consultar alias para evitar duplicados;
--- cada usuario solo puede modificar su propio perfil.
+-- Perfiles: cada usuario solo puede consultar su perfil;
+-- el administrador puede consultar perfiles para gestionar inscripciones.
 drop policy if exists "profiles_select_authenticated" on public.profiles;
-create policy "profiles_select_authenticated"
+drop policy if exists "profiles_select_self_or_admin" on public.profiles;
+create policy "profiles_select_self_or_admin"
   on public.profiles for select to authenticated
-  using (true);
+  using (
+    auth.uid() = id
+    or auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid
+  );
 
 drop policy if exists "profiles_insert_self" on public.profiles;
 create policy "profiles_insert_self"
