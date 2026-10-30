@@ -3478,3 +3478,147 @@ body[data-tc-theme="arena"],
   color: #171717 !important;
   border: 1px solid #555555 !important;
 }
+
+
+/* =========================================================
+   FEFUTIN — FONDO NEGRO Y HOME COHESIVO
+   ========================================================= */
+:root {
+  color-scheme: dark !important;
+  --fefutin-black: #080808;
+  --fefutin-white: #ffffff;
+  --fefutin-red: #b5122a;
+}
+
+/* El negro corresponde al fondo de toda la página, no a las tarjetas. */
+html, body, #root,
+body[data-tc-theme],
+body[data-tc-theme="clash"],
+body[data-tc-theme="arena"],
+.cr-container,
+.cr-container.tc-theme-clash {
+  min-height: 100%;
+  background: #080808 !important;
+  background-color: #080808 !important;
+  background-image: none !important;
+  color: #fff !important;
+}
+.tc-home-screen {
+  background: transparent !important;
+  color: #fff !important;
+}
+
+/* Tarjeta principal clara sobre el fondo negro. */
+.tc-home-panel {
+  background: #fff !important;
+  color: #171717 !important;
+  border: 2px solid #fff !important;
+  border-radius: 18px !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.42) !important;
+}
+
+/* Torneos en la Nube: bloque interior de la tarjeta principal,
+   misma geometría y un acento institucional para que se lea como parte del conjunto. */
+.tc-home-tournaments {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-top: 1.4rem !important;
+  padding: clamp(14px, 2.2vw, 22px) !important;
+  background: #f4f4f4 !important;
+  border: 1px solid #171717 !important;
+  border-top: 4px solid #b5122a !important;
+  border-radius: 13px !important;
+  color: #171717 !important;
+}
+.tc-home-tournaments-heading {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  width: 100% !important;
+  margin-bottom: 1rem !important;
+  padding-bottom: .8rem !important;
+  border-bottom: 1px solid #d4d4d4 !important;
+  text-align: left !important;
+}
+.tc-home-tournaments-heading > div {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: auto !important;
+  gap: .6rem !important;
+}
+.tc-home-tournaments-heading h3,
+.tc-home-tournaments-heading svg {
+  color: #171717 !important;
+}
+.tc-home-tournaments-heading h3 {
+  font-size: .9rem !important;
+  letter-spacing: .035em !important;
+}
+.tc-home-tournaments-heading button {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+  padding: 7px 10px !important;
+  background: #fff !important;
+  border: 1px solid #171717 !important;
+  border-radius: 7px !important;
+  color: #171717 !important;
+  font-size: .72rem !important;
+  font-weight: 800 !important;
+}
+.tc-home-tournaments-heading button svg { color: #b5122a !important; }
+.tc-home-tournaments > div > label {
+  color: #333 !important;
+}
+.tc-home-tournaments .cr-input {
+  background: #fff !important;
+  color: #171717 !important;
+  border: 1px solid #9a9a9a !important;
+}
+.tc-home-tournament-item {
+  background: #fff !important;
+  border: 1px solid #b8b8b8 !important;
+  border-left: 4px solid #b5122a !important;
+  border-radius: 9px !important;
+  color: #171717 !important;
+}
+.tc-home-tournament-item * { text-shadow: none !important; }
+.tc-home-tournament-item > div:first-child { min-width: 0; }
+.tc-home-tournament-item:hover {
+  border-color: #b5122a !important;
+  box-shadow: 0 5px 14px rgba(0,0,0,.09) !important;
+}
+.tc-home-tournaments > p {
+  color: #555 !important;
+}
+
+/* Acceso ADMIN: discreto, solo una pelota; conserva el mismo evento de acceso. */
+.tc-admin-ball {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,.28) !important;
+  border-radius: 50% !important;
+  color: #fff !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+  opacity: .72;
+}
+.tc-admin-ball:hover {
+  opacity: 1;
+  background: rgba(181,18,42,.22) !important;
+  border-color: #b5122a !important;
+}
+@media (max-width: 760px) {
+  .tc-home-tournaments { padding: 13px !important; }
+  .tc-home-tournaments-heading { align-items: center !important; }
+  .tc-home-tournaments-heading h3 { font-size: .78rem !important; }
+}
