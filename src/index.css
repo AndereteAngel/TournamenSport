@@ -2791,3 +2791,136 @@ table td { color: #f1f1f3 !important; }
   box-shadow: 0 0 28px rgba(255,122,26,.1),inset 0 1px 0 rgba(255,255,255,.05) !important;
 }
 .tc-champion-card .tc-champion-stat { border-color:#414146 !important; }
+
+
+/* =========================================================
+   IDENTIDAD INSTITUCIONAL FEFUTIN
+   Capa visual: no modifica la lógica de torneos.
+========================================================= */
+:root {
+  --fefutin-red: #b5122a;
+  --fefutin-red-dark: #850d20;
+  --fefutin-graphite: #171c27;
+  --fefutin-paper: #ffffff;
+}
+body, body[data-tc-theme="clash"], body[data-tc-theme="arena"] {
+  background: #f1f2f4 !important;
+  color: var(--fefutin-graphite) !important;
+}
+.cr-container {
+  background: transparent !important;
+  color: var(--fefutin-graphite) !important;
+}
+.cr-card {
+  background: #ffffff !important;
+  border: 1px solid #d5d8de !important;
+  border-top: 4px solid var(--fefutin-red) !important;
+  border-radius: 14px !important;
+  color: var(--fefutin-graphite) !important;
+  box-shadow: 0 12px 30px rgba(23,28,39,.09) !important;
+}
+.cr-card-glow {
+  background: linear-gradient(90deg, var(--fefutin-red-dark), var(--fefutin-red), #e7a0aa) !important;
+  height: 4px !important;
+}
+.cr-title, .cr-logo-title {
+  color: var(--fefutin-graphite) !important;
+  text-shadow: none !important;
+}
+.cr-btn-gold, .cr-card button:not(.tc-theme-toggle) {
+  background: var(--fefutin-red) !important;
+  border: 1px solid var(--fefutin-red-dark) !important;
+  border-bottom: 3px solid var(--fefutin-red-dark) !important;
+  color: #fff !important;
+  text-shadow: none !important;
+  box-shadow: 0 4px 10px rgba(181,18,42,.16) !important;
+}
+.cr-input, .cr-card input, .cr-card select, .cr-card textarea {
+  background: #fff !important;
+  border: 1px solid #c8cbd2 !important;
+  color: var(--fefutin-graphite) !important;
+  box-shadow: none !important;
+}
+.cr-input:focus, .cr-card input:focus, .cr-card select:focus, .cr-card textarea:focus {
+  border-color: var(--fefutin-red) !important;
+  outline: 2px solid rgba(181,18,42,.12) !important;
+}
+.cr-card p, .cr-card label, .cr-card span, .cr-card strong,
+.cr-card td, .cr-card th, .cr-card h1, .cr-card h2, .cr-card h3 {
+  text-shadow: none !important;
+}
+.tc-navbar {
+  background: var(--fefutin-graphite) !important;
+  border: 1px solid #303847 !important;
+  border-top: 4px solid var(--fefutin-red) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 22px rgba(23,28,39,.16) !important;
+}
+.tc-navbar button {
+  border-color: var(--fefutin-red) !important;
+}
+.tc-navbar img, .tc-login-crest {
+  object-fit: contain !important;
+}
+.fefutin-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 25%, #343b49 0%, #171c27 58%, #10141c 100%);
+}
+.fefutin-welcome-panel {
+  width: min(100%, 480px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: clamp(28px, 6vw, 52px) 24px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-top: 5px solid var(--fefutin-red);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(0,0,0,.32);
+}
+.fefutin-welcome-logo {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  margin-bottom: 18px;
+}
+.fefutin-welcome-kicker {
+  color: #687080;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+.fefutin-welcome-panel h1 {
+  margin: 10px 0 0;
+  color: var(--fefutin-graphite);
+  font-size: clamp(2.4rem, 9vw, 3.5rem);
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+.fefutin-welcome-panel p {
+  margin: 12px 0 26px;
+  color: #626a78;
+  font-size: .95rem;
+}
+.fefutin-welcome-panel button {
+  width: min(100%, 260px);
+  padding: 15px 22px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--fefutin-red);
+  color: #fff;
+  font: 900 .9rem 'Montserrat', sans-serif;
+  letter-spacing: .08em;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--fefutin-red-dark);
+}
+@media (max-width: 600px) {
+  .fefutin-welcome-logo { width: 128px; height: 128px; }
+}
