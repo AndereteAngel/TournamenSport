@@ -174,9 +174,13 @@ grant insert, update, delete on public.tournaments to authenticated;
 
 drop policy if exists "profiles_select_authenticated" on public.profiles;
 drop policy if exists "profiles_select_admin" on public.profiles;
-create policy "profiles_select_admin"
+drop policy if exists "profiles_select_self_or_admin" on public.profiles;
+create policy "profiles_select_self_or_admin"
   on public.profiles for select to authenticated
-  using (auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid);
+  using (
+    auth.uid() = id
+    or auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid
+  );
 
 create or replace function public.list_registered_players()
 returns table (id uuid, username text)
