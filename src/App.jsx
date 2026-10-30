@@ -2388,6 +2388,13 @@ export function TournamenSportApp() {
             margin: "auto",
           }}
         >
+          <div className="tc-home-panel-art" aria-hidden="true">
+            <img src="/tournament-join.svg" alt="" />
+            <div>
+              <span>FEFUTIN</span>
+              <strong>EL DEPORTE NOS UNE</strong>
+            </div>
+          </div>
           {isAdmin && <div
             style={{
               display: "flex",
