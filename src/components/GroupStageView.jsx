@@ -729,72 +729,39 @@ export function GroupStageView({
                 style={{
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: "5px",
+                  minWidth: "92px",
                   padding: "3px 6px",
                   background: "rgba(0,0,0,0.25)",
                   borderRadius: "8px",
                 }}
               >
-                <input
-                  type="number"
-                  min="0"
-                  value={match.score1 !== null ? match.score1 : ""}
-                  disabled={!canEditResults}
-                  onChange={(e) =>
-                    handleScoreChange(match.id, "score1", e.target.value)
-                  }
-                  style={{
-                    width: "34px",
-                    height: "30px",
-                    textAlign: "center",
-                    backgroundColor: canEditResults ? "#1e1b2e" : "#15141c",
-                    border: canEditResults
-                      ? "1px solid #1b5fa8"
-                      : "1px solid #272532",
-                    color: "#fff",
-                    borderRadius: "5px",
-                    padding: "2px",
-                    fontWeight: "bold",
-                    boxSizing: "border-box",
-                    cursor: canEditResults ? "text" : "not-allowed",
-                    opacity: canEditResults ? 1 : 0.8,
-                  }}
-                />
-
-                <span
-                  style={{
-                    color: "#6b7280",
-                    fontWeight: "bold",
-                  }}
-                >
-                  -
-                </span>
-
-                <input
-                  type="number"
-                  min="0"
-                  value={match.score2 !== null ? match.score2 : ""}
-                  disabled={!canEditResults}
-                  onChange={(e) =>
-                    handleScoreChange(match.id, "score2", e.target.value)
-                  }
-                  style={{
-                    width: "34px",
-                    height: "30px",
-                    textAlign: "center",
-                    backgroundColor: canEditResults ? "#1e1b2e" : "#15141c",
-                    border: canEditResults
-                      ? "1px solid #1b5fa8"
-                      : "1px solid #272532",
-                    color: "#fff",
-                    borderRadius: "5px",
-                    padding: "2px",
-                    fontWeight: "bold",
-                    boxSizing: "border-box",
-                    cursor: canEditResults ? "text" : "not-allowed",
-                    opacity: canEditResults ? 1 : 0.8,
-                  }}
-                />
+                {canEditResults ? (
+                  <>
+                    <input
+                      type="number"
+                      min="0"
+                      value={match.score1 !== null ? match.score1 : ""}
+                      disabled={!canEditResults}
+                      onChange={(e) => handleScoreChange(match.id, "score1", e.target.value)}
+                      style={{ width: "34px", height: "30px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "5px", padding: "2px", fontWeight: "bold", boxSizing: "border-box" }}
+                    />
+                    <span style={{ color: "#6b7280", fontWeight: "bold" }}>-</span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={match.score2 !== null ? match.score2 : ""}
+                      disabled={!canEditResults}
+                      onChange={(e) => handleScoreChange(match.id, "score2", e.target.value)}
+                      style={{ width: "34px", height: "30px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "5px", padding: "2px", fontWeight: "bold", boxSizing: "border-box" }}
+                    />
+                  </>
+                ) : (
+                  <strong style={{ color: "#fff", fontSize: "0.9rem", letterSpacing: "0.08em" }}>
+                    {match.score1 !== null ? match.score1 : "–"} - {match.score2 !== null ? match.score2 : "–"}
+                  </strong>
+                )}
               </div>
 
               {/* EQUIPO 2 */}
