@@ -1071,6 +1071,12 @@ export function TournamenSportApp() {
         return;
       }
 
+      if (session.user.id !== ADMIN_UID) {
+        if (mounted) setCurrentUser(null);
+        await supabase.auth.signOut();
+        return;
+      }
+
       const user = await buildCurrentUser(session.user);
 
       if (mounted) setCurrentUser(user);
@@ -1082,6 +1088,11 @@ export function TournamenSportApp() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!session?.user) {
+        if (mounted) setCurrentUser(null);
+        return;
+      }
+
+      if (session.user.id !== ADMIN_UID) {
         if (mounted) setCurrentUser(null);
         return;
       }
@@ -1453,6 +1464,13 @@ export function TournamenSportApp() {
       return;
     }
 
+    if (data.user?.id !== ADMIN_UID) {
+      await supabase.auth.signOut();
+      showNotice("⛔ Esta cuenta no tiene permisos de administrador.");
+      setAuthInput({ username: "", email: "", password: "" });
+      return;
+    }
+
     const user = await buildCurrentUser(data.user);
 
     setCurrentUser(user);
@@ -1462,6 +1480,7 @@ export function TournamenSportApp() {
       email: "",
       password: "",
     });
+    setActiveView("home");
   };
 
   const handleLogout = async () => {
@@ -2262,8 +2281,7 @@ export function TournamenSportApp() {
         confirmation={confirmation}
         onResolveConfirmation={resolveConfirmation}
       />
-      {currentUser && (
-        <Navbar
+      <Navbar
           onGoHome={handleGoHome}
           currentTitle={activeTournament?.title}
           tournamentCode={activeTournament?.code}
@@ -2271,17 +2289,18 @@ export function TournamenSportApp() {
           tournaments={tournaments}
           isAdmin={isAdmin}
           onGoStats={() => setActiveView("stats")}
+          onAdminClick={() => setActiveView("admin-login")}
+          onLogout={handleLogout}
         />
-      )}
 
-      {currentUser && activeTournament && showChampionCard && String(activeTournament.status || "").trim().toLocaleLowerCase("es") === "finalizado" && (
+      {isAdmin && activeTournament && showChampionCard && String(activeTournament.status || "").trim().toLocaleLowerCase("es") === "finalizado" && (
         <ChampionCelebration
           tournament={activeTournament}
           onClose={() => setShowChampionCard(false)}
         />
       )}
 
-      {!currentUser ? (
+      {activeView === "admin-login" && !isAdmin ? (
         <div className="tc-form-screen tc-auth-screen">
         <div className="cr-card tc-auth-card" style={{ margin: "auto" }}>
           <div className="cr-card-glow"></div>
@@ -2300,7 +2319,7 @@ export function TournamenSportApp() {
 
             <div className="tc-auth-kicker"><span></span> PLATAFORMA DE TORNEOS DEPORTIVOS <span></span></div>
             <h1 className="cr-logo-title">TournamenSport</h1>
-            <p className="tc-auth-tagline">{authMode === "login" ? "Organizá y seguí tus competencias deportivas." : "Creá tu cuenta y participá en torneos deportivos."}</p>
+            <p className="tc-auth-tagline">Acceso exclusivo para la administración de FEFUTIN.</p>
           </div>
 
           <form
@@ -2312,7 +2331,7 @@ export function TournamenSportApp() {
               gap: "1rem",
             }}
           >
-            {authMode === "register" && (
+            {false && authMode === "register" && (
               <div>
                 <label
                   style={{
