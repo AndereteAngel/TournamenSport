@@ -113,28 +113,32 @@ create policy "profiles_update_self"
   using (auth.uid() = id)
   with check (auth.uid() = id);
 
--- Torneos: usuarios autenticados pueden ver torneos; solo el creador puede
--- crearlos, modificarlos o eliminarlos desde las políticas iniciales.
+-- Torneos: lectura pública para visitantes y usuarios autenticados.
+-- Todas las escrituras quedan reservadas al UID administrador de FEFUTIN.
 drop policy if exists "tournaments_select_authenticated" on public.tournaments;
-create policy "tournaments_select_authenticated"
-  on public.tournaments for select to authenticated
+drop policy if exists "tournaments_select_public" on public.tournaments;
+create policy "tournaments_select_public"
+  on public.tournaments for select to anon, authenticated
   using (true);
 
 drop policy if exists "tournaments_insert_creator" on public.tournaments;
-create policy "tournaments_insert_creator"
+drop policy if exists "tournaments_insert_admin" on public.tournaments;
+create policy "tournaments_insert_admin"
   on public.tournaments for insert to authenticated
-  with check (auth.uid() = created_by_user_id);
+  with check (auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid);
 
 drop policy if exists "tournaments_update_creator" on public.tournaments;
-create policy "tournaments_update_creator"
+drop policy if exists "tournaments_update_admin" on public.tournaments;
+create policy "tournaments_update_admin"
   on public.tournaments for update to authenticated
-  using (auth.uid() = created_by_user_id)
-  with check (auth.uid() = created_by_user_id);
+  using (auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid)
+  with check (auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid);
 
 drop policy if exists "tournaments_delete_creator" on public.tournaments;
-create policy "tournaments_delete_creator"
+drop policy if exists "tournaments_delete_admin" on public.tournaments;
+create policy "tournaments_delete_admin"
   on public.tournaments for delete to authenticated
-  using (auth.uid() = created_by_user_id);
+  using (auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid);
 
 -- Visitas: cada usuario autenticado solo puede consultar/insertar/actualizar
 -- sus propias visitas. No se habilita lectura pública de correos ni actividad.
@@ -155,5 +159,6 @@ create policy "visitas_update_own"
   with check (auth.uid() = user_id);
 
 grant select, insert, update on public.profiles to authenticated;
-grant select, insert, update, delete on public.tournaments to authenticated;
+grant select on public.tournaments to anon, authenticated;
+grant insert, update, delete on public.tournaments to authenticated;
 grant select, insert, update on public.visitas to authenticated;
