@@ -1016,13 +1016,8 @@ export function TournamenSportApp() {
     resolveConfirmation,
   } = useTournamentNotice();
   const [currentUser, setCurrentUser] = useState(null);
-  const [authMode, setAuthMode] = useState("login");
   const [showPassword, setShowPassword] = useState(false);
-  const [authInput, setAuthInput] = useState({
-    username: "",
-    email: "",
-    password: "",
-  });
+  const [authInput, setAuthInput] = useState({ email: "", password: "" });
   const [activeView, setActiveView] = useState("home");
   const [activeTournament, setActiveTournament] = useState(null);
   const [showChampionCard, setShowChampionCard] = useState(false);
@@ -1364,7 +1359,6 @@ export function TournamenSportApp() {
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
 
-    const username = authInput.username.trim();
     const email = authInput.email.trim().toLowerCase();
     const password = authInput.password.trim();
 
@@ -1389,7 +1383,7 @@ export function TournamenSportApp() {
     if (data.user?.id !== ADMIN_UID) {
       await supabase.auth.signOut();
       showNotice("⛔ Esta cuenta no tiene permisos de administrador.");
-      setAuthInput({ username: "", email: "", password: "" });
+      setAuthInput({ email: "", password: "" });
       return;
     }
 
@@ -1398,7 +1392,6 @@ export function TournamenSportApp() {
     setCurrentUser(user);
 
     setAuthInput({
-      username: "",
       email: "",
       password: "",
     });
@@ -2253,37 +2246,6 @@ export function TournamenSportApp() {
               gap: "1rem",
             }}
           >
-            {false && authMode === "register" && (
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: "bold",
-                    textTransform: "uppercase",
-                    color: "#d1d5db",
-                    marginBottom: "4px",
-                  }}
-                >
-                  <span className="tc-auth-field-icon" aria-hidden="true">●</span> Nombre de usuario
-                </label>
-
-                <input
-                  type="text"
-                  placeholder="Ej.: Juan Pérez"
-                  value={authInput.username}
-                  onChange={(e) =>
-                    setAuthInput({
-                      ...authInput,
-                      username: e.target.value,
-                    })
-                  }
-                  required
-                  className="cr-input"
-                />
-              </div>
-            )}
-
             <div>
               <label
                 style={{
@@ -2372,7 +2334,7 @@ export function TournamenSportApp() {
             </button>
 
             <div style={{ textAlign: "center", marginTop: "0.5rem" }}>
-              <button type="button" onClick={() => { setActiveView("home"); setAuthInput({ username: "", email: "", password: "" }); }} style={{ background: "transparent", border: "none", color: "#9ca3af", fontSize: "0.8rem", cursor: "pointer" }}>
+              <button type="button" onClick={() => { setActiveView("home"); setAuthInput({ email: "", password: "" }); }} style={{ background: "transparent", border: "none", color: "#9ca3af", fontSize: "0.8rem", cursor: "pointer" }}>
                 ← Volver a la plataforma pública
               </button>
             </div>
