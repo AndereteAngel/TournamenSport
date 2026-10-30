@@ -74,31 +74,27 @@ export function Navbar({
           cursor: "pointer",
         }}
       >
-        <div
-          style={{
-            width: "30px",
-            height: "30px",
-            backgroundColor: "#242427",
-            border: "2px solid #ff9140",
-            borderRadius: "7px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "14px",
-            boxShadow: "0 2px 5px rgba(0,0,0,0.5)",
+        <button
+          type="button"
+          className="tc-navbar-admin-logo"
+          onClick={(event) => {
+            event.stopPropagation();
+            isAdmin ? onLogout?.() : onAdminClick?.();
           }}
+          title={isAdmin ? "Cerrar sesión de administrador" : "Ingresar como administrador"}
+          aria-label={isAdmin ? "Cerrar sesión de administrador" : "Ingresar como administrador"}
         >
-          <img src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166" alt="" aria-hidden="true" style={{ width: "25px", height: "27px", objectFit: "contain" }} />
-        </div>
+          <img src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166" alt="Acceso de administrador FEFUTIN" />
+        </button>
 
         <div>
           <span
             style={{
               fontFamily: "'Montserrat', sans-serif",
               fontWeight: 900,
-              fontSize: "0.8rem",
-              color: "#ffad70",
-              textShadow: "1px 1px 0px #000",
+              fontSize: "1.15rem",
+              color: "#ffffff",
+              textShadow: "0 2px 8px rgba(0,0,0,.85)",
               display: "block",
               lineHeight: "1.1",
             }}
@@ -204,15 +200,7 @@ export function Navbar({
           </button>
         )}
 
-        <button
-          type="button"
-          className="tc-admin-ball"
-          onClick={isAdmin ? onLogout : onAdminClick}
-          title={isAdmin ? "Cerrar sesión de administrador" : "Acceso de administrador"}
-          aria-label={isAdmin ? "Cerrar sesión de administrador" : "Acceso de administrador"}
-        >
-          ⚽
-        </button>
+
 
         <button
           onClick={onGoHome}
@@ -236,15 +224,7 @@ export function Navbar({
         </button>
       </div>
 
-      <button
-        type="button"
-        className="mobile-admin-btn tc-admin-ball"
-        onClick={isAdmin ? onLogout : onAdminClick}
-        title={isAdmin ? "Cerrar sesión de administrador" : "Acceso de administrador"}
-        aria-label={isAdmin ? "Cerrar sesión de administrador" : "Acceso de administrador"}
-      >
-        ⚽
-      </button>
+
 
       {/* HAMBURGUESA */}
       <button
