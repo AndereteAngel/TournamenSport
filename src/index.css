@@ -3821,3 +3821,61 @@ body[data-tc-theme="arena"],
   .tc-home-panel-art { min-height: 132px !important; }
   .tc-home-panel-art img { width: 76% !important; }
 }
+
+
+/* FEFUTIN — ilustración de futsal a sangre, sin márgenes negros */
+.tc-home-panel-art {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  box-sizing: border-box !important;
+  min-height: 168px !important;
+  margin: -1px -1px 1.25rem !important;
+  padding: 20px 24px !important;
+  overflow: hidden !important;
+  border-radius: 14px 14px 8px 8px !important;
+  background: #111 !important;
+}
+.tc-home-panel-art img {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 52% !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
+.tc-home-panel-art::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  background: linear-gradient(90deg, rgba(0,0,0,.82) 0%, rgba(0,0,0,.55) 42%, rgba(0,0,0,.08) 100%) !important;
+}
+.tc-home-panel-art > div {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  max-width: 72% !important;
+  align-items: flex-start !important;
+}
+.tc-home-panel-art span {
+  color: #fff !important;
+  font-size: .72rem !important;
+  letter-spacing: .2em !important;
+}
+.tc-home-panel-art strong {
+  color: #fff !important;
+  font-size: clamp(1.2rem, 3.5vw, 1.8rem) !important;
+  line-height: 1.12 !important;
+  text-shadow: 0 2px 12px rgba(0,0,0,.9) !important;
+}
+@media (max-width: 600px) {
+  .tc-home-panel-art {
+    min-height: 132px !important;
+    padding: 14px 16px !important;
+  }
+  .tc-home-panel-art > div { max-width: 78% !important; }
+}
