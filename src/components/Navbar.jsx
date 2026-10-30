@@ -103,7 +103,7 @@ export function Navbar({
               lineHeight: "1.1",
             }}
           >
-            {currentTitle || "TournamenSport"}
+            {currentTitle || "FEFUTIN"}
           </span>
 
           <span
@@ -189,14 +189,14 @@ export function Navbar({
           <TCIcon name="user" size={13} /> {username}
         </div>
 
-        <button
+        {currentUser && (        <button
           type="button"
           onClick={() => setMedalOpen((open) => !open)}
           style={medalButtonStyle}
           title="Ver historial de medallas"
         >
           <TCIcon name="medal" size={19} /> <span>Medallero</span> <span className="tc-medal-total">{medals.gold + medals.silver + medals.bronze + medals.diploma}</span>
-        </button>
+        </button>)}
 
         {isAdmin && (
           <button type="button" onClick={onGoStats} style={medalButtonStyle}>
@@ -321,13 +321,13 @@ export function Navbar({
             </button>
           )}
 
-          <button
+          {currentUser && (          <button
             type="button"
             onClick={() => setMedalOpen((open) => !open)}
             style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem" }}
           >
             <TCIcon name="medal" size={19} /> <span>Mi medallero</span> <span className="tc-medal-total">{medals.gold + medals.silver + medals.bronze + medals.diploma}</span>
-          </button>
+          </button>)}
 
           {isAdmin && (
             <button type="button" onClick={() => { setMenuOpen(false); onGoStats?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem" }}>
