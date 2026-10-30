@@ -2446,32 +2446,12 @@ export function TournamenSportApp() {
                 marginTop: "0.5rem",
               }}
             >
-              {authMode === "login" ? <><TCIcon name="user" size={17} /> Iniciar sesión</> : <><TCIcon name="shield" size={17} /> Registrarse</>}
+              <><TCIcon name="shield" size={17} /> Ingresar como administrador</>
             </button>
 
-            <div
-              style={{
-                textAlign: "center",
-                marginTop: "0.5rem",
-              }}
-            >
-              <button
-                type="button"
-                onClick={() =>
-                  setAuthMode(authMode === "login" ? "register" : "login")
-                }
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#60a5fa",
-                  fontSize: "0.8rem",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                }}
-              >
-                {authMode === "login"
-                  ? "¿No tienes cuenta? Regístrate aquí"
-                  : "¿Ya tienes cuenta? Inicia sesión"}
+            <div style={{ textAlign: "center", marginTop: "0.5rem" }}>
+              <button type="button" onClick={() => { setActiveView("home"); setAuthInput({ username: "", email: "", password: "" }); }} style={{ background: "transparent", border: "none", color: "#9ca3af", fontSize: "0.8rem", cursor: "pointer" }}>
+                ← Volver a la plataforma pública
               </button>
             </div>
           </form>
@@ -2500,7 +2480,7 @@ export function TournamenSportApp() {
             margin: "auto",
           }}
         >
-          <div
+          {isAdmin && <div
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -2599,7 +2579,7 @@ export function TournamenSportApp() {
             </button>
           )}
 
-          <div
+          {isAdmin && <div
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
@@ -3038,7 +3018,7 @@ export function TournamenSportApp() {
           </div>
         </div>
         </div>
-      ) : activeView === "create" ? (
+      ) : activeView === "create" && isAdmin ? (
         <div className="tc-form-screen tc-create-screen">
         <div className="tc-create-artwork">
           <img src="/tournament-join.svg" alt="Equipos deportivos preparados para una competencia" />
@@ -3049,7 +3029,7 @@ export function TournamenSportApp() {
           onCancel={() => setActiveView("home")}
         />
         </div>
-      ) : activeView === "edit" ? (
+      ) : activeView === "edit" && isAdmin ? (
         <div className="tc-form-screen tc-edit-screen">
         <CreateTournament
           isEditing={true}
@@ -3061,7 +3041,7 @@ export function TournamenSportApp() {
           }}
         />
         </div>
-      ) : activeView === "join" ? (
+      ) : activeView === "join" && isAdmin ? (
         <div className="tc-form-screen tc-join-screen">
         <div className="tc-join-artwork">
           <img src="/tournament-join.svg" alt="Ilustración de una competencia deportiva" />
@@ -3175,10 +3155,7 @@ export function TournamenSportApp() {
                 const registration = (activeTournament.groups || []).find((group) => group?.name === "__INSCRIPCIONES__");
                 const participants = Array.isArray(registration?.teams) ? registration.teams : [];
                 const capacity = Number(registration?.capacity || 0);
-                const isOwner = currentUser && (
-                  activeTournament.created_by_user_id === currentUser.id ||
-                  (!activeTournament.created_by_user_id && currentUser.username === activeTournament.created_by)
-                );
+                const canManage = isAdmin;
                 return (
                   <>
                     <h2 className="cr-title" style={{ marginBottom: "0.5rem" }}>📝 Inscripciones abiertas</h2>
@@ -3196,7 +3173,7 @@ export function TournamenSportApp() {
                       </div>
                     ) : <p style={{ color: "#9ca3af" }}>Todavía no hay jugadores inscriptos.</p>}
                     <p style={{ color: "#9ca3af", fontSize: "0.8rem" }}>El creador dará comienzo al torneo cuando esté listo. Al iniciar, se cerrarán las inscripciones y se sortearán los grupos y partidos.</p>
-                    {(isOwner || currentUser?.id === ADMIN_UID) && (
+                    {canManage && (
                       <div style={{ marginTop: "1rem", padding: "0.85rem", background: "#171522", border: "1px solid #3b82f6", borderRadius: "10px" }}>
                         <h3 style={{ color: "#fff", margin: "0 0 0.35rem" }}><TCIcon name="users" /> Agregar jugadores registrados</h3>
                         <p style={{ color: "#9ca3af", fontSize: "0.78rem", marginTop: 0 }}>Seleccioná cuentas existentes por alias. Solo se muestran los nombres públicos y se respeta el cupo.</p>
@@ -3226,7 +3203,7 @@ export function TournamenSportApp() {
                         )}
                       </div>
                     )}
-                    {(isOwner || currentUser?.id === ADMIN_UID) && (
+                    {canManage && (
                       <button type="button" className="cr-btn-gold" onClick={handleStartRegistrationTournament} style={{ width: "100%", marginTop: "0.5rem" }}>
                         <TCIcon name="flag" /> Dar comienzo al torneo
                       </button>
@@ -3244,6 +3221,7 @@ export function TournamenSportApp() {
               onUpdateTournament={handleUpdateTournamentInSupabase}
               onProceedToPlayoffs={handleProceedToPlayoffs}
               currentUser={currentUser}
+              isAdmin={isAdmin}
             />
           )}
 
@@ -3309,6 +3287,7 @@ export function TournamenSportApp() {
             tournament={activeTournament}
             onUpdateTournament={handleUpdateTournamentInSupabase}
             onFinishTournament={handleFinishTournament}
+            isAdmin={isAdmin}
           />
 
           {(isTournamentAdmin || isAdmin) && activeTournament.status !== "Finalizado" && (
