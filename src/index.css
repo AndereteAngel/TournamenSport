@@ -3156,3 +3156,144 @@ table td { color:var(--fefutin-ink) !important; }
   .tc-navbar { gap:8px !important; }
   .tc-navbar .mobile-menu-btn { background:#f5f6f8 !important; color:var(--fefutin-ink) !important; }
 }
+
+
+/* =========================================================
+   FEFUTIN — AJUSTES DE CONTRASTE Y ALINEACIÓN
+   ========================================================= */
+:root {
+  --fefutin-ink: #171c27;
+  --fefutin-red: #b5122a;
+  --fefutin-paper: #ffffff;
+}
+
+/* Fondo institucional: exclusivamente blanco y negro, sin matices azules */
+html, body, #root,
+body[data-tc-theme],
+body[data-tc-theme="clash"],
+body[data-tc-theme="arena"] {
+  background: #fff !important;
+  background-image: none !important;
+  color: var(--fefutin-ink) !important;
+}
+.cr-container {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+/* Tarjetas claras: borde negro visible. Tarjetas oscuras: borde blanco. */
+.cr-card, .tc-home-panel, .tc-home-action,
+.tc-home-action-create, .tc-home-action-join,
+.tc-home-tournament-item, .tc-auth-card,
+.tc-stats-card, .tc-champion-card {
+  border: 2px solid #171c27 !important;
+}
+.cr-card, .tc-home-panel, .tc-home-action,
+.tc-home-action-create, .tc-home-action-join,
+.tc-home-tournament-item, .tc-auth-card,
+.tc-stats-card {
+  background: #fff !important;
+  background-image: none !important;
+  color: #171c27 !important;
+}
+.tc-arena-hero, .tc-navbar-dark, .tc-home-action-dark {
+  background: #111 !important;
+  background-image: none !important;
+  border: 2px solid #fff !important;
+}
+
+/* Neutralizar los fondos azules heredados en acciones y elementos de interfaz */
+.tc-home-action-create,
+.tc-home-action-join,
+.tc-home-admin-action,
+.tc-home-tournaments-heading button,
+.tc-navbar .desktop-nav-actions button,
+.tc-navbar .mobile-admin-btn,
+.tc-navbar .mobile-menu-btn {
+  background-image: none !important;
+}
+.tc-home-action-create,
+.tc-home-action-join {
+  background: #fff !important;
+  border: 2px solid #171c27 !important;
+  color: #171c27 !important;
+}
+.tc-home-action-create h3, .tc-home-action-create p,
+.tc-home-action-join h3, .tc-home-action-join p {
+  color: #171c27 !important;
+}
+.tc-home-action-icon {
+  color: #b5122a !important;
+  background: #fff !important;
+  border: 1px solid #171c27 !important;
+}
+
+/* Encabezado de torneos: texto legible y controles centrados */
+.tc-home-tournaments-heading {
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 12px !important;
+  text-align: center !important;
+  width: 100% !important;
+}
+.tc-home-tournaments-heading > div {
+  justify-content: center !important;
+  width: 100% !important;
+}
+.tc-home-tournaments-heading h3 {
+  color: #171c27 !important;
+  text-shadow: none !important;
+  text-align: center !important;
+}
+.tc-home-tournaments-heading button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: center !important;
+  margin: 0 auto !important;
+  padding: 9px 18px !important;
+  border: 1px solid #171c27 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #171c27 !important;
+  font-weight: 800 !important;
+}
+.tc-home-tournaments-heading button:hover {
+  background: #171c27 !important;
+  color: #fff !important;
+}
+
+/* Acceso/acción de administración centrado y sin azul */
+.tc-home-admin-action {
+  display: flex !important;
+  width: min(100%, 280px) !important;
+  margin: 0 auto 1rem !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  background: #171c27 !important;
+  border: 2px solid #fff !important;
+  color: #fff !important;
+}
+.tc-home-admin-action:hover {
+  background: #b5122a !important;
+  border-color: #171c27 !important;
+}
+
+/* Centrado del grupo de acciones de la barra superior */
+.tc-navbar .desktop-nav-actions {
+  justify-content: center !important;
+  align-items: center !important;
+}
+.tc-navbar .desktop-nav-actions button,
+.tc-navbar .mobile-admin-btn {
+  justify-content: center !important;
+  text-align: center !important;
+}
+.tc-navbar .desktop-nav-actions button:last-child,
+.tc-navbar .mobile-admin-btn {
+  background: #b5122a !important;
+  color: #fff !important;
+  border: 2px solid #171c27 !important;
+}
