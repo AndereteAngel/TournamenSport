@@ -206,11 +206,12 @@ export function Navbar({
 
         <button
           type="button"
+          className="tc-admin-ball"
           onClick={isAdmin ? onLogout : onAdminClick}
-          style={{ ...medalButtonStyle, borderColor: isAdmin ? "#b5122a" : "#d1d5db", color: "#fff" }}
+          title={isAdmin ? "Cerrar sesión de administrador" : "Acceso de administrador"}
+          aria-label={isAdmin ? "Cerrar sesión de administrador" : "Acceso de administrador"}
         >
-          <TCIcon name={isAdmin ? "log-out" : "shield"} size={16} />
-          <span>{isAdmin ? "Salir ADMIN" : "ADMIN"}</span>
+          ⚽
         </button>
 
         <button
@@ -237,25 +238,12 @@ export function Navbar({
 
       <button
         type="button"
-        className="mobile-admin-btn"
+        className="mobile-admin-btn tc-admin-ball"
         onClick={isAdmin ? onLogout : onAdminClick}
-        style={{
-          display: "none",
-          alignItems: "center",
-          gap: "5px",
-          padding: "0.42rem 0.55rem",
-          background: "linear-gradient(145deg, #242427, #111113)",
-          border: "1px solid #d1d5db",
-          borderRadius: "8px",
-          color: "#fff",
-          fontSize: "0.68rem",
-          fontWeight: 900,
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
+        title={isAdmin ? "Cerrar sesión de administrador" : "Acceso de administrador"}
+        aria-label={isAdmin ? "Cerrar sesión de administrador" : "Acceso de administrador"}
       >
-        <TCIcon name={isAdmin ? "log-out" : "shield"} size={15} />
-        {isAdmin ? "SALIR" : "ADMIN"}
+        ⚽
       </button>
 
       {/* HAMBURGUESA */}
