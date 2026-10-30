@@ -18,3 +18,6 @@ No configures aquí las credenciales de TournamentClash si querés mantener los 
 
 ## Deploy
 En Netlify, conectá este repositorio y configurá las mismas dos variables de entorno. Comando de build: `npm run build`; directorio de publicación: `dist`.
+
+## Prueba de despliegue
+Commit de prueba para solicitar a Netlify un Branch Deploy desde `prueba-fefutin`.
