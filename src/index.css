@@ -3297,3 +3297,184 @@ body[data-tc-theme="arena"] {
   color: #fff !important;
   border: 2px solid #171c27 !important;
 }
+
+
+/* FEFUTIN — CORRECCIÓN REAL DE BACKGROUND Y LEGIBILIDAD */
+:root {
+  color-scheme: light !important;
+  --fefutin-ink: #171717;
+  --fefutin-paper: #ffffff;
+  --fefutin-red: #b5122a;
+}
+
+/* Fondo de página completo: blanco sólido. Sin fondos azules ni degradados. */
+html, body, #root,
+body[data-tc-theme],
+body[data-tc-theme="clash"],
+body[data-tc-theme="arena"],
+.cr-container,
+.cr-container.tc-theme-clash {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #171717 !important;
+}
+
+/* La cabecera visual puede ser negra, pero no azul. */
+.tc-arena-hero {
+  background: #111111 !important;
+  background-color: #111111 !important;
+  background-image: none !important;
+  border: 2px solid #ffffff !important;
+}
+.tc-arena-hero > img {
+  opacity: .16 !important;
+  filter: grayscale(1) contrast(1.1) !important;
+}
+.tc-home-hero-overlay {
+  background: rgba(0,0,0,.78) !important;
+}
+.tc-home-hero-overlay h1,
+.tc-home-hero-overlay p,
+.tc-home-eyebrow,
+.tc-home-hero-tag {
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+/* Tarjetas claras: borde negro. Textos oscuros de alto contraste. */
+.cr-card, .sports-card, .tc-home-panel,
+.tc-home-action, .tc-home-action-create, .tc-home-action-join,
+.tc-home-tournament-item, .tc-auth-card, .tc-stats-card {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border: 2px solid #171717 !important;
+  color: #171717 !important;
+  box-shadow: 0 8px 22px rgba(0,0,0,.10) !important;
+}
+.cr-card h1, .cr-card h2, .cr-card h3, .cr-card h4,
+.cr-card p, .cr-card label, .cr-card span, .cr-card strong,
+.cr-card small, .cr-card td, .cr-card th,
+.tc-home-panel h1, .tc-home-panel h2, .tc-home-panel h3,
+.tc-home-panel p, .tc-home-panel label,
+.tc-home-action h3, .tc-home-action p,
+.tc-home-tournament-item, .tc-home-tournament-item * {
+  color: #171717 !important;
+  text-shadow: none !important;
+}
+.tc-home-action-create, .tc-home-action-join {
+  border: 2px solid #171717 !important;
+  background: #ffffff !important;
+}
+.tc-home-action-icon {
+  color: #b5122a !important;
+  background: #ffffff !important;
+  border: 1px solid #171717 !important;
+}
+
+/* Navbar negra con borde blanco y todos sus textos legibles. */
+.tc-navbar {
+  background: #111111 !important;
+  background-color: #111111 !important;
+  background-image: none !important;
+  border: 2px solid #ffffff !important;
+  color: #ffffff !important;
+}
+.tc-navbar span, .tc-navbar button, .tc-navbar a,
+.tc-navbar svg, .tc-navbar .desktop-nav-actions > div {
+  color: #ffffff !important;
+}
+.tc-navbar .desktop-nav-actions button,
+.tc-navbar .mobile-admin-btn,
+.tc-navbar .mobile-menu-btn {
+  background: #222222 !important;
+  border: 1px solid #ffffff !important;
+  color: #ffffff !important;
+}
+.tc-navbar .desktop-nav-actions button:last-child,
+.tc-navbar .mobile-admin-btn {
+  background: #b5122a !important;
+  border: 2px solid #ffffff !important;
+  color: #ffffff !important;
+}
+
+/* Encabezado Torneos en la Nube: no más texto gris claro sobre fondo claro. */
+.tc-home-tournaments-heading,
+.tc-home-tournaments-heading h3,
+.tc-home-tournaments-heading span,
+.tc-home-tournaments-heading svg {
+  color: #171717 !important;
+  text-shadow: none !important;
+}
+.tc-home-tournaments-heading button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: center !important;
+  margin: 0 auto !important;
+  padding: 9px 18px !important;
+  background: #171717 !important;
+  border: 2px solid #171717 !important;
+  color: #ffffff !important;
+}
+.tc-home-tournaments-heading button svg {
+  color: #ffffff !important;
+}
+
+/* Centrado de acciones administrativas y botón de recarga. */
+.tc-home-admin-action {
+  display: flex !important;
+  width: min(100%, 280px) !important;
+  margin: 0 auto 1rem !important;
+  justify-content: center !important;
+  align-items: center !important;
+  background: #171717 !important;
+  border: 2px solid #ffffff !important;
+  color: #ffffff !important;
+}
+.tc-home-tournaments-heading {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  gap: 10px !important;
+}
+.tc-home-tournaments-heading > div {
+  justify-content: center !important;
+  width: 100% !important;
+}
+
+/* Formularios y pantallas internas: superficies claras, texto oscuro. */
+.tc-form-screen, .tc-groups-screen, .tc-playoffs-screen,
+.tc-stats-screen, .tc-competition-screen {
+  background: #ffffff !important;
+  background-image: none !important;
+  color: #171717 !important;
+}
+.tc-form-screen .cr-card, .tc-groups-screen .cr-card,
+.tc-playoffs-screen .cr-card, .tc-stats-screen .cr-card {
+  background: #ffffff !important;
+  border: 2px solid #171717 !important;
+  color: #171717 !important;
+}
+.tc-form-screen .cr-card *,
+.tc-groups-screen .cr-card *,
+.tc-playoffs-screen .cr-card *,
+.tc-stats-screen .cr-card * {
+  text-shadow: none !important;
+}
+.tc-form-screen .cr-card h1, .tc-form-screen .cr-card h2,
+.tc-form-screen .cr-card h3, .tc-form-screen .cr-card p,
+.tc-form-screen .cr-card label, .tc-form-screen .cr-card span,
+.tc-groups-screen .cr-card *, .tc-playoffs-screen .cr-card *,
+.tc-stats-screen .cr-card * {
+  color: #171717 !important;
+}
+.tc-form-screen input, .tc-form-screen select, .tc-form-screen textarea,
+.tc-groups-screen input, .tc-playoffs-screen input {
+  background: #ffffff !important;
+  color: #171717 !important;
+  border: 1px solid #555555 !important;
+}
