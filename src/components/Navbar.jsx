@@ -10,6 +10,8 @@ export function Navbar({
   tournaments = [],
   isAdmin = false,
   onGoStats,
+  onAdminClick,
+  onLogout,
 }) {
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -24,7 +26,7 @@ export function Navbar({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const username = currentUser?.username || "Jugador";
+  const username = currentUser?.username || "Visitante";
   const medals = getPlayerMedals(tournaments, username);
   const medalButtonStyle = { display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.45rem", padding: "0.45rem 0.7rem", background: "linear-gradient(145deg, #242427, #111113)", border: "1px solid #ff9140", borderRadius: "9px", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "inset 0 1px rgba(255,255,255,.08), 0 3px 10px rgba(0,0,0,.22)" };
 
@@ -203,6 +205,15 @@ export function Navbar({
         )}
 
         <button
+          type="button"
+          onClick={isAdmin ? onLogout : onAdminClick}
+          style={{ ...medalButtonStyle, borderColor: isAdmin ? "#b5122a" : "#d1d5db", color: "#fff" }}
+        >
+          <TCIcon name={isAdmin ? "log-out" : "shield"} size={16} />
+          <span>{isAdmin ? "Salir ADMIN" : "ADMIN"}</span>
+        </button>
+
+        <button
           onClick={onGoHome}
           style={{
             padding: "0.4rem 0.75rem",
@@ -323,6 +334,19 @@ export function Navbar({
               <TCIcon name="chart" size={17} /> <span>Estadísticas</span>
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              if (isAdmin) onLogout?.();
+              else onAdminClick?.();
+            }}
+            style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem", borderColor: isAdmin ? "#b5122a" : "#d1d5db" }}
+          >
+            <TCIcon name={isAdmin ? "log-out" : "shield"} size={16} />
+            <span>{isAdmin ? "Salir ADMIN" : "Ingresar como ADMIN"}</span>
+          </button>
 
           <button
             onClick={() => {
