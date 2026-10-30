@@ -147,6 +147,11 @@ create policy "visitas_select_own"
   on public.visitas for select to authenticated
   using (auth.uid() = user_id);
 
+drop policy if exists "visitas_select_admin" on public.visitas;
+create policy "visitas_select_admin"
+  on public.visitas for select to authenticated
+  using (auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid);
+
 drop policy if exists "visitas_insert_own" on public.visitas;
 create policy "visitas_insert_own"
   on public.visitas for insert to authenticated
