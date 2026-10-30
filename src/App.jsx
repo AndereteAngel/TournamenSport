@@ -1034,6 +1034,13 @@ export function TournamenSportApp() {
   const isAdmin = currentUser?.id === ADMIN_UID;
 
   useEffect(() => {
+    if (!isAdmin && ["create", "edit", "join", "stats"].includes(activeView)) {
+      setActiveView("home");
+      setActiveTournament(null);
+    }
+  }, [isAdmin, activeView]);
+
+  useEffect(() => {
     document.documentElement.dataset.tcTheme = "clash";
     document.body.dataset.tcTheme = "clash";
     try {
