@@ -1006,7 +1006,7 @@ function AdminStats({ onBack }) {
   );
 }
 
-export function FEFUTINApp() {
+export function TournamenSportApp() {
   const {
     notice,
     showNotice,
@@ -1367,84 +1367,6 @@ export function FEFUTINApp() {
     const username = authInput.username.trim();
     const email = authInput.email.trim().toLowerCase();
     const password = authInput.password.trim();
-
-    if (authMode === "register") {
-      if (!username || !email || !password) {
-        showNotice("❌ Completá todos los campos.");
-        return;
-      }
-
-      if (username.length < 3) {
-        showNotice("❌ El alias debe tener al menos 3 caracteres.");
-        return;
-      }
-
-      if (password.length < 6) {
-        showNotice("❌ La contraseña debe tener al menos 6 caracteres.");
-        return;
-      }
-
-      const { data: existingProfile, error: profileError } = await supabase
-        .from("profiles")
-        .select("id")
-        .ilike("username", username)
-        .maybeSingle();
-
-      if (profileError)
-        console.error("Error al verificar alias:", profileError);
-
-      if (existingProfile) {
-        showNotice("❌ Este alias ya está registrado.");
-        return;
-      }
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { username },
-        },
-      });
-
-      if (error) {
-        console.error("Error al registrar usuario:", error);
-
-        if (error.message?.toLowerCase().includes("already registered")) {
-          showNotice("❌ Este email ya está registrado.");
-        } else {
-          showNotice(`❌ No se pudo registrar el usuario: ${error.message}`);
-        }
-
-        return;
-      }
-
-      if (!data.session) {
-        showNotice(
-          "✅ Registro realizado.\n\nRevisá tu correo electrónico para confirmar la cuenta y luego iniciá sesión."
-        );
-
-        setAuthInput({
-          username: "",
-          email: "",
-          password: "",
-        });
-
-        setAuthMode("login");
-        return;
-      }
-
-      const user = await buildCurrentUser(data.user);
-
-      setCurrentUser(user);
-
-      setAuthInput({
-        username: "",
-        email: "",
-        password: "",
-      });
-
-      return;
-    }
 
     if (!email || !password) {
       showNotice("❌ Ingresá tu email y contraseña.");
@@ -2425,7 +2347,7 @@ export function FEFUTINApp() {
               </label>
 
               <input
-                type={authMode === "login" && showPassword ? "text" : "password"}
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 value={authInput.password}
                 onChange={(e) =>
@@ -2467,7 +2389,7 @@ export function FEFUTINApp() {
           <img src="/tournament-join.svg" alt="Ilustración deportiva de equipos listos para competir" />
           <div className="tc-home-hero-overlay">
             <span className="tc-home-eyebrow">TORNEOS Y COMPETENCIAS DEPORTIVAS</span>
-            <h1>TOURNAMEN<span>SPORT</span></h1>
+            <h1>FEFUTIN</h1>
             <p>Organizá. Competí. Compartí el deporte.</p>
             <div className="tc-home-hero-tag"><span></span> TU PRÓXIMA VICTORIA TE ESPERA</div>
           </div>
@@ -3341,4 +3263,4 @@ export function FEFUTINApp() {
   );
 }
 
-export default FEFUTINApp;
+export default TournamenSportApp;
