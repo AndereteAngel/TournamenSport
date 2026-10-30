@@ -372,7 +372,7 @@ function AdminStats({ onBack }) {
                 fontSize: "0.8rem",
               }}
             >
-              Panel privado de TournamenSport
+              Panel privado de FEFUTIN
             </p>
           </div>
 
@@ -1006,7 +1006,7 @@ function AdminStats({ onBack }) {
   );
 }
 
-export function TournamenSportApp() {
+export function FEFUTINApp() {
   const {
     notice,
     showNotice,
@@ -1299,7 +1299,7 @@ export function TournamenSportApp() {
     const confirmar = await confirmTournament(
       `⚠️ ELIMINAR TORNEO\n\n` +
         `"${tournament.title}"\n\n` +
-        `Esta acción eliminará el torneo de TournamenSport.\n\n` +
+        `Esta acción eliminará el torneo de FEFUTIN.\n\n` +
         `¿Estás seguro de que querés continuar?`
     );
 
@@ -1562,7 +1562,7 @@ export function TournamenSportApp() {
   };
 
   const handleRegisterForTournament = async (tournament) => {
-    if (!currentUser || !tournament?.id) return;
+    if (!isAdmin || !tournament?.id) return;
 
     const { data: latest, error: fetchError } = await supabase
       .from("tournaments")
@@ -2313,12 +2313,12 @@ export function TournamenSportApp() {
           >
             <img
               src="/tc-crest.svg"
-              alt="Escudo original de TournamenSport"
+              alt="Escudo original de FEFUTIN"
               className="tc-login-crest"
             />
 
             <div className="tc-auth-kicker"><span></span> PLATAFORMA DE TORNEOS DEPORTIVOS <span></span></div>
-            <h1 className="cr-logo-title">TournamenSport</h1>
+            <h1 className="cr-logo-title">FEFUTIN</h1>
             <p className="tc-auth-tagline">Acceso exclusivo para la administración de FEFUTIN.</p>
           </div>
 
@@ -2463,7 +2463,7 @@ export function TournamenSportApp() {
         </div>
       ) : activeView === "home" ? (
         <div className="tc-home-screen">
-        <section className="tc-arena-hero" aria-label="Bienvenido a la arena de TournamenSport">
+        <section className="tc-arena-hero" aria-label="Bienvenido a la arena de FEFUTIN">
           <img src="/tournament-join.svg" alt="Ilustración deportiva de equipos listos para competir" />
           <div className="tc-home-hero-overlay">
             <span className="tc-home-eyebrow">TORNEOS Y COMPETENCIAS DEPORTIVAS</span>
@@ -2523,7 +2523,7 @@ export function TournamenSportApp() {
                     display: "block",
                   }}
                 >
-                  Participante
+                  Administrador
                 </span>
 
                 <h2
@@ -2898,7 +2898,7 @@ export function TournamenSportApp() {
                         flexShrink: 0,
                       }}
                     >
-                    {String(t.status || "").trim().toLocaleLowerCase("es") === "inscripciones" && (
+                    {isAdmin && String(t.status || "").trim().toLocaleLowerCase("es") === "inscripciones" && (
                       <button
                         type="button"
                         disabled={(() => {
@@ -3341,4 +3341,4 @@ export function TournamenSportApp() {
   );
 }
 
-export default TournamenSportApp;
+export default FEFUTINApp;
