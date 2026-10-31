@@ -1025,6 +1025,7 @@ export function TournamenSportApp() {
   const [joinCodeInput, setJoinCodeInput] = useState("");
   const [tournaments, setTournaments] = useState([]);
   const [tournamentCategoryFilter, setTournamentCategoryFilter] = useState("Todas");
+  const [tournamentDivisionFilter, setTournamentDivisionFilter] = useState("Todas");
   const [loading, setLoading] = useState(false);
   const [editingTournament, setEditingTournament] = useState(false);
   const [deletingTournamentId, setDeletingTournamentId] = useState(null);
@@ -2194,11 +2195,20 @@ export function TournamenSportApp() {
     ).filter(Boolean)
   )].sort((a, b) => a.localeCompare(b, "es"));
 
-  const filteredTournaments = tournamentCategoryFilter === "Todas"
-    ? tournaments
-    : tournaments.filter((tournament) =>
-        getTournamentCategory(tournament) === tournamentCategoryFilter
-      );
+  const getTournamentDivision = (tournament) => {
+    const category = `${getTournamentCategory(tournament)} ${tournament?.game || ""}`.toLocaleLowerCase("es");
+    if (/femenin|mujer/.test(category)) return "Femenino";
+    if (/mayor|adult|senior|primera/.test(category)) return "Mayores";
+    return "Infantil";
+  };
+
+  const filteredTournaments = tournaments.filter((tournament) => {
+    const matchesCategory = tournamentCategoryFilter === "Todas" ||
+      getTournamentCategory(tournament) === tournamentCategoryFilter;
+    const matchesDivision = tournamentDivisionFilter === "Todas" ||
+      getTournamentDivision(tournament) === tournamentDivisionFilter;
+    return matchesCategory && matchesDivision;
+  });
 
 
   return (
@@ -2380,10 +2390,25 @@ export function TournamenSportApp() {
           }}
         >
           <div className="tc-home-panel-art" aria-label="FEFUTIN — Fútbol formativo">
+            <img src="/WhatsApp%20Image%202026-10-31%20at%2010.45.37.jpeg" alt="Escudo Liga FEFUTIN" />
             <div>
               <span>FEFUTIN</span>
               <strong>FÚTBOL FORMATIVO</strong>
             </div>
+          </div>
+          <div className="tc-home-divisions" aria-label="Divisiones de la liga">
+            <button type="button" className="tc-home-division-card" onClick={() => { setTournamentDivisionFilter("Infantil"); setTournamentCategoryFilter("Todas"); }}>
+              <img src="/WhatsApp%20Image%202026-10-31%20at%2010.45.23.jpeg" alt="" />
+              <span>INFANTIL</span>
+            </button>
+            <button type="button" className="tc-home-division-card" onClick={() => { setTournamentDivisionFilter("Femenino"); setTournamentCategoryFilter("Todas"); }}>
+              <img src="/WhatsApp%20Image%202026-10-30%20at%2021.11.20.jpeg" alt="" />
+              <span>FEMENINO</span>
+            </button>
+            <button type="button" className="tc-home-division-card" onClick={() => { setTournamentDivisionFilter("Mayores"); setTournamentCategoryFilter("Todas"); }}>
+              <img src="/WhatsApp%20Image%202026-10-30%20at%2020.59.32.jpeg" alt="" />
+              <span>MAYORES</span>
+            </button>
           </div>
           {isAdmin && <div
             style={{
@@ -2624,12 +2649,12 @@ export function TournamenSportApp() {
                   textTransform: "uppercase",
                 }}
               >
-                Buscar torneos por categoría
+                {tournamentDivisionFilter === "Todas" ? "Buscar torneos por categoría" : `Torneos de ${tournamentDivisionFilter}`} · <button type="button" className="tc-home-filter-reset" onClick={() => { setTournamentDivisionFilter("Todas"); setTournamentCategoryFilter("Todas"); }}>Ver todas las divisiones</button>
               </label>
               <select
                 id="tournament-category-filter"
                 value={tournamentCategoryFilter}
-                onChange={(e) => setTournamentCategoryFilter(e.target.value)}
+                onChange={(e) => { setTournamentCategoryFilter(e.target.value); setTournamentDivisionFilter("Todas"); }}
                 className="cr-input"
                 style={{ width: "100%" }}
               >
