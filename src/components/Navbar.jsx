@@ -126,6 +126,7 @@ export function Navbar({
       >
         {tournamentCode && (
           <button
+            className="tc-nav-code"
             onClick={handleCopyCode}
             title="Copiar código para compartir"
             style={{
@@ -186,6 +187,7 @@ export function Navbar({
         </div>
 
         {currentUser && (        <button
+          className="tc-nav-medals"
           type="button"
           onClick={() => setMedalOpen((open) => !open)}
           style={medalButtonStyle}
@@ -195,7 +197,7 @@ export function Navbar({
         </button>)}
 
         {isAdmin && (
-          <button type="button" onClick={onGoStats} style={medalButtonStyle}>
+          <button className="tc-nav-stats" type="button" onClick={onGoStats} style={medalButtonStyle}>
             <TCIcon name="chart" size={17} /> <span>Estadísticas</span>
           </button>
         )}
@@ -203,6 +205,7 @@ export function Navbar({
 
 
         <button
+          className="tc-nav-home"
           onClick={onGoHome}
           style={{
             padding: "0.4rem 0.75rem",
@@ -403,6 +406,41 @@ export function Navbar({
       {/* CSS RESPONSIVE */}
       <style>{`
         .mobile-nav-quick-actions { display: none; }
+
+        @media (min-width: 641px) {
+          .tc-navbar .desktop-nav-actions > .tc-nav-code {
+            background: linear-gradient(180deg, #343943, #171c27) !important;
+            border: 1px solid #687386 !important;
+            border-bottom: 3px solid #0b0e14 !important;
+            color: #e5e7eb !important;
+            box-shadow: 0 3px 9px rgba(0,0,0,.28) !important;
+          }
+          .tc-navbar .desktop-nav-actions > .tc-nav-medals {
+            background: linear-gradient(180deg, #5b4818, #29200d) !important;
+            border: 1px solid #e5bd55 !important;
+            border-bottom: 3px solid #8a681b !important;
+            color: #ffe08a !important;
+            box-shadow: 0 3px 10px rgba(218,165,32,.16) !important;
+          }
+          .tc-navbar .desktop-nav-actions > .tc-nav-stats {
+            background: linear-gradient(180deg, #173d5c, #102638) !important;
+            border: 1px solid #4e91bd !important;
+            border-bottom: 3px solid #0a1b2a !important;
+            color: #c5e8ff !important;
+            box-shadow: 0 3px 10px rgba(48,130,190,.16) !important;
+          }
+          .tc-navbar .desktop-nav-actions > .tc-nav-home {
+            background: linear-gradient(180deg, #c5223b, #8f1026) !important;
+            border: 1px solid #f07889 !important;
+            border-bottom: 3px solid #5e0b19 !important;
+            color: #fff !important;
+            box-shadow: 0 3px 10px rgba(181,18,42,.25) !important;
+          }
+          .tc-navbar .desktop-nav-actions > button:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.12);
+          }
+        }
 
         @media (max-width: 640px) {
           .desktop-nav-actions { display: none !important; }
