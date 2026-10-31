@@ -3879,3 +3879,45 @@ body[data-tc-theme="arena"],
   }
   .tc-home-panel-art > div { max-width: 78% !important; }
 }
+
+
+/* FEFUTIN — banner institucional limpio mientras se integra la fotografía final. */
+.tc-home-panel-art {
+  justify-content: flex-start !important;
+  gap: clamp(16px, 3vw, 32px) !important;
+  background: linear-gradient(110deg, #080808 0%, #171c27 68%, #b5122a 100%) !important;
+}
+.tc-home-panel-art img {
+  position: relative !important;
+  inset: auto !important;
+  z-index: 2 !important;
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: clamp(76px, 13vw, 124px) !important;
+  height: clamp(76px, 13vw, 124px) !important;
+  object-fit: contain !important;
+  padding: 5px !important;
+  background: #fff !important;
+  border: 2px solid #b5122a !important;
+  border-radius: 12px !important;
+  opacity: 1 !important;
+  filter: none !important;
+  box-shadow: 0 5px 18px rgba(0,0,0,.35) !important;
+}
+.tc-home-panel-art::after { display: none !important; }
+.tc-home-panel-art > div {
+  z-index: 2 !important;
+  width: auto !important;
+  max-width: none !important;
+}
+.tc-home-panel-art span { color: #fff !important; }
+.tc-home-panel-art strong {
+  color: #fff !important;
+  font-size: clamp(1.15rem, 3.4vw, 1.8rem) !important;
+  line-height: 1.1 !important;
+}
+@media (max-width: 600px) {
+  .tc-home-panel-art { min-height: 118px !important; padding: 12px !important; gap: 12px !important; }
+  .tc-home-panel-art img { width: 76px !important; height: 76px !important; }
+  .tc-home-panel-art > div { max-width: calc(100% - 90px) !important; }
+}

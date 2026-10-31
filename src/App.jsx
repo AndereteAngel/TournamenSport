@@ -2379,10 +2379,13 @@ export function TournamenSportApp() {
             margin: "auto",
           }}
         >
-          <div className="tc-home-panel-art" aria-hidden="true">
-            <img src="/tournament-join.svg" alt="" />
+          <div className="tc-home-panel-art" aria-label="FEFUTIN — El deporte nos une">
+            <img
+              src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166"
+              alt="FEFUTIN"
+            />
             <div>
-              <span>FEFUTIN</span>
+              <span>FÚTBOL DE SALÓN</span>
               <strong>EL DEPORTE NOS UNE</strong>
             </div>
           </div>
