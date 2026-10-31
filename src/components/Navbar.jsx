@@ -226,6 +226,16 @@ export function Navbar({
 
 
 
+      {/* ACCESOS RÁPIDOS MÓVILES: mismo tamaño y alineados antes del menú. */}
+      <div className="mobile-nav-quick-actions">
+        <button type="button" className="mobile-nav-quick-btn mobile-nav-home" onClick={onGoHome}>
+          <TCIcon name="home" size={14} /> Inicio
+        </button>
+        <div className="mobile-nav-quick-btn mobile-nav-visitor" title={username}>
+          <TCIcon name="user" size={14} /> <span>{username}</span>
+        </div>
+      </div>
+
       {/* HAMBURGUESA */}
       <button
         onClick={() => setMenuOpen(!menuOpen)}
@@ -392,18 +402,49 @@ export function Navbar({
 
       {/* CSS RESPONSIVE */}
       <style>{`
+        .mobile-nav-quick-actions { display: none; }
+
         @media (max-width: 640px) {
-          .desktop-nav-actions {
-            display: none !important;
-          }
-
-          .mobile-menu-btn {
+          .desktop-nav-actions { display: none !important; }
+          .mobile-nav-quick-actions {
             display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 6px !important;
+            margin-left: auto !important;
+            margin-right: 7px !important;
           }
-
-          .mobile-admin-btn {
+          .mobile-nav-quick-btn {
+            box-sizing: border-box !important;
             display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 5px !important;
+            width: 82px !important;
+            min-width: 82px !important;
+            height: 34px !important;
+            min-height: 34px !important;
+            padding: 0 6px !important;
+            border: 1px solid #55555b !important;
+            border-radius: 7px !important;
+            background: #0d0d0f !important;
+            color: #fff !important;
+            font: 800 10px/1 'Montserrat', sans-serif !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
           }
+          .mobile-nav-home {
+            background: linear-gradient(135deg, #ff9140 0%, #ff7a1a 58%, #e85d04 100%) !important;
+            border-color: #ffb36b !important;
+          }
+          .mobile-nav-visitor span {
+            display: block !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+          }
+          .mobile-menu-btn { display: flex !important; flex: 0 0 auto !important; }
+          .mobile-admin-btn { display: inline-flex !important; }
         }
       `}</style>
     </div>
