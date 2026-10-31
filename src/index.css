@@ -4078,3 +4078,38 @@ body[data-tc-theme="arena"],
   .tc-home-division-card { height: 108px; border-radius: 9px; }
   .tc-home-division-card span { padding: 9px 2px; font-size: .65rem; letter-spacing: .02em; }
 }
+
+
+/* Ajustes de la cabecera y tarjetas individuales de torneos. */
+.tc-home-panel-art > img {
+  width: clamp(105px, 16vw, 158px);
+  height: clamp(105px, 16vw, 158px);
+  object-fit: contain;
+  background: transparent;
+  mix-blend-mode: multiply;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.35));
+}
+.tc-home-tournament-card {
+  position: relative;
+  min-height: 82px;
+  padding: .85rem 1rem !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  border-left: 4px solid #b5122a !important;
+  background: linear-gradient(110deg, rgba(27,95,168,.19), rgba(18,16,25,.96)) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  transition: transform .18s ease, border-color .18s ease;
+}
+.tc-home-tournament-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255,215,0,.65) !important;
+}
+.tc-home-tournament-card h4 { font-size: .95rem !important; }
+.tc-home-tournament-card::after {
+  content: "VER TORNEO  →";
+  align-self: center;
+  color: #facc15;
+  font-size: .62rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}

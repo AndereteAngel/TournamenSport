@@ -38,6 +38,7 @@ export function CreateTournament({
       return {
         title: "",
         game: "Fútbol",
+        division: "Infantil",
         categoryType: "Año de nacimiento",
         categoryDetail: "2008",
         format: "groups_playoff",
@@ -52,9 +53,11 @@ export function CreateTournament({
     const participants = getParticipantsFromTournament();
     const sports = ["Fútbol", "Futsal", "Básquet", "Vóley", "Handball", "Hockey", "Rugby", "Tenis", "Atletismo", "Natación", "Otro deporte"];
     const storedGame = String(initialData.game || "Fútbol");
-    const separatorIndex = storedGame.lastIndexOf(" · ");
-    const gameFromStoredValue = separatorIndex >= 0 ? storedGame.slice(0, separatorIndex).trim() : storedGame.trim();
-    const detailFromStoredGame = separatorIndex >= 0 ? storedGame.slice(separatorIndex + 3).trim() : "";
+    const gameParts = storedGame.split(" · ").map((part) => part.trim());
+    const divisionFromStoredGame = gameParts.find((part) => ["Infantil", "Femenino", "Mayores"].includes(part)) || "Infantil";
+    const categoryIndex = gameParts.length - 1;
+    const detailFromStoredGame = categoryIndex > 0 ? gameParts[categoryIndex] : "";
+    const gameFromStoredValue = gameParts[0] || "Fútbol";
     const categoryDetail = String(initialData.category_detail || detailFromStoredGame || "").trim();
     const knownDivisions = ["Primera", "Reserva", "Tercera", "Cuarta", "Quinta", "Sexta", "Otra división"];
     const knownFormative = ["Premini", "Mini", "Infantiles", "Menores", "Cadetes", "Juveniles", "Sub-14", "Sub-16", "Sub-18", "Sub-21", "Otra categoría"];
@@ -69,6 +72,7 @@ export function CreateTournament({
     return {
       title: initialData.title || "",
       game: sports.includes(gameFromStoredValue) ? gameFromStoredValue : "Fútbol",
+      division: divisionFromStoredGame,
       categoryType: initialData.category_type || inferredCategoryType,
       categoryDetail,
       format: initialData.format || "groups_playoff",
@@ -163,7 +167,7 @@ export function CreateTournament({
 
     onSave({
       ...formData,
-      game: `${formData.game}${formData.categoryDetail ? ` · ${formData.categoryDetail}` : ""}`,
+      game: `${formData.game} · ${formData.division}${formData.categoryDetail ? ` · ${formData.categoryDetail}` : ""}`,
       category_type: formData.categoryType,
       category_detail: formData.categoryDetail,
       maxParticipants: Number(formData.maxParticipants),
@@ -280,6 +284,16 @@ export function CreateTournament({
             required
             className="cr-input"
           />
+        </div>
+
+        {/* DIVISIÓN DE LA LIGA */}
+        <div>
+          <label className="sports-label">Rama / división de la liga</label>
+          <select value={formData.division} onChange={(e) => setFormData({ ...formData, division: e.target.value })} className="cr-input sports-input" required>
+            <option value="Infantil">Infantil</option>
+            <option value="Femenino">Femenino</option>
+            <option value="Mayores">Mayores</option>
+          </select>
         </div>
 
         {/* DEPORTE, CATEGORÍA Y FORMATO */}

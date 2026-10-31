@@ -2196,6 +2196,9 @@ export function TournamenSportApp() {
   )].sort((a, b) => a.localeCompare(b, "es"));
 
   const getTournamentDivision = (tournament) => {
+    const parts = String(tournament?.game || "").split(" · ").map((part) => part.trim());
+    const explicitDivision = parts.find((part) => ["Infantil", "Femenino", "Mayores"].includes(part));
+    if (explicitDivision) return explicitDivision;
     const category = `${getTournamentCategory(tournament)} ${tournament?.game || ""}`.toLocaleLowerCase("es");
     if (/femenin|mujer/.test(category)) return "Femenino";
     if (/mayor|adult|senior|primera/.test(category)) return "Mayores";
@@ -2697,7 +2700,7 @@ export function TournamenSportApp() {
               >
                 {filteredTournaments.map((t) => (
                   <div
-                    className="tc-home-tournament-item"
+                    className="tc-home-tournament-item tc-home-tournament-card"
                     key={t.id}
                     onClick={() => {
                       setActiveTournament(t);
