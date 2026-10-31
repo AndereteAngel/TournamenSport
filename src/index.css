@@ -4113,3 +4113,17 @@ body[data-tc-theme="arena"],
   letter-spacing: .05em;
   white-space: nowrap;
 }
+
+
+/* FEFUTIN — logo sin bandas blancas ni marco. */
+.tc-home-panel-art > img {
+  background: #000 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  mix-blend-mode: normal !important;
+  opacity: 1 !important;
+  filter: none !important;
+}
