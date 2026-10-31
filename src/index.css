@@ -3921,3 +3921,90 @@ body[data-tc-theme="arena"],
   .tc-home-panel-art img { width: 76px !important; height: 76px !important; }
   .tc-home-panel-art > div { max-width: calc(100% - 90px) !important; }
 }
+
+
+/* FEFUTIN — primera pasada de ajuste: botones proporcionados y textos centrados. */
+.tc-home-screen button,
+.tc-navbar button {
+  box-sizing: border-box !important;
+  font-family: 'Montserrat', sans-serif !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
+}
+.tc-home-screen .tc-home-action,
+.tc-home-screen .tc-home-admin-action,
+.tc-home-tournaments-heading button,
+.tc-navbar .desktop-nav-actions > button,
+.tc-navbar .mobile-menu-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  white-space: normal !important;
+  vertical-align: middle !important;
+}
+.tc-home-screen .tc-home-action {
+  min-height: 112px !important;
+  flex-direction: column !important;
+  text-align: center !important;
+}
+.tc-home-screen .tc-home-action-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto 7px !important;
+}
+.tc-home-screen .tc-home-action h3,
+.tc-home-screen .tc-home-action p {
+  width: 100% !important;
+  text-align: center !important;
+  line-height: 1.25 !important;
+  overflow-wrap: anywhere !important;
+}
+.tc-home-screen .tc-home-admin-action {
+  min-height: 42px !important;
+  padding: 10px 16px !important;
+}
+.tc-navbar .desktop-nav-actions > div {
+  background: #171c27 !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.38) !important;
+}
+.tc-navbar .desktop-nav-actions > div * {
+  color: #fff !important;
+}
+.tc-navbar .desktop-nav-actions button,
+.tc-navbar .mobile-menu-btn {
+  min-height: 38px !important;
+  padding: 8px 12px !important;
+  font-size: .74rem !important;
+  font-weight: 800 !important;
+  letter-spacing: .01em !important;
+}
+.tc-home-panel-art {
+  min-height: 150px !important;
+  justify-content: flex-start !important;
+  background: linear-gradient(110deg, #080808 0%, #171c27 72%, #b5122a 100%) !important;
+}
+.tc-home-panel-art > div {
+  max-width: 100% !important;
+  width: 100% !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+.tc-home-panel-art span {
+  font-size: .72rem !important;
+  letter-spacing: .22em !important;
+}
+.tc-home-panel-art strong {
+  font-size: clamp(1.45rem, 4vw, 2.15rem) !important;
+  line-height: 1.12 !important;
+  letter-spacing: .035em !important;
+  text-align: center !important;
+}
+@media (max-width: 600px) {
+  .tc-home-screen .tc-home-action { min-height: 104px !important; }
+  .tc-navbar .desktop-nav-actions button,
+  .tc-navbar .mobile-menu-btn { font-size: .7rem !important; }
+  .tc-home-panel-art { min-height: 122px !important; }
+}
