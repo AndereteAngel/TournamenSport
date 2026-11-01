@@ -219,13 +219,18 @@ export function PlayoffBracket({
                 ? "Gran Final y partido por el tercer puesto"
                 : round.some((match) => match.stage === "final") || (rIdx === rounds.length - 1 && round.length === 1)
                 ? "Gran Final"
-                : rounds.length === 1
-                ? "Eliminación Directa"
-                : rIdx === 0
-                ? "Cuartos de Final"
-                : rIdx === 1
-                ? "Semifinales"
-                : `Fase ${rIdx + 1}`}
+                : (() => {
+                    const entrants = round.length * 2;
+                    const labels = {
+                      2: "Final",
+                      4: "Semifinales",
+                      8: "Cuartos de final",
+                      16: "Octavos de final",
+                      32: "Dieciseisavos de final",
+                      64: "Treintaidosavos de final",
+                    };
+                    return labels[entrants] || `Ronda de ${entrants} participantes`;
+                  })()}
             </h3>
 
             <div
