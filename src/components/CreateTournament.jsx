@@ -484,7 +484,8 @@ export function CreateTournament({
                 <option value={4}>4 clasificados</option>
                 <option value={6}>6 clasificados</option>
                 <option value={8}>8 clasificados</option>
-              </select>            </div>
+              </select>
+            </div>
           </div>
         )}
 
