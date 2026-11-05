@@ -87,27 +87,27 @@ export function CreateTournament({
 
   const [formData, setFormData] = useState(getInitialFormData());
   const { notice, showNotice, clearNotice } = useTournamentNotice();
-  const [teamsCatalog, setRegisteredProfiles] = useState([]);
-  const [loadingTeamsCatalog, setLoadingProfiles] = useState(false);
-  const [teamSearch, setProfileSearch] = useState("");
-  const [selectedTeamIds, setSelectedProfileIds] = useState([]);
-  const [teamCatalogError, setProfileError] = useState("");
+  const [teamsCatalog, setTeamsCatalog] = useState([]);
+  const [loadingTeamsCatalog, setLoadingTeamsCatalog] = useState(false);
+  const [teamSearch, setTeamSearch] = useState("");
+  const [selectedTeamIds, setSelectedTeamIds] = useState([]);
+  const [teamCatalogError, setTeamCatalogError] = useState("");
 
   const loadTeamsCatalog = async () => {
-    setLoadingProfiles(true);
-    setProfileError("");
+    setLoadingTeamsCatalog(true);
+    setTeamCatalogError("");
     const { data, error } = await supabase
       .from("teams_catalog").select("id, name").order("name", { ascending: true });
 
     if (error) {
       console.error("Error al cargar perfiles:", error);
-      setProfileError("No se pudo cargar el catálogo de equipos. Verificá que la tabla teams_catalog esté creada y que el administrador tenga permisos de lectura.");
-      setLoadingProfiles(false);
+      setTeamCatalogError("No se pudo cargar el catálogo de equipos. Verificá que la tabla teams_catalog esté creada y que el administrador tenga permisos de lectura.");
+      setLoadingTeamsCatalog(false);
       return;
     }
 
-    setRegisteredProfiles(data || []);
-    setLoadingProfiles(false);
+    setTeamsCatalog(data || []);
+    setLoadingTeamsCatalog(false);
   };
 
   // =========================================================
@@ -512,14 +512,14 @@ export function CreateTournament({
               {teamCatalogError && <p role="alert" style={{ color: "#fca5a5", fontSize: "0.75rem", lineHeight: 1.4 }}>{teamCatalogError}</p>}
               {teamsCatalog.length > 0 && (
                 <>
-                  <input type="search" value={teamSearch} onChange={(e) => setProfileSearch(e.target.value)} placeholder="Buscar equipo..." aria-label="Buscar equipos disponibles" className="cr-input" style={{ marginTop: "0.65rem" }} />
+                  <input type="search" value={teamSearch} onChange={(e) => setTeamSearch(e.target.value)} placeholder="Buscar equipo..." aria-label="Buscar equipos disponibles" className="cr-input" style={{ marginTop: "0.65rem" }} />
                   <div style={{ maxHeight: "190px", overflowY: "auto", display: "grid", gap: "0.35rem", marginTop: "0.55rem" }}>
                     {teamsCatalog.filter((profile) => {
                       const query = teamSearch.trim().toLocaleLowerCase("es");
                       return !query || String(profile.name || "").toLocaleLowerCase("es").includes(query);
                     }).map((profile) => (
                       <label key={profile.id} style={{ display: "flex", alignItems: "center", gap: "0.55rem", padding: "0.5rem", borderRadius: "7px", background: "#121019", color: "#e5e7eb", fontSize: "0.82rem", cursor: "pointer" }}>
-                        <input type="checkbox" checked={selectedTeamIds.includes(profile.id)} onChange={(e) => setSelectedProfileIds((prev) => e.target.checked ? [...prev, profile.id] : prev.filter((id) => id !== profile.id))} />
+                        <input type="checkbox" checked={selectedTeamIds.includes(profile.id)} onChange={(e) => setSelectedTeamIds((prev) => e.target.checked ? [...prev, profile.id] : prev.filter((id) => id !== profile.id))} />
                         <span>{profile.name || "Sin alias"}</span>
                       </label>
                     ))}
@@ -562,7 +562,7 @@ export function CreateTournament({
           {teamCatalogError && <p role="alert" style={{ color: "#fca5a5", fontSize: "0.75rem", lineHeight: 1.4 }}>{teamCatalogError}</p>}
           {teamsCatalog.length > 0 && (
             <>
-              <input type="search" value={teamSearch} onChange={(e) => setProfileSearch(e.target.value)} placeholder="Buscar equipo..." aria-label="Filtrar equipos disponibles" className="cr-input" style={{ marginTop: "0.65rem" }} />
+              <input type="search" value={teamSearch} onChange={(e) => setTeamSearch(e.target.value)} placeholder="Buscar equipo..." aria-label="Filtrar equipos disponibles" className="cr-input" style={{ marginTop: "0.65rem" }} />
               <div style={{ maxHeight: "190px", overflowY: "auto", display: "grid", gap: "0.35rem", marginTop: "0.55rem" }}>
                 {teamsCatalog.filter((profile) => {
                   const query = teamSearch.trim().toLocaleLowerCase("es");
@@ -574,7 +574,7 @@ export function CreateTournament({
                     .some((name) => name.trim().toLocaleLowerCase("es") === username.toLocaleLowerCase("es"));
                   return (
                     <label key={profile.id} style={{ display: "flex", alignItems: "center", gap: "0.55rem", padding: "0.5rem", borderRadius: "7px", background: "#121019", color: alreadyParticipant ? "#6b7280" : "#e5e7eb", fontSize: "0.82rem", cursor: alreadyParticipant ? "not-allowed" : "pointer" }}>
-                      <input type="checkbox" checked={alreadyParticipant || selectedTeamIds.includes(profile.id)} disabled={alreadyParticipant || !username} onChange={(e) => setSelectedProfileIds((prev) => e.target.checked ? [...prev, profile.id] : prev.filter((id) => id !== profile.id))} />
+                      <input type="checkbox" checked={alreadyParticipant || selectedTeamIds.includes(profile.id)} disabled={alreadyParticipant || !username} onChange={(e) => setSelectedTeamIds((prev) => e.target.checked ? [...prev, profile.id] : prev.filter((id) => id !== profile.id))} />
                       <span>{username || "Sin alias"}</span>
                       {alreadyParticipant && <span>✓ Ya participa</span>}
                     </label>
