@@ -2559,11 +2559,25 @@ export function TournamenSportApp() {
                 <span className="tc-about-eyebrow">FEFUTIN · FÚTBOL FORMATIVO</span>
                 <h2 id="tc-about-title">¿QUIÉNES SOMOS?</h2>
                 <p>
-                  Somos una liga dedicada al fútbol formativo, que promueve el deporte
-                  como espacio de aprendizaje, encuentro y crecimiento. Trabajamos para
-                  que cada jugador y jugadora pueda disfrutar, desarrollarse y sentirse
-                  parte de una comunidad.
+                  FEFUTIN es una comunidad deportiva que encuentra en el fútbol mucho más
+                  que una competencia: un lugar para aprender, compartir, superarse y
+                  construir vínculos. A través de sus torneos, busca que chicos, chicas,
+                  jóvenes y adultos puedan disfrutar del deporte y sentirse parte de un
+                  espacio de encuentro.
                 </p>
+                <p>
+                  Las publicaciones institucionales históricas de FEFUTIN ya reflejaban
+                  su vínculo con la organización y difusión de torneos de fútbol infantil
+                  y femenino. Esta plataforma reúne hoy la información de las divisiones
+                  Infantil, Femenino y Mayores, para acercar sus competencias a jugadores,
+                  familias, equipos y acompañantes.
+                </p>
+                <h3>NUESTRAS DIVISIONES</h3>
+                <div className="tc-about-divisions">
+                  <div><strong>INFANTIL</strong><span>Formación, aprendizaje y diversión. Crecer jugando y compartiendo en equipo.</span></div>
+                  <div><strong>FEMENINO</strong><span>Un espacio para competir, desarrollar el talento y fortalecer la participación.</span></div>
+                  <div><strong>MAYORES</strong><span>La pasión por el fútbol continúa: encuentro, competencia y compañerismo.</span></div>
+                </div>
                 <h3>NUESTROS VALORES</h3>
                 <div className="tc-about-values">
                   <div><strong>RESPETO</strong><span>Por compañeros, rivales, familias y árbitros.</span></div>
