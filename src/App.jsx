@@ -295,7 +295,7 @@ function AdminStats({ onBack }) {
   if (loadingStats) {
     return (
       <div
-        className="cr-card"
+        className="cr-card tc-stats-screen"
         style={{
           maxWidth: "1000px",
           margin: "auto",
@@ -312,7 +312,7 @@ function AdminStats({ onBack }) {
   if (errorStats) {
     return (
       <div
-        className="cr-card"
+        className="cr-card tc-stats-screen"
         style={{
           maxWidth: "1000px",
           margin: "auto",
@@ -336,6 +336,7 @@ function AdminStats({ onBack }) {
 
   return (
     <div
+      className="tc-stats-screen"
       style={{
         width: "100%",
         maxWidth: "1100px",
