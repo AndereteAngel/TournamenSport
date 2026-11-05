@@ -1553,8 +1553,12 @@ export function TournamenSportApp() {
       showNotice("Tu solicitud de acceso está pendiente de aprobación. Mientras tanto podés consultar la plataforma pública.");
     } else if (user.approvalStatus === "desestimado") {
       showNotice("Tu solicitud de acceso fue desestimada. Tu cuenta conserva acceso como visitante.");
-    } else if (user.role !== "admin") {
-      showNotice("Ingresaste como visitante. Las funciones de gestión se habilitarán según tu rol aprobado.");
+    } else if (user.role === "visitante") {
+      showNotice("Ingresaste como visitante. Podés consultar la información pública de FEFUTIN.");
+    } else if (user.role === "arbitro") {
+      showNotice("Ingresaste como árbitro. Tenés acceso a la consulta de torneos y resultados.");
+    } else if (user.role === "directivo") {
+      showNotice("Ingresaste como directivo. Tenés acceso a las funciones de gestión habilitadas para tu rol.");
     }
 
     setAuthInput({
