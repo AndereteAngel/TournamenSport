@@ -188,12 +188,12 @@ language sql
 stable
 security definer
 set search_path = ''
-as $
+as $$
   select p.id, p.username
   from public.profiles p
   where auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid
   order by lower(p.username);
-$;
+$$;
 
 revoke all on function public.list_registered_players() from public, anon;
 grant execute on function public.list_registered_players() to authenticated;
