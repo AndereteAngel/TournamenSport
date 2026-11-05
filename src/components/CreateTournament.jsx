@@ -164,7 +164,7 @@ export function CreateTournament({
         return;
       }
       if (teams.length > Number(formData.maxParticipants)) {
-        showNotice(`Seleccionaste ${teams.length} jugadores, pero el cupo máximo es ${formData.maxParticipants}.`);
+        showNotice(`Seleccionaste ${teams.length} equipos, pero el cupo máximo es ${formData.maxParticipants}.`);
         return;
       }
     }
@@ -498,7 +498,7 @@ export function CreateTournament({
                 className="cr-input"
               />
               <span style={{ fontSize: "10px", color: "#9ca3af", marginTop: "4px", display: "block" }}>
-                Podés cargar los jugadores ahora o completar la lista antes de iniciar el torneo.
+                Podés seleccionar equipos del catálogo o completar la lista manualmente.
               </span>
             </div>
 
@@ -583,7 +583,7 @@ export function CreateTournament({
               </div>
               <p style={{ color: "#93c5fd", fontSize: "0.75rem", marginBottom: 0 }}>Equipos nuevos seleccionados: {selectedTeamIds.filter((id) => {
                 const profile = teamsCatalog.find((item) => item.id === id);
-                const username = String(profile?.username || "").trim().toLocaleLowerCase("es");
+                const username = String(profile?.name || "").trim().toLocaleLowerCase("es");
                 return username && !formData.participantsInput.split("\\n").some((name) => name.trim().toLocaleLowerCase("es") === username);
               }).length}</p>
             </>
