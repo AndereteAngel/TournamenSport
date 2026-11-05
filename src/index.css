@@ -5741,3 +5741,70 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   color: #626875 !important;
   -webkit-text-fill-color: #626875 !important;
 }
+
+
+/* FEFUTIN — en computadora se replica la navbar móvil: marca, Inicio y menú desplegable. */
+@media (min-width: 641px) {
+  .tc-navbar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    padding: .45rem .8rem !important;
+  }
+  .tc-navbar .desktop-nav-actions {
+    display: none !important;
+  }
+  .tc-navbar .mobile-navbar-alias {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    margin-top: 4px !important;
+    color: #f2f2f2 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+  }
+  .tc-navbar .mobile-nav-quick-actions {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 8px !important;
+    margin-left: auto !important;
+    margin-right: 8px !important;
+    flex: 0 0 auto !important;
+  }
+  .tc-navbar .mobile-nav-quick-btn {
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    width: 82px !important;
+    min-width: 82px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    padding: 0 9px !important;
+    border: 1px solid #f07889 !important;
+    border-radius: 6px !important;
+    background: linear-gradient(135deg, #b5122a 0%, #8f1026 100%) !important;
+    color: #fff !important;
+    font: 800 12px/1 'Montserrat', sans-serif !important;
+    white-space: nowrap !important;
+  }
+  .tc-navbar .mobile-menu-btn {
+    display: flex !important;
+    flex: 0 0 36px !important;
+    width: 36px !important;
+    min-width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    border: 1px solid #55555b !important;
+    border-radius: 6px !important;
+    background: #0d0d0f !important;
+    color: #fff !important;
+  }
+}
