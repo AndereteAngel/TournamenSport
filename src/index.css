@@ -4779,3 +4779,54 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
 .cr-input { color:#fff !important; background:#090909 !important; border-color:rgba(255,255,255,.38) !important; }
 .cr-input::placeholder { color:#c4c4c4 !important; opacity:1 !important; }
 .cr-input:focus { border-color:#b5122a !important; box-shadow:inset 0 2px 4px rgba(0,0,0,.8),0 0 0 3px rgba(181,18,42,.2) !important; }
+
+
+/* FEFUTIN — corrección de detalles señalados en móvil */
+.tc-admin-crown {
+  box-sizing: border-box !important;
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #080808 !important;
+  color: #fff !important;
+  border: 2px solid #b5122a !important;
+  border-radius: 10px !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.85), 0 3px 9px rgba(0,0,0,.45) !important;
+}
+.tc-admin-crown svg, .tc-admin-crown svg * {
+  color: #fff !important;
+  stroke: #fff !important;
+}
+.tc-admin-profile-row {
+  border-bottom: 1px solid rgba(255,255,255,.22) !important;
+}
+.tc-admin-username { color: #fff !important; }
+.tc-home-screen .tc-home-actions .tc-home-action,
+.tc-home-screen .tc-home-actions .tc-home-action-create,
+.tc-home-screen .tc-home-actions .tc-home-action-join {
+  box-sizing: border-box !important;
+  color: #fff !important;
+  background: linear-gradient(145deg,#c01835 0%,#a20f28 58%,#800b20 100%) !important;
+  border: 2px solid rgba(255,255,255,.92) !important;
+  box-shadow: 0 5px 0 #590a18, 0 9px 20px rgba(0,0,0,.32) !important;
+}
+.tc-home-screen .tc-home-actions .tc-home-action h3,
+.tc-home-screen .tc-home-actions .tc-home-action p,
+.tc-home-screen .tc-home-actions .tc-home-action strong,
+.tc-home-screen .tc-home-actions .tc-home-action span {
+  color: #fff !important;
+  text-shadow: 0 1px 3px rgba(50,0,10,.65) !important;
+}
+.tc-home-screen .tc-home-actions .tc-home-action .tc-home-action-icon {
+  background: #fff !important;
+  border: 2px solid #fff !important;
+  box-shadow: 0 2px 7px rgba(0,0,0,.28) !important;
+}
+.tc-home-screen .tc-home-actions .tc-home-action .tc-home-action-icon svg,
+.tc-home-screen .tc-home-actions .tc-home-action .tc-home-action-icon svg * {
+  color: #b5122a !important;
+  stroke: #b5122a !important;
+}
