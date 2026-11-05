@@ -5498,3 +5498,64 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   justify-content: center !important;
   margin: 1.25rem 0 0 !important;
 }
+
+
+/* FEFUTIN — Quiénes somos: modal por encima de la navbar y con scroll propio. */
+.tc-about-overlay {
+  z-index: 1000000 !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  padding: calc(env(safe-area-inset-top, 0px) + 84px) 16px 24px !important;
+}
+.tc-about-modal {
+  max-height: calc(100dvh - 124px) !important;
+  margin: 0 auto !important;
+  flex: 0 0 auto !important;
+  overscroll-behavior: contain !important;
+}
+.tc-about-divisions {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 9px !important;
+  margin: 0 0 20px !important;
+}
+.tc-about-divisions > div {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  min-width: 0 !important;
+  padding: 12px !important;
+  background: rgba(181,18,42,.12) !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+  border-top: 3px solid #b5122a !important;
+  border-radius: 9px !important;
+}
+.tc-about-divisions strong {
+  color: #fff !important;
+  font-size: .72rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .05em !important;
+}
+.tc-about-divisions span {
+  color: #d8dce4 !important;
+  font-size: .68rem !important;
+  line-height: 1.5 !important;
+}
+@media (max-width: 520px) {
+  .tc-about-overlay {
+    padding: calc(env(safe-area-inset-top, 0px) + 76px) 10px 16px !important;
+  }
+  .tc-about-modal {
+    max-height: calc(100dvh - 108px) !important;
+    padding: 25px 16px 20px !important;
+  }
+  .tc-about-divisions {
+    grid-template-columns: 1fr !important;
+    gap: 7px !important;
+  }
+  .tc-about-divisions > div {
+    padding: 10px !important;
+  }
+}
