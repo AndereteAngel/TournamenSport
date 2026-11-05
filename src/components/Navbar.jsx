@@ -74,22 +74,23 @@ export function Navbar({
           cursor: "pointer",
         }}
       >
-        <button
-          type="button"
-          className="tc-navbar-admin-logo"
+        <img
+          src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166"
+          alt={isAdmin ? "FEFUTIN - cerrar sesión de administrador" : "FEFUTIN - acceso de administrador"}
+          title={isAdmin ? "Cerrar sesión de administrador" : "Ingresar como administrador"}
+          role="button"
+          tabIndex={0}
           onClick={(event) => {
             event.stopPropagation();
             isAdmin ? onLogout?.() : onAdminClick?.();
           }}
-          title={isAdmin ? "Cerrar sesión de administrador" : "Ingresar como administrador"}
-          aria-label={isAdmin ? "Cerrar sesión de administrador" : "Ingresar como administrador"}
-        >
-          <TCIcon name="crown" size={25} />
-        </button>
-
-        <img
-          src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166"
-          alt="FEFUTIN"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              event.stopPropagation();
+              isAdmin ? onLogout?.() : onAdminClick?.();
+            }
+          }}
           className="tc-navbar-fefutin-logo"
           style={{
             width: "46px",
