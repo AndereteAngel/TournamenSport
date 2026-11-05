@@ -2748,13 +2748,13 @@ export function TournamenSportApp() {
                       cursor: "pointer",
                     }}
                   >
-                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".95rem", fontWeight: 900, lineHeight: 1.25, overflowWrap: "anywhere", letterSpacing: ".02em", textShadow: "0 1px 2px rgba(0,0,0,.65)" }}>
                       {t.title}
                     </div>
-                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".95rem", fontWeight: 900, lineHeight: 1.25, overflowWrap: "anywhere", letterSpacing: ".02em", textShadow: "0 1px 2px rgba(0,0,0,.65)" }}>
                       {getTournamentCategory(t)}
                     </div>
-                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".95rem", fontWeight: 900, lineHeight: 1.25, overflowWrap: "anywhere", letterSpacing: ".02em", textShadow: "0 1px 2px rgba(0,0,0,.65)" }}>
                       {getTournamentDivision(t)}
                     </div>
                     <div style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "center", gap: "6px" }}>
