@@ -2736,80 +2736,30 @@ export function TournamenSportApp() {
                       );
                     }}
                     style={{
-                      padding: "0.8rem 0.9rem",
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) 66px",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "10px",
                       backgroundColor: "#171c27",
                       border: "1px solid rgba(255,255,255,.28)",
                       borderLeft: "4px solid #b5122a",
                       borderRadius: "10px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: "0.8rem",
                       cursor: "pointer",
                     }}
                   >
-                    <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: "5px" }}>
-                      <h4
-                        style={{
-                          fontWeight: 950,
-                          fontSize: "0.9rem",
-                          margin: 0,
-                          color: "#fff",
-                          overflowWrap: "anywhere",
-                        }}
-                      >
-                        {t.title}
-                      </h4>
-                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px" }}>
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            padding: "3px 7px",
-                            borderRadius: "5px",
-                            background: "rgba(181,18,42,.18)",
-                            border: "1px solid rgba(181,18,42,.65)",
-                            color: "#ffd5dc",
-                            fontSize: "0.68rem",
-                            fontWeight: 850,
-                          }}
-                        >
-                          {getTournamentCategory(t)}
-                        </span>
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            padding: "3px 7px",
-                            borderRadius: "5px",
-                            background: "rgba(255,255,255,.07)",
-                            border: "1px solid rgba(255,255,255,.22)",
-                            color: "#f8fafc",
-                            fontSize: "0.68rem",
-                            fontWeight: 850,
-                          }}
-                        >
-                          {getTournamentDivision(t)}
-                        </span>
-                      </div>
+                    <div style={{ minWidth: 0, color: "#fff", fontWeight: 900, fontSize: "0.82rem", lineHeight: 1.25, overflowWrap: "anywhere" }}>
+                      {t.title}
                     </div>
-
-                    <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "7px", minWidth: "58px" }}>
-                      <span
-                        style={{
-                          display: "block",
-                          color: "#fff",
-                          background: "#b5122a",
-                          border: "1px solid #f07889",
-                          borderRadius: "7px",
-                          padding: "6px 9px",
-                          fontSize: "0.7rem",
-                          fontWeight: 950,
-                          whiteSpace: "nowrap",
-                          textAlign: "center",
-                        }}
-                      >
-                        Entrar →
+                    <div style={{ minWidth: 0, color: "#ffd5dc", background: "rgba(181,18,42,.18)", border: "1px solid rgba(181,18,42,.65)", borderRadius: "6px", padding: "7px 5px", textAlign: "center", fontSize: "0.68rem", fontWeight: 850, lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                      {getTournamentCategory(t)}
+                    </div>
+                    <div style={{ minWidth: 0, color: "#f8fafc", background: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.22)", borderRadius: "6px", padding: "7px 5px", textAlign: "center", fontSize: "0.68rem", fontWeight: 850, lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                      {getTournamentDivision(t)}
+                    </div>
+                    <div style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+                      <span style={{ display: "block", width: "100%", boxSizing: "border-box", color: "#fff", background: "#b5122a", border: "1px solid #f07889", borderRadius: "7px", padding: "7px 3px", fontSize: "0.68rem", fontWeight: 950, whiteSpace: "nowrap", textAlign: "center" }}>
+                        Entrar
                       </span>
                       {isAdmin && (
                         <button
