@@ -232,3 +232,38 @@
     padding: 5px 9px !important;
   }
 }
+
+/* Tarjetas de estadísticas arbitrales: mismo lenguaje visual que la card principal */
+.referee-stat-card {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 1.15rem;
+  color: #fff;
+  background: linear-gradient(110deg, #171c27 0%, #10141d 72%, rgba(181,18,42,.28) 100%);
+  border: 1px solid rgba(255,255,255,.32);
+  border-left: 4px solid #b5122a;
+  border-radius: 12px;
+  box-shadow: 0 5px 14px rgba(0,0,0,.25);
+}
+
+.referee-stat-card-button {
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.referee-stat-card-button:hover {
+  transform: translateY(-2px);
+  border-color: #b5122a;
+  box-shadow: 0 7px 18px rgba(181,18,42,.2);
+}
+
+.referee-stat-card-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
