@@ -198,3 +198,41 @@ $;
 revoke all on function public.list_registered_players() from public, anon;
 grant execute on function public.list_registered_players() to authenticated;
 grant select, insert, update on public.visitas to authenticated;
+
+-- =========================================================
+-- CATÁLOGO HISTÓRICO DE EQUIPOS FEFUTIN
+-- Los equipos permanecen aunque se elimine el torneo donde participaron.
+-- =========================================================
+
+create table if not exists public.teams_catalog (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  normalized_name text generated always as (lower(trim(name))) stored,
+  created_at timestamptz not null default now(),
+  constraint teams_catalog_name_not_empty check (char_length(trim(name)) > 0)
+);
+
+create unique index if not exists teams_catalog_normalized_name_unique
+  on public.teams_catalog (normalized_name);
+
+alter table public.teams_catalog enable row level security;
+
+drop policy if exists "teams_catalog_select_public" on public.teams_catalog;
+create policy "teams_catalog_select_public"
+  on public.teams_catalog for select to anon, authenticated
+  using (true);
+
+drop policy if exists "teams_catalog_insert_admin" on public.teams_catalog;
+create policy "teams_catalog_insert_admin"
+  on public.teams_catalog for insert to authenticated
+  with check (auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid);
+
+drop policy if exists "teams_catalog_update_admin" on public.teams_catalog;
+create policy "teams_catalog_update_admin"
+  on public.teams_catalog for update to authenticated
+  using (auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid)
+  with check (auth.uid() = 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid);
+
+grant select on public.teams_catalog to anon, authenticated;
+grant insert, update on public.teams_catalog to authenticated;
+revoke delete on public.teams_catalog from anon, authenticated;
