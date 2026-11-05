@@ -87,6 +87,19 @@ export function Navbar({
           <TCIcon name="crown" size={25} />
         </button>
 
+        <img
+          src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166"
+          alt="FEFUTIN"
+          className="tc-navbar-fefutin-logo"
+          style={{
+            width: "46px",
+            height: "42px",
+            objectFit: "contain",
+            display: "block",
+            flex: "0 0 auto",
+          }}
+        />
+
         <div>
           <span
             style={{
