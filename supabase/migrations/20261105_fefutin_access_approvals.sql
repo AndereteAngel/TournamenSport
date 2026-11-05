@@ -40,7 +40,7 @@ begin
     and p.approval_status = 'aprobado'
     and p.deactivated_at is null;
 
-  if v_actor_role not in ('admin', 'directivo') then
+  if coalesce(v_actor_role, '') not in ('admin', 'directivo') then
     raise exception 'No tenés permisos para consultar solicitudes';
   end if;
 
@@ -72,7 +72,7 @@ begin
     and p.approval_status = 'aprobado'
     and p.deactivated_at is null;
 
-  if v_actor_role not in ('admin', 'directivo') then
+  if coalesce(v_actor_role, '') not in ('admin', 'directivo') then
     raise exception 'No tenés permisos para aprobar solicitudes';
   end if;
 
@@ -133,7 +133,7 @@ begin
     and p.approval_status = 'aprobado'
     and p.deactivated_at is null;
 
-  if v_actor_role not in ('admin', 'directivo') then
+  if coalesce(v_actor_role, '') not in ('admin', 'directivo') then
     raise exception 'No tenés permisos para desestimar solicitudes';
   end if;
 
