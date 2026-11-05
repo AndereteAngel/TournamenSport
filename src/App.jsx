@@ -2559,31 +2559,23 @@ export function TournamenSportApp() {
                 <span className="tc-about-eyebrow">FEFUTIN · FÚTBOL FORMATIVO</span>
                 <h2 id="tc-about-title">¿QUIÉNES SOMOS?</h2>
                 <p>
-                  FEFUTIN es una comunidad deportiva que encuentra en el fútbol mucho más
-                  que una competencia: un lugar para aprender, compartir, superarse y
-                  construir vínculos. A través de sus torneos, busca que chicos, chicas,
-                  jóvenes y adultos puedan disfrutar del deporte y sentirse parte de un
-                  espacio de encuentro.
-                </p>
-                <p>
-                  Las publicaciones institucionales históricas de FEFUTIN ya reflejaban
-                  su vínculo con la organización y difusión de torneos de fútbol infantil
-                  y femenino. Esta plataforma reúne hoy la información de las divisiones
-                  Infantil, Femenino y Mayores, para acercar sus competencias a jugadores,
-                  familias, equipos y acompañantes.
+                  Somos una comunidad que vive el fútbol como un espacio para aprender,
+                  compartir, superarse y construir vínculos. A través de nuestros torneos
+                  promovemos el deporte, la participación y el encuentro entre jugadores,
+                  familias y equipos.
                 </p>
                 <h3>NUESTRAS DIVISIONES</h3>
                 <div className="tc-about-divisions">
-                  <div><strong>INFANTIL</strong><span>Formación, aprendizaje y diversión. Crecer jugando y compartiendo en equipo.</span></div>
-                  <div><strong>FEMENINO</strong><span>Un espacio para competir, desarrollar el talento y fortalecer la participación.</span></div>
-                  <div><strong>MAYORES</strong><span>La pasión por el fútbol continúa: encuentro, competencia y compañerismo.</span></div>
+                  <div><strong>INFANTIL</strong><span>Formación, aprendizaje y diversión en equipo.</span></div>
+                  <div><strong>FEMENINO</strong><span>Participación, talento y crecimiento deportivo.</span></div>
+                  <div><strong>MAYORES</strong><span>Pasión, competencia y compañerismo.</span></div>
                 </div>
                 <h3>NUESTROS VALORES</h3>
                 <div className="tc-about-values">
-                  <div><strong>RESPETO</strong><span>Por compañeros, rivales, familias y árbitros.</span></div>
-                  <div><strong>INCLUSIÓN</strong><span>Un lugar donde todos y todas puedan participar.</span></div>
-                  <div><strong>FORMACIÓN</strong><span>Aprender, crecer y mejorar dentro y fuera de la cancha.</span></div>
-                  <div><strong>COMPAÑERISMO</strong><span>Construir equipo desde la solidaridad y el juego limpio.</span></div>
+                  <div><strong>RESPETO</strong><span>Dentro y fuera de la cancha.</span></div>
+                  <div><strong>INCLUSIÓN</strong><span>Un lugar para todos y todas.</span></div>
+                  <div><strong>FORMACIÓN</strong><span>Aprender y crecer jugando.</span></div>
+                  <div><strong>COMPAÑERISMO</strong><span>Unidos por el juego limpio.</span></div>
                 </div>
                 <div className="tc-about-footer">UNIDOS POR EL DEPORTE · CRECIENDO EN EQUIPO</div>
               </section>
