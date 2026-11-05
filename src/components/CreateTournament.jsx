@@ -87,21 +87,21 @@ export function CreateTournament({
 
   const [formData, setFormData] = useState(getInitialFormData());
   const { notice, showNotice, clearNotice } = useTournamentNotice();
-  const [registeredProfiles, setRegisteredProfiles] = useState([]);
-  const [loadingProfiles, setLoadingProfiles] = useState(false);
-  const [profileSearch, setProfileSearch] = useState("");
-  const [selectedProfileIds, setSelectedProfileIds] = useState([]);
-  const [profileError, setProfileError] = useState("");
+  const [teamsCatalog, setRegisteredProfiles] = useState([]);
+  const [loadingTeamsCatalog, setLoadingProfiles] = useState(false);
+  const [teamSearch, setProfileSearch] = useState("");
+  const [selectedTeamIds, setSelectedProfileIds] = useState([]);
+  const [teamCatalogError, setProfileError] = useState("");
 
-  const loadRegisteredProfiles = async () => {
+  const loadTeamsCatalog = async () => {
     setLoadingProfiles(true);
     setProfileError("");
     const { data, error } = await supabase
-      .rpc("list_registered_players");
+      .from("teams_catalog").select("id, name").order("name", { ascending: true });
 
     if (error) {
       console.error("Error al cargar perfiles:", error);
-      setProfileError("No se pudo cargar la lista. Revisá los permisos de lectura de profiles en Supabase. También podés ingresar los nombres manualmente.");
+      setProfileError("No se pudo cargar el catálogo de equipos. Verificá que la tabla teams_catalog esté creada y que el administrador tenga permisos de lectura.");
       setLoadingProfiles(false);
       return;
     }
@@ -118,6 +118,10 @@ export function CreateTournament({
     setFormData(getInitialFormData());
   }, [initialData, isEditing]);
 
+  useEffect(() => {
+    loadTeamsCatalog();
+  }, []);
+
   // =========================================================
   // GUARDAR
   // =========================================================
@@ -130,9 +134,9 @@ export function CreateTournament({
       .map((name) => name.trim())
       .filter((name) => name.length > 0);
 
-    const selectedTeams = registeredProfiles
-      .filter((profile) => selectedProfileIds.includes(profile.id))
-      .map((profile) => String(profile.username || "").trim())
+    const selectedTeams = teamsCatalog
+      .filter((profile) => selectedTeamIds.includes(profile.id))
+      .map((profile) => String(profile.name || "").trim())
       .filter(Boolean);
 
     const teams = [...new Map(
@@ -500,34 +504,34 @@ export function CreateTournament({
 
             <div style={{ padding: "0.85rem", border: "1px solid rgba(96,165,250,0.45)", borderRadius: "10px", background: "rgba(27,95,168,0.12)" }}>
               <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "8px" }}>
-                Jugadores registrados
+                Equipos disponibles
               </label>
-              <button type="button" onClick={loadRegisteredProfiles} disabled={loadingProfiles} style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", background: "#1b5fa8", border: "1px solid #60a5fa", color: "#fff", cursor: loadingProfiles ? "wait" : "pointer", fontWeight: "bold" }}>
-                {loadingProfiles ? "Cargando jugadores..." : registeredProfiles.length ? "↻ Actualizar lista de jugadores" : "🔎 Buscar cuentas registradas"}
+              <button type="button" onClick={loadTeamsCatalog} disabled={loadingTeamsCatalog} style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", background: "#1b5fa8", border: "1px solid #60a5fa", color: "#fff", cursor: loadingTeamsCatalog ? "wait" : "pointer", fontWeight: "bold" }}>
+                {loadingTeamsCatalog ? "Cargando equipos..." : teamsCatalog.length ? "↻ Actualizar catálogo" : "🔎 Cargar catálogo de equipos"}
               </button>
-              {profileError && <p role="alert" style={{ color: "#fca5a5", fontSize: "0.75rem", lineHeight: 1.4 }}>{profileError}</p>}
-              {registeredProfiles.length > 0 && (
+              {teamCatalogError && <p role="alert" style={{ color: "#fca5a5", fontSize: "0.75rem", lineHeight: 1.4 }}>{teamCatalogError}</p>}
+              {teamsCatalog.length > 0 && (
                 <>
-                  <input type="search" value={profileSearch} onChange={(e) => setProfileSearch(e.target.value)} placeholder="Filtrar por alias..." aria-label="Filtrar jugadores registrados" className="cr-input" style={{ marginTop: "0.65rem" }} />
+                  <input type="search" value={teamSearch} onChange={(e) => setProfileSearch(e.target.value)} placeholder="Buscar equipo..." aria-label="Buscar equipos disponibles" className="cr-input" style={{ marginTop: "0.65rem" }} />
                   <div style={{ maxHeight: "190px", overflowY: "auto", display: "grid", gap: "0.35rem", marginTop: "0.55rem" }}>
-                    {registeredProfiles.filter((profile) => {
-                      const query = profileSearch.trim().toLocaleLowerCase("es");
-                      return !query || String(profile.username || "").toLocaleLowerCase("es").includes(query);
+                    {teamsCatalog.filter((profile) => {
+                      const query = teamSearch.trim().toLocaleLowerCase("es");
+                      return !query || String(profile.name || "").toLocaleLowerCase("es").includes(query);
                     }).map((profile) => (
                       <label key={profile.id} style={{ display: "flex", alignItems: "center", gap: "0.55rem", padding: "0.5rem", borderRadius: "7px", background: "#121019", color: "#e5e7eb", fontSize: "0.82rem", cursor: "pointer" }}>
-                        <input type="checkbox" checked={selectedProfileIds.includes(profile.id)} onChange={(e) => setSelectedProfileIds((prev) => e.target.checked ? [...prev, profile.id] : prev.filter((id) => id !== profile.id))} />
-                        <span>{profile.username || "Sin alias"}</span>
+                        <input type="checkbox" checked={selectedTeamIds.includes(profile.id)} onChange={(e) => setSelectedProfileIds((prev) => e.target.checked ? [...prev, profile.id] : prev.filter((id) => id !== profile.id))} />
+                        <span>{profile.name || "Sin alias"}</span>
                       </label>
                     ))}
                   </div>
-                  <p style={{ color: "#93c5fd", fontSize: "0.75rem", marginBottom: 0 }}>Seleccionados: {selectedProfileIds.length}</p>
+                  <p style={{ color: "#93c5fd", fontSize: "0.75rem", marginBottom: 0 }}>Seleccionados: {selectedTeamIds.length}</p>
                 </>
               )}
             </div>
 
             <div>
               <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "4px" }}>
-                Agregar jugadores manualmente (opcional)
+                Agregar equipos manualmente (opcional)
               </label>
               <textarea
                 placeholder={"Club Atlético Norte\nDeportivo Central\nEscuela Municipal"}
@@ -550,35 +554,35 @@ export function CreateTournament({
 
         <div style={{ padding: "0.85rem", border: "1px solid rgba(96,165,250,0.45)", borderRadius: "10px", background: "rgba(27,95,168,0.12)" }}>
           <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "8px" }}>
-            Agregar desde la lista de usuarios
+            Agregar desde el catálogo de equipos
           </label>
-          <button type="button" onClick={loadRegisteredProfiles} disabled={loadingProfiles} style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", background: "#1b5fa8", border: "1px solid #60a5fa", color: "#fff", cursor: loadingProfiles ? "wait" : "pointer", fontWeight: "bold" }}>
-            {loadingProfiles ? "Cargando usuarios..." : registeredProfiles.length ? "↻ Actualizar lista de usuarios" : "🔎 Cargar usuarios registrados"}
+          <button type="button" onClick={loadTeamsCatalog} disabled={loadingTeamsCatalog} style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", background: "#1b5fa8", border: "1px solid #60a5fa", color: "#fff", cursor: loadingTeamsCatalog ? "wait" : "pointer", fontWeight: "bold" }}>
+            {loadingTeamsCatalog ? "Cargando equipos..." : teamsCatalog.length ? "↻ Actualizar catálogo" : "🔎 Cargar equipos disponibles"}
           </button>
-          {profileError && <p role="alert" style={{ color: "#fca5a5", fontSize: "0.75rem", lineHeight: 1.4 }}>{profileError}</p>}
-          {registeredProfiles.length > 0 && (
+          {teamCatalogError && <p role="alert" style={{ color: "#fca5a5", fontSize: "0.75rem", lineHeight: 1.4 }}>{teamCatalogError}</p>}
+          {teamsCatalog.length > 0 && (
             <>
-              <input type="search" value={profileSearch} onChange={(e) => setProfileSearch(e.target.value)} placeholder="Filtrar por alias..." aria-label="Filtrar usuarios registrados" className="cr-input" style={{ marginTop: "0.65rem" }} />
+              <input type="search" value={teamSearch} onChange={(e) => setProfileSearch(e.target.value)} placeholder="Buscar equipo..." aria-label="Filtrar equipos disponibles" className="cr-input" style={{ marginTop: "0.65rem" }} />
               <div style={{ maxHeight: "190px", overflowY: "auto", display: "grid", gap: "0.35rem", marginTop: "0.55rem" }}>
-                {registeredProfiles.filter((profile) => {
-                  const query = profileSearch.trim().toLocaleLowerCase("es");
-                  return !query || String(profile.username || "").toLocaleLowerCase("es").includes(query);
+                {teamsCatalog.filter((profile) => {
+                  const query = teamSearch.trim().toLocaleLowerCase("es");
+                  return !query || String(profile.name || "").toLocaleLowerCase("es").includes(query);
                 }).map((profile) => {
-                  const username = String(profile.username || "").trim();
+                  const username = String(profile.name || "").trim();
                   const alreadyParticipant = formData.participantsInput
                     .split("\\n")
                     .some((name) => name.trim().toLocaleLowerCase("es") === username.toLocaleLowerCase("es"));
                   return (
                     <label key={profile.id} style={{ display: "flex", alignItems: "center", gap: "0.55rem", padding: "0.5rem", borderRadius: "7px", background: "#121019", color: alreadyParticipant ? "#6b7280" : "#e5e7eb", fontSize: "0.82rem", cursor: alreadyParticipant ? "not-allowed" : "pointer" }}>
-                      <input type="checkbox" checked={alreadyParticipant || selectedProfileIds.includes(profile.id)} disabled={alreadyParticipant || !username} onChange={(e) => setSelectedProfileIds((prev) => e.target.checked ? [...prev, profile.id] : prev.filter((id) => id !== profile.id))} />
+                      <input type="checkbox" checked={alreadyParticipant || selectedTeamIds.includes(profile.id)} disabled={alreadyParticipant || !username} onChange={(e) => setSelectedProfileIds((prev) => e.target.checked ? [...prev, profile.id] : prev.filter((id) => id !== profile.id))} />
                       <span>{username || "Sin alias"}</span>
                       {alreadyParticipant && <span>✓ Ya participa</span>}
                     </label>
                   );
                 })}
               </div>
-              <p style={{ color: "#93c5fd", fontSize: "0.75rem", marginBottom: 0 }}>Usuarios nuevos seleccionados: {selectedProfileIds.filter((id) => {
-                const profile = registeredProfiles.find((item) => item.id === id);
+              <p style={{ color: "#93c5fd", fontSize: "0.75rem", marginBottom: 0 }}>Equipos nuevos seleccionados: {selectedTeamIds.filter((id) => {
+                const profile = teamsCatalog.find((item) => item.id === id);
                 const username = String(profile?.username || "").trim().toLocaleLowerCase("es");
                 return username && !formData.participantsInput.split("\\n").some((name) => name.trim().toLocaleLowerCase("es") === username);
               }).length}</p>
