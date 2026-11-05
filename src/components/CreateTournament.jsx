@@ -100,7 +100,7 @@ export function CreateTournament({
       .from("teams_catalog").select("id, name").order("name", { ascending: true });
 
     if (error) {
-      console.error("Error al cargar perfiles:", error);
+      console.error("Error al cargar catálogo de equipos:", error);
       setTeamCatalogError("No se pudo cargar el catálogo de equipos. Verificá que la tabla teams_catalog esté creada y que el administrador tenga permisos de lectura.");
       setLoadingTeamsCatalog(false);
       return;
