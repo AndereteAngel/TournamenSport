@@ -2286,44 +2286,22 @@ export function TournamenSportApp() {
     );
   };
 
-  const renderDivisionCard = (division, image, label) => {
-    const divisionTournaments = tournaments.filter(
-      (tournament) => getTournamentDivision(tournament) === division
-    );
-
-    return (
-      <section className="tc-home-division-section" key={division}>
-        <button
-          type="button"
-          className="tc-home-division-card"
-          onClick={() => {
-            setTournamentDivisionFilter(division);
-            setTournamentCategoryFilter("Todas");
-          }}
-        >
-          <img src={image} alt="" />
-          <span>{label}</span>
-        </button>
-
-        <div className="tc-home-division-tournaments">
-          {divisionTournaments.length ? divisionTournaments.map((tournament) => (
-            <button
-              type="button"
-              className="tc-home-division-tournament"
-              key={tournament.id}
-              onClick={() => openTournament(tournament)}
-            >
-              <strong>{tournament.title || "Torneo sin nombre"}</strong>
-              <span>{getTournamentCategory(tournament)}</span>
-              <small>{tournament.status || "En preparación"}</small>
-            </button>
-          )) : (
-            <p className="tc-home-division-empty">Todavía no hay torneos</p>
-          )}
-        </div>
-      </section>
-    );
-  };
+  const renderDivisionCard = (division, image, label) => (
+    <section className="tc-home-division-section" key={division}>
+      <button
+        type="button"
+        className="tc-home-division-card"
+        onClick={() => {
+          setTournamentDivisionFilter(division);
+          setTournamentCategoryFilter("Todas");
+          setActiveView("division-tournaments");
+        }}
+      >
+        <img src={image} alt="" />
+        <span>{label}</span>
+      </button>
+    </section>
+  );
 
 
   return (
@@ -2495,6 +2473,36 @@ export function TournamenSportApp() {
       ) : activeView === "stats" && isAdmin ? (
         <div className="tc-form-screen tc-stats-screen">
           <AdminStats onBack={() => setActiveView("home")} />
+        </div>
+      ) : activeView === "division-tournaments" ? (
+        <div className="tc-form-screen tc-division-tournaments-screen">
+          <section className="cr-card" style={{ width: "100%", maxWidth: "980px", margin: "auto" }}>
+            <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>
+              <span aria-hidden="true">←</span> Volver
+            </button>
+            <div className="tc-home-panel-art">
+              <div><span>FEFUTIN</span><strong>FÚTBOL · {tournamentDivisionFilter.toLocaleUpperCase("es")}</strong></div>
+            </div>
+            <h2 className="cr-title">TORNEOS DE {tournamentDivisionFilter.toLocaleUpperCase("es")}</h2>
+            {(() => {
+              const branchTournaments = tournaments.filter((t) => getTournamentDivision(t) === tournamentDivisionFilter);
+              const categories = [...new Set(branchTournaments.map(getTournamentCategory).filter(Boolean))];
+              return categories.length ? categories.map((category) => (
+                <section key={category} className="tc-division-category">
+                  <h3>{category}</h3>
+                  <div className="tc-division-tournament-list">
+                    {branchTournaments.filter((t) => getTournamentCategory(t) === category).map((t) => (
+                      <button type="button" className="tc-home-division-tournament" key={t.id} onClick={() => openTournament(t)}>
+                        <strong>{t.title || "Torneo sin nombre"}</strong>
+                        <span>Fútbol · {category}</span>
+                        <small>{t.status || "En preparación"}</small>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              )) : <p style={{ color: "#fff" }}>Todavía no hay torneos creados en esta rama.</p>;
+            })()}
+          </section>
         </div>
       ) : activeView === "home" ? (
         <div className="tc-home-screen">
