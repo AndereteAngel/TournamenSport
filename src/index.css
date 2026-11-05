@@ -4830,3 +4830,41 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   color: #b5122a !important;
   stroke: #b5122a !important;
 }
+
+
+/* FEFUTIN — mismo acabado para todas las tarjetas de inicio */
+.tc-home-screen .tc-home-division-card,
+.tc-home-screen .tc-home-about-card,
+.tc-home-screen .tc-home-admin-action,
+.tc-home-screen .tc-home-actions .tc-home-action,
+.tc-home-screen .tc-home-tournament-card {
+  border: 2px solid rgba(255,255,255,.92) !important;
+  box-shadow: 0 4px 0 #590a18, 0 8px 18px rgba(0,0,0,.3) !important;
+}
+.tc-home-screen .tc-home-division-card {
+  border-color: #fff !important;
+  outline: 1px solid rgba(181,18,42,.8) !important;
+  outline-offset: 2px !important;
+}
+.tc-home-screen .tc-home-about-card,
+.tc-home-screen .tc-home-admin-action {
+  background: linear-gradient(145deg,#c01835 0%,#a20f28 58%,#800b20 100%) !important;
+  color: #fff !important;
+}
+.tc-home-screen .tc-home-about-card strong,
+.tc-home-screen .tc-home-about-card small,
+.tc-home-screen .tc-home-about-card .tc-home-about-arrow {
+  color: #fff !important;
+}
+.tc-home-screen .tc-home-admin-action {
+  border-color: rgba(255,255,255,.92) !important;
+}
+.tc-home-screen .tc-home-tournament-card {
+  background: linear-gradient(145deg,#c01835 0%,#a20f28 58%,#800b20 100%) !important;
+  border-left: 4px solid #fff !important;
+  color: #fff !important;
+}
+.tc-home-screen .tc-home-tournament-card > div,
+.tc-home-screen .tc-home-tournament-card > div * {
+  color: #fff !important;
+}
