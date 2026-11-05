@@ -4971,3 +4971,48 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   .tc-navbar .mobile-menu-btn { min-width: 31px !important; min-height: 30px !important; padding: .2rem .32rem !important; }
   .tc-navbar .mobile-menu-btn svg { width: 15px !important; height: 15px !important; }
 }
+
+
+/* Navbar móvil — reducir margen vertical de hamburguesa y accesos */
+.tc-navbar .mobile-menu-btn {
+  padding: .08rem .3rem !important;
+  min-height: 26px !important;
+  height: 26px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.tc-navbar .mobile-menu-btn svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+.tc-navbar .mobile-nav-quick-btn {
+  padding-top: .08rem !important;
+  padding-bottom: .08rem !important;
+  min-height: 25px !important;
+  line-height: 1.1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+.tc-navbar .mobile-nav-home,
+.tc-navbar .mobile-nav-visitor {
+  padding-left: .32rem !important;
+  padding-right: .32rem !important;
+}
+.tc-navbar .mobile-nav-quick-btn svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+@media (max-width: 420px) {
+  .tc-navbar .mobile-menu-btn {
+    min-height: 24px !important;
+    height: 24px !important;
+    padding: .05rem .26rem !important;
+  }
+  .tc-navbar .mobile-nav-quick-btn {
+    min-height: 23px !important;
+    padding-top: .04rem !important;
+    padding-bottom: .04rem !important;
+  }
+}
