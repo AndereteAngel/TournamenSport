@@ -116,16 +116,6 @@ export function Navbar({
             {currentTitle || "FEFUTIN"}
           </span>
 
-          <span
-            style={{
-              fontSize: "9px",
-              color: "#9ca3af",
-              fontWeight: 700,
-              textTransform: "uppercase",
-            }}
-          >
-            <TCIcon name="user" size={13} /> {username}
-          </span>
         </div>
       </div>
 
@@ -248,9 +238,6 @@ export function Navbar({
         <button type="button" className="mobile-nav-quick-btn mobile-nav-home" onClick={onGoHome}>
           <TCIcon name="home" size={14} /> Inicio
         </button>
-        <div className="mobile-nav-quick-btn mobile-nav-visitor" title={username}>
-          <TCIcon name="user" size={14} /> <span>{username}</span>
-        </div>
       </div>
 
       {/* HAMBURGUESA */}
@@ -458,30 +445,33 @@ export function Navbar({
 
         @media (max-width: 640px) {
           .desktop-nav-actions { display: none !important; }
+          .tc-navbar {
+            padding: 0.35rem 0.55rem !important;
+          }
           .mobile-nav-quick-actions {
             display: flex !important;
             align-items: center !important;
             justify-content: flex-end !important;
-            gap: 6px !important;
+            gap: 5px !important;
             margin-left: auto !important;
-            margin-right: 7px !important;
+            margin-right: 6px !important;
           }
           .mobile-nav-quick-btn {
             box-sizing: border-box !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 5px !important;
-            width: 82px !important;
-            min-width: 82px !important;
-            height: 34px !important;
-            min-height: 34px !important;
-            padding: 0 6px !important;
+            gap: 4px !important;
+            width: 68px !important;
+            min-width: 68px !important;
+            height: 27px !important;
+            min-height: 27px !important;
+            padding: 0 5px !important;
             border: 1px solid #55555b !important;
-            border-radius: 7px !important;
+            border-radius: 6px !important;
             background: #0d0d0f !important;
             color: #fff !important;
-            font: 800 10px/1 'Montserrat', sans-serif !important;
+            font: 800 9px/1 'Montserrat', sans-serif !important;
             white-space: nowrap !important;
             overflow: hidden !important;
           }
@@ -489,13 +479,18 @@ export function Navbar({
             background: linear-gradient(135deg, #b5122a 0%, #8f1026 100%) !important;
             border-color: #f07889 !important;
           }
-          .mobile-nav-visitor span {
-            display: block !important;
-            min-width: 0 !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
+          .mobile-menu-btn {
+            display: flex !important;
+            flex: 0 0 29px !important;
+            width: 29px !important;
+            min-width: 29px !important;
+            height: 27px !important;
+            min-height: 27px !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            border-radius: 6px !important;
           }
-          .mobile-menu-btn { display: flex !important; flex: 0 0 auto !important; }
           .mobile-admin-btn { display: inline-flex !important; }
         }
       `}</style>
