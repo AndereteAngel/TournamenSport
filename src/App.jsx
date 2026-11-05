@@ -1017,6 +1017,9 @@ export function TournamenSportApp() {
     resolveConfirmation,
   } = useTournamentNotice();
   const [currentUser, setCurrentUser] = useState(null);
+  const [pendingAccessRequests, setPendingAccessRequests] = useState([]);
+  const [loadingAccessRequests, setLoadingAccessRequests] = useState(false);
+  const [accessActionError, setAccessActionError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [authInput, setAuthInput] = useState({ email: "", password: "" });
   const [authMode, setAuthMode] = useState("login");
@@ -1041,6 +1044,7 @@ export function TournamenSportApp() {
   // En esta etapa solo el rol admin conserva las funciones administrativas actuales.
   // Directivos y árbitros se habilitarán cuando estén listas sus políticas RLS.
   const isAdmin = currentUser?.role === "admin";
+  const canManageAccess = ["admin", "directivo"].includes(currentUser?.role);
   const [catalogSeeded, setCatalogSeeded] = useState(false);
 
   const saveTeamsToCatalog = async (teams) => {
@@ -1082,11 +1086,12 @@ export function TournamenSportApp() {
   }, [isAdmin, tournaments, catalogSeeded]);
 
   useEffect(() => {
+    if (!canManageAccess && activeView === "access-requests") setActiveView("home");
     if (!isAdmin && ["create", "edit", "join", "stats"].includes(activeView)) {
       setActiveView("home");
       setActiveTournament(null);
     }
-  }, [isAdmin, activeView]);
+  }, [isAdmin, canManageAccess, activeView]);
 
   useEffect(() => {
     document.documentElement.dataset.tcTheme = "clash";
@@ -1187,6 +1192,43 @@ export function TournamenSportApp() {
       approvalStatus: access.approval_status || "aprobado",
       approvedAt: access.approved_at || null,
     };
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadPendingRequests = async () => {
+      if (!canManageAccess) { setPendingAccessRequests([]); return; }
+      setLoadingAccessRequests(true);
+      const { data, error } = await supabase.rpc("get_fefutin_pending_requests");
+      if (cancelled) return;
+      if (error) {
+        console.error("Error al cargar solicitudes de acceso:", error);
+        setAccessActionError("No se pudieron cargar las solicitudes. Revisá la conexión con Supabase.");
+      } else {
+        setPendingAccessRequests(data || []);
+        setAccessActionError("");
+      }
+      setLoadingAccessRequests(false);
+    };
+    loadPendingRequests();
+    return () => { cancelled = true; };
+  }, [canManageAccess, currentUser?.id]);
+
+  const refreshPendingRequests = async () => {
+    if (!canManageAccess) return;
+    setLoadingAccessRequests(true);
+    const { data, error } = await supabase.rpc("get_fefutin_pending_requests");
+    if (error) setAccessActionError(error.message || "No se pudieron actualizar las solicitudes.");
+    else { setPendingAccessRequests(data || []); setAccessActionError(""); }
+    setLoadingAccessRequests(false);
+  };
+
+  const handleAccessDecision = async (userId, decision) => {
+    const rpcName = decision === "approve" ? "approve_fefutin_access" : "reject_fefutin_access";
+    const { error } = await supabase.rpc(rpcName, { p_user_id: userId });
+    if (error) { setAccessActionError(error.message || "No se pudo procesar la solicitud."); return; }
+    setAccessActionError("");
+    await refreshPendingRequests();
   };
 
   // =========================================================
@@ -2397,6 +2439,9 @@ export function TournamenSportApp() {
           currentUser={currentUser}
           tournaments={tournaments}
           isAdmin={isAdmin}
+          canManageAccess={canManageAccess}
+          pendingAccessCount={pendingAccessRequests.length}
+          onGoAccessRequests={() => { setAccessActionError(""); setActiveView("access-requests"); }}
           onGoStats={() => setActiveView("stats")}
           onAdminClick={() => setActiveView("admin-login")}
           onLogout={handleLogout}
@@ -2555,6 +2600,47 @@ export function TournamenSportApp() {
             </div>
           </form>
         </div>
+        </div>
+      ) : activeView === "access-requests" && canManageAccess ? (
+        <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
+          <section className="cr-card" style={{ width: "100%", maxWidth: "900px", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)" }}>
+            <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>← Volver</button>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", margin: "1rem 0 1.5rem" }}>
+              <div>
+                <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: "0.12em", fontSize: "0.72rem", margin: 0 }}>GESTIÓN DE USUARIOS</p>
+                <h2 className="cr-title" style={{ margin: "0.35rem 0" }}>SOLICITUDES DE ACCESO</h2>
+                <p style={{ color: "var(--tc-text, #fff)", opacity: 0.75, margin: 0 }}>Revisá y resolvé los pedidos de ingreso a FEFUTIN.</p>
+              </div>
+              <button type="button" className="tc-form-back" onClick={refreshPendingRequests} disabled={loadingAccessRequests}>↻ Actualizar</button>
+            </div>
+            {accessActionError && <div role="alert" style={{ border: "1px solid #b5122a", color: "#fff", background: "#391018", borderRadius: "8px", padding: "0.8rem", marginBottom: "1rem" }}>{accessActionError}</div>}
+            {loadingAccessRequests ? (
+              <p style={{ color: "#fff", textAlign: "center", padding: "2rem" }}>Cargando solicitudes...</p>
+            ) : pendingAccessRequests.length === 0 ? (
+              <div style={{ border: "1px solid #555", borderRadius: "12px", padding: "2rem 1rem", textAlign: "center", color: "#fff" }}>
+                <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>✓</div>
+                <strong>No hay solicitudes pendientes</strong>
+                <p style={{ opacity: 0.7, marginBottom: 0 }}>Cuando alguien solicite acceso como árbitro o directivo, aparecerá aquí.</p>
+              </div>
+            ) : (
+              <div style={{ display: "grid", gap: "0.85rem" }}>
+                {pendingAccessRequests.map((request) => (
+                  <article key={request.id} style={{ border: "1px solid #b5122a", borderRadius: "12px", background: "#111", padding: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+                    <div style={{ minWidth: 0 }}>
+                      <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>{request.username || "Sin nombre"}</strong>
+                      <span style={{ color: "#ddd", display: "block", overflowWrap: "anywhere", fontSize: "0.88rem" }}>{request.email || "Sin email"}</span>
+                      <span style={{ display: "inline-block", marginTop: "0.5rem", color: "#fff", background: "#8f1026", borderRadius: "20px", padding: "0.25rem 0.65rem", fontSize: "0.72rem", fontWeight: 800 }}>{request.requested_role === "directivo" ? "SOLICITA SER DIRECTIVO" : "SOLICITA SER ÁRBITRO"}</span>
+                      <small style={{ display: "block", color: "#aaa", marginTop: "0.4rem" }}>Recibida: {request.created_at ? new Date(request.created_at).toLocaleString("es-AR") : "—"}</small>
+                    </div>
+                    <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap" }}>
+                      <button type="button" className="cr-btn-gold" onClick={() => handleAccessDecision(request.id, "approve")}>Aprobar</button>
+                      <button type="button" className="tc-form-back" onClick={() => handleAccessDecision(request.id, "reject")}>Desestimar</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
       ) : activeView === "stats" && isAdmin ? (
         <div className="tc-form-screen tc-stats-screen">
