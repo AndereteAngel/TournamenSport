@@ -43,6 +43,181 @@ const adminTournamentButtonStyle = {
   boxShadow: "0 3px 0 #422200, 0 5px 10px rgba(255,156,0,0.2)",
 };
 
+
+function RefereeStats({ onBack }) {
+  const [perfiles, setPerfiles] = useState([]);
+  const [torneos, setTorneos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const cargarEstadisticas = async () => {
+    setLoading(true);
+    setError("");
+    const [
+      { data: perfilesData, error: perfilesError },
+      { data: torneosData, error: torneosError },
+    ] = await Promise.all([
+      supabase.from("profiles")
+        .select("id, username, role, approval_status, deactivated_at")
+        .order("username", { ascending: true }),
+      supabase.from("tournaments").select("*"),
+    ]);
+
+    if (perfilesError || torneosError) {
+      console.error("Error al cargar estadísticas arbitrales:", { perfilesError, torneosError });
+      setError(perfilesError
+        ? "No se pudo cargar la lista de árbitros. Revisá los permisos de lectura de profiles en Supabase."
+        : "No se pudieron cargar los torneos para calcular las estadísticas.");
+      setLoading(false);
+      return;
+    }
+
+    setPerfiles(perfilesData || []);
+    setTorneos(torneosData || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    cargarEstadisticas();
+  }, []);
+
+  const estadisticasPorId = {};
+  const registrarPartido = (match, tournament) => {
+    const refereeId = match?.referee_id;
+    const scoreLocal = Number(match?.score1);
+    const scoreVisitante = Number(match?.score2);
+    const team1 = String(match?.team1 || "").trim();
+    const team2 = String(match?.team2 || "").trim();
+
+    if (!refereeId ||
+        match?.score1 === null || match?.score1 === undefined ||
+        match?.score2 === null || match?.score2 === undefined ||
+        !Number.isFinite(scoreLocal) || !Number.isFinite(scoreVisitante) ||
+        !team1 || !team2 ||
+        team1.toLocaleLowerCase("es") === "pasaje directo" ||
+        team2.toLocaleLowerCase("es") === "pasaje directo") return;
+
+    if (!estadisticasPorId[refereeId]) {
+      const perfil = perfiles.find((item) => item.id === refereeId);
+      estadisticasPorId[refereeId] = {
+        id: refereeId,
+        nombre: perfil?.username || "Árbitro",
+        partidos: 0,
+        golesLocal: 0,
+        golesVisitante: 0,
+        golesTotales: 0,
+        porRama: {},
+      };
+    }
+
+    const stats = estadisticasPorId[refereeId];
+    const rama = String(tournament?.game || "").split(" · ")[1] || "Sin rama";
+    stats.partidos += 1;
+    stats.golesLocal += scoreLocal;
+    stats.golesVisitante += scoreVisitante;
+    stats.golesTotales += scoreLocal + scoreVisitante;
+    stats.porRama[rama] = (stats.porRama[rama] || 0) + 1;
+  };
+
+  torneos.forEach((tournament) => {
+    (Array.isArray(tournament.groups) ? tournament.groups : []).forEach((group) => {
+      (Array.isArray(group?.matches) ? group.matches : []).forEach((match) => registrarPartido(match, tournament));
+    });
+    (Array.isArray(tournament.playoffs) ? tournament.playoffs : []).forEach((round) => {
+      (Array.isArray(round) ? round : []).forEach((match) => registrarPartido(match, tournament));
+    });
+  });
+
+  perfiles
+    .filter((perfil) => perfil.role === "arbitro" && perfil.approval_status === "aprobado" && !perfil.deactivated_at)
+    .forEach((perfil) => {
+      if (!estadisticasPorId[perfil.id]) {
+        estadisticasPorId[perfil.id] = {
+          id: perfil.id,
+          nombre: perfil.username || "Árbitro",
+          partidos: 0,
+          golesLocal: 0,
+          golesVisitante: 0,
+          golesTotales: 0,
+          porRama: {},
+        };
+      }
+    });
+
+  const estadisticas = Object.values(estadisticasPorId)
+    .sort((a, b) => b.partidos - a.partidos || a.nombre.localeCompare(b.nombre, "es"));
+
+  if (loading || error) {
+    return (
+      <div className="cr-card" style={{ width: "100%", maxWidth: "1100px", margin: "0 auto", textAlign: "center" }}>
+        <h2 className="cr-title">ÁRBITROS · ESTADÍSTICAS</h2>
+        <p style={{ color: error ? "#f87171" : "#d1d5db" }}>{error || "Cargando estadísticas arbitrales..."}</p>
+        {error && <button type="button" className="cr-btn-gold" onClick={cargarEstadisticas}>Reintentar</button>}
+        <div><button type="button" className="tc-form-back" onClick={onBack} style={{ marginTop: "1rem" }}>← Volver</button></div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ width: "100%", maxWidth: "1100px", margin: "0 auto", paddingBottom: "2rem" }}>
+      <section className="cr-card" style={{ marginBottom: "1rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+          <div>
+            <h2 className="cr-title" style={{ marginBottom: "4px" }}>ÁRBITROS · ESTADÍSTICAS</h2>
+            <p style={{ color: "#d1d5db", margin: 0, fontSize: "0.82rem" }}>Comparativa general de rendimiento arbitral</p>
+          </div>
+          <button type="button" onClick={cargarEstadisticas} className="tc-form-back">↻ Actualizar</button>
+        </div>
+      </section>
+
+      <section className="cr-card">
+        <h3 style={{ color: "#fff", marginTop: 0 }}>Rendimiento de todos los árbitros</h3>
+        {estadisticas.length === 0 ? (
+          <p style={{ color: "#d1d5db" }}>Todavía no hay árbitros aprobados para mostrar.</p>
+        ) : (
+          <div style={{ overflowX: "auto", width: "100%" }}>
+            <table style={{ width: "100%", minWidth: "650px", borderCollapse: "collapse", color: "#fff", fontSize: "0.82rem" }}>
+              <thead>
+                <tr style={{ borderBottom: "2px solid #b5122a", color: "#fff", textAlign: "left" }}>
+                  <th style={{ padding: "0.7rem 0.45rem" }}>Árbitro</th>
+                  <th style={{ padding: "0.7rem 0.45rem", textAlign: "center" }}>Partidos</th>
+                  <th style={{ padding: "0.7rem 0.45rem" }}>Ramas</th>
+                  <th style={{ padding: "0.7rem 0.45rem", textAlign: "center" }}>Goles local</th>
+                  <th style={{ padding: "0.7rem 0.45rem", textAlign: "center" }}>Goles visitante</th>
+                  <th style={{ padding: "0.7rem 0.45rem", textAlign: "center" }}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {estadisticas.map((arbitro) => (
+                  <tr key={arbitro.id} style={{ borderBottom: "1px solid #34313d" }}>
+                    <td style={{ padding: "0.75rem 0.45rem", fontWeight: 800 }}>{arbitro.nombre}</td>
+                    <td style={{ padding: "0.75rem 0.45rem", textAlign: "center", fontWeight: 900 }}>{arbitro.partidos}</td>
+                    <td style={{ padding: "0.75rem 0.45rem", color: "#e5e7eb" }}>
+                      {Object.entries(arbitro.porRama).length
+                        ? Object.entries(arbitro.porRama).map(([rama, cantidad]) => rama + ": " + cantidad).join(" · ")
+                        : "Sin partidos"}
+                    </td>
+                    <td style={{ padding: "0.75rem 0.45rem", textAlign: "center" }}>{arbitro.golesLocal}</td>
+                    <td style={{ padding: "0.75rem 0.45rem", textAlign: "center" }}>{arbitro.golesVisitante}</td>
+                    <td style={{ padding: "0.75rem 0.45rem", textAlign: "center", fontWeight: 900 }}>{arbitro.golesTotales}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p style={{ color: "#aaa", fontSize: "0.72rem", marginBottom: 0, marginTop: "1rem" }}>
+          Se cuentan partidos con resultado completo y árbitro identificado. Los registros anteriores a la identificación del árbitro no se atribuyen retroactivamente.
+        </p>
+      </section>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
+        <button type="button" className="tc-form-back" onClick={onBack}>← Volver al inicio</button>
+      </div>
+    </div>
+  );
+}
+
 function AdminStats({ onBack }) {
   const [visitas, setVisitas] = useState([]);
   const [perfiles, setPerfiles] = useState([]);
@@ -1176,6 +1351,7 @@ export function TournamenSportApp() {
   const isArbitro = currentUser?.role === "arbitro";
   const canManageTournaments = isAdmin || isDirectivo;
   const canViewStatistics = isAdmin;
+  const canViewRefereeStats = isAdmin || isDirectivo || isArbitro;
   const canDeleteTournaments = isAdmin;
   const canManageAccess = isAdmin || isDirectivo;
   const [catalogSeeded, setCatalogSeeded] = useState(false);
@@ -1221,11 +1397,12 @@ export function TournamenSportApp() {
   useEffect(() => {
     if (!canManageAccess && activeView === "access-requests") setActiveView("home");
     if ((!canManageTournaments && ["create", "edit", "join"].includes(activeView)) ||
-        (!canViewStatistics && activeView === "stats")) {
+        (!canViewStatistics && activeView === "stats") ||
+        (!canViewRefereeStats && activeView === "referee-stats")) {
       setActiveView("home");
       setActiveTournament(null);
     }
-  }, [isAdmin, canManageTournaments, canViewStatistics, canManageAccess, activeView]);
+  }, [isAdmin, canManageTournaments, canViewStatistics, canViewRefereeStats, canManageAccess, activeView]);
 
   useEffect(() => {
     document.documentElement.dataset.tcTheme = "clash";
@@ -2816,6 +2993,10 @@ export function TournamenSportApp() {
         <div className="tc-form-screen tc-stats-screen">
           <AdminStats onBack={() => setActiveView("home")} />
         </div>
+      ) : activeView === "referee-stats" && canViewRefereeStats ? (
+        <div className="tc-form-screen tc-stats-screen">
+          <RefereeStats onBack={() => setActiveView("home")} />
+        </div>
       ) : activeView === "division-tournaments" ? (
         <div className="tc-form-screen tc-division-tournaments-screen">
           <section className="cr-card" style={{ width: "100%", maxWidth: "980px", margin: "auto" }}>
@@ -2909,6 +3090,21 @@ export function TournamenSportApp() {
             <span className="tc-home-about-arrow">→</span>
           </button>
 
+          {(isAdmin || isDirectivo || isArbitro) && (
+            <button
+              type="button"
+              className="tc-home-about-card"
+              onClick={() => setActiveView("referee-stats")}
+            >
+              <span className="tc-home-about-icon">🧑‍⚖️</span>
+              <span className="tc-home-about-copy">
+                <strong>ÁRBITROS</strong>
+                <small>Consultá y compará las estadísticas arbitrales</small>
+              </span>
+              <span className="tc-home-about-arrow">→</span>
+            </button>
+          )}
+
           {showWhoWeAre && (
             <div className="tc-about-overlay" onClick={() => setShowWhoWeAre(false)}>
               <section
@@ -2958,7 +3154,7 @@ export function TournamenSportApp() {
               </section>
             </div>
           )}
-          {isAdmin && <div
+          {(isAdmin || isDirectivo || isArbitro) && <div
             style={{
               display: "flex",
               justifyContent: "space-between",
@@ -2977,7 +3173,7 @@ export function TournamenSportApp() {
               }}
             >
               <div className="tc-admin-crown">
-                <TCIcon name="crown" size={22} />
+                <TCIcon name={isAdmin ? "crown" : "user"} size={22} />
               </div>
 
               <div>
@@ -2991,7 +3187,7 @@ export function TournamenSportApp() {
                   }}
                   className="tc-admin-label"
                 >
-                  Administrador
+                  {isAdmin ? "Administrador" : isDirectivo ? "Directivo" : "Árbitro"}
                 </span>
 
                 <h2
