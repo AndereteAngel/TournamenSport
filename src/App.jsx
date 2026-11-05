@@ -2763,21 +2763,7 @@ export function TournamenSportApp() {
                           flexWrap: "wrap",
                         }}
                       >
-                        {t.is_public ? (
-                          <span
-                            style={{
-                              fontSize: "9px",
-                              backgroundColor: "rgba(27, 95, 168, 0.4)",
-                              color: "#93c5fd",
-                              fontWeight: "bold",
-                              padding: "2px 6px",
-                              borderRadius: "4px",
-                              border: "1px solid rgba(59, 130, 246, 0.3)",
-                            }}
-                          >
-                            {t.code}
-                          </span>
-                        ) : (
+                        {t.is_public ? null : (
                           <span
                             style={{
                               fontSize: "9px",
