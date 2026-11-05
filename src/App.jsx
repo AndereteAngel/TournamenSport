@@ -2729,7 +2729,6 @@ export function TournamenSportApp() {
                     onClick={() => {
                       setActiveTournament(t);
                       setShowChampionCard(String(t.status || "").trim().toLocaleLowerCase("es") === "finalizado");
-
                       setActiveView(
                         t.playoffs && t.playoffs.length > 0
                           ? "playoffs"
@@ -2737,216 +2736,107 @@ export function TournamenSportApp() {
                       );
                     }}
                     style={{
-                      padding: "0.75rem",
-                      backgroundColor: "#121019",
-                      border: "2px solid #2d2b3b",
+                      padding: "0.8rem 0.9rem",
+                      backgroundColor: "#171c27",
+                      border: "1px solid rgba(255,255,255,.28)",
+                      borderLeft: "4px solid #b5122a",
                       borderRadius: "10px",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      gap: "0.75rem",
+                      gap: "0.8rem",
                       cursor: "pointer",
                     }}
                   >
-                    <div
-                      style={{
-                        minWidth: 0,
-                        flex: 1,
-                      }}
-                    >
-                      <div
+                    <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: "5px" }}>
+                      <h4
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                          marginBottom: "2px",
-                          flexWrap: "wrap",
+                          fontWeight: 950,
+                          fontSize: "0.9rem",
+                          margin: 0,
+                          color: "#fff",
+                          overflowWrap: "anywhere",
                         }}
                       >
-                        {t.is_public ? null : (
-                          <span
-                            style={{
-                              fontSize: "9px",
-                              backgroundColor: "rgba(127, 29, 29, 0.4)",
-                              color: "#fca5a5",
-                              fontWeight: "bold",
-                              padding: "2px 6px",
-                              borderRadius: "4px",
-                              border: "1px solid rgba(239, 68, 68, 0.3)",
-                            }}
-                          >
-                            <><TCIcon name="lock" size={12} /> Privado</>
-                          </span>
-                        )}
-
-                        <span
-                          style={{
-                            fontSize: "10px",
-                            fontWeight: "bold",
-                            color: "#ffd700",
-                          }}
-                        >
-                          <TCIcon name="crown" size={13} /> {t.created_by}
-                        </span>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          flexWrap: "wrap",
-                          gap: "0.45rem",
-                          minWidth: 0,
-                        }}
-                      >
-                        <h4
-                          style={{
-                            fontWeight: 900,
-                            fontSize: "0.85rem",
-                            margin: 0,
-                            color: "#fff",
-                            overflowWrap: "anywhere",
-                          }}
-                        >
-                          {t.title}
-                        </h4>
+                        {t.title}
+                      </h4>
+                      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px" }}>
                         <span
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
                             padding: "3px 7px",
                             borderRadius: "5px",
-                            background: "rgba(249, 115, 22, 0.14)",
-                            border: "1px solid rgba(249, 115, 22, 0.55)",
-                            color: "#fdba74",
-                            fontSize: "0.65rem",
-                            fontWeight: 800,
-                            lineHeight: 1.3,
+                            background: "rgba(181,18,42,.18)",
+                            border: "1px solid rgba(181,18,42,.65)",
+                            color: "#ffd5dc",
+                            fontSize: "0.68rem",
+                            fontWeight: 850,
                           }}
                         >
                           {getTournamentCategory(t)}
                         </span>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "3px 7px",
+                            borderRadius: "5px",
+                            background: "rgba(255,255,255,.07)",
+                            border: "1px solid rgba(255,255,255,.22)",
+                            color: "#f8fafc",
+                            fontSize: "0.68rem",
+                            fontWeight: 850,
+                          }}
+                        >
+                          {getTournamentDivision(t)}
+                        </span>
                       </div>
                     </div>
 
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.6rem",
-                        flexShrink: 0,
-                      }}
-                    >
-                    {isAdmin && String(t.status || "").trim().toLocaleLowerCase("es") === "inscripciones" && (
-                      <button
-                        type="button"
-                        disabled={(() => {
-                          const registration = (t.groups || []).find((group) => group?.name === "__INSCRIPCIONES__");
-                          const teams = registration?.teams || [];
-                          const alreadyRegistered = teams.some((name) => String(name).toLocaleLowerCase("es") === currentUser.username.toLocaleLowerCase("es"));
-                          const full = Number(registration?.capacity || 0) > 0 && teams.length >= Number(registration.capacity);
-                          return alreadyRegistered || full;
-                        })()}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRegisterForTournament(t);
-                        }}
-                        style={{
-                          padding: "0.5rem 0.65rem",
-                          background: "linear-gradient(135deg, #166534, #14532d)",
-                          border: "1px solid #4ade80",
-                          borderRadius: "8px",
-                          color: "#dcfce7",
-                          fontSize: "0.68rem",
-                          fontWeight: 900,
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
-                          opacity: (() => {
-                            const registration = (t.groups || []).find((group) => group?.name === "__INSCRIPCIONES__");
-                            const teams = registration?.teams || [];
-                            const alreadyRegistered = teams.some((name) => String(name).toLocaleLowerCase("es") === currentUser.username.toLocaleLowerCase("es"));
-                            const full = Number(registration?.capacity || 0) > 0 && teams.length >= Number(registration.capacity);
-                            return alreadyRegistered || full ? 0.55 : 1;
-                          })(),
-                        }}
-                      >
-                        {(() => {
-                          const registration = (t.groups || []).find((group) => group?.name === "__INSCRIPCIONES__");
-                          const teams = registration?.teams || [];
-                          const alreadyRegistered = teams.some((name) => String(name).toLocaleLowerCase("es") === currentUser.username.toLocaleLowerCase("es"));
-                          const full = Number(registration?.capacity || 0) > 0 && teams.length >= Number(registration.capacity);
-                          return alreadyRegistered ? "✓ Inscripto" : full ? "Cupo completo" : "📝 Inscripción";
-                        })()}
-                      </button>
-                    )}
-                    <div
-                      style={{
-                        textAlign: "right",
-                      }}
-                    >
+                    <div style={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "7px", minWidth: "58px" }}>
                       <span
                         style={{
-                          fontSize: "0.75rem",
-                          fontWeight: 900,
-                          color:
-                            String(t.status || "").trim().toLocaleLowerCase("es") === "en curso" ? "#34d399" :
-                            String(t.status || "").trim().toLocaleLowerCase("es") === "inscripciones" ? "#facc15" : "#60a5fa",
                           display: "block",
+                          color: "#fff",
+                          background: "#b5122a",
+                          border: "1px solid #f07889",
+                          borderRadius: "7px",
+                          padding: "6px 9px",
+                          fontSize: "0.7rem",
+                          fontWeight: 950,
+                          whiteSpace: "nowrap",
+                          textAlign: "center",
                         }}
                       >
-                        {t.status}
+                        Entrar →
                       </span>
-
-                      <span
-                        style={{
-                          fontSize: "9px",
-                          color: "#9ca3af",
-                          fontWeight: 500,
-                        }}
-                      >
-                        Entrar ➔
-                      </span>
-                    </div>
-
-                      {/* BOTÓN ELIMINAR - SOLO ADMIN */}
-
                       {isAdmin && (
                         <button
                           type="button"
                           title="Eliminar torneo"
+                          aria-label="Eliminar torneo"
                           disabled={deletingTournamentId === t.id}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteTournament(t);
                           }}
                           style={{
-                            width: "34px",
-                            height: "34px",
+                            width: "30px",
+                            height: "30px",
                             flexShrink: 0,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
-                            background:
-                              deletingTournamentId === t.id
-                                ? "#374151"
-                                : "rgba(127, 29, 29, 0.35)",
-                            border:
-                              deletingTournamentId === t.id
-                                ? "1px solid #4b5563"
-                                : "1px solid rgba(239, 68, 68, 0.45)",
+                            background: deletingTournamentId === t.id ? "#374151" : "rgba(127,29,29,.35)",
+                            border: "1px solid rgba(239,68,68,.55)",
                             borderRadius: "6px",
-                            color:
-                              deletingTournamentId === t.id
-                                ? "#9ca3af"
-                                : "#f87171",
-                            cursor:
-                              deletingTournamentId === t.id
-                                ? "not-allowed"
-                                : "pointer",
-                            fontSize: "15px",
+                            color: deletingTournamentId === t.id ? "#9ca3af" : "#f87171",
+                            cursor: deletingTournamentId === t.id ? "not-allowed" : "pointer",
+                            padding: 0,
                           }}
                         >
-                          {deletingTournamentId === t.id ? "…" : <TCIcon name="trash" size={16} />}
+                          {deletingTournamentId === t.id ? "…" : <TCIcon name="trash" size={17} />}
                         </button>
                       )}
                     </div>
