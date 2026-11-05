@@ -1040,6 +1040,7 @@ export function TournamenSportApp() {
   const [registeredProfilesSearch, setRegisteredProfilesSearch] = useState("");
   const [selectedRegisteredProfileIds, setSelectedRegisteredProfileIds] = useState([]);
   const isAdmin = currentUser?.role === "admin";
+  const isDirectivo = currentUser?.role === "directivo";
   const isArbitro = currentUser?.role === "arbitro";
   const canManageTournaments = isAdmin || isDirectivo;
   const canViewStatistics = isAdmin;
