@@ -4700,3 +4700,69 @@ h2.tc-admin-username {
     min-height: 27px !important;
   }
 }
+
+
+/* Ajuste de la card Armar Torneo: marco e icono centrados y proporcionados */
+.tc-home-actions .tc-home-action-create {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+.tc-home-actions .tc-home-action-create .tc-home-action-icon {
+  box-sizing: border-box !important;
+  flex: 0 0 92px !important;
+  width: 92px !important;
+  min-width: 92px !important;
+  height: 92px !important;
+  min-height: 92px !important;
+  margin: 0 auto 14px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: center !important;
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  background: #fff !important;
+  border: 2px solid #171c27 !important;
+  border-radius: 16px !important;
+}
+.tc-home-actions .tc-home-action-create .tc-home-action-icon .tc-icon-core {
+  display: flex !important;
+  width: 100% !important;
+  height: 100% !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.tc-home-actions .tc-home-action-create .tc-home-action-icon svg {
+  display: block !important;
+  width: 58px !important;
+  height: 58px !important;
+  max-width: none !important;
+  max-height: none !important;
+  color: #b5122a !important;
+  stroke: #b5122a !important;
+  stroke-width: 2.8 !important;
+}
+.tc-home-actions .tc-home-action-create h3,
+.tc-home-actions .tc-home-action-create p {
+  width: 100% !important;
+  text-align: center !important;
+}
+@media (max-width: 640px) {
+  .tc-home-actions .tc-home-action-create .tc-home-action-icon {
+    flex-basis: 86px !important;
+    width: 86px !important;
+    min-width: 86px !important;
+    height: 86px !important;
+    min-height: 86px !important;
+  }
+  .tc-home-actions .tc-home-action-create .tc-home-action-icon svg {
+    width: 54px !important;
+    height: 54px !important;
+  }
+}
