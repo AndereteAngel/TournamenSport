@@ -5394,3 +5394,46 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
 .tc-round-heading small {
   color: #facc15 !important;
 }
+
+
+/* FEFUTIN — corrección efectiva de contraste en pantallas concretas */
+.tc-stats-screen,
+.tc-stats-screen * {
+  color: #e5e7eb !important;
+}
+.tc-stats-screen :is(h1, h2, h3, h4, h5, h6, .cr-title) {
+  color: #ffffff !important;
+}
+.tc-stats-screen :is(input, select, textarea) {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: #111111 !important;
+}
+.tc-stats-screen input::placeholder,
+.tc-stats-screen textarea::placeholder {
+  color: #aeb8c5 !important;
+  -webkit-text-fill-color: #aeb8c5 !important;
+}
+.tc-stats-screen select option {
+  color: #ffffff !important;
+  background: #111111 !important;
+}
+.tc-stats-screen .cr-btn-gold,
+.tc-stats-screen .cr-btn-gold * {
+  color: #171717 !important;
+}
+
+/* Aviso del organizador: fuerza contraste también en todos sus nodos internos. */
+.tc-organizer-notice,
+.tc-organizer-notice * {
+  color: #f1f5f9 !important;
+}
+.tc-organizer-notice strong {
+  color: #ffffff !important;
+}
+
+/* Encabezado de fecha y su descripción. */
+.tc-round-heading,
+.tc-round-heading * {
+  color: #facc15 !important;
+}
