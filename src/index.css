@@ -5649,3 +5649,57 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   }
   .tc-division-search input { font-size: .72rem !important; }
 }
+
+
+/* FEFUTIN — buscador de categorías: marco destacado, centrado y con aire. */
+#root .cr-container .tc-division-tournaments-screen .tc-division-search {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: min(100% - 32px, 640px) !important;
+  min-height: 56px !important;
+  margin: 26px auto 32px !important;
+  padding: 12px 18px !important;
+  box-sizing: border-box !important;
+  background: #ffffff !important;
+  border: 3px solid #b5122a !important;
+  border-radius: 14px !important;
+  box-shadow: 0 5px 0 rgba(181,18,42,.24), 0 9px 22px rgba(0,0,0,.22) !important;
+}
+#root .cr-container .tc-division-tournaments-screen .tc-division-search > span {
+  flex: 0 0 auto !important;
+  color: #b5122a !important;
+  font-size: 1.45rem !important;
+}
+#root .cr-container .tc-division-tournaments-screen .tc-division-search input {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 5px 2px !important;
+  color: #171c27 !important;
+  -webkit-text-fill-color: #171c27 !important;
+  font-size: .9rem !important;
+  font-weight: 750 !important;
+}
+#root .cr-container .tc-division-tournaments-screen .tc-division-search input::placeholder {
+  color: #737987 !important;
+  -webkit-text-fill-color: #737987 !important;
+}
+#root .cr-container .tc-division-tournaments-screen .tc-division-search button {
+  flex: 0 0 auto !important;
+  min-width: 28px !important;
+  color: #b5122a !important;
+  font-size: 1.45rem !important;
+}
+@media (max-width: 520px) {
+  #root .cr-container .tc-division-tournaments-screen .tc-division-search {
+    width: calc(100% - 20px) !important;
+    min-height: 52px !important;
+    margin: 20px auto 26px !important;
+    padding: 10px 14px !important;
+    border-width: 2px !important;
+    border-radius: 12px !important;
+  }
+  #root .cr-container .tc-division-tournaments-screen .tc-division-search input {
+    font-size: .8rem !important;
+  }
+}
