@@ -2748,17 +2748,17 @@ export function TournamenSportApp() {
                       cursor: "pointer",
                     }}
                   >
-                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 5px", borderRadius: "7px", border: "1px solid rgba(255,255,255,.35)", background: "#252c39", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
                       {t.title}
                     </div>
-                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 5px", borderRadius: "7px", border: "1px solid rgba(255,255,255,.35)", background: "#252c39", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
                       {getTournamentCategory(t)}
                     </div>
-                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 5px", borderRadius: "7px", border: "1px solid rgba(255,255,255,.35)", background: "#252c39", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
                       {getTournamentDivision(t)}
                     </div>
                     <div style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "center", gap: "6px" }}>
-                      <div style={{ boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 5px", borderRadius: "7px", border: "1px solid rgba(255,255,255,.35)", background: "#252c39", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2 }}>
+                      <div style={{ boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2 }}>
                         Entrar
                       </div>
                       {isAdmin && (
