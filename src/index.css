@@ -4911,3 +4911,20 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   border: 2px solid #b5122a !important;
   box-shadow: 0 0 0 1px rgba(255,255,255,.85) !important;
 }
+
+
+/* Logo oficial FEFUTIN en la navbar */
+.tc-navbar .tc-navbar-fefutin-logo {
+  width: 46px !important;
+  height: 42px !important;
+  object-fit: contain !important;
+  display: block !important;
+  flex: 0 0 auto !important;
+  background: #fff !important;
+  border: 1px solid rgba(255,255,255,.9) !important;
+  border-radius: 6px !important;
+  padding: 2px !important;
+}
+@media (max-width: 420px) {
+  .tc-navbar .tc-navbar-fefutin-logo { width: 38px !important; height: 36px !important; }
+}
