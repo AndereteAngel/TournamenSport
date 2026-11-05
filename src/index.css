@@ -5485,3 +5485,16 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
 #root .cr-container .fefutin-welcome-panel button {
   color: #ffffff !important;
 }
+
+
+/* FEFUTIN — botón volver al pie derecho de las interfaces de ramas. */
+#root .tc-division-tournaments-screen > .cr-card {
+  display: flex !important;
+  flex-direction: column !important;
+}
+#root .tc-division-tournaments-screen .tc-form-back {
+  order: 10 !important;
+  align-self: flex-end !important;
+  justify-content: center !important;
+  margin: 1.25rem 0 0 !important;
+}
