@@ -1019,6 +1019,8 @@ export function TournamenSportApp() {
   const [currentUser, setCurrentUser] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [authInput, setAuthInput] = useState({ email: "", password: "" });
+  const [authMode, setAuthMode] = useState("login");
+  const [registerInput, setRegisterInput] = useState({ username: "", requestedRole: "arbitro" });
   const [activeView, setActiveView] = useState("home");
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -1418,8 +1420,59 @@ export function TournamenSportApp() {
   };
 
   // =========================================================
-  // AUTENTICACIÓN
+  // AUTENTICACIÓN Y SOLICITUDES DE ACCESO
   // =========================================================
+
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    const username = registerInput.username.trim();
+    const email = authInput.email.trim().toLowerCase();
+    const password = authInput.password.trim();
+    const requestedRole = registerInput.requestedRole;
+
+    if (username.length < 3) {
+      showNotice("Ingresá un nombre de al menos 3 caracteres.");
+      return;
+    }
+    if (!email || password.length < 6) {
+      showNotice("Ingresá un email válido y una contraseña de al menos 6 caracteres.");
+      return;
+    }
+    if (!["directivo", "arbitro"].includes(requestedRole)) {
+      showNotice("Seleccioná si solicitás acceso como directivo o árbitro.");
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { username, requested_role: requestedRole },
+      },
+    });
+
+    if (error) {
+      console.error("Error al registrar solicitud:", error);
+      showNotice(error.message?.toLowerCase().includes("already")
+        ? "Ese email ya está registrado. Probá iniciar sesión."
+        : "No se pudo crear la cuenta. Revisá los datos e intentá nuevamente.");
+      return;
+    }
+
+    setAuthInput({ email: "", password: "" });
+    setRegisterInput({ username: "", requestedRole: "arbitro" });
+    setAuthMode("login");
+
+    if (data.session && data.user) {
+      const user = await buildCurrentUser(data.user);
+      if (user) {
+        setCurrentUser(user);
+        setActiveView("home");
+      }
+    }
+
+    showNotice("✅ Solicitud enviada. Tu cuenta queda como visitante hasta que FEFUTIN apruebe el rol solicitado. Si Supabase requiere confirmar el email, revisá tu correo.");
+  };
 
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
@@ -2378,15 +2431,25 @@ export function TournamenSportApp() {
             <p className="tc-auth-tagline">Ingresá a la plataforma de FEFUTIN.</p>
           </div>
 
+          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+            <button type="button" onClick={() => setAuthMode("login")} className={authMode === "login" ? "cr-btn-gold" : "tc-form-back"} style={{ flex: 1, padding: "0.65rem" }}>Ingresar</button>
+            <button type="button" onClick={() => setAuthMode("register")} className={authMode === "register" ? "cr-btn-gold" : "tc-form-back"} style={{ flex: 1, padding: "0.65rem" }}>Solicitar acceso</button>
+          </div>
+
           <form
             className="tc-auth-form"
-            onSubmit={handleAuthSubmit}
+            onSubmit={authMode === "register" ? handleRegisterSubmit : handleAuthSubmit}
             style={{
               display: "flex",
               flexDirection: "column",
               gap: "1rem",
             }}
           >
+            {authMode === "register" && <div>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "4px" }}>Nombre y apellido</label>
+              <input type="text" placeholder="Ej: Juan Pérez" value={registerInput.username} onChange={(e) => setRegisterInput({ ...registerInput, username: e.target.value })} required minLength={3} className="cr-input" />
+            </div>}
+
             <div>
               <label
                 style={{
@@ -2464,6 +2527,15 @@ export function TournamenSportApp() {
               />
             </div>
 
+            {authMode === "register" && <div>
+              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "4px" }}>Solicito acceso como</label>
+              <select value={registerInput.requestedRole} onChange={(e) => setRegisterInput({ ...registerInput, requestedRole: e.target.value })} className="cr-input" required>
+                <option value="arbitro">Árbitro</option>
+                <option value="directivo">Directivo</option>
+              </select>
+              <p style={{ color: "#9ca3af", fontSize: "0.75rem", lineHeight: 1.45, margin: "0.35rem 0 0" }}>La solicitud debe ser aprobada por las autoridades de FEFUTIN. Mientras tanto tendrás acceso público como visitante.</p>
+            </div>}
+
             <button
               type="submit"
               className="cr-btn-gold tc-auth-submit"
@@ -2473,11 +2545,11 @@ export function TournamenSportApp() {
                 borderBottom: "3px solid #522b00",
               }}
             >
-              <><TCIcon name="shield" size={17} /> Ingresar</>
+              <><TCIcon name="shield" size={17} /> {authMode === "register" ? "Enviar solicitud" : "Ingresar"}</>
             </button>
 
             <div style={{ textAlign: "center", marginTop: "0.5rem" }}>
-              <button type="button" onClick={() => { setActiveView("home"); setAuthInput({ email: "", password: "" }); }} style={{ background: "transparent", border: "none", color: "#9ca3af", fontSize: "0.8rem", cursor: "pointer" }}>
+              <button type="button" onClick={() => { setActiveView("home"); setAuthMode("login"); setAuthInput({ email: "", password: "" }); setRegisterInput({ username: "", requestedRole: "arbitro" }); }} style={{ background: "transparent", border: "none", color: "#9ca3af", fontSize: "0.8rem", cursor: "pointer" }}>
                 ← Volver a la plataforma pública
               </button>
             </div>
