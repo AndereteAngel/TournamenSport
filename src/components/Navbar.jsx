@@ -116,7 +116,9 @@ export function Navbar({
           >
             {currentTitle || "FEFUTIN"}
           </span>
-
+          <span className="mobile-navbar-alias">
+            <TCIcon name="user" size={11} /> {username}
+          </span>
         </div>
       </div>
 
@@ -408,6 +410,7 @@ export function Navbar({
       {/* CSS RESPONSIVE */}
       <style>{`
         .mobile-nav-quick-actions { display: none; }
+        .mobile-navbar-alias { display: none; }
 
         @media (min-width: 641px) {
           .tc-navbar .desktop-nav-actions > .tc-nav-code {
@@ -446,6 +449,16 @@ export function Navbar({
 
         @media (max-width: 640px) {
           .desktop-nav-actions { display: none !important; }
+          .mobile-navbar-alias {
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+            margin-top: 4px !important;
+            color: #f2f2f2 !important;
+            font-size: 11px !important;
+            font-weight: 700 !important;
+            white-space: nowrap !important;
+          }
           .tc-navbar {
             padding: 0.35rem 0.55rem !important;
           }
