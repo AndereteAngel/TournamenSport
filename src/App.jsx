@@ -2714,7 +2714,7 @@ export function TournamenSportApp() {
 
           </div>}
 
-          <div className="tc-home-tournaments">
+          <div className="tc-home-tournaments" style={{ display: "none" }}>
             <div
               className="tc-home-tournaments-heading"
               style={{
