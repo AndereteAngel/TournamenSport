@@ -1035,6 +1035,45 @@ export function TournamenSportApp() {
   const [registeredProfilesSearch, setRegisteredProfilesSearch] = useState("");
   const [selectedRegisteredProfileIds, setSelectedRegisteredProfileIds] = useState([]);
   const isAdmin = currentUser?.id === ADMIN_UID;
+  const [catalogSeeded, setCatalogSeeded] = useState(false);
+
+  const saveTeamsToCatalog = async (teams) => {
+    const uniqueTeams = [...new Map(
+      (teams || [])
+        .map((name) => String(name || "").trim())
+        .filter(Boolean)
+        .map((name) => [name.toLocaleLowerCase("es"), name])
+    ).values()];
+
+    if (!uniqueTeams.length) return null;
+
+    const { error } = await supabase
+      .from("teams_catalog")
+      .upsert(
+        uniqueTeams.map((name) => ({ name })),
+        { onConflict: "normalized_name", ignoreDuplicates: true }
+      );
+
+    if (error) console.error("No se pudo actualizar el catálogo histórico de equipos:", error);
+    return error;
+  };
+
+  useEffect(() => {
+    if (!isAdmin || catalogSeeded || !tournaments.length) return;
+
+    const historicalTeams = tournaments.flatMap((tournament) =>
+      (tournament.groups || []).flatMap((group) => group.teams || [])
+    );
+
+    if (!historicalTeams.length) {
+      setCatalogSeeded(true);
+      return;
+    }
+
+    saveTeamsToCatalog(historicalTeams).then((error) => {
+      if (!error) setCatalogSeeded(true);
+    });
+  }, [isAdmin, tournaments, catalogSeeded]);
 
   useEffect(() => {
     if (!isAdmin && ["create", "edit", "join", "stats"].includes(activeView)) {
@@ -1489,9 +1528,13 @@ export function TournamenSportApp() {
     }
 
     if (data && data.length > 0) {
+      const catalogError = await saveTeamsToCatalog(config.teams);
       setActiveTournament(data[0]);
       setTournaments((prev) => [data[0], ...prev]);
       setActiveView("groups");
+      if (catalogError) {
+        showNotice("El torneo se creó, pero no se pudo actualizar el catálogo de equipos. Revisá los permisos de teams_catalog.");
+      }
     }
   };
 
@@ -2002,6 +2045,7 @@ export function TournamenSportApp() {
     }
 
     if (data && data.length > 0) {
+      const catalogError = await saveTeamsToCatalog(config.teams);
       setActiveTournament(data[0]);
 
       setTournaments((prev) =>
@@ -2015,7 +2059,10 @@ export function TournamenSportApp() {
         setActiveView("groups");
       }
 
-      showNotice("✅ Torneo modificado correctamente.");
+      showNotice(catalogError
+        ? "El torneo se modificó, pero no se pudo actualizar el catálogo de equipos."
+        : "✅ Torneo modificado correctamente."
+      );
     }
   };
 
@@ -2223,6 +2270,55 @@ export function TournamenSportApp() {
     return matchesCategory && matchesDivision;
   });
 
+  const openTournament = (tournament) => {
+    setActiveTournament(tournament);
+    setShowChampionCard(String(tournament.status || "").trim().toLocaleLowerCase("es") === "finalizado");
+    setActiveView(
+      tournament.playoffs && tournament.playoffs.length > 0
+        ? "playoffs"
+        : "groups"
+    );
+  };
+
+  const renderDivisionCard = (division, image, label) => {
+    const divisionTournaments = tournaments.filter(
+      (tournament) => getTournamentDivision(tournament) === division
+    );
+
+    return (
+      <section className="tc-home-division-section" key={division}>
+        <button
+          type="button"
+          className="tc-home-division-card"
+          onClick={() => {
+            setTournamentDivisionFilter(division);
+            setTournamentCategoryFilter("Todas");
+          }}
+        >
+          <img src={image} alt="" />
+          <span>{label}</span>
+        </button>
+
+        <div className="tc-home-division-tournaments">
+          {divisionTournaments.length ? divisionTournaments.map((tournament) => (
+            <button
+              type="button"
+              className="tc-home-division-tournament"
+              key={tournament.id}
+              onClick={() => openTournament(tournament)}
+            >
+              <strong>{tournament.title || "Torneo sin nombre"}</strong>
+              <span>{getTournamentCategory(tournament)}</span>
+              <small>{tournament.status || "En preparación"}</small>
+            </button>
+          )) : (
+            <p className="tc-home-division-empty">Todavía no hay torneos</p>
+          )}
+        </div>
+      </section>
+    );
+  };
+
 
   return (
     <div className="cr-container tc-theme-clash">
@@ -2412,18 +2508,9 @@ export function TournamenSportApp() {
             </div>
           </div>
           <div className="tc-home-divisions" aria-label="Divisiones de la liga">
-            <button type="button" className="tc-home-division-card" onClick={() => { setTournamentDivisionFilter("Infantil"); setTournamentCategoryFilter("Todas"); }}>
-              <img src="/WhatsApp%20Image%202026-10-31%20at%2010.45.23.jpeg" alt="" />
-              <span>INFANTIL</span>
-            </button>
-            <button type="button" className="tc-home-division-card" onClick={() => { setTournamentDivisionFilter("Femenino"); setTournamentCategoryFilter("Todas"); }}>
-              <img src="/WhatsApp%20Image%202026-10-30%20at%2021.11.20.jpeg" alt="" />
-              <span>FEMENINO</span>
-            </button>
-            <button type="button" className="tc-home-division-card" onClick={() => { setTournamentDivisionFilter("Mayores"); setTournamentCategoryFilter("Todas"); }}>
-              <img src="/WhatsApp%20Image%202026-10-30%20at%2020.59.32.jpeg" alt="" />
-              <span>MAYORES</span>
-            </button>
+            {renderDivisionCard("Infantil", "/WhatsApp%20Image%202026-10-31%20at%2010.45.23.jpeg", "INFANTIL")}
+            {renderDivisionCard("Femenino", "/WhatsApp%20Image%202026-10-30%20at%2021.11.20.jpeg", "FEMENINO")}
+            {renderDivisionCard("Mayores", "/WhatsApp%20Image%202026-10-30%20at%2020.59.32.jpeg", "MAYORES")}
           </div>
           <button
             type="button"
@@ -2717,15 +2804,7 @@ export function TournamenSportApp() {
                   <div
                     className="tc-home-tournament-item tc-home-tournament-card"
                     key={t.id}
-                    onClick={() => {
-                      setActiveTournament(t);
-                      setShowChampionCard(String(t.status || "").trim().toLocaleLowerCase("es") === "finalizado");
-                      setActiveView(
-                        t.playoffs && t.playoffs.length > 0
-                          ? "playoffs"
-                          : "groups"
-                      );
-                    }}
+                    onClick={() => openTournament(t)}
                     style={{
                       display: "grid",
                       gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
