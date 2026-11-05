@@ -5437,3 +5437,36 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
 .tc-round-heading * {
   color: #facc15 !important;
 }
+
+/* FEFUTIN — CONTRASTE DEFINITIVO EN TODA LA APLICACIÓN
+   Elimina texto negro heredado o definido en estilos inline sobre fondos oscuros. */
+#root .cr-container,
+#root .cr-container * {
+  color: #ffffff !important;
+}
+
+/* Excepciones: texto oscuro únicamente cuando el fondo del control es claro. */
+#root .cr-container .tc-theme-toggle {
+  color: #111111 !important;
+}
+#root .cr-container .tc-medal-total {
+  color: #171426 !important;
+}
+
+/* Los campos y sus textos auxiliares siempre conservan contraste. */
+#root .cr-container input,
+#root .cr-container select,
+#root .cr-container textarea {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+}
+#root .cr-container input::placeholder,
+#root .cr-container textarea::placeholder {
+  color: #c4c4c4 !important;
+  -webkit-text-fill-color: #c4c4c4 !important;
+}
+#root .cr-container select option {
+  color: #ffffff !important;
+  background: #171717 !important;
+}
