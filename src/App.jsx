@@ -555,7 +555,7 @@ function AdminStats({ onBack }) {
       {/* ESTADÍSTICAS DE ÁRBITROS */}
       <div className="cr-card" style={{ marginBottom: "1rem" }}>
         <h3 style={{ color: "#fff", marginTop: 0, marginBottom: "0.45rem" }}>
-          <TCIcon name="whistle" /> Estadísticas de árbitros
+          <TCIcon name="chart" /> Estadísticas de árbitros
         </h3>
         <p style={{ color: "#9ca3af", fontSize: "0.75rem", marginTop: 0 }}>
           Se cuentan los partidos con resultado completo y árbitro identificado. Los resultados cargados antes de registrar al árbitro no se atribuyen retroactivamente.
