@@ -106,7 +106,8 @@ export function Navbar({
             style={{
               fontFamily: "'Montserrat', sans-serif",
               fontWeight: 900,
-              fontSize: "1.15rem",
+              fontSize: "1.25rem",
+              whiteSpace: "nowrap",
               color: "#ffffff",
               textShadow: "0 2px 8px rgba(0,0,0,.85)",
               display: "block",
@@ -452,9 +453,10 @@ export function Navbar({
             display: flex !important;
             align-items: center !important;
             justify-content: flex-end !important;
-            gap: 5px !important;
+            gap: 8px !important;
             margin-left: auto !important;
-            margin-right: 6px !important;
+            margin-right: 8px !important;
+            flex: 0 0 auto !important;
           }
           .mobile-nav-quick-btn {
             box-sizing: border-box !important;
@@ -462,16 +464,16 @@ export function Navbar({
             align-items: center !important;
             justify-content: center !important;
             gap: 4px !important;
-            width: 68px !important;
-            min-width: 68px !important;
-            height: 27px !important;
-            min-height: 27px !important;
-            padding: 0 5px !important;
+            width: 82px !important;
+            min-width: 82px !important;
+            height: 36px !important;
+            min-height: 36px !important;
+            padding: 0 9px !important;
             border: 1px solid #55555b !important;
             border-radius: 6px !important;
             background: #0d0d0f !important;
             color: #fff !important;
-            font: 800 9px/1 'Montserrat', sans-serif !important;
+            font: 800 12px/1 'Montserrat', sans-serif !important;
             white-space: nowrap !important;
             overflow: hidden !important;
           }
@@ -481,9 +483,9 @@ export function Navbar({
           }
           .mobile-menu-btn {
             display: flex !important;
-            flex: 0 0 29px !important;
-            width: 29px !important;
-            min-width: 29px !important;
+            flex: 0 0 36px !important;
+            width: 36px !important;
+            min-width: 36px !important;
             height: 27px !important;
             min-height: 27px !important;
             align-items: center !important;
