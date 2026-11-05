@@ -1036,7 +1036,9 @@ export function TournamenSportApp() {
   const [loadingRegisteredProfiles, setLoadingRegisteredProfiles] = useState(false);
   const [registeredProfilesSearch, setRegisteredProfilesSearch] = useState("");
   const [selectedRegisteredProfileIds, setSelectedRegisteredProfileIds] = useState([]);
-  const isAdmin = currentUser?.id === ADMIN_UID;
+  // En esta etapa solo el rol admin conserva las funciones administrativas actuales.
+  // Directivos y árbitros se habilitarán cuando estén listas sus políticas RLS.
+  const isAdmin = currentUser?.role === "admin";
   const [catalogSeeded, setCatalogSeeded] = useState(false);
 
   const saveTeamsToCatalog = async (teams) => {
@@ -1117,13 +1119,13 @@ export function TournamenSportApp() {
         return;
       }
 
-      if (session.user.id !== ADMIN_UID) {
+      const user = await buildCurrentUser(session.user);
+
+      if (!user) {
         if (mounted) setCurrentUser(null);
         await supabase.auth.signOut();
         return;
       }
-
-      const user = await buildCurrentUser(session.user);
 
       if (mounted) setCurrentUser(user);
     };
@@ -1138,23 +1140,12 @@ export function TournamenSportApp() {
         return;
       }
 
-      if (session.user.id !== ADMIN_UID) {
-        if (mounted) setCurrentUser(null);
-        return;
-      }
-
-      // Reflejar la sesión de administrador inmediatamente; completar alias/email en segundo plano.
-      if (mounted) {
-        setCurrentUser({
-          id: session.user.id,
-          username: session.user.user_metadata?.username || "Administrador",
-          email: session.user.email || "",
-        });
-        setActiveView("home");
-      }
-
       const user = await buildCurrentUser(session.user);
-      if (mounted) setCurrentUser(user);
+      if (mounted) {
+        setCurrentUser(user);
+        if (user) setActiveView("home");
+      }
+      if (!user) await supabase.auth.signOut();
     });
 
     return () => {
@@ -1166,19 +1157,33 @@ export function TournamenSportApp() {
   const buildCurrentUser = async (authUser) => {
     if (!authUser) return null;
 
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select("id, username, email")
-      .eq("id", authUser.id)
-      .maybeSingle();
+    const [{ data: profile, error: profileError }, { data: accessRows, error: accessError }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, username, email")
+        .eq("id", authUser.id)
+        .maybeSingle(),
+      supabase.rpc("get_my_fefutin_access"),
+    ]);
 
-    if (error) console.error("Error al obtener perfil:", error);
+    if (profileError || accessError) {
+      console.error("Error al obtener perfil o permisos:", { profileError, accessError });
+      return null;
+    }
+
+    const access = Array.isArray(accessRows) ? accessRows[0] : null;
+    if (!profile || !access || access.approval_status === "baja" || access.deactivated_at) {
+      return null;
+    }
 
     return {
       id: authUser.id,
-      username:
-        profile?.username || authUser.user_metadata?.username || "Jugador",
-      email: authUser.email || profile?.email || "",
+      username: profile.username || authUser.user_metadata?.username || "Jugador",
+      email: authUser.email || profile.email || "",
+      role: access.role || "visitante",
+      requestedRole: access.requested_role || null,
+      approvalStatus: access.approval_status || "aprobado",
+      approvedAt: access.approved_at || null,
     };
   };
 
@@ -1440,16 +1445,22 @@ export function TournamenSportApp() {
       return;
     }
 
-    if (data.user?.id !== ADMIN_UID) {
+    const user = await buildCurrentUser(data.user);
+
+    if (!user) {
       await supabase.auth.signOut();
-      showNotice("⛔ Esta cuenta no tiene permisos de administrador.");
-      setAuthInput({ email: "", password: "" });
+      showNotice("⛔ La cuenta está desactivada o no tiene un perfil habilitado. Contactá a FEFUTIN.");
       return;
     }
 
-    const user = await buildCurrentUser(data.user);
-
     setCurrentUser(user);
+    if (user.approvalStatus === "pendiente") {
+      showNotice("Tu solicitud de acceso está pendiente de aprobación. Mientras tanto podés consultar la plataforma pública.");
+    } else if (user.approvalStatus === "desestimado") {
+      showNotice("Tu solicitud de acceso fue desestimada. Tu cuenta conserva acceso como visitante.");
+    } else if (user.role !== "admin") {
+      showNotice("Ingresaste como visitante. Las funciones de gestión se habilitarán según tu rol aprobado.");
+    }
 
     setAuthInput({
       email: "",
@@ -2364,7 +2375,7 @@ export function TournamenSportApp() {
 
             <div className="tc-auth-kicker"><span></span> PLATAFORMA DE TORNEOS DEPORTIVOS <span></span></div>
             <h1 className="cr-logo-title">FEFUTIN</h1>
-            <p className="tc-auth-tagline">Acceso exclusivo para la administración de FEFUTIN.</p>
+            <p className="tc-auth-tagline">Ingresá a la plataforma de FEFUTIN.</p>
           </div>
 
           <form
@@ -2462,7 +2473,7 @@ export function TournamenSportApp() {
                 borderBottom: "3px solid #522b00",
               }}
             >
-              <><TCIcon name="shield" size={17} /> Ingresar como administrador</>
+              <><TCIcon name="shield" size={17} /> Ingresar</>
             </button>
 
             <div style={{ textAlign: "center", marginTop: "0.5rem" }}>
