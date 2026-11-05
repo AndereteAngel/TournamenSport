@@ -2737,7 +2737,7 @@ export function TournamenSportApp() {
                     }}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(3, minmax(0, 1fr)) minmax(66px, .8fr)",
+                      gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
                       alignItems: "center",
                       gap: "8px",
                       padding: "10px",
@@ -2758,9 +2758,6 @@ export function TournamenSportApp() {
                       {getTournamentDivision(t)}
                     </div>
                     <div style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "center", gap: "6px" }}>
-                      <div style={{ boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2 }}>
-                        Entrar
-                      </div>
                       {isAdmin && (
                         <button
                           type="button"
