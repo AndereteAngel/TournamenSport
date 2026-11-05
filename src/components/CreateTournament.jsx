@@ -200,7 +200,7 @@ export function CreateTournament({
 
     onSave({
       ...formData,
-      game: `${formData.game} · ${formData.division}${formData.categoryDetail ? ` · ${formData.categoryDetail}` : ""}`,
+      game: `Fútbol · ${formData.division}${formData.categoryDetail ? ` · ${formData.categoryDetail}` : ""}`,
       category_type: formData.categoryType,
       category_detail: formData.categoryDetail,
       maxParticipants: Number(formData.maxParticipants),
@@ -317,32 +317,15 @@ export function CreateTournament({
           </select>
         </div>
 
-        {/* DEPORTE, CATEGORÍA Y FORMATO */}
-        <div className="sports-form-grid">
-          <div>
-            <label className="sports-label">Deporte</label>
-            <select value={formData.game} onChange={(e) => setFormData({ ...formData, game: e.target.value })} className="cr-input sports-input">
-              <option>Fútbol</option>
-              <option>Futsal</option>
-              <option>Básquet</option>
-              <option>Vóley</option>
-              <option>Handball</option>
-              <option>Hockey</option>
-              <option>Rugby</option>
-              <option>Tenis</option>
-              <option>Atletismo</option>
-              <option>Natación</option>
-              <option>Otro deporte</option>
-            </select>
-          </div>
-          <div>
-            <label className="sports-label">Formato de competencia</label>
-            <select value={formData.format} onChange={(e) => setFormData({ ...formData, format: e.target.value })} className="cr-input sports-input">
-              <option value="groups_playoff">Grupos + eliminatorias</option>
-              <option value="single_elimination">Eliminación directa</option>
-              <option value="league">Todos contra todos</option>
-            </select>
-          </div>
+        {/* FÚTBOL ES EL ÚNICO DEPORTE DE FEFUTIN */}
+        <input type="hidden" value="Fútbol" />
+        <div>
+          <label className="sports-label">Formato de competencia</label>
+          <select value={formData.format} onChange={(e) => setFormData({ ...formData, format: e.target.value })} className="cr-input sports-input">
+            <option value="groups_playoff">Grupos + eliminatorias</option>
+            <option value="single_elimination">Eliminación directa</option>
+            <option value="league">Todos contra todos</option>
+          </select>
         </div>
 
         <div>
