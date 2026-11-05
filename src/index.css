@@ -5470,3 +5470,18 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   color: #ffffff !important;
   background: #171717 !important;
 }
+
+/* FEFUTIN — portada de bienvenida: panel blanco, tipografía oscura. */
+#root .cr-container .fefutin-welcome-panel,
+#root .cr-container .fefutin-welcome-panel * {
+  color: #171c27 !important;
+}
+#root .cr-container .fefutin-welcome-panel .fefutin-welcome-kicker {
+  color: #687080 !important;
+}
+#root .cr-container .fefutin-welcome-panel p {
+  color: #626a78 !important;
+}
+#root .cr-container .fefutin-welcome-panel button {
+  color: #ffffff !important;
+}
