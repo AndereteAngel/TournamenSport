@@ -3172,7 +3172,7 @@ export function TournamenSportApp() {
           {(isAdmin || isDirectivo || isArbitro) && (
             <button
               type="button"
-              className="tc-home-about-card"
+              className="tc-home-about-card tc-home-referee-card"
               onClick={() => setActiveView("referee-stats")}
             >
               <span className="tc-home-about-icon">🧑‍⚖️</span>
