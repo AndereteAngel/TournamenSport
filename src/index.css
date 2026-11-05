@@ -4868,3 +4868,46 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
 .tc-home-screen .tc-home-tournament-card > div * {
   color: #fff !important;
 }
+
+
+/* FEFUTIN — limpieza final de colores heredados en toda la navbar */
+.tc-navbar::after {
+  background: linear-gradient(90deg, transparent 0%, #8f1026 18%, #b5122a 50%, #8f1026 82%, transparent 100%) !important;
+}
+.tc-navbar,
+.tc-navbar * {
+  --tc-nav-accent-blue: #b5122a;
+  --tc-nav-accent-gold: #b5122a;
+}
+.tc-navbar .desktop-nav-actions > .tc-nav-code,
+.tc-navbar .desktop-nav-actions > .tc-nav-medals,
+.tc-navbar .desktop-nav-actions > .tc-nav-stats,
+.tc-navbar .desktop-nav-actions > .tc-nav-home,
+.tc-navbar .mobile-nav-quick-btn,
+.tc-navbar .mobile-menu-btn {
+  background: linear-gradient(145deg,#b5122a 0%,#8f1026 100%) !important;
+  border: 1px solid #f07889 !important;
+  border-bottom: 3px solid #590a18 !important;
+  color: #fff !important;
+  box-shadow: 0 3px 10px rgba(181,18,42,.18) !important;
+}
+.tc-navbar .desktop-nav-actions > .tc-nav-code svg,
+.tc-navbar .desktop-nav-actions > .tc-nav-medals svg,
+.tc-navbar .desktop-nav-actions > .tc-nav-stats svg,
+.tc-navbar .desktop-nav-actions > .tc-nav-home svg,
+.tc-navbar .mobile-nav-quick-btn svg,
+.tc-navbar .mobile-menu-btn svg {
+  color: #fff !important;
+  stroke: #fff !important;
+}
+.tc-navbar .desktop-nav-actions > div[title="Usuario actual"],
+.tc-navbar .mobile-nav-visitor {
+  background: #101010 !important;
+  border: 1px solid rgba(255,255,255,.35) !important;
+  color: #fff !important;
+}
+.tc-navbar .tc-navbar-admin-logo {
+  background: #080808 !important;
+  border: 2px solid #b5122a !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.85) !important;
+}
