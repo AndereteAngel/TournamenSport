@@ -5131,3 +5131,28 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
 .tc-edit-screen .sports-card .sports-help {
   color: #e0e0e0 !important;
 }
+
+
+/* FEFUTIN — volver discreto al pie del formulario */
+.tc-form-back {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 7px !important;
+  width: auto !important;
+  margin: 1rem 0 0 !important;
+  padding: 6px 2px !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: #fff !important;
+  font-size: .85rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  box-shadow: none !important;
+}
+.tc-form-back span {
+  color: #fff !important;
+  font-size: 1.2rem !important;
+  line-height: 1 !important;
+}
+.tc-form-back:hover { color: #f2b7c0 !important; }
