@@ -2480,6 +2480,7 @@ export function TournamenSportApp() {
               paddingBottom: "1rem",
               borderBottom: "1px solid #2d2b3b",
             }}
+            className="tc-admin-profile-row"
           >
             <div
               style={{
@@ -2488,19 +2489,7 @@ export function TournamenSportApp() {
                 gap: "0.75rem",
               }}
             >
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  backgroundColor: "#1b5fa8",
-                  borderRadius: "8px",
-                  border: "2px solid #ffd700",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "18px",
-                }}
-              >
+              <div className="tc-admin-crown">
                 <TCIcon name="crown" size={22} />
               </div>
 
