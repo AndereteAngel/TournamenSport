@@ -1019,6 +1019,7 @@ export function TournamenSportApp() {
   const [showPassword, setShowPassword] = useState(false);
   const [authInput, setAuthInput] = useState({ email: "", password: "" });
   const [activeView, setActiveView] = useState("home");
+  const [showWhoWeAre, setShowWhoWeAre] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeTournament, setActiveTournament] = useState(null);
   const [showChampionCard, setShowChampionCard] = useState(false);
@@ -2413,6 +2414,54 @@ export function TournamenSportApp() {
               <span>MAYORES</span>
             </button>
           </div>
+          <button
+            type="button"
+            className="tc-home-about-card"
+            onClick={() => setShowWhoWeAre(true)}
+          >
+            <span className="tc-home-about-icon">⚽</span>
+            <span className="tc-home-about-copy">
+              <strong>QUIÉNES SOMOS</strong>
+              <small>Conocé la liga y nuestros valores</small>
+            </span>
+            <span className="tc-home-about-arrow">→</span>
+          </button>
+
+          {showWhoWeAre && (
+            <div className="tc-about-overlay" onClick={() => setShowWhoWeAre(false)}>
+              <section
+                className="tc-about-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="tc-about-title"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="tc-about-accent" />
+                <button
+                  type="button"
+                  className="tc-about-close"
+                  aria-label="Cerrar"
+                  onClick={() => setShowWhoWeAre(false)}
+                >×</button>
+                <span className="tc-about-eyebrow">FEFUTIN · FÚTBOL FORMATIVO</span>
+                <h2 id="tc-about-title">¿QUIÉNES SOMOS?</h2>
+                <p>
+                  Somos una liga dedicada al fútbol formativo, que promueve el deporte
+                  como espacio de aprendizaje, encuentro y crecimiento. Trabajamos para
+                  que cada jugador y jugadora pueda disfrutar, desarrollarse y sentirse
+                  parte de una comunidad.
+                </p>
+                <h3>NUESTROS VALORES</h3>
+                <div className="tc-about-values">
+                  <div><strong>RESPETO</strong><span>Por compañeros, rivales, familias y árbitros.</span></div>
+                  <div><strong>INCLUSIÓN</strong><span>Un lugar donde todos y todas puedan participar.</span></div>
+                  <div><strong>FORMACIÓN</strong><span>Aprender, crecer y mejorar dentro y fuera de la cancha.</span></div>
+                  <div><strong>COMPAÑERISMO</strong><span>Construir equipo desde la solidaridad y el juego limpio.</span></div>
+                </div>
+                <div className="tc-about-footer">UNIDOS POR EL DEPORTE · CRECIENDO EN EQUIPO</div>
+              </section>
+            </div>
+          )}
           {isAdmin && <div
             style={{
               display: "flex",
