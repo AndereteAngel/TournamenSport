@@ -379,43 +379,6 @@ export function CreateTournament({
         </div>
 
         {/* ===================================================
-            VISIBILIDAD
-            =================================================== */}
-
-        <div>
-          <label
-            style={{
-              display: "block",
-              fontSize: "0.75rem",
-              fontWeight: "bold",
-              textTransform: "uppercase",
-              color: "#d1d5db",
-              marginBottom: "4px",
-            }}
-          >
-            Visibilidad del Torneo
-          </label>
-
-          <select
-            value={formData.isPublic ? "public" : "private"}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                isPublic: e.target.value === "public",
-              })
-            }
-            className="cr-input"
-            style={{
-              cursor: "pointer",
-            }}
-          >
-            <option value="public">Público (Muestra código en la lista)</option>
-
-            <option value="private">Privado (Oculta código)</option>
-          </select>
-        </div>
-
-        {/* ===================================================
             GRUPOS
             =================================================== */}
 
