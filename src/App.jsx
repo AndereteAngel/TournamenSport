@@ -167,7 +167,7 @@ function RefereeStats({ onBack }) {
 
   if (loading || error) {
     return (
-      <div className="cr-card" style={{ width: "100%", maxWidth: "1100px", margin: "0 auto", textAlign: "center" }}>
+      <div className="referee-stat-card" style={{ width: "100%", maxWidth: "1100px", margin: "0 auto", textAlign: "center" }}>
         <h2 className="cr-title">ÁRBITROS · ESTADÍSTICAS</h2>
         <p style={{ color: error ? "#f87171" : "#d1d5db" }}>{error || "Cargando estadísticas arbitrales..."}</p>
         {error && <button type="button" className="cr-btn-gold" onClick={cargarEstadisticas}>Reintentar</button>}
@@ -179,13 +179,13 @@ function RefereeStats({ onBack }) {
   if (arbitroActual) {
     return (
       <div style={{ width: "100%", maxWidth: "1100px", margin: "0 auto", paddingBottom: "2rem" }}>
-        <section className="cr-card" style={{ marginBottom: "1rem" }}>
+        <section className="referee-stat-card" style={{ marginBottom: "1rem" }}>
           <button type="button" className="tc-form-back" onClick={() => setArbitroSeleccionado(null)} style={{ marginBottom: "1rem" }}>← Todos los árbitros</button>
           <h2 className="cr-title" style={{ marginBottom: "4px" }}>{arbitroActual.nombre}</h2>
           <p style={{ color: "#d1d5db", margin: 0, fontSize: "0.82rem" }}>Ficha individual · Estadísticas arbitrales</p>
         </section>
 
-        <section className="cr-card" style={{ marginBottom: "1rem" }}>
+        <section className="referee-stat-card" style={{ marginBottom: "1rem" }}>
           <h3 style={{ color: "#fff", marginTop: 0 }}>Resultados dirigidos</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: "0.75rem" }}>
             {tarjetaMetrica("Partidos", arbitroActual.partidos)}
@@ -195,7 +195,7 @@ function RefereeStats({ onBack }) {
           </div>
         </section>
 
-        <section className="cr-card" style={{ marginBottom: "1rem" }}>
+        <section className="referee-stat-card" style={{ marginBottom: "1rem" }}>
           <h3 style={{ color: "#fff", marginTop: 0 }}>Goles en sus partidos</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: "0.75rem" }}>
             {tarjetaMetrica("Goles locales", arbitroActual.golesLocal)}
@@ -204,7 +204,7 @@ function RefereeStats({ onBack }) {
           </div>
         </section>
 
-        <section className="cr-card">
+        <section className="referee-stat-card">
           <h3 style={{ color: "#fff", marginTop: 0 }}>Partidos por rama</h3>
           {Object.keys(arbitroActual.porRama).length ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.65rem" }}>
@@ -226,7 +226,7 @@ function RefereeStats({ onBack }) {
 
   return (
     <div style={{ width: "100%", maxWidth: "1100px", margin: "0 auto", paddingBottom: "2rem" }}>
-      <section className="cr-card" style={{ marginBottom: "1rem" }}>
+      <section className="referee-stat-card" style={{ marginBottom: "1rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
           <div>
             <h2 className="cr-title" style={{ marginBottom: "4px" }}>ÁRBITROS · ESTADÍSTICAS</h2>
@@ -237,7 +237,7 @@ function RefereeStats({ onBack }) {
       </section>
 
       {estadisticas.length === 0 ? (
-        <section className="cr-card"><p style={{ color: "#d1d5db" }}>Todavía no hay árbitros aprobados para mostrar.</p></section>
+        <section className="referee-stat-card"><p style={{ color: "#d1d5db" }}>Todavía no hay árbitros aprobados para mostrar.</p></section>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.85rem" }}>
           {estadisticas.map((arbitro) => (
@@ -245,8 +245,8 @@ function RefereeStats({ onBack }) {
               key={arbitro.id}
               type="button"
               onClick={() => setArbitroSeleccionado(arbitro.id)}
-              className="cr-card"
-              style={{ width: "100%", textAlign: "left", color: "#fff", cursor: "pointer", border: "1px solid #b5122a", display: "flex", flexDirection: "column", gap: "0.65rem" }}
+              className="referee-stat-card referee-stat-card-button"
+              style={{ width: "100%", textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem" }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
                 <strong style={{ fontSize: "1rem" }}>{arbitro.nombre}</strong>
@@ -278,6 +278,16 @@ function RefereeStats({ onBack }) {
 
       <p style={{ color: "#aaa", fontSize: "0.72rem", marginBottom: 0, marginTop: "1rem" }}>
         Se cuentan partidos con resultado completo y árbitro identificado. Los registros anteriores a la identificación del árbitro no se atribuyen retroactivamente.
+      </p>
+
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
+        <button type="button" className="tc-form-back" onClick={onBack}>← Volver al inicio</button>
+      </div>
+    </div>
+  );
+}
+
+etroactivamente.
       </p>
 
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
