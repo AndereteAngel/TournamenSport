@@ -5721,3 +5721,23 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
 #root .cr-container .tc-division-tournaments-screen .cr-card .tc-division-search {
   background: #ffffff !important;
 }
+
+
+/* Corrección definitiva: el input del buscador no hereda el fondo oscuro global. */
+#root .cr-container .tc-division-tournaments-screen .cr-card .tc-division-search input[type="search"],
+#root .cr-container .tc-division-tournaments-screen .cr-card .tc-division-search input[type="search"]:focus,
+#root .cr-container .tc-division-tournaments-screen .cr-card .tc-division-search input[type="search"]:active {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #171c27 !important;
+  -webkit-text-fill-color: #171c27 !important;
+  caret-color: #171c27 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+}
+#root .cr-container .tc-division-tournaments-screen .cr-card .tc-division-search input[type="search"]::placeholder {
+  color: #626875 !important;
+  -webkit-text-fill-color: #626875 !important;
+}
