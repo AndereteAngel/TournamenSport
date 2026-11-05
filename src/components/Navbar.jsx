@@ -28,7 +28,7 @@ export function Navbar({
 
   const username = currentUser?.username || "Visitante";
   const medals = getPlayerMedals(tournaments, username);
-  const medalButtonStyle = { display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.45rem", padding: "0.45rem 0.7rem", background: "linear-gradient(145deg, #242427, #111113)", border: "1px solid #ff9140", borderRadius: "9px", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "inset 0 1px rgba(255,255,255,.08), 0 3px 10px rgba(0,0,0,.22)" };
+  const medalButtonStyle = { display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.45rem", padding: "0.45rem 0.7rem", background: "#0b0b0f", border: "1px solid #b5122a", borderRadius: "9px", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "inset 0 1px rgba(255,255,255,.08), 0 3px 10px rgba(0,0,0,.22)" };
 
   return (
     <div
@@ -37,7 +37,7 @@ export function Navbar({
         width: "100%",
         maxWidth: "100%",
         margin: "0 auto",
-        background: "linear-gradient(135deg, #1b1b1e 0%, #111113 100%)",
+        background: "linear-gradient(135deg, #101010 0%, #050505 100%)",
         border: "1px solid #414146",
         borderRadius: "14px",
         padding: "0.6rem 1rem",
@@ -58,7 +58,7 @@ export function Navbar({
           left: 0,
           right: 0,
           height: "4px",
-          background: "linear-gradient(90deg, #ff7a1a, #ffb36b, #ff7a1a)",
+          background: "linear-gradient(90deg, #8f1026, #b5122a, #8f1026)",
           borderTopLeftRadius: "11px",
           borderTopRightRadius: "11px",
         }}
@@ -84,7 +84,7 @@ export function Navbar({
           title={isAdmin ? "Cerrar sesión de administrador" : "Ingresar como administrador"}
           aria-label={isAdmin ? "Cerrar sesión de administrador" : "Ingresar como administrador"}
         >
-          <img src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166" alt="Acceso de administrador FEFUTIN" />
+          <TCIcon name="crown" size={25} />
         </button>
 
         <div>
@@ -137,7 +137,7 @@ export function Navbar({
               border: "1px solid #55555b",
               borderRadius: "8px",
               padding: "0.3rem 0.6rem",
-              color: "#ffad70",
+              color: "#ffffff",
               fontSize: "10px",
               fontWeight: "bold",
               cursor: "pointer",
@@ -177,7 +177,7 @@ export function Navbar({
             background: "#0d0d0f",
             border: "1px solid #55555b",
             borderRadius: "8px",
-            color: "#ffad70",
+            color: "#ffffff",
             fontSize: "10px",
             fontWeight: "bold",
           }}
@@ -209,9 +209,9 @@ export function Navbar({
           onClick={onGoHome}
           style={{
             padding: "0.4rem 0.75rem",
-            background: "linear-gradient(135deg, #ff9140 0%, #ff7a1a 58%, #e85d04 100%)",
-            border: "1px solid #ffb36b",
-            borderBottom: "3px solid #a63c00",
+            background: "linear-gradient(135deg, #b5122a 0%, #8f1026 100%)",
+            border: "1px solid #f07889",
+            borderBottom: "3px solid #590a18",
             borderRadius: "8px",
             color: "#fff",
             fontFamily: "'Montserrat', sans-serif",
@@ -284,7 +284,7 @@ export function Navbar({
               background: "#0d0d0f",
               border: "1px solid #55555b",
               borderRadius: "8px",
-              color: "#ffad70",
+              color: "#ffffff",
               fontSize: "0.8rem",
               fontWeight: "bold",
             }}
@@ -304,7 +304,7 @@ export function Navbar({
                 border: "1px solid #55555b",
                 borderRadius: "8px",
                 padding: "0.6rem",
-                color: "#ffad70",
+                color: "#ffffff",
                 fontSize: "0.8rem",
                 fontWeight: "bold",
                 cursor: "pointer",
@@ -347,9 +347,9 @@ export function Navbar({
             style={{
               padding: "0.7rem",
               background:
-                "linear-gradient(to bottom, #1b5fa8 0%, #0f3768 100%)",
-              border: "1px solid #ffb36b",
-              borderBottom: "3px solid #a63c00",
+                "linear-gradient(to bottom, #b5122a 0%, #8f1026 100%)",
+              border: "1px solid #f07889",
+              borderBottom: "3px solid #590a18",
               borderRadius: "8px",
               color: "#fff",
               fontFamily: "'Montserrat', sans-serif",
@@ -365,9 +365,9 @@ export function Navbar({
       )}
 
       {currentUser && medalOpen && (
-        <div style={{ position: "absolute", top: "calc(100% + 10px)", right: 0, width: "min(340px, calc(100vw - 32px))", maxHeight: "70vh", overflowY: "auto", padding: "1rem", borderRadius: "14px", border: "1px solid #ff9140", background: "linear-gradient(145deg, #1b1b1e, #111113)", boxShadow: "0 12px 35px rgba(0,0,0,0.8)", zIndex: 200 }}>
+        <div style={{ position: "absolute", top: "calc(100% + 10px)", right: 0, width: "min(340px, calc(100vw - 32px))", maxHeight: "70vh", overflowY: "auto", padding: "1rem", borderRadius: "14px", border: "1px solid #b5122a", background: "linear-gradient(145deg, #171717, #080808)", boxShadow: "0 12px 35px rgba(0,0,0,0.8)", zIndex: 200 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem", marginBottom: "0.8rem" }}>
-            <strong style={{ color: "#ffb36b", fontSize: "0.85rem" }}><TCIcon name="medal" size={16} /> MI MEDALLERO</strong>
+            <strong style={{ color: "#ffffff", fontSize: "0.85rem" }}><TCIcon name="medal" size={16} /> MI MEDALLERO</strong>
             <button type="button" onClick={() => setMedalOpen(false)} aria-label="Cerrar medallero" className="tc-close-button" style={{ background: "transparent", border: 0, color: "#d1d5db", fontSize: "1rem", cursor: "pointer" }}>✕</button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "0.4rem", marginBottom: "0.9rem" }}>
@@ -416,17 +416,17 @@ export function Navbar({
             box-shadow: 0 3px 9px rgba(0,0,0,.28) !important;
           }
           .tc-navbar .desktop-nav-actions > .tc-nav-medals {
-            background: linear-gradient(180deg, #5b4818, #29200d) !important;
-            border: 1px solid #e5bd55 !important;
+            background: linear-gradient(180deg, #252525, #101010) !important;
+            border: 1px solid #b5122a !important;
             border-bottom: 3px solid #8a681b !important;
-            color: #ffe08a !important;
+            color: #ffffff !important;
             box-shadow: 0 3px 10px rgba(218,165,32,.16) !important;
           }
           .tc-navbar .desktop-nav-actions > .tc-nav-stats {
-            background: linear-gradient(180deg, #173d5c, #102638) !important;
-            border: 1px solid #4e91bd !important;
+            background: linear-gradient(180deg, #252525, #101010) !important;
+            border: 1px solid rgba(255,255,255,.35) !important;
             border-bottom: 3px solid #0a1b2a !important;
-            color: #c5e8ff !important;
+            color: #ffffff !important;
             box-shadow: 0 3px 10px rgba(48,130,190,.16) !important;
           }
           .tc-navbar .desktop-nav-actions > .tc-nav-home {
@@ -472,8 +472,8 @@ export function Navbar({
             overflow: hidden !important;
           }
           .mobile-nav-home {
-            background: linear-gradient(135deg, #ff9140 0%, #ff7a1a 58%, #e85d04 100%) !important;
-            border-color: #ffb36b !important;
+            background: linear-gradient(135deg, #b5122a 0%, #8f1026 100%) !important;
+            border-color: #f07889 !important;
           }
           .mobile-nav-visitor span {
             display: block !important;
