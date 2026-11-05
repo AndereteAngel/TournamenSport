@@ -2737,7 +2737,7 @@ export function TournamenSportApp() {
                     }}
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) 66px",
+                      gridTemplateColumns: "repeat(3, minmax(0, 1fr)) minmax(66px, .8fr)",
                       alignItems: "center",
                       gap: "8px",
                       padding: "10px",
@@ -2748,19 +2748,19 @@ export function TournamenSportApp() {
                       cursor: "pointer",
                     }}
                   >
-                    <div style={{ minWidth: 0, color: "#fff", fontWeight: 900, fontSize: "0.82rem", lineHeight: 1.25, overflowWrap: "anywhere" }}>
+                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 5px", borderRadius: "7px", border: "1px solid rgba(255,255,255,.35)", background: "#252c39", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
                       {t.title}
                     </div>
-                    <div style={{ minWidth: 0, color: "#ffd5dc", background: "rgba(181,18,42,.18)", border: "1px solid rgba(181,18,42,.65)", borderRadius: "6px", padding: "7px 5px", textAlign: "center", fontSize: "0.68rem", fontWeight: 850, lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 5px", borderRadius: "7px", border: "1px solid rgba(255,255,255,.35)", background: "#252c39", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
                       {getTournamentCategory(t)}
                     </div>
-                    <div style={{ minWidth: 0, color: "#f8fafc", background: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.22)", borderRadius: "6px", padding: "7px 5px", textAlign: "center", fontSize: "0.68rem", fontWeight: 850, lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                    <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 5px", borderRadius: "7px", border: "1px solid rgba(255,255,255,.35)", background: "#252c39", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2, overflowWrap: "anywhere" }}>
                       {getTournamentDivision(t)}
                     </div>
-                    <div style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "6px" }}>
-                      <span style={{ display: "block", width: "100%", boxSizing: "border-box", color: "#fff", background: "#b5122a", border: "1px solid #f07889", borderRadius: "7px", padding: "7px 3px", fontSize: "0.68rem", fontWeight: 950, whiteSpace: "nowrap", textAlign: "center" }}>
+                    <div style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "center", gap: "6px" }}>
+                      <div style={{ boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 5px", borderRadius: "7px", border: "1px solid rgba(255,255,255,.35)", background: "#252c39", color: "#fff", textAlign: "center", fontSize: ".7rem", fontWeight: 900, lineHeight: 1.2 }}>
                         Entrar
-                      </span>
+                      </div>
                       {isAdmin && (
                         <button
                           type="button"
@@ -2772,16 +2772,16 @@ export function TournamenSportApp() {
                             handleDeleteTournament(t);
                           }}
                           style={{
+                            alignSelf: "center",
                             width: "30px",
                             height: "30px",
-                            flexShrink: 0,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             background: deletingTournamentId === t.id ? "#374151" : "rgba(127,29,29,.35)",
                             border: "1px solid rgba(239,68,68,.55)",
-                            borderRadius: "6px",
-                            color: deletingTournamentId === t.id ? "#9ca3af" : "#f87171",
+                            borderRadius: "7px",
+                            color: "#f87171",
                             cursor: deletingTournamentId === t.id ? "not-allowed" : "pointer",
                             padding: 0,
                           }}
