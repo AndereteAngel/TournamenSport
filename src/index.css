@@ -4595,3 +4595,108 @@ body[data-tc-theme="arena"],
   .tc-home-tournaments-heading > div > svg { width: 23px !important; height: 23px !important; }
   .tc-home-tournaments > p { font-size: .85rem !important; }
 }
+
+
+/* FIX DIRECTO: reglas globales de las clases reales del JSX, sin depender de wrapper */
+span.tc-admin-label {
+  color: #ffffff !important;
+  background: #171c27 !important;
+  display: inline-block !important;
+  padding: 2px 5px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  text-shadow: none !important;
+}
+h2.tc-admin-username {
+  color: #ffffff !important;
+  background: #171c27 !important;
+  display: block !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  padding: 3px 7px !important;
+  border-radius: 5px !important;
+  font-size: 1.2rem !important;
+  font-weight: 950 !important;
+  text-shadow: none !important;
+  overflow-wrap: anywhere !important;
+}
+/* Icono principal de la card Armar Torneo: crecer de forma visible */
+.tc-home-action-create .tc-home-action-icon {
+  box-sizing: border-box !important;
+  width: 76px !important;
+  height: 76px !important;
+  min-width: 76px !important;
+  min-height: 76px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto 12px !important;
+  background: #ffffff !important;
+  border: 3px solid #171c27 !important;
+  border-radius: 16px !important;
+}
+.tc-home-action-create .tc-home-action-icon svg,
+.tc-home-action-create .tc-home-action-icon svg * {
+  width: 42px !important;
+  height: 42px !important;
+  color: #b5122a !important;
+  stroke: #b5122a !important;
+  stroke-width: 2.8 !important;
+}
+/* Iconos reales del encabezado de Torneos en la Nube */
+.tc-home-tournaments-heading svg {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  min-height: 30px !important;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  stroke-width: 2.8 !important;
+}
+.tc-home-tournaments-heading button svg {
+  width: 23px !important;
+  height: 23px !important;
+  min-width: 23px !important;
+  min-height: 23px !important;
+}
+.tc-home-tournaments-heading h3 {
+  color: #ffffff !important;
+  font-size: 1.08rem !important;
+  font-weight: 950 !important;
+  text-shadow: none !important;
+}
+/* Contraste legible para mensajes vacíos y filtro */
+.tc-home-tournaments p {
+  color: #ffffff !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+.tc-home-tournaments label {
+  color: #ffffff !important;
+  font-weight: 950 !important;
+}
+.tc-home-tournaments .tc-home-filter-reset {
+  color: #ffd5dc !important;
+}
+@media (max-width: 640px) {
+  .tc-home-action-create .tc-home-action-icon {
+    width: 68px !important;
+    height: 68px !important;
+    min-width: 68px !important;
+    min-height: 68px !important;
+  }
+  .tc-home-action-create .tc-home-action-icon svg,
+  .tc-home-action-create .tc-home-action-icon svg * {
+    width: 38px !important;
+    height: 38px !important;
+  }
+  .tc-home-tournaments-heading h3 { font-size: .98rem !important; }
+  .tc-home-tournaments-heading svg {
+    width: 27px !important;
+    height: 27px !important;
+    min-width: 27px !important;
+    min-height: 27px !important;
+  }
+}
