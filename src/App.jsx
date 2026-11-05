@@ -1102,8 +1102,17 @@ export function TournamenSportApp() {
         return;
       }
 
-      const user = await buildCurrentUser(session.user);
+      // Reflejar la sesión de administrador inmediatamente; completar alias/email en segundo plano.
+      if (mounted) {
+        setCurrentUser({
+          id: session.user.id,
+          username: session.user.user_metadata?.username || "Administrador",
+          email: session.user.email || "",
+        });
+        setActiveView("home");
+      }
 
+      const user = await buildCurrentUser(session.user);
       if (mounted) setCurrentUser(user);
     });
 
@@ -2504,6 +2513,7 @@ export function TournamenSportApp() {
                     textTransform: "uppercase",
                     display: "block",
                   }}
+                  className="tc-admin-label"
                 >
                   Administrador
                 </span>
@@ -2515,6 +2525,7 @@ export function TournamenSportApp() {
                     color: "#ffd700",
                     margin: 0,
                   }}
+                  className="tc-admin-username"
                 >
                   {currentUser.username}
                 </h2>
@@ -2564,7 +2575,7 @@ export function TournamenSportApp() {
           {isAdmin && <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              gridTemplateColumns: "minmax(0, 1fr)",
               gap: "0.75rem",
               marginBottom: "1.5rem",
             }}
@@ -2608,43 +2619,7 @@ export function TournamenSportApp() {
               </p>
             </button>
 
-            <button
-              className="tc-home-action tc-home-action-join"
-              onClick={() => setActiveView("join")}
-              style={{
-                padding: "1rem",
-                background: "linear-gradient(to bottom, #581c87, #1e142e)",
-                border: "2px solid rgba(168, 85, 247, 0.5)",
-                borderRadius: "10px",
-                textAlign: "left",
-                cursor: "pointer",
-                color: "#fff",
-              }}
-            >
-              <div className="tc-home-action-icon">
-                <TCIcon name="search" size={25} />
-              </div>
 
-              <h3
-                style={{
-                  fontWeight: 900,
-                  fontSize: "0.85rem",
-                  margin: "0 0 2px 0",
-                }}
-              >
-                Unirme
-              </h3>
-
-              <p
-                style={{
-                  fontSize: "10px",
-                  color: "#e9d5ff",
-                  margin: 0,
-                }}
-              >
-                Entra con código
-              </p>
-            </button>
           </div>}
 
           <div className="tc-home-tournaments">
