@@ -1522,8 +1522,14 @@ export function TournamenSportApp() {
       .select();
 
     if (error) {
-      showNotice("❌ Error al guardar el torneo en Supabase.");
-      console.error(error);
+      console.error("Error detallado al guardar el torneo en Supabase:", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      const reason = error.message || error.details || "Error sin descripción";
+      showNotice(`❌ Supabase rechazó la creación: ${reason}`);
       return;
     }
 
