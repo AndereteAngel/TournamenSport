@@ -5016,3 +5016,65 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     padding-bottom: .04rem !important;
   }
 }
+
+
+/* FEFUTIN — último ajuste solicitado: tamaños y marco de Quiénes Somos */
+@media (max-width: 640px) {
+  .tc-navbar .mobile-nav-home,
+  .tc-navbar .mobile-menu-btn {
+    box-sizing: border-box !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 2px solid #ffffff !important;
+    border-bottom: 2px solid #ffffff !important;
+    border-radius: 8px !important;
+    opacity: 1 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  .tc-navbar .mobile-nav-home {
+    width: 90px !important;
+    min-width: 90px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    gap: 6px !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+  }
+  .tc-navbar .mobile-nav-home svg { width: 16px !important; height: 16px !important; }
+  .tc-navbar .mobile-menu-btn {
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  .tc-navbar .mobile-menu-btn svg { width: 20px !important; height: 20px !important; }
+}
+.tc-auth-submit {
+  min-height: 38px !important;
+  padding: 0.55rem 1rem !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+}
+.tc-home-screen .tc-home-about-card {
+  box-sizing: border-box !important;
+  border: 3px solid #ffffff !important;
+  outline: 2px solid rgba(255,255,255,.45) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 4px 0 #590a18, 0 8px 18px rgba(0,0,0,.3) !important;
+}
+.tc-home-screen .tc-home-about-card strong,
+.tc-home-screen .tc-home-about-card small {
+  font-size: 1rem !important;
+  font-weight: 900 !important;
+}
+@media (max-width: 640px) {
+  .tc-home-screen .tc-home-about-card { padding: 0.85rem !important; }
+  .tc-home-screen .tc-home-about-card strong { font-size: 1rem !important; }
+  .tc-home-screen .tc-home-about-card small { font-size: 0.82rem !important; }
+}
