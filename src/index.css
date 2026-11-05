@@ -5078,3 +5078,56 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   .tc-home-screen .tc-home-about-card strong { font-size: 1rem !important; }
   .tc-home-screen .tc-home-about-card small { font-size: 0.82rem !important; }
 }
+
+
+/* FEFUTIN — contraste uniforme en Armar/Modificar torneo */
+.tc-create-screen,
+.tc-edit-screen {
+  background: #080808 !important;
+  color: #ffffff !important;
+}
+.tc-create-screen .sports-card,
+.tc-edit-screen .sports-card {
+  background: linear-gradient(145deg, #191919 0%, #0b0b0b 100%) !important;
+  color: #ffffff !important;
+  border: 2px solid rgba(255,255,255,.8) !important;
+}
+.tc-create-screen .sports-card .cr-title,
+.tc-create-screen .sports-card label,
+.tc-create-screen .sports-card p,
+.tc-create-screen .sports-card span,
+.tc-create-screen .sports-card strong,
+.tc-create-screen .sports-card small,
+.tc-edit-screen .sports-card .cr-title,
+.tc-edit-screen .sports-card label,
+.tc-edit-screen .sports-card p,
+.tc-edit-screen .sports-card span,
+.tc-edit-screen .sports-card strong,
+.tc-edit-screen .sports-card small {
+  color: #ffffff !important;
+}
+.tc-create-screen .sports-card input,
+.tc-create-screen .sports-card select,
+.tc-create-screen .sports-card textarea,
+.tc-edit-screen .sports-card input,
+.tc-edit-screen .sports-card select,
+.tc-edit-screen .sports-card textarea {
+  background: #090909 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,.55) !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+.tc-create-screen .sports-card select option,
+.tc-edit-screen .sports-card select option {
+  background: #171717 !important;
+  color: #ffffff !important;
+}
+.tc-create-screen .sports-card input::placeholder,
+.tc-edit-screen .sports-card input::placeholder {
+  color: #c4c4c4 !important;
+  opacity: 1 !important;
+}
+.tc-create-screen .sports-card .sports-help,
+.tc-edit-screen .sports-card .sports-help {
+  color: #e0e0e0 !important;
+}
