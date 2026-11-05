@@ -9,6 +9,9 @@ export function Navbar({
   currentUser,
   tournaments = [],
   isAdmin = false,
+  canManageAccess = false,
+  pendingAccessCount = 0,
+  onGoAccessRequests,
   onGoStats,
   onAdminClick,
   onLogout,
@@ -203,6 +206,13 @@ export function Navbar({
           <TCIcon name="medal" size={19} /> <span>Medallero</span> <span className="tc-medal-total">{medals.gold + medals.silver + medals.bronze + medals.diploma}</span>
         </button>)}
 
+        {canManageAccess && (
+          <button type="button" onClick={onGoAccessRequests} style={{ ...medalButtonStyle, position: "relative" }}>
+            <TCIcon name="user" size={16} /> <span>Solicitudes</span>
+            {pendingAccessCount > 0 && <span aria-label={`${pendingAccessCount} solicitudes pendientes`} style={{ position: "absolute", top: "-6px", right: "-6px", minWidth: "17px", height: "17px", padding: "0 4px", borderRadius: "20px", background: "#e11d48", color: "#fff", border: "2px solid #080808", fontSize: "10px", fontWeight: 900, display: "grid", placeItems: "center" }}>{pendingAccessCount > 9 ? "9+" : pendingAccessCount}</span>}
+          </button>
+        )}
+
         {isAdmin && (
           <button className="tc-nav-stats" type="button" onClick={onGoStats} style={medalButtonStyle}>
             <TCIcon name="chart" size={17} /> <span>Estadísticas</span>
@@ -336,6 +346,13 @@ export function Navbar({
           >
             <TCIcon name="medal" size={19} /> <span>Mi medallero</span> <span className="tc-medal-total">{medals.gold + medals.silver + medals.bronze + medals.diploma}</span>
           </button>)}
+
+          {canManageAccess && (
+            <button type="button" onClick={() => { setMenuOpen(false); onGoAccessRequests?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem", position: "relative" }}>
+              <TCIcon name="user" size={16} /> <span>Solicitudes</span>
+              {pendingAccessCount > 0 && <span style={{ minWidth: "17px", height: "17px", borderRadius: "20px", background: "#e11d48", color: "#fff", fontSize: "10px", fontWeight: 900, display: "grid", placeItems: "center" }}>{pendingAccessCount > 9 ? "9+" : pendingAccessCount}</span>}
+            </button>
+          )}
 
           {isAdmin && (
             <button type="button" onClick={() => { setMenuOpen(false); onGoStats?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem" }}>
