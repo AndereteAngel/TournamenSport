@@ -4254,3 +4254,190 @@ body[data-tc-theme="arena"],
     margin: 0 !important;
   }
 }
+
+
+/* FEFUTIN — tarjeta Quiénes Somos y modal institucional */
+.tc-home-about-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  width: 100% !important;
+  margin: 0 0 1.4rem !important;
+  padding: 15px 18px !important;
+  box-sizing: border-box !important;
+  text-align: left !important;
+  color: #fff !important;
+  background: linear-gradient(110deg, #171c27 0%, #10141d 72%, rgba(181,18,42,.28) 100%) !important;
+  border: 1px solid rgba(255,255,255,.32) !important;
+  border-left: 4px solid #b5122a !important;
+  border-radius: 12px !important;
+  box-shadow: 0 5px 14px rgba(0,0,0,.25) !important;
+  cursor: pointer !important;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease !important;
+}
+.tc-home-about-card:hover {
+  transform: translateY(-2px) !important;
+  border-color: #b5122a !important;
+  box-shadow: 0 7px 18px rgba(181,18,42,.2) !important;
+}
+.tc-home-about-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 42px !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 9px !important;
+  background: rgba(181,18,42,.2) !important;
+  border: 1px solid rgba(181,18,42,.65) !important;
+  font-size: 22px !important;
+}
+.tc-home-about-copy {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+}
+.tc-home-about-copy strong {
+  color: #fff !important;
+  font-family: 'Montserrat', sans-serif !important;
+  font-size: .92rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .06em !important;
+}
+.tc-home-about-copy small {
+  color: #c4c9d2 !important;
+  font-size: .75rem !important;
+}
+.tc-home-about-arrow {
+  color: #f4a6b2 !important;
+  font-size: 1.5rem !important;
+  font-weight: 900 !important;
+}
+.tc-about-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  padding: 18px !important;
+  background: rgba(0,0,0,.78) !important;
+  backdrop-filter: blur(7px) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
+}
+.tc-about-modal {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 560px !important;
+  max-height: min(88vh, 760px) !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  padding: 30px 28px 24px !important;
+  color: #fff !important;
+  background: linear-gradient(145deg, #171c27 0%, #0d1119 100%) !important;
+  border: 2px solid #fff !important;
+  border-top: 5px solid #b5122a !important;
+  border-radius: 18px !important;
+  box-shadow: 0 22px 70px rgba(0,0,0,.65), 0 0 0 1px rgba(181,18,42,.25) !important;
+  font-family: 'Montserrat', sans-serif !important;
+}
+.tc-about-accent {
+  position: absolute !important;
+  top: 0 !important;
+  left: 28px !important;
+  width: 72px !important;
+  height: 3px !important;
+  background: #b5122a !important;
+}
+.tc-about-close {
+  position: absolute !important;
+  top: 12px !important;
+  right: 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  color: #fff !important;
+  background: #252a33 !important;
+  border: 1px solid rgba(255,255,255,.3) !important;
+  border-radius: 8px !important;
+  font-size: 25px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+}
+.tc-about-eyebrow {
+  display: block !important;
+  margin-bottom: 9px !important;
+  color: #f4a6b2 !important;
+  font-size: .66rem !important;
+  font-weight: 900 !important;
+  letter-spacing: .16em !important;
+}
+.tc-about-modal h2 {
+  margin: 0 35px 15px 0 !important;
+  color: #fff !important;
+  font-size: clamp(1.25rem, 4vw, 1.7rem) !important;
+  font-weight: 950 !important;
+  letter-spacing: .04em !important;
+}
+.tc-about-modal p {
+  margin: 0 0 20px !important;
+  color: #d8dce4 !important;
+  font-size: .88rem !important;
+  line-height: 1.75 !important;
+}
+.tc-about-modal h3 {
+  margin: 0 0 12px !important;
+  color: #fff !important;
+  font-size: .82rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .12em !important;
+}
+.tc-about-values {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+.tc-about-values > div {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 5px !important;
+  padding: 12px !important;
+  background: rgba(255,255,255,.045) !important;
+  border: 1px solid rgba(255,255,255,.13) !important;
+  border-left: 3px solid #b5122a !important;
+  border-radius: 8px !important;
+}
+.tc-about-values strong {
+  color: #fff !important;
+  font-size: .72rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .05em !important;
+}
+.tc-about-values span {
+  color: #c4c9d2 !important;
+  font-size: .7rem !important;
+  line-height: 1.5 !important;
+}
+.tc-about-footer {
+  margin-top: 18px !important;
+  padding-top: 14px !important;
+  border-top: 1px solid rgba(255,255,255,.16) !important;
+  color: #f4a6b2 !important;
+  font-size: .62rem !important;
+  font-weight: 900 !important;
+  letter-spacing: .12em !important;
+  text-align: center !important;
+}
+@media (max-width: 520px) {
+  .tc-home-about-card { padding: 12px !important; gap: 10px !important; }
+  .tc-home-about-copy strong { font-size: .78rem !important; }
+  .tc-home-about-copy small { font-size: .68rem !important; }
+  .tc-about-modal { padding: 25px 18px 20px !important; border-radius: 14px !important; }
+  .tc-about-values { grid-template-columns: 1fr !important; }
+}
