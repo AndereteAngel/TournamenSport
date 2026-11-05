@@ -8,6 +8,8 @@ export function GroupStageView({
   onProceedToPlayoffs,
   currentUser,
   isAdmin = false,
+  isReferee = false,
+  onUpdateMatchResult,
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
@@ -39,9 +41,10 @@ export function GroupStageView({
     currentGroup.matches
   );
 
-  // Solo la cuenta administradora puede cargar/modificar resultados.
+  // Administradores/directivos gestionan el torneo; los árbitros solo cargan marcadores.
   const isFinalized = String(tournament.status || "").trim().toLocaleLowerCase("es") === "finalizado";
-  const canEditResults = isAdmin && !isFinalized;
+  const canEditResults = (isAdmin || isReferee) && !isFinalized;
+  const canAdvanceToPlayoffs = isAdmin && !isFinalized;
 
   // El resumen se calcula según el participante elegido en el torneo,
   // que puede tener un nombre distinto al usuario con el que inició sesión.
@@ -89,6 +92,19 @@ export function GroupStageView({
     if (!canEditResults || isFinalized) return;
 
     const numValue = value === "" ? null : Number(value);
+
+    if (isReferee) {
+      const currentMatch = currentGroup.matches.find((match) => match.id === matchId);
+      if (!currentMatch) return;
+      onUpdateMatchResult?.({
+        phase: "groups",
+        groupIndex: activeGroupIndex,
+        matchId,
+        score1: field === "score1" ? numValue : currentMatch.score1,
+        score2: field === "score2" ? numValue : currentMatch.score2,
+      });
+      return;
+    }
 
     const updatedGroups = tournament.groups.map((group, gIdx) => {
       if (gIdx !== activeGroupIndex) return group;
@@ -407,8 +423,7 @@ export function GroupStageView({
       >
         {canEditResults ? (
           <>
-            <TCIcon name="shield" size={15} /> <strong>Organizador:</strong> sos el responsable de cargar y
-            validar los resultados.
+            <TCIcon name="shield" size={15} /> <strong>{isReferee ? "Árbitro:" : "Organizador:"}</strong> {isReferee ? "podés cargar y corregir los resultados de los partidos." : "sos el responsable de cargar y validar los resultados."}
           </>
         ) : (
           <>
@@ -784,7 +799,7 @@ export function GroupStageView({
       </div>
 
       {/* AVANZAR */}
-      {allGroupsFinished && canEditResults && (
+      {allGroupsFinished && canAdvanceToPlayoffs && (
         <button
           onClick={onProceedToPlayoffs}
           className="cr-btn-gold"
