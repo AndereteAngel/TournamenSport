@@ -30,7 +30,8 @@ on public.tournaments
 for insert
 to authenticated
 with check (
-  public.has_fefutin_role(array['admin', 'directivo'])
+  (auth.uid() = '006b7cfc-6517-4e66-8892-1bb5b9931115'::uuid
+   or public.has_fefutin_role(array['directivo']))
   and created_by_user_id = auth.uid()
 );
 
@@ -41,7 +42,8 @@ on public.tournaments
 for update
 to authenticated
 using (
-  public.has_fefutin_role(array['admin', 'directivo'])
+  (auth.uid() = '006b7cfc-6517-4e66-8892-1bb5b9931115'::uuid
+   or public.has_fefutin_role(array['directivo']))
 )
 with check (
   public.has_fefutin_role(array['admin', 'directivo'])
