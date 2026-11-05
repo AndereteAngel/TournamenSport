@@ -1028,6 +1028,7 @@ export function TournamenSportApp() {
   const [tournaments, setTournaments] = useState([]);
   const [tournamentCategoryFilter, setTournamentCategoryFilter] = useState("Todas");
   const [tournamentDivisionFilter, setTournamentDivisionFilter] = useState("Todas");
+  const [divisionCategorySearch, setDivisionCategorySearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [editingTournament, setEditingTournament] = useState(false);
   const [deletingTournamentId, setDeletingTournamentId] = useState(null);
@@ -2295,6 +2296,7 @@ export function TournamenSportApp() {
         onClick={() => {
           setTournamentDivisionFilter(division);
           setTournamentCategoryFilter("Todas");
+          setDivisionCategorySearch("");
           setActiveView("division-tournaments");
         }}
       >
@@ -2485,23 +2487,51 @@ export function TournamenSportApp() {
               <div><span>FEFUTIN</span><strong>FÚTBOL · {tournamentDivisionFilter.toLocaleUpperCase("es")}</strong></div>
             </div>
             <h2 className="cr-title">TORNEOS DE {tournamentDivisionFilter.toLocaleUpperCase("es")}</h2>
+            <div className="tc-division-search">
+              <span aria-hidden="true">⌕</span>
+              <input
+                type="search"
+                value={divisionCategorySearch}
+                onChange={(event) => setDivisionCategorySearch(event.target.value)}
+                placeholder="Buscar por categoría o torneo..."
+                aria-label={`Buscar torneos de ${tournamentDivisionFilter} por categoría o nombre`}
+              />
+              {divisionCategorySearch && (
+                <button type="button" onClick={() => setDivisionCategorySearch("")} aria-label="Limpiar búsqueda">×</button>
+              )}
+            </div>
             {(() => {
               const branchTournaments = tournaments.filter((t) => getTournamentDivision(t) === tournamentDivisionFilter);
               const categories = [...new Set(branchTournaments.map(getTournamentCategory).filter(Boolean))];
-              return categories.length ? categories.map((category) => (
-                <section key={category} className="tc-division-category">
-                  <h3>{category}</h3>
-                  <div className="tc-division-tournament-list">
-                    {branchTournaments.filter((t) => getTournamentCategory(t) === category).map((t) => (
-                      <button type="button" className="tc-home-division-tournament" key={t.id} onClick={() => openTournament(t)}>
-                        <strong>{t.title || "Torneo sin nombre"}</strong>
-                        <span>Fútbol · {category}</span>
-                        <small>{t.status || "En preparación"}</small>
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              )) : <p style={{ color: "#fff" }}>Todavía no hay torneos creados en esta rama.</p>;
+              const query = divisionCategorySearch.trim().toLocaleLowerCase("es");
+              const visibleCategories = categories.filter((category) => {
+                const categoryMatches = category.toLocaleLowerCase("es").includes(query);
+                const hasMatchingTournament = branchTournaments.some((t) =>
+                  getTournamentCategory(t) === category &&
+                  String(t.title || "").toLocaleLowerCase("es").includes(query)
+                );
+                return !query || categoryMatches || hasMatchingTournament;
+              });
+              return categories.length ? (
+                visibleCategories.length ? visibleCategories.map((category) => (
+                  <section key={category} className="tc-division-category">
+                    <h3>{category}</h3>
+                    <div className="tc-division-tournament-list">
+                      {branchTournaments.filter((t) =>
+                        getTournamentCategory(t) === category &&
+                        (!query || category.toLocaleLowerCase("es").includes(query) ||
+                          String(t.title || "").toLocaleLowerCase("es").includes(query))
+                      ).map((t) => (
+                        <button type="button" className="tc-home-division-tournament" key={t.id} onClick={() => openTournament(t)}>
+                          <strong>{t.title || "Torneo sin nombre"}</strong>
+                          <span>Fútbol · {category}</span>
+                          <small>{t.status || "En preparación"}</small>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )) : <p className="tc-division-search-empty">No encontramos torneos para “{divisionCategorySearch}”. Probá con otra categoría o nombre.</p>
+              ) : <p style={{ color: "#fff" }}>Todavía no hay torneos creados en esta rama.</p>;
             })()}
           </section>
         </div>
