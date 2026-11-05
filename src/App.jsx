@@ -13,8 +13,6 @@ import { TournamentNotice, useTournamentNotice } from "./components/TournamentNo
 import { PlayoffBracket } from "./components/PlayoffBracket";
 import { supabase } from "./supabaseClient";
 
-const ADMIN_UID = import.meta.env.VITE_ADMIN_USER_ID || "c2089fce-5fb1-430a-8abc-89f5b762b69a";
-
 // La categoría se guarda dentro de "game" al crear el torneo (ej.: "Fútbol · 2012").
 // También leemos las columnas específicas si existen en torneos anteriores/nuevos.
 const getTournamentCategory = (tournament) => {
@@ -1041,10 +1039,14 @@ export function TournamenSportApp() {
   const [loadingRegisteredProfiles, setLoadingRegisteredProfiles] = useState(false);
   const [registeredProfilesSearch, setRegisteredProfilesSearch] = useState("");
   const [selectedRegisteredProfileIds, setSelectedRegisteredProfileIds] = useState([]);
-  // En esta etapa solo el rol admin conserva las funciones administrativas actuales.
-  // Directivos y árbitros se habilitarán cuando estén listas sus políticas RLS.
   const isAdmin = currentUser?.role === "admin";
-  const canManageAccess = ["admin", "directivo"].includes(currentUser?.role);
+  const isDirectivo = currentUser?.role === "directivo";
+  const isArbitro = currentUser?.role === "arbitro";
+  const canManageTournaments = isAdmin || isDirectivo;
+  const canEnterResults = canManageTournaments || isArbitro;
+  const canViewStatistics = isAdmin;
+  const canDeleteTournaments = isAdmin;
+  const canManageAccess = isAdmin || isDirectivo;
   const [catalogSeeded, setCatalogSeeded] = useState(false);
 
   const saveTeamsToCatalog = async (teams) => {
@@ -1087,11 +1089,12 @@ export function TournamenSportApp() {
 
   useEffect(() => {
     if (!canManageAccess && activeView === "access-requests") setActiveView("home");
-    if (!isAdmin && ["create", "edit", "join", "stats"].includes(activeView)) {
+    if ((!canManageTournaments && ["create", "edit", "join"].includes(activeView)) ||
+        (!canViewStatistics && activeView === "stats")) {
       setActiveView("home");
       setActiveTournament(null);
     }
-  }, [isAdmin, canManageAccess, activeView]);
+  }, [isAdmin, canManageTournaments, canViewStatistics, canManageAccess, activeView]);
 
   useEffect(() => {
     document.documentElement.dataset.tcTheme = "clash";
@@ -1390,7 +1393,7 @@ export function TournamenSportApp() {
   // =========================================================
 
   const handleDeleteTournament = async (tournament) => {
-    if (!currentUser || currentUser.id !== ADMIN_UID) {
+    if (!currentUser || !canDeleteTournaments) {
       showNotice("❌ No tenés permisos para eliminar torneos.");
       return;
     }
@@ -1598,8 +1601,8 @@ export function TournamenSportApp() {
   // =========================================================
 
   const handleCreateTournamentSubmit = async (config) => {
-    if (!isAdmin) {
-      showNotice("❌ Solo el administrador puede crear torneos.");
+    if (!canManageTournaments) {
+      showNotice("❌ Solo un administrador o directivo puede crear torneos.");
       setActiveView("home");
       return;
     }
@@ -1737,8 +1740,8 @@ export function TournamenSportApp() {
 
   const handleAddSelectedRegisteredProfiles = async () => {
     if (!activeTournament?.id || !currentUser) return;
-    if (!isAdmin) {
-      showNotice("Solo el administrador puede agregar participantes.");
+    if (!canManageTournaments) {
+      showNotice("Solo un administrador o directivo puede agregar participantes.");
       return;
     }
     const { data: latest, error: fetchError } = await supabase.from("tournaments")
@@ -1795,8 +1798,8 @@ export function TournamenSportApp() {
   const handleStartRegistrationTournament = async () => {
     if (!activeTournament?.id) return;
 
-    if (!isAdmin) {
-      showNotice("Solo el administrador puede dar comienzo al torneo.");
+    if (!canManageTournaments) {
+      showNotice("Solo un administrador o directivo puede dar comienzo al torneo.");
       return;
     }
 
@@ -2066,7 +2069,7 @@ export function TournamenSportApp() {
     );
   };
 
-  const isTournamentAdmin = isAdmin;
+  const isTournamentAdmin = canManageTournaments;
 
   const handleEditTournamentSubmit = async (config) => {
     if (!activeTournament) return;
@@ -2185,8 +2188,8 @@ export function TournamenSportApp() {
   };
 
   const handleUpdateTournamentInSupabase = async (updatedTournament) => {
-    if (!isAdmin) {
-      showNotice("❌ Solo el administrador puede modificar torneos y resultados.");
+    if (!canManageTournaments) {
+      showNotice("❌ Solo un administrador o directivo puede modificar torneos y resultados.");
       return;
     }
     const currentStatus = String(activeTournament?.status || updatedTournament?.status || "")
@@ -2223,8 +2226,8 @@ export function TournamenSportApp() {
 
   const handleJoinTournamentSubmit = (e) => {
     e.preventDefault();
-    if (!isAdmin) {
-      showNotice("⛔ Solo el administrador puede gestionar inscripciones.");
+    if (!canManageTournaments) {
+      showNotice("⛔ Solo un administrador o directivo puede gestionar inscripciones.");
       setActiveView("home");
       return;
     }
@@ -2253,7 +2256,7 @@ export function TournamenSportApp() {
   // =========================================================
 
   const handleProceedToPlayoffs = () => {
-    if (!isAdmin) return;
+    if (!canManageTournaments) return;
     const qualifiedTeams = [];
 
     activeTournament.groups.forEach((group) => {
@@ -2298,7 +2301,7 @@ export function TournamenSportApp() {
   };
 
   const handleFinishTournament = async () => {
-    if (!isAdmin || !activeTournament) return;
+    if (!canManageTournaments || !activeTournament) return;
     const format = String(activeTournament?.format || "").trim().toLocaleLowerCase("es");
 
     if (format === "league") {
@@ -2882,7 +2885,7 @@ export function TournamenSportApp() {
             </button>
           )}
 
-          {isAdmin && <div
+          {canManageTournaments && <div
             style={{
               display: "grid",
               gridTemplateColumns: "minmax(0, 1fr)",
@@ -3096,7 +3099,7 @@ export function TournamenSportApp() {
           </div>
         </div>
         </div>
-      ) : activeView === "create" && isAdmin ? (
+      ) : activeView === "create" && canManageTournaments ? (
         <div className="tc-form-screen tc-create-screen">
         <div className="tc-create-artwork">
           <img src="/WhatsApp%20Image%202026-10-31%20at%2010.45.37.jpeg" alt="Identidad visual de la Liga FEFUTIN" />
@@ -3107,7 +3110,7 @@ export function TournamenSportApp() {
           onCancel={() => setActiveView("home")}
         />
         </div>
-      ) : activeView === "edit" && isAdmin ? (
+      ) : activeView === "edit" && canManageTournaments ? (
         <div className="tc-form-screen tc-edit-screen">
         <CreateTournament
           isEditing={true}
@@ -3119,7 +3122,7 @@ export function TournamenSportApp() {
           }}
         />
         </div>
-      ) : activeView === "join" && isAdmin ? (
+      ) : activeView === "join" && canManageTournaments ? (
         <div className="tc-form-screen tc-join-screen">
         <div className="tc-join-artwork">
           <img src="/tournament-join.svg" alt="Ilustración de una competencia deportiva" />
@@ -3233,7 +3236,7 @@ export function TournamenSportApp() {
                 const registration = (activeTournament.groups || []).find((group) => group?.name === "__INSCRIPCIONES__");
                 const participants = Array.isArray(registration?.teams) ? registration.teams : [];
                 const capacity = Number(registration?.capacity || 0);
-                const canManage = isAdmin;
+                const canManage = canManageTournaments;
                 return (
                   <>
                     <h2 className="cr-title" style={{ marginBottom: "0.5rem" }}>📝 Inscripciones abiertas</h2>
@@ -3299,7 +3302,7 @@ export function TournamenSportApp() {
               onUpdateTournament={handleUpdateTournamentInSupabase}
               onProceedToPlayoffs={handleProceedToPlayoffs}
               currentUser={currentUser}
-              isAdmin={isAdmin}
+              isAdmin={canManageTournaments}
             />
           )}
 
@@ -3365,7 +3368,7 @@ export function TournamenSportApp() {
             tournament={activeTournament}
             onUpdateTournament={handleUpdateTournamentInSupabase}
             onFinishTournament={handleFinishTournament}
-            isAdmin={isAdmin}
+            isAdmin={canManageTournaments}
           />
 
           {(isTournamentAdmin || isAdmin) && activeTournament.status !== "Finalizado" && (
