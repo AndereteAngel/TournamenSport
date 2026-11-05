@@ -203,19 +203,7 @@ export function CreateTournament({
           {isEditing ? <><TCIcon name="settings" size={20} /> Modificar Torneo</> : <><TCIcon name="trophy" size={20} /> Crear torneo deportivo</>}
         </h2>
 
-        <button
-          onClick={onCancel}
-          style={{
-            background: "transparent",
-            border: "none",
-            color: "#9ca3af",
-            cursor: "pointer",
-            fontWeight: "bold",
-            fontSize: "0.85rem",
-          }}
-        >
-          <span className="tc-close-symbol" aria-hidden="true">✕</span> Volver
-        </button>
+
       </div>
 
       {/* =====================================================
@@ -664,6 +652,13 @@ export function CreateTournament({
             : <><TCIcon name="trophy" size={16} /> Crear torneo</>}
         </button>
       </form>
+      <button
+        type="button"
+        className="tc-form-back"
+        onClick={onCancel}
+      >
+        <span aria-hidden="true">←</span> Volver
+      </button>
       </div>
     </>
   );
