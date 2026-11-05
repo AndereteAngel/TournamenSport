@@ -96,17 +96,46 @@ export function CreateTournament({
   const loadTeamsCatalog = async () => {
     setLoadingTeamsCatalog(true);
     setTeamCatalogError("");
-    const { data, error } = await supabase
-      .from("teams_catalog").select("id, name").order("name", { ascending: true });
+    const [
+      { data: catalogData, error: catalogError },
+      { data: tournamentData, error: tournamentsError },
+    ] = await Promise.all([
+      supabase.from("teams_catalog").select("id, name").order("name", { ascending: true }),
+      supabase.from("tournaments").select("groups"),
+    ]);
 
-    if (error) {
-      console.error("Error al cargar catálogo de equipos:", error);
-      setTeamCatalogError("No se pudo cargar el catálogo de equipos. Verificá que la tabla teams_catalog esté creada y que el administrador tenga permisos de lectura.");
-      setLoadingTeamsCatalog(false);
-      return;
+    const historicalNames = (tournamentData || []).flatMap((tournament) =>
+      (tournament.groups || []).flatMap((group) =>
+        Array.isArray(group?.teams) ? group.teams : []
+      )
+    );
+
+    const mergedTeams = new Map();
+    (catalogData || []).forEach((team) => {
+      const name = String(team.name || "").trim();
+      if (name) mergedTeams.set(name.toLocaleLowerCase("es"), { ...team, name });
+    });
+    historicalNames.forEach((rawName) => {
+      const name = String(rawName || "").trim();
+      const key = name.toLocaleLowerCase("es");
+      if (name && !mergedTeams.has(key)) {
+        mergedTeams.set(key, { id: `historical-${key}`, name });
+      }
+    });
+
+    if (catalogError) {
+      console.error("Error al cargar catálogo de equipos:", catalogError);
+    }
+    if (tournamentsError) {
+      console.error("Error al recuperar equipos de torneos anteriores:", tournamentsError);
     }
 
-    setTeamsCatalog(data || []);
+    setTeamsCatalog([...mergedTeams.values()].sort((a, b) => a.name.localeCompare(b.name, "es")));
+    if (catalogError && tournamentsError) {
+      setTeamCatalogError("Supabase no permitió leer el catálogo ni los torneos anteriores. Revisá las políticas SELECT de ambas tablas.");
+    } else if (catalogError) {
+      setTeamCatalogError("No se pudo leer el catálogo permanente; se muestran los equipos recuperados de torneos anteriores.");
+    }
     setLoadingTeamsCatalog(false);
   };
 
