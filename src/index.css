@@ -5819,3 +5819,10 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
 #root .cr-container .tc-home-referee-card :is(strong, small, span) {
   color: inherit !important;
 }
+
+/* FEFUTIN — quitar únicamente el fondo blanco de las tarjetas indicadas */
+#root .cr-container .tc-groups-screen .cr-card,
+#root .cr-container .tc-playoffs-screen .cr-card,
+#root .cr-container .referee-stat-card {
+  background: #171c27 !important;
+}
