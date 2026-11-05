@@ -5703,3 +5703,21 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     font-size: .8rem !important;
   }
 }
+
+
+/* FEFUTIN — el campo de búsqueda es blanco con texto negro; evita el override global de inputs. */
+#root .cr-container .tc-division-tournaments-screen .cr-card .tc-division-search input,
+#root .cr-container .tc-division-tournaments-screen .cr-card .tc-division-search input:focus {
+  color: #171c27 !important;
+  -webkit-text-fill-color: #171c27 !important;
+  caret-color: #171c27 !important;
+  background: transparent !important;
+}
+#root .cr-container .tc-division-tournaments-screen .cr-card .tc-division-search input::placeholder {
+  color: #626875 !important;
+  -webkit-text-fill-color: #626875 !important;
+  opacity: 1 !important;
+}
+#root .cr-container .tc-division-tournaments-screen .cr-card .tc-division-search {
+  background: #ffffff !important;
+}
