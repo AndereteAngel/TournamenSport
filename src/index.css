@@ -5559,3 +5559,30 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     padding: 10px !important;
   }
 }
+
+
+/* FEFUTIN — Quiénes somos sin tarjeta/contenedor visual. */
+.tc-about-modal {
+  max-width: 760px !important;
+  padding: 22px 24px 28px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+.tc-about-accent {
+  display: none !important;
+}
+.tc-about-values > div,
+.tc-about-divisions > div {
+  background: rgba(255,255,255,.055) !important;
+  border: 0 !important;
+  border-left: 3px solid #b5122a !important;
+  border-radius: 3px !important;
+}
+@media (max-width: 520px) {
+  .tc-about-modal {
+    padding: 18px 12px 24px !important;
+  }
+}
