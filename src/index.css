@@ -5352,3 +5352,45 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   }
 }
 
+
+
+/* FEFUTIN — contraste puntual en estadísticas y datos de jornada */
+.tc-stats-screen :is(
+  h1, h2, h3, h4, h5, h6,
+  p, span, strong, b, small, label, td, th, a, li, legend, summary
+):not([style*="color"]) {
+  color: #e5e7eb !important;
+}
+.tc-stats-screen :is(
+  h1, h2, h3, h4, h5, h6
+):not([style*="color"]) {
+  color: #ffffff !important;
+}
+.tc-stats-screen input,
+.tc-stats-screen select,
+.tc-stats-screen textarea {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background-color: #111111 !important;
+}
+.tc-stats-screen select option {
+  color: #ffffff !important;
+  background: #171717 !important;
+}
+
+/* El aviso conserva su acento, pero nunca deja el texto negro. */
+.tc-organizer-notice,
+.tc-organizer-notice strong {
+  color: #f1f5f9 !important;
+}
+.tc-organizer-notice strong {
+  color: #ffffff !important;
+}
+
+/* Número y rótulo de cada fecha del fixture. */
+.tc-round-heading,
+.tc-round-heading span,
+.tc-round-heading strong,
+.tc-round-heading small {
+  color: #facc15 !important;
+}
