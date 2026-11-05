@@ -5239,3 +5239,116 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   .tc-home-division-tournament small { font-size: .58rem; }
   .tc-home-division-empty { font-size: .6rem; padding: 7px 3px; }
 }
+
+/* =========================================================
+   FEFUTIN — AUDITORÍA GLOBAL DE CONTRASTE
+   Corrección visual transversal para todas las interfaces.
+   No modifica componentes ni lógica.
+========================================================= */
+
+/* Base: la aplicación FEFUTIN utiliza superficies oscuras. */
+.cr-container,
+.cr-container.tc-theme-clash,
+.tc-form-screen,
+.tc-competition-screen,
+.tc-home-screen {
+  color: #f1f5f9 !important;
+  color-scheme: dark;
+}
+
+/* Texto general: evita herencias negras en tarjetas, paneles,
+   tablas, formularios, pantallas de grupos y eliminatorias. */
+.cr-container :is(
+  h1, h2, h3, h4, h5, h6,
+  p, label, small, li, td, th, legend, summary,
+  span, strong, em, b, i
+):not(.tc-medal-total):not(.tc-icon-frame):not(.tc-icon-frame *) {
+  color: #e5e7eb !important;
+}
+
+/* Títulos principales y encabezados de cada pantalla. */
+.cr-container :is(h1, h2, h3, h4, h5, h6, .cr-title) {
+  color: #ffffff !important;
+}
+
+/* Controles de texto en login, creación, edición, inscripción,
+   filtros, carga de resultados y administración. */
+.cr-container input:not([type="checkbox"]):not([type="radio"]),
+.cr-container select,
+.cr-container textarea {
+  background: #111111 !important;
+  color: #ffffff !important;
+  border-color: rgba(255,255,255,.58) !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff;
+}
+
+.cr-container select option {
+  background: #171717 !important;
+  color: #ffffff !important;
+}
+
+.cr-container input::placeholder,
+.cr-container textarea::placeholder {
+  color: #c4c4c4 !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #c4c4c4 !important;
+}
+
+.cr-container input:disabled,
+.cr-container select:disabled,
+.cr-container textarea:disabled {
+  color: #d1d5db !important;
+  -webkit-text-fill-color: #d1d5db !important;
+  opacity: 1 !important;
+}
+
+/* Botones: texto blanco en controles oscuros; se preserva
+   el texto oscuro del botón principal dorado cuando corresponda. */
+.cr-container button:not(.cr-btn-gold) {
+  color: #ffffff !important;
+}
+
+.cr-container button:not(.cr-btn-gold) :is(span, strong, small) {
+  color: #ffffff !important;
+}
+
+.cr-container .cr-btn-gold,
+.cr-container .cr-btn-gold :is(span, strong, small) {
+  color: #171426 !important;
+}
+
+/* Tablas y encabezados de grupos / clasificaciones. */
+.cr-container table {
+  color: #e5e7eb !important;
+}
+
+.cr-container table th {
+  color: #ffffff !important;
+}
+
+.cr-container table td {
+  color: #e5e7eb !important;
+}
+
+/* Mensajes, diálogos, avisos y textos auxiliares. */
+.cr-container [role="alert"],
+.cr-container [role="alertdialog"],
+.cr-container [role="dialog"] {
+  color: #ffffff !important;
+}
+
+.cr-container :is(input, select, textarea, button, a):focus-visible {
+  outline: 2px solid #ffffff !important;
+  outline-offset: 3px;
+}
+
+/* Ajuste móvil: evita zoom automático y mantiene legibles los campos. */
+@media (max-width: 600px) {
+  .cr-container input:not([type="checkbox"]):not([type="radio"]),
+  .cr-container select,
+  .cr-container textarea {
+    font-size: 16px;
+  }
+}
+
