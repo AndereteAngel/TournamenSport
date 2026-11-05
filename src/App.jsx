@@ -46,6 +46,8 @@ const adminTournamentButtonStyle = {
 function AdminStats({ onBack }) {
   const [visitas, setVisitas] = useState([]);
   const [perfiles, setPerfiles] = useState([]);
+  const [torneosStats, setTorneosStats] = useState([]);
+  const [errorArbitrosStats, setErrorArbitrosStats] = useState("");
   const [loadingStats, setLoadingStats] = useState(true);
   const [errorStats, setErrorStats] = useState("");
   const [busquedaJugador, setBusquedaJugador] = useState("");
@@ -62,6 +64,7 @@ function AdminStats({ onBack }) {
     const [
       { data: visitasData, error: visitasError },
       { data: perfilesData, error: perfilesError },
+      { data: torneosData, error: torneosError },
     ] = await Promise.all([
       supabase
         .from("visitas")
@@ -71,8 +74,11 @@ function AdminStats({ onBack }) {
         .order("created_at", { ascending: false }),
       supabase
         .from("profiles")
-        .select("id, username, email, created_at")
+        .select("id, username, email, created_at, role, approval_status, deactivated_at")
         .order("created_at", { ascending: false }),
+      supabase
+        .from("tournaments")
+        .select("*"),
     ]);
 
     if (visitasError || perfilesError) {
@@ -91,6 +97,11 @@ function AdminStats({ onBack }) {
 
     setVisitas((visitasData || []).filter((visita) => visita.user_id));
     setPerfiles(perfilesData || []);
+    setTorneosStats(torneosError ? [] : (torneosData || []));
+    setErrorArbitrosStats(torneosError
+      ? "No se pudieron consultar los torneos para calcular las estadísticas arbitrales."
+      : "");
+    if (torneosError) console.error("Error al obtener torneos para estadísticas arbitrales:", torneosError);
     setLoadingStats(false);
   };
 
@@ -290,6 +301,80 @@ function AdminStats({ onBack }) {
     );
   });
 
+  // Estadísticas arbitrales: se leen los marcadores ya guardados en cada partido.
+  // referee_id identifica al árbitro que realizó la última carga/corrección del resultado.
+  const estadisticasArbitrosPorId = {};
+  const registrarPartidoArbitrado = (match, tournament) => {
+    const refereeId = match?.referee_id;
+    const scoreLocal = Number(match?.score1);
+    const scoreVisitante = Number(match?.score2);
+    const team1 = String(match?.team1 || "").trim();
+    const team2 = String(match?.team2 || "").trim();
+
+    if (!refereeId ||
+        match?.score1 === null || match?.score1 === undefined ||
+        match?.score2 === null || match?.score2 === undefined ||
+        !Number.isFinite(scoreLocal) || !Number.isFinite(scoreVisitante) ||
+        !team1 || !team2 ||
+        team1.toLocaleLowerCase("es") === "pasaje directo" ||
+        team2.toLocaleLowerCase("es") === "pasaje directo") return;
+
+    if (!estadisticasArbitrosPorId[refereeId]) {
+      const perfil = perfiles.find((item) => item.id === refereeId);
+      estadisticasArbitrosPorId[refereeId] = {
+        id: refereeId,
+        nombre: perfil?.username || "Árbitro",
+        partidos: 0,
+        golesLocal: 0,
+        golesVisitante: 0,
+        golesTotales: 0,
+        porRama: {},
+      };
+    }
+
+    const stats = estadisticasArbitrosPorId[refereeId];
+    const partesJuego = String(tournament?.game || "").split(" · ");
+    const rama = partesJuego[1] || "Sin rama";
+    stats.partidos += 1;
+    stats.golesLocal += scoreLocal;
+    stats.golesVisitante += scoreVisitante;
+    stats.golesTotales += scoreLocal + scoreVisitante;
+    stats.porRama[rama] = (stats.porRama[rama] || 0) + 1;
+  };
+
+  torneosStats.forEach((tournament) => {
+    (Array.isArray(tournament.groups) ? tournament.groups : []).forEach((group) => {
+      (Array.isArray(group?.matches) ? group.matches : []).forEach((match) => {
+        registrarPartidoArbitrado(match, tournament);
+      });
+    });
+    (Array.isArray(tournament.playoffs) ? tournament.playoffs : []).forEach((round) => {
+      (Array.isArray(round) ? round : []).forEach((match) => {
+        registrarPartidoArbitrado(match, tournament);
+      });
+    });
+  });
+
+  // También mostramos árbitros aprobados que todavía no registraron partidos.
+  perfiles
+    .filter((perfil) => perfil.role === "arbitro" && perfil.approval_status === "aprobado")
+    .forEach((perfil) => {
+      if (!estadisticasArbitrosPorId[perfil.id]) {
+        estadisticasArbitrosPorId[perfil.id] = {
+          id: perfil.id,
+          nombre: perfil.username || "Árbitro",
+          partidos: 0,
+          golesLocal: 0,
+          golesVisitante: 0,
+          golesTotales: 0,
+          porRama: {},
+        };
+      }
+    });
+
+  const estadisticasArbitros = Object.values(estadisticasArbitrosPorId)
+    .sort((a, b) => b.partidos - a.partidos || a.nombre.localeCompare(b.nombre, "es"));
+
   if (loadingStats) {
     return (
       <div
@@ -465,6 +550,53 @@ function AdminStats({ onBack }) {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* ESTADÍSTICAS DE ÁRBITROS */}
+      <div className="cr-card" style={{ marginBottom: "1rem" }}>
+        <h3 style={{ color: "#fff", marginTop: 0, marginBottom: "0.45rem" }}>
+          <TCIcon name="whistle" /> Estadísticas de árbitros
+        </h3>
+        <p style={{ color: "#9ca3af", fontSize: "0.75rem", marginTop: 0 }}>
+          Se cuentan los partidos con resultado completo y árbitro identificado. Los resultados cargados antes de registrar al árbitro no se atribuyen retroactivamente.
+        </p>
+
+        {errorArbitrosStats ? (
+          <p style={{ color: "#f87171" }}>{errorArbitrosStats}</p>
+        ) : estadisticasArbitros.length === 0 ? (
+          <p style={{ color: "#9ca3af" }}>Todavía no hay partidos registrados por árbitros.</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", minWidth: "620px", borderCollapse: "collapse", color: "#fff", fontSize: "0.8rem" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid #4b5563", color: "#d1d5db", textAlign: "left" }}>
+                  <th style={{ padding: "0.65rem 0.45rem" }}>Árbitro</th>
+                  <th style={{ padding: "0.65rem 0.45rem", textAlign: "center" }}>Partidos</th>
+                  <th style={{ padding: "0.65rem 0.45rem" }}>Ramas</th>
+                  <th style={{ padding: "0.65rem 0.45rem", textAlign: "center" }}>Goles local</th>
+                  <th style={{ padding: "0.65rem 0.45rem", textAlign: "center" }}>Goles visitante</th>
+                  <th style={{ padding: "0.65rem 0.45rem", textAlign: "center" }}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {estadisticasArbitros.map((arbitro) => (
+                  <tr key={arbitro.id} style={{ borderBottom: "1px solid #2d2b3b" }}>
+                    <td style={{ padding: "0.7rem 0.45rem", fontWeight: 800 }}>{arbitro.nombre}</td>
+                    <td style={{ padding: "0.7rem 0.45rem", textAlign: "center", color: "#facc15", fontWeight: 900 }}>{arbitro.partidos}</td>
+                    <td style={{ padding: "0.7rem 0.45rem", color: "#d1d5db" }}>
+                      {Object.entries(arbitro.porRama).length
+                        ? Object.entries(arbitro.porRama).map(([rama, cantidad]) => `${rama}: ${cantidad}`).join(" · ")
+                        : "Sin partidos"}
+                    </td>
+                    <td style={{ padding: "0.7rem 0.45rem", textAlign: "center" }}>{arbitro.golesLocal}</td>
+                    <td style={{ padding: "0.7rem 0.45rem", textAlign: "center" }}>{arbitro.golesVisitante}</td>
+                    <td style={{ padding: "0.7rem 0.45rem", textAlign: "center", color: "#facc15", fontWeight: 900 }}>{arbitro.golesTotales}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* DISPOSITIVOS */}
