@@ -389,6 +389,7 @@ export function GroupStageView({
 
       {/* AVISO DE PERMISOS */}
       <div
+        className="tc-organizer-notice"
         style={{
           marginBottom: "1.2rem",
           padding: "0.75rem 0.9rem",
@@ -693,7 +694,7 @@ export function GroupStageView({
           {displayMatches.map((match, index) => (
             <>
               {isLeague && (index === 0 || Number(displayMatches[index - 1].round || 1) !== Number(match.round || 1)) && (
-                <div key={"fecha-" + (match.round || 1)} style={{ marginTop: index === 0 ? 0 : "0.65rem", padding: "0.65rem 0.8rem", borderRadius: "9px", background: "linear-gradient(90deg, rgba(250,204,21,0.16), rgba(250,204,21,0.04))", border: "1px solid rgba(250,204,21,0.35)", color: "#facc15", fontSize: "0.8rem", fontWeight: 900, letterSpacing: "0.06em" }}>
+                <div className="tc-round-heading" key={"fecha-" + (match.round || 1)} style={{ marginTop: index === 0 ? 0 : "0.65rem", padding: "0.65rem 0.8rem", borderRadius: "9px", background: "linear-gradient(90deg, rgba(250,204,21,0.16), rgba(250,204,21,0.04))", border: "1px solid rgba(250,204,21,0.35)", color: "#facc15", fontSize: "0.8rem", fontWeight: 900, letterSpacing: "0.06em" }}>
                   FECHA {match.round || 1} <span style={{ color: "#d1d5db", fontWeight: 600, letterSpacing: 0 }}>· Todos contra todos</span>
                 </div>
               )}
