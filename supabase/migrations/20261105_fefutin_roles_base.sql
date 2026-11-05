@@ -7,7 +7,7 @@ begin;
 alter table public.profiles
   add column if not exists role text not null default 'visitante',
   add column if not exists requested_role text,
-  add column if not exists approval_status text not null default 'approved',
+  add column if not exists approval_status text not null default 'aprobado',
   add column if not exists approved_by uuid references auth.users(id) on delete set null,
   add column if not exists approved_at timestamptz,
   add column if not exists deactivated_at timestamptz;
@@ -52,7 +52,8 @@ where id <> 'c2089fce-5fb1-430a-8abc-89f5b762b69a'::uuid
 -- estado de aprobacion, aprobador ni fecha de baja desde el cliente.
 revoke update on table public.profiles from anon, public, authenticated;
 grant update (username, email) on table public.profiles to authenticated;
-grant select, insert on table public.profiles to authenticated;
+grant select on table public.profiles to authenticated;
+revoke insert on table public.profiles from anon, public, authenticated;
 
 -- Funciones seguras para que la aplicacion pueda consultar el rol propio.
 create or replace function public.get_my_fefutin_access()
