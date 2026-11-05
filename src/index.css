@@ -5586,3 +5586,66 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     padding: 18px 12px 24px !important;
   }
 }
+
+
+/* FEFUTIN — buscador compacto dentro de cada rama. */
+.tc-division-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: min(100%, 520px);
+  margin: 0 auto 18px;
+  padding: 9px 12px;
+  box-sizing: border-box;
+  background: #fff;
+  border: 2px solid #b5122a;
+  border-radius: 9px;
+  box-shadow: 0 3px 0 rgba(0,0,0,.28);
+}
+.tc-division-search > span {
+  color: #b5122a !important;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.tc-division-search input {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 0;
+  color: #171c27 !important;
+  background: transparent !important;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font: 700 .8rem 'Montserrat', sans-serif !important;
+}
+.tc-division-search input::placeholder {
+  color: #626875 !important;
+  opacity: 1;
+}
+.tc-division-search button {
+  padding: 0 3px;
+  color: #b5122a !important;
+  background: transparent !important;
+  border: 0 !important;
+  font-size: 1.25rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+.tc-division-search-empty {
+  margin: 10px 0;
+  padding: 14px;
+  color: #fff !important;
+  background: rgba(255,255,255,.06);
+  border-left: 3px solid #b5122a;
+  border-radius: 5px;
+  font-size: .78rem;
+  text-align: center;
+}
+@media (max-width: 520px) {
+  .tc-division-search {
+    margin-bottom: 14px;
+    padding: 8px 10px;
+  }
+  .tc-division-search input { font-size: .72rem !important; }
+}
