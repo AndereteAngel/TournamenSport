@@ -2882,7 +2882,7 @@ export function TournamenSportApp() {
       ) : activeView === "create" && isAdmin ? (
         <div className="tc-form-screen tc-create-screen">
         <div className="tc-create-artwork">
-          <img src="/tournament-join.svg" alt="Equipos deportivos preparados para una competencia" />
+          <img src="/WhatsApp%20Image%202026-10-31%20at%2010.45.37.jpeg" alt="Identidad visual de la Liga FEFUTIN" />
           <div><strong>ORGANIZÁ TU TORNEO</strong><span>Elegí el deporte, definí la categoría y prepará la competencia.</span></div>
         </div>
         <CreateTournament
