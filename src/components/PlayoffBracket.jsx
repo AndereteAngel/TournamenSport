@@ -5,13 +5,29 @@ export function PlayoffBracket({
   onUpdateTournament,
   onFinishTournament,
   isAdmin = false,
+  isReferee = false,
+  onUpdateMatchResult,
 }) {
   const rounds = tournament.playoffs || [];
   const isFinalized = String(tournament.status || "").trim().toLocaleLowerCase("es") === "finalizado";
+  const canEditResults = (isAdmin || isReferee) && !isFinalized;
 
   const handleScoreChange = (roundIdx, matchId, field, value) => {
-    if (!isAdmin || isFinalized) return;
+    if (!canEditResults || isFinalized) return;
     const numValue = value === "" ? null : Number(value);
+
+    if (isReferee) {
+      const currentMatch = rounds[roundIdx]?.find((match) => match.id === matchId);
+      if (!currentMatch) return;
+      onUpdateMatchResult?.({
+        phase: "playoffs",
+        roundIndex: roundIdx,
+        matchId,
+        score1: field === "score1" ? numValue : currentMatch.score1,
+        score2: field === "score2" ? numValue : currentMatch.score2,
+      });
+      return;
+    }
 
     // Copiamos las rondas actuales y eliminamos rondas posteriores si se modifica un resultado anterior
     const updatedRounds = rounds.slice(0, roundIdx + 1).map((round, rIdx) => {
@@ -284,7 +300,7 @@ export function PlayoffBracket({
                         minWidth: "84px",
                       }}
                     >
-                      {isAdmin && !isFinalized ? (
+                      {canEditResults ? (
                         <>
                           <input type="number" min="0" value={match.score1 !== null ? match.score1 : ""} onChange={(e) => handleScoreChange(rIdx, match.id, "score1", e.target.value)} style={{ width: "34px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "4px", padding: "4px" }} />
                           <span>-</span>
