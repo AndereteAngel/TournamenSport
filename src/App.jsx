@@ -49,6 +49,7 @@ function RefereeStats({ onBack }) {
   const [torneos, setTorneos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [arbitroSeleccionado, setArbitroSeleccionado] = useState(null);
 
   const cargarEstadisticas = async () => {
     setLoading(true);
@@ -103,6 +104,9 @@ function RefereeStats({ onBack }) {
         id: refereeId,
         nombre: perfil?.username || "Árbitro",
         partidos: 0,
+        victoriasLocales: 0,
+        victoriasVisitantes: 0,
+        empates: 0,
         golesLocal: 0,
         golesVisitante: 0,
         golesTotales: 0,
@@ -113,6 +117,9 @@ function RefereeStats({ onBack }) {
     const stats = estadisticasPorId[refereeId];
     const rama = String(tournament?.game || "").split(" · ")[1] || "Sin rama";
     stats.partidos += 1;
+    if (scoreLocal > scoreVisitante) stats.victoriasLocales += 1;
+    else if (scoreVisitante > scoreLocal) stats.victoriasVisitantes += 1;
+    else stats.empates += 1;
     stats.golesLocal += scoreLocal;
     stats.golesVisitante += scoreVisitante;
     stats.golesTotales += scoreLocal + scoreVisitante;
@@ -136,6 +143,9 @@ function RefereeStats({ onBack }) {
           id: perfil.id,
           nombre: perfil.username || "Árbitro",
           partidos: 0,
+          victoriasLocales: 0,
+          victoriasVisitantes: 0,
+          empates: 0,
           golesLocal: 0,
           golesVisitante: 0,
           golesTotales: 0,
@@ -146,6 +156,14 @@ function RefereeStats({ onBack }) {
 
   const estadisticas = Object.values(estadisticasPorId)
     .sort((a, b) => b.partidos - a.partidos || a.nombre.localeCompare(b.nombre, "es"));
+  const arbitroActual = estadisticas.find((item) => item.id === arbitroSeleccionado);
+
+  const tarjetaMetrica = (etiqueta, valor, color = "#fff") => (
+    <div style={{ background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", padding: "0.9rem", textAlign: "center" }}>
+      <div style={{ color: "#c7cbd1", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>{etiqueta}</div>
+      <div style={{ color, fontSize: "1.65rem", fontWeight: 900, marginTop: "0.25rem" }}>{valor}</div>
+    </div>
+  );
 
   if (loading || error) {
     return (
@@ -158,58 +176,109 @@ function RefereeStats({ onBack }) {
     );
   }
 
+  if (arbitroActual) {
+    return (
+      <div style={{ width: "100%", maxWidth: "1100px", margin: "0 auto", paddingBottom: "2rem" }}>
+        <section className="cr-card" style={{ marginBottom: "1rem" }}>
+          <button type="button" className="tc-form-back" onClick={() => setArbitroSeleccionado(null)} style={{ marginBottom: "1rem" }}>← Todos los árbitros</button>
+          <h2 className="cr-title" style={{ marginBottom: "4px" }}>{arbitroActual.nombre}</h2>
+          <p style={{ color: "#d1d5db", margin: 0, fontSize: "0.82rem" }}>Ficha individual · Estadísticas arbitrales</p>
+        </section>
+
+        <section className="cr-card" style={{ marginBottom: "1rem" }}>
+          <h3 style={{ color: "#fff", marginTop: 0 }}>Resultados dirigidos</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: "0.75rem" }}>
+            {tarjetaMetrica("Partidos", arbitroActual.partidos)}
+            {tarjetaMetrica("Victorias locales", arbitroActual.victoriasLocales, "#86efac")}
+            {tarjetaMetrica("Empates", arbitroActual.empates, "#facc15")}
+            {tarjetaMetrica("Victorias visitantes", arbitroActual.victoriasVisitantes, "#93c5fd")}
+          </div>
+        </section>
+
+        <section className="cr-card" style={{ marginBottom: "1rem" }}>
+          <h3 style={{ color: "#fff", marginTop: 0 }}>Goles en sus partidos</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: "0.75rem" }}>
+            {tarjetaMetrica("Goles locales", arbitroActual.golesLocal)}
+            {tarjetaMetrica("Goles visitantes", arbitroActual.golesVisitante)}
+            {tarjetaMetrica("Goles totales", arbitroActual.golesTotales, "#facc15")}
+          </div>
+        </section>
+
+        <section className="cr-card">
+          <h3 style={{ color: "#fff", marginTop: 0 }}>Partidos por rama</h3>
+          {Object.keys(arbitroActual.porRama).length ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.65rem" }}>
+              {Object.entries(arbitroActual.porRama).map(([rama, cantidad]) => (
+                <div key={rama} style={{ background: "#171c27", borderRadius: "10px", padding: "0.8rem", color: "#fff", border: "1px solid #34313d" }}>
+                  <strong>{rama}</strong><div style={{ color: "#d1d5db", marginTop: "0.25rem" }}>{cantidad} partidos</div>
+                </div>
+              ))}
+            </div>
+          ) : <p style={{ color: "#d1d5db" }}>Todavía no registra partidos.</p>}
+        </section>
+
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
+          <button type="button" className="tc-form-back" onClick={() => setArbitroSeleccionado(null)}>← Volver a todos</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: "100%", maxWidth: "1100px", margin: "0 auto", paddingBottom: "2rem" }}>
       <section className="cr-card" style={{ marginBottom: "1rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
           <div>
             <h2 className="cr-title" style={{ marginBottom: "4px" }}>ÁRBITROS · ESTADÍSTICAS</h2>
-            <p style={{ color: "#d1d5db", margin: 0, fontSize: "0.82rem" }}>Comparativa general de rendimiento arbitral</p>
+            <p style={{ color: "#d1d5db", margin: 0, fontSize: "0.82rem" }}>Consultá y compará el rendimiento de todos los árbitros</p>
           </div>
           <button type="button" onClick={cargarEstadisticas} className="tc-form-back">↻ Actualizar</button>
         </div>
       </section>
 
-      <section className="cr-card">
-        <h3 style={{ color: "#fff", marginTop: 0 }}>Rendimiento de todos los árbitros</h3>
-        {estadisticas.length === 0 ? (
-          <p style={{ color: "#d1d5db" }}>Todavía no hay árbitros aprobados para mostrar.</p>
-        ) : (
-          <div style={{ overflowX: "auto", width: "100%" }}>
-            <table style={{ width: "100%", minWidth: "650px", borderCollapse: "collapse", color: "#fff", fontSize: "0.82rem" }}>
-              <thead>
-                <tr style={{ borderBottom: "2px solid #b5122a", color: "#fff", textAlign: "left" }}>
-                  <th style={{ padding: "0.7rem 0.45rem" }}>Árbitro</th>
-                  <th style={{ padding: "0.7rem 0.45rem", textAlign: "center" }}>Partidos</th>
-                  <th style={{ padding: "0.7rem 0.45rem" }}>Ramas</th>
-                  <th style={{ padding: "0.7rem 0.45rem", textAlign: "center" }}>Goles local</th>
-                  <th style={{ padding: "0.7rem 0.45rem", textAlign: "center" }}>Goles visitante</th>
-                  <th style={{ padding: "0.7rem 0.45rem", textAlign: "center" }}>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {estadisticas.map((arbitro) => (
-                  <tr key={arbitro.id} style={{ borderBottom: "1px solid #34313d" }}>
-                    <td style={{ padding: "0.75rem 0.45rem", fontWeight: 800 }}>{arbitro.nombre}</td>
-                    <td style={{ padding: "0.75rem 0.45rem", textAlign: "center", fontWeight: 900 }}>{arbitro.partidos}</td>
-                    <td style={{ padding: "0.75rem 0.45rem", color: "#e5e7eb" }}>
-                      {Object.entries(arbitro.porRama).length
-                        ? Object.entries(arbitro.porRama).map(([rama, cantidad]) => rama + ": " + cantidad).join(" · ")
-                        : "Sin partidos"}
-                    </td>
-                    <td style={{ padding: "0.75rem 0.45rem", textAlign: "center" }}>{arbitro.golesLocal}</td>
-                    <td style={{ padding: "0.75rem 0.45rem", textAlign: "center" }}>{arbitro.golesVisitante}</td>
-                    <td style={{ padding: "0.75rem 0.45rem", textAlign: "center", fontWeight: 900 }}>{arbitro.golesTotales}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        <p style={{ color: "#aaa", fontSize: "0.72rem", marginBottom: 0, marginTop: "1rem" }}>
-          Se cuentan partidos con resultado completo y árbitro identificado. Los registros anteriores a la identificación del árbitro no se atribuyen retroactivamente.
-        </p>
-      </section>
+      {estadisticas.length === 0 ? (
+        <section className="cr-card"><p style={{ color: "#d1d5db" }}>Todavía no hay árbitros aprobados para mostrar.</p></section>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.85rem" }}>
+          {estadisticas.map((arbitro) => (
+            <button
+              key={arbitro.id}
+              type="button"
+              onClick={() => setArbitroSeleccionado(arbitro.id)}
+              className="cr-card"
+              style={{ width: "100%", textAlign: "left", color: "#fff", cursor: "pointer", border: "1px solid #b5122a", display: "flex", flexDirection: "column", gap: "0.65rem" }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
+                <strong style={{ fontSize: "1rem" }}>{arbitro.nombre}</strong>
+                <span style={{ color: "#b5122a", fontSize: "1.25rem" }}>›</span>
+              </div>
+              <div style={{ color: "#d1d5db", fontSize: "0.78rem" }}>{arbitro.partidos} partidos arbitrados</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem", textAlign: "center" }}>
+                <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
+                  <strong style={{ display: "block", color: "#86efac", fontSize: "1.1rem" }}>{arbitro.victoriasLocales}</strong>
+                  <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>V. LOCAL</span>
+                </div>
+                <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
+                  <strong style={{ display: "block", color: "#facc15", fontSize: "1.1rem" }}>{arbitro.empates}</strong>
+                  <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>EMPATES</span>
+                </div>
+                <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
+                  <strong style={{ display: "block", color: "#93c5fd", fontSize: "1.1rem" }}>{arbitro.victoriasVisitantes}</strong>
+                  <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>V. VISIT.</span>
+                </div>
+              </div>
+              <div style={{ color: "#c7cbd1", fontSize: "0.72rem" }}>
+                Goles: {arbitro.golesLocal} local · {arbitro.golesVisitante} visitante
+              </div>
+              <span style={{ color: "#fca5a5", fontSize: "0.75rem", fontWeight: 800 }}>VER FICHA COMPLETA →</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <p style={{ color: "#aaa", fontSize: "0.72rem", marginBottom: 0, marginTop: "1rem" }}>
+        Se cuentan partidos con resultado completo y árbitro identificado. Los registros anteriores a la identificación del árbitro no se atribuyen retroactivamente.
+      </p>
 
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
         <button type="button" className="tc-form-back" onClick={onBack}>← Volver al inicio</button>
