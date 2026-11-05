@@ -5808,3 +5808,28 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     color: #fff !important;
   }
 }
+
+
+/* FEFUTIN — tarjetas de árbitros con el mismo fondo de la tarjeta principal.
+   Se aplica al final de la hoja global para evitar que los temas anteriores las blanqueen. */
+#root .cr-container .referee-stat-card,
+#root .cr-container button.referee-stat-card {
+  background: linear-gradient(110deg, #171c27 0%, #10141d 72%, rgba(181, 18, 42, .28) 100%) !important;
+  background-color: #171c27 !important;
+  background-image: linear-gradient(110deg, #171c27 0%, #10141d 72%, rgba(181, 18, 42, .28) 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,.32) !important;
+  border-left: 4px solid #b5122a !important;
+  border-radius: 12px !important;
+  box-shadow: 0 5px 14px rgba(0,0,0,.25) !important;
+}
+
+#root .cr-container .referee-stat-card-button:hover {
+  background: linear-gradient(110deg, #1b2230 0%, #10141d 72%, rgba(181, 18, 42, .36) 100%) !important;
+  border-color: #b5122a !important;
+  transform: translateY(-2px);
+}
+
+#root .cr-container .referee-stat-card :is(strong, span, p, h2, h3, div) {
+  color: inherit;
+}
