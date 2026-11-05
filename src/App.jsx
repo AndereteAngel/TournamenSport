@@ -2375,6 +2375,8 @@ export function TournamenSportApp() {
               className="cr-btn-gold tc-auth-submit"
               style={{
                 marginTop: "0.5rem",
+                padding: "0.55rem 1rem",
+                borderBottom: "3px solid #522b00",
               }}
             >
               <><TCIcon name="shield" size={17} /> Ingresar como administrador</>
