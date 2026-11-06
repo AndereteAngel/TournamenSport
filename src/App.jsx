@@ -482,7 +482,7 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                   </div>
                 </div>
                 <div className="referee-mini-goals" style={{ color: "#c7cbd1", fontSize: "0.7rem", lineHeight: 1.4, display: "flex", justifyContent: "space-between", gap: "0.4rem", flexWrap: "wrap" }}>
-                  <span>GOLES A FAVOR: <strong style={{ color: "#fff" }}>{arbitro.golesLocal + arbitro.golesVisitante}</strong></span>
+                  <span>GOLES EN PARTIDOS: <strong style={{ color: "#fff" }}>{arbitro.golesLocal + arbitro.golesVisitante}</strong></span>
                   <span>LOCAL <strong style={{ color: "#fff" }}>{arbitro.golesLocal}</strong> · VISIT. <strong style={{ color: "#fff" }}>{arbitro.golesVisitante}</strong></span>
                 </div>
                 <span className="referee-mini-detail" style={{ color: "#ff9aa8", fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.08em", borderTop: "1px solid #343d4b", paddingTop: "0.65rem", marginTop: "auto", display: "flex", justifyContent: "space-between" }}>CONSULTAR FICHA <span aria-hidden="true">→</span></span>
