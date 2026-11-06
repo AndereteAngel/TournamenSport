@@ -5834,3 +5834,26 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   background-color: #171c27 !important;
   background-image: none !important;
 }
+
+
+/* FEFUTIN — fondos oscuros para planilla de ingreso, lista de torneos y mini tarjetas arbitrales */
+#root .tc-join-screen > .cr-card,
+#root .tc-create-screen .cr-card,
+#root .tc-home-screen .tc-home-panel,
+#root .tc-home-screen .tc-home-tournaments,
+#root .tc-home-screen .tc-home-tournament-card,
+#root .tc-home-screen .tc-home-division-tournament,
+#root .tc-division-tournaments-screen > .cr-card,
+#root .referee-stat-card,
+#root button.referee-stat-card {
+  background: #0b0b0d !important;
+  background-color: #0b0b0d !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border-color: #b5122a !important;
+}
+#root .tc-home-screen .tc-home-tournament-card *,
+#root .tc-home-screen .tc-home-division-tournament *,
+#root .referee-stat-card * {
+  color: inherit;
+}
