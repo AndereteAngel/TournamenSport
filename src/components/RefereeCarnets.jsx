@@ -154,7 +154,11 @@ export function RefereeCarnets({ currentUser, canManage, onBack }) {
                   <p style={{ margin: 0, color: "#fff", fontSize: "clamp(.62rem,2.5vw,.78rem)", fontWeight: 900, letterSpacing: ".1em", overflowWrap: "anywhere" }}>FEFUTIN</p>
                   <p style={{ margin: ".15rem 0 0", color: "#fff", fontSize: "clamp(.52rem,2.2vw,.66rem)", fontWeight: 700, letterSpacing: ".06em", overflowWrap: "anywhere" }}>FEDERACIÓN DE FÚTBOL INFANTIL</p>
                 </div>
-                <span aria-hidden="true" style={{ flex: "0 0 auto", width: "38px", height: "38px", border: "1px solid rgba(255,255,255,.7)", borderRadius: "50%", display: "grid", placeItems: "center", color: "#fff", fontSize: "1.25rem" }}>⚽</span>
+                <img
+                  src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166"
+                  alt="Logo oficial de FEFUTIN"
+                  style={{ flex: "0 0 auto", width: "54px", height: "54px", objectFit: "contain", padding: "3px", boxSizing: "border-box", background: "#fff", border: "1px solid rgba(255,255,255,.8)", borderRadius: "8px" }}
+                />
               </div>
               <div style={{ boxSizing: "border-box", width: "100%", padding: "clamp(.75rem,3vw,1.15rem)", display: "grid", gridTemplateColumns: "clamp(82px,25%,132px) minmax(0,1fr)", gap: "clamp(.65rem,3vw,1.1rem)", alignItems: "start" }}>
                 <div style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "grid", placeItems: "center" }}>
