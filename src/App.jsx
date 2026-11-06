@@ -10,6 +10,7 @@ import { Navbar } from "./components/Navbar";
 import { TCIcon } from "./components/TCIcon";
 import { TournamentNotice, useTournamentNotice } from "./components/TournamentNotice";
 import { PlayoffBracket } from "./components/PlayoffBracket";
+import { ChampionCelebration } from "./components/ChampionCelebration";
 import { supabase } from "./supabaseClient";
 
 // La categoría se guarda dentro de "game" al crear el torneo (ej.: "Fútbol · 2012").
@@ -1600,6 +1601,7 @@ export function TournamenSportApp() {
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeTournament, setActiveTournament] = useState(null);
+  const [showChampionCard, setShowChampionCard] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
   const [tournaments, setTournaments] = useState([]);
   const [tournamentCategoryFilter, setTournamentCategoryFilter] = useState("Todas");
@@ -2997,7 +2999,7 @@ export function TournamenSportApp() {
 
     setActiveTournament(finishedObj);
     setTournaments((prev) => prev.map((t) => t.id === finishedObj.id ? finishedObj : t));
-    showNotice("Torneo finalizado correctamente.");
+    setShowChampionCard(true);
   };
 
   const tournamentCategories = [...new Set(
@@ -3071,6 +3073,12 @@ export function TournamenSportApp() {
         confirmation={confirmation}
         onResolveConfirmation={resolveConfirmation}
       />
+      {showChampionCard && activeTournament?.status === "Finalizado" && (
+        <ChampionCelebration
+          tournament={activeTournament}
+          onClose={() => setShowChampionCard(false)}
+        />
+      )}
       <Navbar
           onGoHome={handleGoHome}
           currentTitle={activeTournament?.title}
