@@ -162,6 +162,7 @@ with check (
   bucket_id = 'fefutin-carnets'
   and (storage.foldername(name))[1] = auth.uid()::text
   and (storage.filename(name)) = 'photo'
+  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'arbitro' and p.approval_status = 'aprobado' and p.deactivated_at is null)
 );
 
 drop policy if exists fefutin_carnet_photo_delete on storage.objects;
