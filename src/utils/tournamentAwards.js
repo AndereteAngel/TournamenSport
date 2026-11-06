@@ -105,17 +105,20 @@ export function getPlayerTournamentStats(tournament, playerName) {
   const target = normalize(playerName);
   const matches = [];
 
-  (tournament?.groups || []).forEach((group) => {
-    (group.matches || []).forEach((match) => matches.push(match));
+  const groups = Array.isArray(tournament?.groups) ? tournament.groups : [];
+  groups.forEach((group) => {
+    (Array.isArray(group?.matches) ? group.matches : []).forEach((match) => matches.push(match));
   });
-  (tournament?.playoffs || []).forEach((round) => {
-    (round || []).forEach((match) => matches.push(match));
-  });
+  const rawPlayoffs = Array.isArray(tournament?.playoffs) ? tournament.playoffs : [];
+  const rounds = rawPlayoffs.length && !Array.isArray(rawPlayoffs[0]) ? [rawPlayoffs] : rawPlayoffs;
+  rounds.flatMap((round) => Array.isArray(round) ? round : []).forEach((match) => matches.push(match));
 
   const played = matches.filter((match) => {
     const involved = normalize(match.team1) === target || normalize(match.team2) === target;
-    return involved && match.score1 !== null && match.score1 !== undefined &&
-      match.score2 !== null && match.score2 !== undefined;
+    return involved &&
+      match.score1 !== null && match.score1 !== undefined && match.score1 !== "" &&
+      match.score2 !== null && match.score2 !== undefined && match.score2 !== "" &&
+      Number.isFinite(Number(match.score1)) && Number.isFinite(Number(match.score2));
   });
 
   const wins = played.filter((match) => {
