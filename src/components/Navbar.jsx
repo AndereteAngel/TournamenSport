@@ -10,6 +10,9 @@ export function Navbar({
   tournaments = [],
   isAdmin = false,
   canManageAccess = false,
+  isArbitro = false,
+  onGoMyCarnet,
+  onGoCarnetDirectory,
   pendingAccessCount = 0,
   onGoAccessRequests,
   onGoStats,
@@ -213,6 +216,17 @@ export function Navbar({
           </button>
         )}
 
+        {isArbitro && (
+          <button type="button" onClick={onGoMyCarnet} style={medalButtonStyle}>
+            <TCIcon name="user" size={16} /> <span>Mi carnet</span>
+          </button>
+        )}
+        {canManageAccess && (
+          <button type="button" onClick={onGoCarnetDirectory} style={medalButtonStyle}>
+            <TCIcon name="users" size={16} /> <span>Carnets de árbitros</span>
+          </button>
+        )}
+
         {isAdmin && (
           <button className="tc-nav-stats" type="button" onClick={onGoStats} style={medalButtonStyle}>
             <TCIcon name="chart" size={17} /> <span>Estadísticas</span>
@@ -351,6 +365,17 @@ export function Navbar({
             <button type="button" onClick={() => { setMenuOpen(false); onGoAccessRequests?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem", position: "relative" }}>
               <TCIcon name="user" size={16} /> <span>Solicitudes</span>
               {pendingAccessCount > 0 && <span style={{ minWidth: "17px", height: "17px", borderRadius: "20px", background: "#e11d48", color: "#fff", fontSize: "10px", fontWeight: 900, display: "grid", placeItems: "center" }}>{pendingAccessCount > 9 ? "9+" : pendingAccessCount}</span>}
+            </button>
+          )}
+
+          {isArbitro && (
+            <button type="button" onClick={() => { setMenuOpen(false); onGoMyCarnet?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem" }}>
+              <TCIcon name="user" size={16} /> <span>Mi carnet de árbitro</span>
+            </button>
+          )}
+          {canManageAccess && (
+            <button type="button" onClick={() => { setMenuOpen(false); onGoCarnetDirectory?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem" }}>
+              <TCIcon name="users" size={16} /> <span>Carnets de árbitros</span>
             </button>
           )}
 
