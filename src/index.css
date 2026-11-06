@@ -5878,3 +5878,12 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   border-radius: 18px !important;
   padding: 1rem !important;
 }
+
+
+/* FEFUTIN — mini cards de árbitros con tono distinto al fondo grafito */
+#root button.referee-stat-card.referee-stat-card-button {
+  background: #10223c !important;
+  background-color: #10223c !important;
+  background-image: linear-gradient(145deg, #142a47, #0d1b30) !important;
+  border: 1px solid #b5122a !important;
+}
