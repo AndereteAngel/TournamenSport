@@ -1918,7 +1918,9 @@ export function TournamenSportApp() {
         if (restoredTournament) {
           setActiveTournament(restoredTournament);
         } else {
-          setActiveView("home");
+          // No cambiar la pantalla guardada si el torneo no aparece en esta consulta.
+          // Puede deberse a permisos, conexión o a que el torneo fue eliminado.
+          console.warn("No se pudo recuperar el torneo guardado; se conserva la pantalla actual.");
         }
       }
     }
