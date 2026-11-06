@@ -180,7 +180,7 @@ function RefereeStats({ onBack }) {
     return (
       <div style={{ width: "100%", maxWidth: "1100px", margin: "0 auto", paddingBottom: "2rem" }}>
         <section className="referee-stat-card" style={{ marginBottom: "1rem" }}>
-          <button type="button" className="tc-form-back" onClick={() => setArbitroSeleccionado(null)} style={{ marginBottom: "1rem" }}>← Todos los árbitros</button>
+          
           <h2 className="cr-title" style={{ marginBottom: "4px" }}>{arbitroActual.nombre}</h2>
           <p style={{ color: "#d1d5db", margin: 0, fontSize: "0.82rem" }}>Ficha individual · Estadísticas arbitrales</p>
         </section>
