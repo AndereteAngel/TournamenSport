@@ -1600,7 +1600,6 @@ export function TournamenSportApp() {
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeTournament, setActiveTournament] = useState(null);
-  const [showChampionCard, setShowChampionCard] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
   const [tournaments, setTournaments] = useState([]);
   const [tournamentCategoryFilter, setTournamentCategoryFilter] = useState("Todas");
@@ -2863,7 +2862,6 @@ export function TournamenSportApp() {
     }
 
     setActiveTournament(found);
-    setShowChampionCard(String(found.status || "").trim().toLocaleLowerCase("es") === "finalizado");
 
     if (found.playoffs && found.playoffs.length > 0) {
       setActiveView("playoffs");
@@ -2984,8 +2982,7 @@ export function TournamenSportApp() {
 
     setActiveTournament(finishedObj);
     setTournaments((prev) => prev.map((t) => t.id === finishedObj.id ? finishedObj : t));
-    setShowChampionCard(true);
-    showNotice("🏆 ¡Torneo finalizado! El campeón quedó registrado.");
+    showNotice("Torneo finalizado correctamente.");
   };
 
   const tournamentCategories = [...new Set(
@@ -3014,7 +3011,6 @@ export function TournamenSportApp() {
 
   const openTournament = (tournament) => {
     setActiveTournament(tournament);
-    setShowChampionCard(String(tournament.status || "").trim().toLocaleLowerCase("es") === "finalizado");
     setActiveView(
       tournament.playoffs && tournament.playoffs.length > 0
         ? "playoffs"
