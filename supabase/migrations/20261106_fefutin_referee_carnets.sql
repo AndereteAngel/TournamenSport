@@ -92,7 +92,7 @@ begin
     raise exception 'Solo un árbitro habilitado puede editar su carnet';
   end if;
 
-  if p_photo_path is not null and p_photo_path <> auth.uid()::text || '/photo' then
+  if p_photo_path is not null and p_photo_path <> (auth.uid()::text || '/photo') then
     raise exception 'Ruta de fotografía inválida';
   end if;
 
@@ -128,7 +128,10 @@ using (
   bucket_id = 'fefutin-carnets'
   and (
     public.can_view_fefutin_referee_carnets()
-    or (storage.foldername(name))[1] = auth.uid()::text
+    or (
+      (storage.foldername(name))[1] = auth.uid()::text
+      and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'arbitro' and p.approval_status = 'aprobado' and p.deactivated_at is null)
+    )
   )
 );
 
@@ -153,6 +156,7 @@ using (
   bucket_id = 'fefutin-carnets'
   and (storage.foldername(name))[1] = auth.uid()::text
   and (storage.filename(name)) = 'photo'
+  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'arbitro' and p.approval_status = 'aprobado' and p.deactivated_at is null)
 )
 with check (
   bucket_id = 'fefutin-carnets'
@@ -167,6 +171,7 @@ using (
   bucket_id = 'fefutin-carnets'
   and (storage.foldername(name))[1] = auth.uid()::text
   and (storage.filename(name)) = 'photo'
+  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'arbitro' and p.approval_status = 'aprobado' and p.deactivated_at is null)
 );
 
 commit;
