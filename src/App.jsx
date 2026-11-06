@@ -8,7 +8,6 @@ import { CreateTournament } from "./components/CreateTournament";
 import { GroupStageView } from "./components/GroupStageView";
 import { Navbar } from "./components/Navbar";
 import { TCIcon } from "./components/TCIcon";
-import { ChampionCelebration } from "./components/ChampionCelebration";
 import { TournamentNotice, useTournamentNotice } from "./components/TournamentNotice";
 import { PlayoffBracket } from "./components/PlayoffBracket";
 import { supabase } from "./supabaseClient";
@@ -3076,13 +3075,6 @@ export function TournamenSportApp() {
           onLogout={handleLogout}
         />
 
-      {isAdmin && activeTournament && showChampionCard && String(activeTournament.status || "").trim().toLocaleLowerCase("es") === "finalizado" && (
-        <ChampionCelebration
-          tournament={activeTournament}
-          onClose={() => setShowChampionCard(false)}
-        />
-      )}
-
       {activeView === "admin-login" && !isAdmin ? (
         <div className="tc-form-screen tc-auth-screen">
         <div className="cr-card tc-auth-card" style={{ margin: "auto" }}>
@@ -4061,6 +4053,21 @@ export function TournamenSportApp() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {(activeView === "groups" || activeView === "playoffs") && (
+        <div style={{ width: "100%", maxWidth: "900px", display: "flex", justifyContent: "flex-end", margin: "0.75rem auto 1.25rem", padding: "0 0.25rem", boxSizing: "border-box" }}>
+          <button
+            type="button"
+            className="tc-form-back"
+            onClick={() => {
+              setActiveTournament(null);
+              setActiveView("home");
+            }}
+          >
+            ← Volver a torneos
+          </button>
         </div>
       )}
     </div>
