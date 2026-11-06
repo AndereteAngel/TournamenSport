@@ -460,13 +460,10 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                 className="referee-stat-card-button"
                 style={{ width: "100%", minWidth: 0, textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem", background: "transparent", border: 0, padding: 0 }}
               >
-                <div className="referee-mini-heading" style={{ display: "flex", alignItems: "center", minHeight: "2.5rem", paddingRight: canManageAccess ? "2.4rem" : 0, minWidth: 0 }}>
-                  <div style={{ minWidth: 0 }}>
-                    <span style={{ display: "block", color: "#ff9aa8", fontSize: "0.58rem", fontWeight: 800, letterSpacing: "0.13em", marginBottom: "0.22rem" }}>ÁRBITRO</span>
-                    <strong style={{ display: "block", fontSize: "clamp(0.76rem, 1.05vw, 0.96rem)", lineHeight: 1.25, overflowWrap: "anywhere" }}>{arbitro.nombre}</strong>
-                  </div>
+                <div className="referee-mini-heading" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "2.8rem", marginTop: canManageAccess ? "1.6rem" : 0, padding: "0.55rem", minWidth: 0, width: "100%", boxSizing: "border-box", background: "#050505", border: "1px solid #343a46", borderRadius: "9px", textAlign: "center" }}>
+                  <strong style={{ display: "block", width: "100%", color: "#fff", fontSize: "clamp(0.76rem, 1.05vw, 0.96rem)", lineHeight: 1.25, textAlign: "center", overflowWrap: "anywhere" }}>{arbitro.nombre}</strong>
                 </div>
-                <div className="referee-mini-total" style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", borderBottom: "1px solid #343d4b", paddingBottom: "0.65rem" }}><strong style={{ color: "#fff", fontSize: "1.65rem", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{arbitro.partidos}</strong><span style={{ color: "#aeb7c5", fontSize: "0.64rem", fontWeight: 800, letterSpacing: "0.08em" }}>PARTIDOS DIRIGIDOS</span></div>
+                <div className="referee-mini-total" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.3rem", textAlign: "center", borderBottom: "1px solid #343d4b", padding: "0.25rem 0 0.65rem" }}><strong style={{ display: "block", width: "100%", color: "#fff", fontSize: "1.75rem", lineHeight: 1, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>{arbitro.partidos}</strong><span style={{ display: "block", width: "100%", color: "#aeb7c5", fontSize: "0.64rem", fontWeight: 800, letterSpacing: "0.08em", textAlign: "center" }}>PARTIDOS DIRIGIDOS</span></div>
                 <div className="referee-mini-metrics" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.45rem", textAlign: "center" }}>
                   <div style={{ background: "#0d1118", border: "1px solid #303947", borderRadius: "7px", padding: "0.45rem 0.1rem" }}>
                     <strong style={{ display: "block", color: "#86efac", fontSize: "1.1rem" }}>{arbitro.victoriasLocales}</strong>
