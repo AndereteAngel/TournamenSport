@@ -5864,3 +5864,17 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
 #root .referee-stat-card * {
   color: inherit;
 }
+
+
+/* FEFUTIN — corregir el fondo blanco del contenedor PADRE de estadísticas arbitrales.
+   Solo afecta esta pantalla; conserva intactas las cards y su lógica. */
+#root .cr-container:has(.tc-form-screen.tc-stats-screen .referee-stat-card),
+#root .tc-form-screen.tc-stats-screen:has(.referee-stat-card) {
+  background: #171c27 !important;
+  background-color: #171c27 !important;
+  background-image: none !important;
+}
+#root .tc-form-screen.tc-stats-screen:has(.referee-stat-card) {
+  border-radius: 18px !important;
+  padding: 1rem !important;
+}
