@@ -5936,3 +5936,42 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     display: none !important;
   }
 }
+
+
+/* Mini tarjetas de árbitros: grilla adaptable y jerarquía visual */
+.referee-stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.referee-mini-card {
+  overflow: hidden;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+
+.referee-mini-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(181, 18, 42, .8);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .34), 0 0 0 1px rgba(181, 18, 42, .12);
+}
+
+.referee-mini-card .referee-stat-card-button {
+  flex: 1;
+  min-height: 100%;
+}
+
+@media (max-width: 900px) {
+  .referee-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .referee-stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .7rem;
+  }
+
+  .referee-mini-card {
+    min-height: 0 !important;
+  }
+}
