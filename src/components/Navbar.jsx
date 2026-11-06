@@ -353,14 +353,6 @@ export function Navbar({
             </button>
           )}
 
-          {currentUser && (          <button
-            type="button"
-            onClick={() => setMedalOpen((open) => !open)}
-            style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem" }}
-          >
-            <TCIcon name="medal" size={19} /> <span>Mi medallero</span> <span className="tc-medal-total">{medals.gold + medals.silver + medals.bronze + medals.diploma}</span>
-          </button>)}
-
           {canManageAccess && (
             <button type="button" onClick={() => { setMenuOpen(false); onGoAccessRequests?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem", position: "relative" }}>
               <TCIcon name="user" size={16} /> <span>Solicitudes</span>
