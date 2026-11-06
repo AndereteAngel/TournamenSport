@@ -1392,6 +1392,16 @@ export function TournamenSportApp() {
     resolveConfirmation,
   } = useTournamentNotice();
   const [currentUser, setCurrentUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [savedNavigation] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("fefutin_navigation_state") || "null");
+      return saved && typeof saved === "object" ? saved : {};
+    } catch {
+      return {};
+    }
+  });
+  const [navigationReady, setNavigationReady] = useState(false);
   const [pendingAccessRequests, setPendingAccessRequests] = useState([]);
   const [loadingAccessRequests, setLoadingAccessRequests] = useState(false);
   const [accessActionError, setAccessActionError] = useState("");
@@ -1399,7 +1409,7 @@ export function TournamenSportApp() {
   const [authInput, setAuthInput] = useState({ email: "", password: "" });
   const [authMode, setAuthMode] = useState("login");
   const [registerInput, setRegisterInput] = useState({ username: "", requestedRole: "arbitro" });
-  const [activeView, setActiveView] = useState("home");
+  const [activeView, setActiveView] = useState(savedNavigation.activeView || "home");
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeTournament, setActiveTournament] = useState(null);
@@ -1465,6 +1475,7 @@ export function TournamenSportApp() {
   }, [isAdmin, tournaments, catalogSeeded]);
 
   useEffect(() => {
+    if (!authReady) return;
     if (!canManageAccess && activeView === "access-requests") setActiveView("home");
     if ((!canManageTournaments && ["create", "edit", "join"].includes(activeView)) ||
         (!canViewStatistics && activeView === "stats") ||
@@ -1472,7 +1483,19 @@ export function TournamenSportApp() {
       setActiveView("home");
       setActiveTournament(null);
     }
-  }, [isAdmin, canManageTournaments, canViewStatistics, canViewRefereeStats, canManageAccess, activeView]);
+  }, [authReady, isAdmin, canManageTournaments, canViewStatistics, canViewRefereeStats, canManageAccess, activeView]);
+
+  useEffect(() => {
+    if (!navigationReady) return;
+    try {
+      localStorage.setItem("fefutin_navigation_state", JSON.stringify({
+        activeView,
+        activeTournamentId: activeTournament?.id || null,
+      }));
+    } catch (error) {
+      console.error("No se pudo guardar la navegación actual:", error);
+    }
+  }, [navigationReady, activeView, activeTournament?.id]);
 
   useEffect(() => {
     document.documentElement.dataset.tcTheme = "clash";
@@ -1499,23 +1522,33 @@ export function TournamenSportApp() {
 
       if (error) {
         console.error("Error al recuperar sesión:", error);
+        if (mounted) setAuthReady(true);
         return;
       }
 
       if (!session?.user) {
-        if (mounted) setCurrentUser(null);
+        if (mounted) {
+          setCurrentUser(null);
+          setAuthReady(true);
+        }
         return;
       }
 
       const user = await buildCurrentUser(session.user);
 
       if (!user) {
-        if (mounted) setCurrentUser(null);
+        if (mounted) {
+          setCurrentUser(null);
+          setAuthReady(true);
+        }
         await supabase.auth.signOut();
         return;
       }
 
-      if (mounted) setCurrentUser(user);
+      if (mounted) {
+        setCurrentUser(user);
+        setAuthReady(true);
+      }
     };
 
     loadCurrentUser();
@@ -1524,14 +1557,17 @@ export function TournamenSportApp() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!session?.user) {
-        if (mounted) setCurrentUser(null);
+        if (mounted) {
+          setCurrentUser(null);
+          setAuthReady(true);
+        }
         return;
       }
 
       const user = await buildCurrentUser(session.user);
       if (mounted) {
         setCurrentUser(user);
-        if (user) setActiveView("home");
+        setAuthReady(true);
       }
       if (!user) await supabase.auth.signOut();
     });
@@ -1760,10 +1796,18 @@ export function TournamenSportApp() {
       if (activeTournament?.id) {
         const refreshedActiveTournament = freshTournaments.find((item) => item.id === activeTournament.id);
         if (refreshedActiveTournament) setActiveTournament(refreshedActiveTournament);
+      } else if (savedNavigation.activeTournamentId) {
+        const restoredTournament = freshTournaments.find((item) => item.id === savedNavigation.activeTournamentId);
+        if (restoredTournament) {
+          setActiveTournament(restoredTournament);
+        } else {
+          setActiveView("home");
+        }
       }
     }
 
     setLoading(false);
+    setNavigationReady(true);
   };
 
   // =========================================================
