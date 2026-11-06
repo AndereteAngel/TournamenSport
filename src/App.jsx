@@ -1509,15 +1509,6 @@ export function TournamenSportApp() {
   } = useTournamentNotice();
   const [currentUser, setCurrentUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
-  const [savedNavigation] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("fefutin_navigation_state") || "null");
-      return saved && typeof saved === "object" ? saved : {};
-    } catch {
-      return {};
-    }
-  });
-  const [navigationReady, setNavigationReady] = useState(false);
   const [pendingAccessRequests, setPendingAccessRequests] = useState([]);
   const [loadingAccessRequests, setLoadingAccessRequests] = useState(false);
   const [accessActionError, setAccessActionError] = useState("");
@@ -1525,9 +1516,9 @@ export function TournamenSportApp() {
   const [authInput, setAuthInput] = useState({ email: "", password: "" });
   const [authMode, setAuthMode] = useState("login");
   const [registerInput, setRegisterInput] = useState({ username: "", requestedRole: "arbitro" });
-  const [activeView, setActiveView] = useState(savedNavigation.activeView || "home");
+  const [activeView, setActiveView] = useState("home");
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(savedNavigation.showWelcome ?? true);
+  const [showWelcome, setShowWelcome] = useState(true);
   const [activeTournament, setActiveTournament] = useState(null);
   const [showChampionCard, setShowChampionCard] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
@@ -1536,7 +1527,6 @@ export function TournamenSportApp() {
   const [tournamentDivisionFilter, setTournamentDivisionFilter] = useState("Todas");
   const [divisionCategorySearch, setDivisionCategorySearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [tournamentLoadError, setTournamentLoadError] = useState("");
   const [editingTournament, setEditingTournament] = useState(false);
   const [deletingTournamentId, setDeletingTournamentId] = useState(null);
   const [registeredProfiles, setRegisteredProfiles] = useState([]);
@@ -1601,19 +1591,6 @@ export function TournamenSportApp() {
       setActiveTournament(null);
     }
   }, [authReady, isAdmin, canManageTournaments, canViewStatistics, canViewRefereeStats, canManageAccess, activeView]);
-
-  useEffect(() => {
-    if (!navigationReady) return;
-    try {
-      localStorage.setItem("fefutin_navigation_state", JSON.stringify({
-        activeView,
-        activeTournamentId: activeTournament?.id || null,
-        showWelcome,
-      }));
-    } catch (error) {
-      console.error("No se pudo guardar la navegación actual:", error);
-    }
-  }, [navigationReady, activeView, activeTournament?.id, showWelcome]);
 
   useEffect(() => {
     document.documentElement.dataset.tcTheme = "clash";
@@ -1898,39 +1875,26 @@ export function TournamenSportApp() {
 
   const fetchTournaments = async () => {
     setLoading(true);
-    setTournamentLoadError("");
 
-    try {
-      const { data, error } = await supabase
-        .from("tournaments")
-        .select("*")
-        .order("created_at", {
-          ascending: false,
-        });
+    const { data, error } = await supabase
+      .from("tournaments")
+      .select("*")
+      .order("created_at", {
+        ascending: false,
+      });
 
-      if (error) throw error;
-
+    if (error) {
+      console.error("Error al obtener torneos:", error);
+    } else {
       const freshTournaments = data || [];
       setTournaments(freshTournaments);
-
       if (activeTournament?.id) {
         const refreshedActiveTournament = freshTournaments.find((item) => item.id === activeTournament.id);
         if (refreshedActiveTournament) setActiveTournament(refreshedActiveTournament);
-      } else if (savedNavigation.activeTournamentId) {
-        const restoredTournament = freshTournaments.find((item) => item.id === savedNavigation.activeTournamentId);
-        if (restoredTournament) {
-          setActiveTournament(restoredTournament);
-        } else {
-          console.warn("No se pudo recuperar el torneo guardado.");
-        }
       }
-    } catch (error) {
-      console.error("Error al obtener torneos:", error);
-      setTournamentLoadError(error?.message || "No se pudieron recuperar los torneos.");
-    } finally {
-      setLoading(false);
-      setNavigationReady(true);
     }
+
+    setLoading(false);
   };
 
   // =========================================================
@@ -2996,21 +2960,6 @@ export function TournamenSportApp() {
     </section>
   );
 
-
-  const viewRequiresTournament = ["groups", "playoffs", "edit"].includes(activeView);
-
-  if (viewRequiresTournament && !activeTournament) {
-    return (
-      <div className="cr-container tc-theme-clash" style={{ minHeight: "100vh", background: "#000", color: "#fff", display: "grid", placeItems: "center", padding: "1.5rem", boxSizing: "border-box" }}>
-        <section style={{ width: "100%", maxWidth: "420px", textAlign: "center", border: "1px solid #b5122a", borderRadius: "14px", background: "#111", padding: "1.5rem" }}>
-          <h2 style={{ marginTop: 0 }}>FEFUTIN</h2>
-          <p>{!navigationReady ? "Recuperando la pantalla que estabas viendo..." : tournamentLoadError ? "No se pudieron recuperar los datos del torneo." : "No se pudo recuperar el torneo que estabas viendo."}</p>
-          {tournamentLoadError && <p style={{ color: "#fca5a5", fontSize: "0.85rem" }}>{tournamentLoadError}</p>}
-          <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>Volver a la plataforma</button>
-        </section>
-      </div>
-    );
-  }
 
   return (
     <div className="cr-container tc-theme-clash">
