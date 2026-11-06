@@ -1411,7 +1411,7 @@ export function TournamenSportApp() {
   const [registerInput, setRegisterInput] = useState({ username: "", requestedRole: "arbitro" });
   const [activeView, setActiveView] = useState(savedNavigation.activeView || "home");
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(savedNavigation.showWelcome ?? true);
   const [activeTournament, setActiveTournament] = useState(null);
   const [showChampionCard, setShowChampionCard] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
@@ -1491,11 +1491,12 @@ export function TournamenSportApp() {
       localStorage.setItem("fefutin_navigation_state", JSON.stringify({
         activeView,
         activeTournamentId: activeTournament?.id || null,
+        showWelcome,
       }));
     } catch (error) {
       console.error("No se pudo guardar la navegación actual:", error);
     }
-  }, [navigationReady, activeView, activeTournament?.id]);
+  }, [navigationReady, activeView, activeTournament?.id, showWelcome]);
 
   useEffect(() => {
     document.documentElement.dataset.tcTheme = "clash";
