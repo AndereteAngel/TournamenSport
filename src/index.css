@@ -5826,3 +5826,11 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
 #root .cr-container .referee-stat-card {
   background: #171c27 !important;
 }
+
+/* Fondo grafito para las tarjetas individuales de árbitros */
+#root .referee-stat-card,
+#root button.referee-stat-card {
+  background: #171c27 !important;
+  background-color: #171c27 !important;
+  background-image: none !important;
+}
