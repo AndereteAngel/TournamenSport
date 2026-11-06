@@ -291,7 +291,7 @@ export function GroupStageView({
       </div>
 
       {/* RESUMEN PERSONAL DEL JUGADOR */}
-      {currentUser?.username && (
+      {tournamentParticipants.length > 0 && (
         <section
           aria-label="Resumen de mis partidos"
           style={{
@@ -688,15 +688,6 @@ export function GroupStageView({
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
-          <button type="button" onClick={() => setMatchStatusFilter("all")} aria-pressed={matchStatusFilter === "all"} style={{ padding: "0.48rem 0.7rem", borderRadius: "8px", border: matchStatusFilter === "all" ? "1px solid #fff" : "1px solid #454b57", background: matchStatusFilter === "all" ? "#343a46" : "#151922", color: "#fff", fontSize: "0.72rem", fontWeight: 800, cursor: "pointer" }}>
-            Todos ({currentGroup.matches.length})
-          </button>
-          <button type="button" onClick={() => setMatchStatusFilter("pending")} aria-pressed={matchStatusFilter === "pending"} style={{ padding: "0.48rem 0.7rem", borderRadius: "8px", border: matchStatusFilter === "pending" ? "1px solid #fbbf24" : "1px solid rgba(251,191,36,0.35)", background: matchStatusFilter === "pending" ? "rgba(251,191,36,0.2)" : "#151922", color: "#fbbf24", fontSize: "0.72rem", fontWeight: 800, cursor: "pointer" }}>
-            Pendientes ({pendingTournamentMatches})
-          </button>
-          <button type="button" onClick={() => setMatchStatusFilter("played")} aria-pressed={matchStatusFilter === "played"} style={{ padding: "0.48rem 0.7rem", borderRadius: "8px", border: matchStatusFilter === "played" ? "1px solid #4ade80" : "1px solid rgba(74,222,128,0.35)", background: matchStatusFilter === "played" ? "rgba(74,222,128,0.18)" : "#151922", color: "#4ade80", fontSize: "0.72rem", fontWeight: 800, cursor: "pointer" }}>
-            Disputados ({playedTournamentMatches})
-          </button>
           {isLeague && (
             <>
               <label htmlFor="filtro-fecha-torneo" style={{ color: "#d1d5db", fontSize: "0.78rem", fontWeight: 700, marginLeft: "0.25rem" }}>
