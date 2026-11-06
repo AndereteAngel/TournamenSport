@@ -491,8 +491,7 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                   aria-label={`Dar de baja a ${arbitro.nombre}`}
                   onClick={async (event) => {
                     event.stopPropagation();
-                    const confirmado = window.confirm(`¿Querés dar de baja a ${arbitro.nombre}? Se conservarán sus partidos y estadísticas históricas.`);
-                    if (!confirmado || !onDeactivateReferee) return;
+                    if (!onDeactivateReferee) return;
                     const resultado = await onDeactivateReferee(arbitro);
                     if (resultado) {
                       setArbitroSeleccionado(null);
