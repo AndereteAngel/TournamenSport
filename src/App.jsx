@@ -1729,7 +1729,7 @@ export function TournamenSportApp() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session?.user) {
         if (mounted) {
           setCurrentUser(null);
@@ -1738,12 +1738,20 @@ export function TournamenSportApp() {
         return;
       }
 
-      const user = await buildCurrentUser(session.user);
-      if (mounted) {
-        setCurrentUser(user);
-        setAuthReady(true);
-      }
-      if (!user) await supabase.auth.signOut();
+      // No ejecutar consultas a Supabase dentro de onAuthStateChange:
+      // el callback se dispara mientras el cliente gestiona el bloqueo de auth.
+      // Diferimos la carga del perfil para evitar bloquear el inicio/cambio de sesión.
+      const authUser = session.user;
+      setTimeout(async () => {
+        if (!mounted) return;
+
+        const user = await buildCurrentUser(authUser);
+        if (mounted) {
+          setCurrentUser(user);
+          setAuthReady(true);
+        }
+        if (!user && mounted) await supabase.auth.signOut();
+      }, 0);
     });
 
     return () => {
