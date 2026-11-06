@@ -1647,7 +1647,9 @@ export function TournamenSportApp() {
     if (!isAdmin || catalogSeeded || !tournaments.length) return;
 
     const historicalTeams = tournaments.flatMap((tournament) =>
-      (tournament.groups || []).flatMap((group) => group.teams || [])
+      (Array.isArray(tournament?.groups) ? tournament.groups : []).flatMap((group) =>
+        Array.isArray(group?.teams) ? group.teams : []
+      )
     );
 
     if (!historicalTeams.length) {
