@@ -446,43 +446,42 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
       {estadisticas.length === 0 ? (
         <section className="referee-stat-card"><p style={{ color: "#d1d5db" }}>Todavía no hay árbitros aprobados para mostrar.</p></section>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.85rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.75rem", alignItems: "stretch" }}>
           {estadisticas.map((arbitro) => (
             <article
               key={arbitro.id}
               className="referee-stat-card"
-              style={{ position: "relative", width: "100%", textAlign: "left", color: "#fff", display: "flex", flexDirection: "column", gap: "0.65rem", background: "#080808", border: "1px solid #b5122a", padding: "0.9rem", borderRadius: "12px" }}
+              style={{ position: "relative", minWidth: 0, width: "100%", textAlign: "left", color: "#fff", display: "flex", flexDirection: "column", gap: "0.65rem", background: "linear-gradient(155deg, #202633 0%, #11151d 72%)", border: "1px solid #343d4b", borderTop: "3px solid #b5122a", padding: "0.8rem", borderRadius: "12px", boxShadow: "0 5px 14px rgba(0,0,0,.22)" }}
             >
               <button
                 type="button"
                 onClick={() => setArbitroSeleccionado(arbitro.id)}
                 aria-label={`Ver estadísticas de ${arbitro.nombre}`}
                 className="referee-stat-card-button"
-                style={{ width: "100%", textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem", background: "transparent", border: 0, padding: 0 }}
+                style={{ width: "100%", minWidth: 0, textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem", background: "transparent", border: 0, padding: 0 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
-                  <strong style={{ fontSize: "1rem" }}>{arbitro.nombre}</strong>
-                  <span style={{ color: "#b5122a", fontSize: "1.25rem" }}>›</span>
+                <div style={{ display: "flex", alignItems: "center", minHeight: "2.2rem", paddingRight: canManageAccess ? "2.1rem" : 0, minWidth: 0 }}>
+                  <strong style={{ fontSize: "clamp(0.68rem, 1.1vw, 0.92rem)", lineHeight: 1.25, overflowWrap: "anywhere" }}>{arbitro.nombre}</strong>
                 </div>
-                <div style={{ color: "#d1d5db", fontSize: "0.78rem" }}>{arbitro.partidos} partidos arbitrados</div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "0.3rem", borderBottom: "1px solid #343d4b", paddingBottom: "0.5rem" }}><strong style={{ color: "#fff", fontSize: "1.15rem", fontVariantNumeric: "tabular-nums" }}>{arbitro.partidos}</strong><span style={{ color: "#aeb7c5", fontSize: "0.65rem" }}>PARTIDOS</span></div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem", textAlign: "center" }}>
-                  <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
+                  <div style={{ background: "#0d1118", border: "1px solid #303947", borderRadius: "7px", padding: "0.45rem 0.1rem" }}>
                     <strong style={{ display: "block", color: "#86efac", fontSize: "1.1rem" }}>{arbitro.victoriasLocales}</strong>
-                    <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>V. LOCAL</span>
+                    <span style={{ color: "#b8c0cc", fontSize: "clamp(0.48rem, 0.7vw, 0.6rem)", display: "block" }}>LOCAL</span>
                   </div>
                   <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
                     <strong style={{ display: "block", color: "#facc15", fontSize: "1.1rem" }}>{arbitro.empates}</strong>
-                    <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>EMPATES</span>
+                    <span style={{ color: "#b8c0cc", fontSize: "clamp(0.48rem, 0.7vw, 0.6rem)", display: "block" }}>EMPATES</span>
                   </div>
                   <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
                     <strong style={{ display: "block", color: "#93c5fd", fontSize: "1.1rem" }}>{arbitro.victoriasVisitantes}</strong>
-                    <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>V. VISIT.</span>
+                    <span style={{ color: "#b8c0cc", fontSize: "clamp(0.48rem, 0.7vw, 0.6rem)", display: "block" }}>VISIT.</span>
                   </div>
                 </div>
-                <div style={{ color: "#c7cbd1", fontSize: "0.72rem" }}>
-                  Goles: {arbitro.golesLocal} local · {arbitro.golesVisitante} visitante
+                <div style={{ color: "#c7cbd1", fontSize: "0.66rem", lineHeight: 1.4 }}>
+                  Goles: <strong style={{ color: "#fff" }}>{arbitro.golesLocal}</strong> local · <strong style={{ color: "#fff" }}>{arbitro.golesVisitante}</strong> visitante
                 </div>
-                <span style={{ color: "#fca5a5", fontSize: "0.75rem", fontWeight: 800 }}>VER FICHA COMPLETA →</span>
+                <span style={{ color: "#ff9aa8", fontSize: "0.65rem", fontWeight: 800, letterSpacing: "0.04em", borderTop: "1px solid #343d4b", paddingTop: "0.5rem" }}>VER DETALLE <span aria-hidden="true">→</span></span>
               </button>
               {canManageAccess && (
                 <button
