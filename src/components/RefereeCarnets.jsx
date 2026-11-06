@@ -148,7 +148,7 @@ export function RefereeCarnets({ currentUser, canManage, onBack }) {
           <p style={{ color: "#ddd", textAlign: "center" }}>Todavía no hay árbitros aprobados para mostrar.</p>
         ) : (
           <>
-            <article style={{ width: "100%", maxWidth: "620px", minWidth: 0, boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "18px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)" }}>
+            <article className="fefutin-carnet-motion" style={{ width: "100%", maxWidth: "620px", minWidth: 0, boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "18px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", animation: "fefutinCarnetSway 5.5s ease-in-out infinite", transformOrigin: "50% 85%" }}>
               <div style={{ boxSizing: "border-box", width: "100%", padding: ".8rem 1rem", background: "#b5122a", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem" }}>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, color: "#fff", fontSize: "clamp(.62rem,2.5vw,.78rem)", fontWeight: 900, letterSpacing: ".1em", overflowWrap: "anywhere" }}>FEFUTIN</p>
@@ -188,6 +188,17 @@ export function RefereeCarnets({ currentUser, canManage, onBack }) {
                 <span style={{ color: "#e7a0aa", fontSize: ".6rem", fontWeight: 800 }}>CARNET DIGITAL · FEFUTIN</span>
               </div>
             </article>
+            <style>{`
+              @keyframes fefutinCarnetSway {
+                0%, 100% { transform: perspective(900px) rotateX(0deg) rotateZ(0deg) translateY(0); }
+                22% { transform: perspective(900px) rotateX(1.2deg) rotateZ(-0.65deg) translateY(-2px); }
+                48% { transform: perspective(900px) rotateX(-0.6deg) rotateZ(0.55deg) translateY(-4px); }
+                72% { transform: perspective(900px) rotateX(0.8deg) rotateZ(-0.35deg) translateY(-1px); }
+              }
+              @media (prefers-reduced-motion: reduce) {
+                .fefutin-carnet-motion { animation: none !important; }
+              }
+            `}</style>
 
             {editable ? (
               <form onSubmit={save} style={{ marginTop: "1.2rem", borderTop: "1px solid #444", paddingTop: "1rem" }}>
