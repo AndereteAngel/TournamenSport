@@ -50,6 +50,11 @@ function RefereeStats({ onBack }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [arbitroSeleccionado, setArbitroSeleccionado] = useState(null);
+  const [mesCalendario, setMesCalendario] = useState(() => {
+    const hoy = new Date();
+    return new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  });
+  const [diaCalendarioSeleccionado, setDiaCalendarioSeleccionado] = useState(null);
 
   const cargarEstadisticas = async () => {
     setLoading(true);
@@ -158,6 +163,51 @@ function RefereeStats({ onBack }) {
     .sort((a, b) => b.partidos - a.partidos || a.nombre.localeCompare(b.nombre, "es"));
   const arbitroActual = estadisticas.find((item) => item.id === arbitroSeleccionado);
 
+  const actividadCalendario = {};
+  const obtenerDiaArgentina = (fecha) => {
+    if (!fecha) return null;
+    const instante = new Date(fecha);
+    if (Number.isNaN(instante.getTime())) return null;
+    const partes = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(instante);
+    const valores = Object.fromEntries(partes.map((parte) => [parte.type, parte.value]));
+    return `${valores.year}-${valores.month}-${valores.day}`;
+  };
+
+  if (arbitroSeleccionado) {
+    const registrarActividadCalendario = (match) => {
+      if (match?.referee_id !== arbitroSeleccionado ||
+          match?.score1 === null || match?.score1 === undefined ||
+          match?.score2 === null || match?.score2 === undefined) return;
+      const dia = obtenerDiaArgentina(match.result_loaded_at);
+      if (!dia) return;
+      actividadCalendario[dia] = (actividadCalendario[dia] || 0) + 1;
+    };
+
+    torneos.forEach((tournament) => {
+      (Array.isArray(tournament.groups) ? tournament.groups : []).forEach((group) => {
+        (Array.isArray(group?.matches) ? group.matches : []).forEach(registrarActividadCalendario);
+      });
+      (Array.isArray(tournament.playoffs) ? tournament.playoffs : []).forEach((round) => {
+        (Array.isArray(round) ? round : []).forEach(registrarActividadCalendario);
+      });
+    });
+  }
+
+  const anioCalendario = mesCalendario.getFullYear();
+  const numeroMesCalendario = mesCalendario.getMonth();
+  const cantidadDiasMes = new Date(anioCalendario, numeroMesCalendario + 1, 0).getDate();
+  const primerDiaSemana = (new Date(anioCalendario, numeroMesCalendario, 1).getDay() + 6) % 7;
+  const claveDiaCalendario = (dia) => `${anioCalendario}-${String(numeroMesCalendario + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+  const fechaHoyCalendario = obtenerDiaArgentina(new Date().toISOString());
+  const cantidadActividadDiaSeleccionado = diaCalendarioSeleccionado
+    ? actividadCalendario[diaCalendarioSeleccionado] || 0
+    : 0;
+
   const tarjetaMetrica = (etiqueta, valor, color = "#fff") => (
     <div style={{ background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", padding: "0.9rem", textAlign: "center" }}>
       <div style={{ color: "#c7cbd1", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase" }}>{etiqueta}</div>
@@ -215,6 +265,72 @@ function RefereeStats({ onBack }) {
               ))}
             </div>
           ) : <p style={{ color: "#d1d5db" }}>Todavía no registra partidos.</p>}
+        </section>
+
+        <section className="referee-stat-card" style={{ marginTop: "1rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+            <div>
+              <h3 style={{ color: "#fff", margin: 0 }}>Actividad de carga</h3>
+              <p style={{ color: "#d1d5db", fontSize: "0.78rem", margin: "0.25rem 0 0" }}>Días en los que registró resultados</p>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <button type="button" className="tc-form-back" aria-label="Mes anterior" onClick={() => { setMesCalendario(new Date(anioCalendario, numeroMesCalendario - 1, 1)); setDiaCalendarioSeleccionado(null); }}>‹</button>
+              <strong style={{ color: "#fff", minWidth: "135px", textAlign: "center", textTransform: "capitalize" }}>
+                {mesCalendario.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}
+              </strong>
+              <button type="button" className="tc-form-back" aria-label="Mes siguiente" onClick={() => { setMesCalendario(new Date(anioCalendario, numeroMesCalendario + 1, 1)); setDiaCalendarioSeleccionado(null); }}>›</button>
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: "0.35rem", marginTop: "1rem" }}>
+            {["L", "M", "M", "J", "V", "S", "D"].map((dia, index) => (
+              <div key={`${dia}-${index}`} style={{ color: "#aeb4bf", textAlign: "center", fontSize: "0.72rem", fontWeight: 800, padding: "0.35rem 0" }}>{dia}</div>
+            ))}
+            {Array.from({ length: primerDiaSemana }, (_, index) => (
+              <div key={`vacio-${index}`} />
+            ))}
+            {Array.from({ length: cantidadDiasMes }, (_, index) => {
+              const dia = index + 1;
+              const clave = claveDiaCalendario(dia);
+              const cantidad = actividadCalendario[clave] || 0;
+              const seleccionado = diaCalendarioSeleccionado === clave;
+              const esHoy = fechaHoyCalendario === clave;
+              return (
+                <button
+                  key={clave}
+                  type="button"
+                  onClick={() => setDiaCalendarioSeleccionado(seleccionado ? null : clave)}
+                  aria-label={`${dia}: ${cantidad} resultados cargados`}
+                  style={{
+                    minWidth: 0,
+                    aspectRatio: "1",
+                    borderRadius: "9px",
+                    border: seleccionado ? "2px solid #fff" : esHoy ? "1px solid #facc15" : cantidad ? "1px solid #b5122a" : "1px solid #343a46",
+                    background: cantidad ? "#b5122a" : "#171c27",
+                    color: "#fff",
+                    fontWeight: cantidad ? 900 : 600,
+                    cursor: "pointer",
+                    padding: "0.2rem",
+                    boxShadow: seleccionado ? "0 0 0 2px rgba(181,18,42,0.35)" : "none",
+                  }}
+                >
+                  <span>{dia}</span>
+                  {cantidad > 0 && <span style={{ display: "block", fontSize: "0.58rem", lineHeight: 1.1 }}>{cantidad}</span>}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.45rem", marginTop: "0.8rem", color: "#d1d5db", fontSize: "0.72rem" }}>
+            <span style={{ width: "11px", height: "11px", borderRadius: "3px", background: "#b5122a", display: "inline-block" }} />
+            Día con resultados cargados
+          </div>
+          {diaCalendarioSeleccionado && (
+            <p style={{ color: "#fff", margin: "0.8rem 0 0", fontSize: "0.82rem" }}>
+              {new Date(`${diaCalendarioSeleccionado}T12:00:00`).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}: <strong>{cantidadActividadDiaSeleccionado} {cantidadActividadDiaSeleccionado === 1 ? "resultado cargado" : "resultados cargados"}</strong>
+            </p>
+          )}
+          {Object.keys(actividadCalendario).length === 0 && (
+            <p style={{ color: "#aeb4bf", fontSize: "0.75rem", margin: "0.8rem 0 0" }}>El calendario comenzará a marcar actividad con las próximas cargas de resultados. Los registros anteriores no tienen fecha de carga guardada.</p>
+          )}
         </section>
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
