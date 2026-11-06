@@ -126,13 +126,50 @@ export function getPlayerTournamentStats(tournament, playerName) {
   const draws = played.filter((match) => Number(match.score1) === Number(match.score2)).length;
   const losses = Math.max(0, played.length - wins - draws);
 
+  const goalsFor = played.reduce((total, match) => {
+    const playerIsTeam1 = normalize(match.team1) === target;
+    return total + Number(playerIsTeam1 ? match.score1 : match.score2);
+  }, 0);
+  const goalsAgainst = played.reduce((total, match) => {
+    const playerIsTeam1 = normalize(match.team1) === target;
+    return total + Number(playerIsTeam1 ? match.score2 : match.score1);
+  }, 0);
+
   return {
     played: played.length,
     wins,
     draws,
     losses,
+    goalsFor,
+    goalsAgainst,
     winRate: played.length ? Math.round((wins / played.length) * 100) : 0,
   };
+}
+
+export function getTournamentGeneralStats(tournament) {
+  const groups = Array.isArray(tournament?.groups) ? tournament.groups : [];
+  const rawPlayoffs = Array.isArray(tournament?.playoffs) ? tournament.playoffs : [];
+  const rounds = rawPlayoffs.length && !Array.isArray(rawPlayoffs[0]) ? [rawPlayoffs] : rawPlayoffs;
+  const matches = [
+    ...groups.flatMap((group) => Array.isArray(group?.matches) ? group.matches : []),
+    ...rounds.flatMap((round) => Array.isArray(round) ? round : []),
+  ].filter((match) =>
+    match &&
+    match.score1 !== null && match.score1 !== undefined && match.score1 !== "" &&
+    match.score2 !== null && match.score2 !== undefined && match.score2 !== "" &&
+    Number.isFinite(Number(match.score1)) && Number.isFinite(Number(match.score2))
+  );
+
+  return matches.reduce((stats, match) => {
+    const local = Number(match.score1);
+    const visitante = Number(match.score2);
+    stats.played += 1;
+    stats.goals += local + visitante;
+    if (local > visitante) stats.homeWins += 1;
+    else if (local < visitante) stats.awayWins += 1;
+    else stats.draws += 1;
+    return stats;
+  }, { played: 0, goals: 0, homeWins: 0, draws: 0, awayWins: 0 });
 }
 
 export function getPlayerMedals(tournaments, playerName) {
