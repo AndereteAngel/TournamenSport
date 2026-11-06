@@ -1731,7 +1731,12 @@ export function TournamenSportApp() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // La carga inicial ya la resuelve getSession() y el inicio de sesión
+      // lo resuelve handleAuthSubmit(). Evitamos ejecutar buildCurrentUser()
+      // dos veces en paralelo para esos mismos eventos.
+      if (event === "INITIAL_SESSION" || event === "SIGNED_IN") return;
+
       if (!session?.user) {
         if (mounted) {
           setCurrentUser(null);
