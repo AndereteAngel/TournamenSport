@@ -1603,6 +1603,9 @@ export function TournamenSportApp() {
   const [pendingAccessRequests, setPendingAccessRequests] = useState([]);
   const [loadingAccessRequests, setLoadingAccessRequests] = useState(false);
   const [accessActionError, setAccessActionError] = useState("");
+  const [activeReferees, setActiveReferees] = useState([]);
+  const [loadingActiveReferees, setLoadingActiveReferees] = useState(false);
+  const [deactivatingRefereeId, setDeactivatingRefereeId] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [authInput, setAuthInput] = useState({ email: "", password: "" });
   const [authMode, setAuthMode] = useState("login");
@@ -1815,6 +1818,11 @@ export function TournamenSportApp() {
   };
 
   useEffect(() => {
+    if (canManageAccess) loadActiveReferees();
+    else setActiveReferees([]);
+  }, [canManageAccess, currentUser?.id]);
+
+  useEffect(() => {
     let cancelled = false;
     const loadPendingRequests = async () => {
       if (!canManageAccess) { setPendingAccessRequests([]); return; }
@@ -1841,6 +1849,50 @@ export function TournamenSportApp() {
     if (error) setAccessActionError(error.message || "No se pudieron actualizar las solicitudes.");
     else { setPendingAccessRequests(data || []); setAccessActionError(""); }
     setLoadingAccessRequests(false);
+  };
+
+  const loadActiveReferees = async () => {
+    if (!canManageAccess) return;
+    setLoadingActiveReferees(true);
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, username, email")
+      .eq("role", "arbitro")
+      .eq("approval_status", "aprobado")
+      .is("deactivated_at", null)
+      .order("username", { ascending: true });
+
+    if (error) {
+      console.error("Error al cargar árbitros activos:", error);
+      setAccessActionError("No se pudo cargar la lista de árbitros activos.");
+    } else {
+      setActiveReferees(data || []);
+    }
+    setLoadingActiveReferees(false);
+  };
+
+  const handleDeactivateReferee = async (referee) => {
+    if (!canManageAccess || !referee?.id || deactivatingRefereeId) return;
+    const nombre = referee.username || referee.email || "este árbitro";
+    const confirmado = window.confirm(
+      `¿Querés dar de baja a ${nombre}? No podrá volver a ingresar, pero se conservarán sus partidos y estadísticas históricas.`
+    );
+    if (!confirmado) return;
+
+    setDeactivatingRefereeId(referee.id);
+    const { error } = await supabase.rpc("deactivate_fefutin_referee", {
+      p_user_id: referee.id,
+    });
+
+    if (error) {
+      console.error("Error al dar de baja al árbitro:", error);
+      setAccessActionError(error.message || "No se pudo dar de baja al árbitro.");
+    } else {
+      setAccessActionError("");
+      await loadActiveReferees();
+      showNotice(`✅ ${nombre} fue dado de baja. Su historial quedó conservado.`);
+    }
+    setDeactivatingRefereeId(null);
   };
 
   const handleAccessDecision = async (userId, decision) => {
@@ -3295,6 +3347,42 @@ export function TournamenSportApp() {
                 ))}
               </div>
             )}
+
+            <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
+                <div>
+                  <h3 style={{ color: "#fff", margin: 0 }}>ÁRBITROS ACTIVOS</h3>
+                  <p style={{ color: "#aaa", fontSize: "0.82rem", margin: "0.3rem 0 0" }}>Desde aquí podés dar de baja una cuenta sin borrar sus partidos ni sus estadísticas.</p>
+                </div>
+                <button type="button" className="tc-form-back" onClick={loadActiveReferees} disabled={loadingActiveReferees}>↻ Actualizar árbitros</button>
+              </div>
+
+              {loadingActiveReferees ? (
+                <p style={{ color: "#ddd", textAlign: "center", padding: "1rem" }}>Cargando árbitros...</p>
+              ) : activeReferees.length === 0 ? (
+                <p style={{ color: "#aaa", padding: "0.5rem 0" }}>No hay árbitros activos para mostrar.</p>
+              ) : (
+                <div style={{ display: "grid", gap: "0.7rem" }}>
+                  {activeReferees.map((referee) => (
+                    <article key={referee.id} style={{ border: "1px solid #444", borderRadius: "10px", background: "#111", padding: "0.85rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.8rem", flexWrap: "wrap" }}>
+                      <div style={{ minWidth: 0 }}>
+                        <strong style={{ color: "#fff", display: "block" }}>{referee.username || "Árbitro sin nombre"}</strong>
+                        <span style={{ color: "#aaa", fontSize: "0.82rem", overflowWrap: "anywhere" }}>{referee.email || "Sin email registrado"}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="tc-form-back"
+                        onClick={() => handleDeactivateReferee(referee)}
+                        disabled={deactivatingRefereeId === referee.id}
+                        style={{ borderColor: "#b5122a", color: "#fff", background: "#391018", opacity: deactivatingRefereeId === referee.id ? 0.6 : 1 }}
+                      >
+                        {deactivatingRefereeId === referee.id ? "Procesando..." : "Dar de baja"}
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
         </div>
       ) : activeView === "referee-carnets" && isArbitro ? (
