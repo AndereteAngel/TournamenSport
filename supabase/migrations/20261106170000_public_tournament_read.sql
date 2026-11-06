@@ -1,14 +1,13 @@
 begin;
 
--- Permite consultar torneos públicos desde cuentas visitante y sesiones anónimas.
--- No concede INSERT, UPDATE ni DELETE: la carga y gestión de resultados conserva
--- las políticas y validaciones existentes.
+-- Los visitantes también pueden consultar cualquier torneo y sus resultados.
+-- Esta política es exclusivamente de lectura: no habilita INSERT, UPDATE ni DELETE.
 drop policy if exists tournaments_select_public_visitors on public.tournaments;
 
 create policy tournaments_select_public_visitors
 on public.tournaments
 for select
 to anon, authenticated
-using (coalesce(is_public, false) = true);
+using (true);
 
 commit;
