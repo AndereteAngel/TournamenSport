@@ -1,13 +1,23 @@
--- FEFUTIN: carnet digital de árbitros con lectura restringida.
+-- FEFUTIN: carnet digital de árbitros con datos personales aislados y acceso restringido.
 begin;
 
-alter table public.profiles
-  add column if not exists referee_first_name text,
-  add column if not exists referee_last_name text,
-  add column if not exists referee_number text,
-  add column if not exists referee_locality text,
-  add column if not exists referee_birth_date date,
-  add column if not exists referee_photo_path text;
+-- La información del carnet vive en una tabla separada: no amplía los datos
+-- visibles mediante las consultas ordinarias de profiles.
+create table if not exists public.fefutin_referee_carnets (
+  user_id uuid primary key references public.profiles(id) on delete cascade,
+  first_name text,
+  last_name text,
+  referee_number text,
+  locality text,
+  birth_date date,
+  photo_path text,
+  updated_at timestamptz not null default now(),
+  constraint fefutin_referee_photo_path_check
+    check (photo_path is null or photo_path = user_id::text || '/photo')
+);
+
+alter table public.fefutin_referee_carnets enable row level security;
+revoke all on public.fefutin_referee_carnets from public, anon, authenticated;
 
 create or replace function public.can_view_fefutin_referee_carnets()
 returns boolean
@@ -17,8 +27,7 @@ security definer
 set search_path = ''
 as $$
   select exists (
-    select 1
-    from public.profiles p
+    select 1 from public.profiles p
     where p.id = auth.uid()
       and p.approval_status = 'aprobado'
       and p.deactivated_at is null
@@ -56,15 +65,15 @@ begin
   end if;
 
   return query
-  select p.id, p.username, p.referee_first_name, p.referee_last_name,
-         p.referee_number, p.referee_locality, p.referee_birth_date,
-         p.referee_photo_path
+  select p.id, p.username, c.first_name, c.last_name,
+         c.referee_number, c.locality, c.birth_date, c.photo_path
   from public.profiles p
+  left join public.fefutin_referee_carnets c on c.user_id = p.id
   where p.role = 'arbitro'
     and p.approval_status = 'aprobado'
     and p.deactivated_at is null
     and (v_role in ('admin', 'directivo') or p.id = auth.uid())
-  order by coalesce(nullif(p.referee_last_name, ''), p.username), p.username;
+  order by coalesce(nullif(c.last_name, ''), p.username), p.username;
 end;
 $$;
 
@@ -96,14 +105,22 @@ begin
     raise exception 'Ruta de fotografía inválida';
   end if;
 
-  update public.profiles
-  set referee_first_name = nullif(trim(p_first_name), ''),
-      referee_last_name = nullif(trim(p_last_name), ''),
-      referee_number = nullif(trim(p_referee_number), ''),
-      referee_locality = nullif(trim(p_locality), ''),
-      referee_birth_date = p_birth_date,
-      referee_photo_path = p_photo_path
-  where id = auth.uid();
+  insert into public.fefutin_referee_carnets (
+    user_id, first_name, last_name, referee_number, locality, birth_date, photo_path, updated_at
+  )
+  values (
+    auth.uid(), nullif(trim(p_first_name), ''), nullif(trim(p_last_name), ''),
+    nullif(trim(p_referee_number), ''), nullif(trim(p_locality), ''),
+    p_birth_date, p_photo_path, now()
+  )
+  on conflict (user_id) do update set
+    first_name = excluded.first_name,
+    last_name = excluded.last_name,
+    referee_number = excluded.referee_number,
+    locality = excluded.locality,
+    birth_date = excluded.birth_date,
+    photo_path = excluded.photo_path,
+    updated_at = now();
 end;
 $$;
 
@@ -130,7 +147,11 @@ using (
     public.can_view_fefutin_referee_carnets()
     or (
       (storage.foldername(name))[1] = auth.uid()::text
-      and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'arbitro' and p.approval_status = 'aprobado' and p.deactivated_at is null)
+      and exists (
+        select 1 from public.profiles p
+        where p.id = auth.uid() and p.role = 'arbitro'
+          and p.approval_status = 'aprobado' and p.deactivated_at is null
+      )
     )
   )
 );
@@ -141,7 +162,7 @@ on storage.objects for insert to authenticated
 with check (
   bucket_id = 'fefutin-carnets'
   and (storage.foldername(name))[1] = auth.uid()::text
-  and (storage.filename(name)) = 'photo'
+  and storage.filename(name) = 'photo'
   and exists (
     select 1 from public.profiles p
     where p.id = auth.uid() and p.role = 'arbitro'
@@ -155,14 +176,22 @@ on storage.objects for update to authenticated
 using (
   bucket_id = 'fefutin-carnets'
   and (storage.foldername(name))[1] = auth.uid()::text
-  and (storage.filename(name)) = 'photo'
-  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'arbitro' and p.approval_status = 'aprobado' and p.deactivated_at is null)
+  and storage.filename(name) = 'photo'
+  and exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid() and p.role = 'arbitro'
+      and p.approval_status = 'aprobado' and p.deactivated_at is null
+  )
 )
 with check (
   bucket_id = 'fefutin-carnets'
   and (storage.foldername(name))[1] = auth.uid()::text
-  and (storage.filename(name)) = 'photo'
-  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'arbitro' and p.approval_status = 'aprobado' and p.deactivated_at is null)
+  and storage.filename(name) = 'photo'
+  and exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid() and p.role = 'arbitro'
+      and p.approval_status = 'aprobado' and p.deactivated_at is null
+  )
 );
 
 drop policy if exists fefutin_carnet_photo_delete on storage.objects;
@@ -171,8 +200,12 @@ on storage.objects for delete to authenticated
 using (
   bucket_id = 'fefutin-carnets'
   and (storage.foldername(name))[1] = auth.uid()::text
-  and (storage.filename(name)) = 'photo'
-  and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'arbitro' and p.approval_status = 'aprobado' and p.deactivated_at is null)
+  and storage.filename(name) = 'photo'
+  and exists (
+    select 1 from public.profiles p
+    where p.id = auth.uid() and p.role = 'arbitro'
+      and p.approval_status = 'aprobado' and p.deactivated_at is null
+  )
 );
 
 commit;
