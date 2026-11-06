@@ -246,7 +246,7 @@ function RefereeStats({ onBack }) {
               type="button"
               onClick={() => setArbitroSeleccionado(arbitro.id)}
               className="referee-stat-card referee-stat-card-button"
-              style={{ width: "100%", textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem" }}
+              style={{ width: "100%", textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem", background: "#080808", backgroundColor: "#080808", border: "1px solid #b5122a" }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
                 <strong style={{ fontSize: "1rem" }}>{arbitro.nombre}</strong>
@@ -3078,7 +3078,7 @@ export function TournamenSportApp() {
         </div>
       ) : activeView === "division-tournaments" ? (
         <div className="tc-form-screen tc-division-tournaments-screen">
-          <section className="cr-card" style={{ width: "100%", maxWidth: "980px", margin: "auto" }}>
+          <section className="cr-card" style={{ width: "100%", maxWidth: "980px", margin: "auto", background: "#080808", backgroundColor: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
             <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>
               <span aria-hidden="true">←</span> Volver
             </button>
@@ -3113,7 +3113,7 @@ export function TournamenSportApp() {
               });
               return categories.length ? (
                 visibleCategories.length ? visibleCategories.map((category) => (
-                  <section key={category} className="tc-division-category">
+                  <section key={category} className="tc-division-category" style={{ background: "#101010", backgroundColor: "#101010", border: "1px solid #b5122a", borderRadius: "12px", padding: "0.75rem", marginBottom: "0.75rem" }}>
                     <h3>{category}</h3>
                     <div className="tc-division-tournament-list">
                       {branchTournaments.filter((t) =>
@@ -3121,7 +3121,7 @@ export function TournamenSportApp() {
                         (!query || category.toLocaleLowerCase("es").includes(query) ||
                           String(t.title || "").toLocaleLowerCase("es").includes(query))
                       ).map((t) => (
-                        <button type="button" className="tc-home-division-tournament" key={t.id} onClick={() => openTournament(t)}>
+                        <button type="button" className="tc-home-division-tournament" key={t.id} onClick={() => openTournament(t)} style={{ background: "#171717", backgroundColor: "#171717", color: "#fff", border: "1px solid #b5122a" }}>
                           <strong>{t.title || "Torneo sin nombre"}</strong>
                           <span>Fútbol · {category}</span>
                           <small>{t.status || "En preparación"}</small>
@@ -3668,7 +3668,7 @@ export function TournamenSportApp() {
           }}
         >
           {String(activeTournament?.status || "").trim().toLocaleLowerCase("es") === "inscripciones" ? (
-            <div className="cr-card" style={{ width: "100%", maxWidth: "900px", boxSizing: "border-box" }}>
+            <div className="cr-card" style={{ width: "100%", maxWidth: "900px", boxSizing: "border-box", background: "#080808", backgroundColor: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
               <div className="cr-card-glow"></div>
               {(() => {
                 const registration = (activeTournament.groups || []).find((group) => group?.name === "__INSCRIPCIONES__");
