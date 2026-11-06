@@ -45,7 +45,7 @@ const adminTournamentButtonStyle = {
 };
 
 
-function RefereeStats({ onBack }) {
+function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) {
   const [perfiles, setPerfiles] = useState([]);
   const [carnets, setCarnets] = useState([]);
   const [torneos, setTorneos] = useState([]);
@@ -448,37 +448,63 @@ function RefereeStats({ onBack }) {
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.85rem" }}>
           {estadisticas.map((arbitro) => (
-            <button
+            <article
               key={arbitro.id}
-              type="button"
-              onClick={() => setArbitroSeleccionado(arbitro.id)}
-              className="referee-stat-card referee-stat-card-button"
-              style={{ width: "100%", textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem", background: "#080808", backgroundColor: "#080808", border: "1px solid #b5122a" }}
+              className="referee-stat-card"
+              style={{ position: "relative", width: "100%", textAlign: "left", color: "#fff", display: "flex", flexDirection: "column", gap: "0.65rem", background: "#080808", border: "1px solid #b5122a", padding: "0.9rem", borderRadius: "12px" }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
-                <strong style={{ fontSize: "1rem" }}>{arbitro.nombre}</strong>
-                <span style={{ color: "#b5122a", fontSize: "1.25rem" }}>›</span>
-              </div>
-              <div style={{ color: "#d1d5db", fontSize: "0.78rem" }}>{arbitro.partidos} partidos arbitrados</div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem", textAlign: "center" }}>
-                <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
-                  <strong style={{ display: "block", color: "#86efac", fontSize: "1.1rem" }}>{arbitro.victoriasLocales}</strong>
-                  <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>V. LOCAL</span>
+              <button
+                type="button"
+                onClick={() => setArbitroSeleccionado(arbitro.id)}
+                aria-label={`Ver estadísticas de ${arbitro.nombre}`}
+                className="referee-stat-card-button"
+                style={{ width: "100%", textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem", background: "transparent", border: 0, padding: 0 }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
+                  <strong style={{ fontSize: "1rem" }}>{arbitro.nombre}</strong>
+                  <span style={{ color: "#b5122a", fontSize: "1.25rem" }}>›</span>
                 </div>
-                <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
-                  <strong style={{ display: "block", color: "#facc15", fontSize: "1.1rem" }}>{arbitro.empates}</strong>
-                  <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>EMPATES</span>
+                <div style={{ color: "#d1d5db", fontSize: "0.78rem" }}>{arbitro.partidos} partidos arbitrados</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem", textAlign: "center" }}>
+                  <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
+                    <strong style={{ display: "block", color: "#86efac", fontSize: "1.1rem" }}>{arbitro.victoriasLocales}</strong>
+                    <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>V. LOCAL</span>
+                  </div>
+                  <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
+                    <strong style={{ display: "block", color: "#facc15", fontSize: "1.1rem" }}>{arbitro.empates}</strong>
+                    <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>EMPATES</span>
+                  </div>
+                  <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
+                    <strong style={{ display: "block", color: "#93c5fd", fontSize: "1.1rem" }}>{arbitro.victoriasVisitantes}</strong>
+                    <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>V. VISIT.</span>
+                  </div>
                 </div>
-                <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
-                  <strong style={{ display: "block", color: "#93c5fd", fontSize: "1.1rem" }}>{arbitro.victoriasVisitantes}</strong>
-                  <span style={{ color: "#d1d5db", fontSize: "0.62rem" }}>V. VISIT.</span>
+                <div style={{ color: "#c7cbd1", fontSize: "0.72rem" }}>
+                  Goles: {arbitro.golesLocal} local · {arbitro.golesVisitante} visitante
                 </div>
-              </div>
-              <div style={{ color: "#c7cbd1", fontSize: "0.72rem" }}>
-                Goles: {arbitro.golesLocal} local · {arbitro.golesVisitante} visitante
-              </div>
-              <span style={{ color: "#fca5a5", fontSize: "0.75rem", fontWeight: 800 }}>VER FICHA COMPLETA →</span>
-            </button>
+                <span style={{ color: "#fca5a5", fontSize: "0.75rem", fontWeight: 800 }}>VER FICHA COMPLETA →</span>
+              </button>
+              {canManageAccess && (
+                <button
+                  type="button"
+                  title="Dar de baja árbitro"
+                  aria-label={`Dar de baja a ${arbitro.nombre}`}
+                  onClick={async (event) => {
+                    event.stopPropagation();
+                    const confirmado = window.confirm(`¿Querés dar de baja a ${arbitro.nombre}? Se conservarán sus partidos y estadísticas históricas.`);
+                    if (!confirmado || !onDeactivateReferee) return;
+                    const resultado = await onDeactivateReferee(arbitro);
+                    if (resultado) {
+                      setArbitroSeleccionado(null);
+                      await cargarEstadisticas();
+                    }
+                  }}
+                  style={{ position: "absolute", top: "0.65rem", right: "0.65rem", width: "34px", height: "34px", display: "grid", placeItems: "center", borderRadius: "8px", border: "1px solid #b5122a", background: "#391018", color: "#fff", cursor: "pointer", zIndex: 2 }}
+                >
+                  <TCIcon name="trash" size={16} />
+                </button>
+              )}
+            </article>
           ))}
         </div>
       )}
@@ -1887,12 +1913,15 @@ export function TournamenSportApp() {
     if (error) {
       console.error("Error al dar de baja al árbitro:", error);
       setAccessActionError(error.message || "No se pudo dar de baja al árbitro.");
+      setDeactivatingRefereeId(null);
+      return false;
     } else {
       setAccessActionError("");
       await loadActiveReferees();
       showNotice(`✅ ${nombre} fue dado de baja. Su historial quedó conservado.`);
+      setDeactivatingRefereeId(null);
+      return true;
     }
-    setDeactivatingRefereeId(null);
   };
 
   const handleAccessDecision = async (userId, decision) => {
@@ -3395,7 +3424,7 @@ export function TournamenSportApp() {
         </div>
       ) : activeView === "referee-stats" && canViewRefereeStats ? (
         <div className="tc-form-screen tc-stats-screen">
-          <RefereeStats onBack={() => setActiveView("home")} />
+          <RefereeStats onBack={() => setActiveView("home")} canManageAccess={canManageAccess} onDeactivateReferee={handleDeactivateReferee} />
         </div>
       ) : activeView === "division-tournaments" ? (
         <div className="tc-form-screen tc-division-tournaments-screen">
