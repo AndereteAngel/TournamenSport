@@ -2993,7 +2993,7 @@ export function TournamenSportApp() {
 
   return (
     <div className="cr-container tc-theme-clash">
-      {showWelcome && (
+      {showWelcome && activeView !== "admin-login" && (
         <section className="fefutin-welcome" aria-label="Bienvenida a FEFUTIN">
           <div className="fefutin-welcome-panel">
             <img src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166" alt="Logo histórico de FEFUTIN" className="fefutin-welcome-logo" />
