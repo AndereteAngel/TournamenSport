@@ -446,12 +446,12 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
       {estadisticas.length === 0 ? (
         <section className="referee-stat-card"><p style={{ color: "#d1d5db" }}>Todavía no hay árbitros aprobados para mostrar.</p></section>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.75rem", alignItems: "stretch" }}>
+        <div className="referee-stats-grid" style={{ display: "grid", gap: "0.9rem", alignItems: "stretch" }}>
           {estadisticas.map((arbitro) => (
             <article
               key={arbitro.id}
-              className="referee-stat-card"
-              style={{ position: "relative", minWidth: 0, width: "100%", textAlign: "left", color: "#fff", display: "flex", flexDirection: "column", gap: "0.65rem", background: "linear-gradient(155deg, #202633 0%, #11151d 72%)", border: "1px solid #343d4b", borderTop: "3px solid #b5122a", padding: "0.8rem", borderRadius: "12px", boxShadow: "0 5px 14px rgba(0,0,0,.22)" }}
+              className="referee-stat-card referee-mini-card"
+              style={{ position: "relative", minWidth: 0, width: "100%", minHeight: "218px", boxSizing: "border-box", textAlign: "left", color: "#fff", display: "flex", flexDirection: "column", gap: "0.75rem", background: "linear-gradient(145deg, #202633 0%, #11151d 78%)", border: "1px solid #343d4b", borderTop: "3px solid #b5122a", padding: "1rem", borderRadius: "14px", boxShadow: "0 7px 18px rgba(0,0,0,.24)" }}
             >
               <button
                 type="button"
@@ -460,11 +460,14 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                 className="referee-stat-card-button"
                 style={{ width: "100%", minWidth: 0, textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem", background: "transparent", border: 0, padding: 0 }}
               >
-                <div style={{ display: "flex", alignItems: "center", minHeight: "2.2rem", paddingRight: canManageAccess ? "2.1rem" : 0, minWidth: 0 }}>
-                  <strong style={{ fontSize: "clamp(0.68rem, 1.1vw, 0.92rem)", lineHeight: 1.25, overflowWrap: "anywhere" }}>{arbitro.nombre}</strong>
+                <div className="referee-mini-heading" style={{ display: "flex", alignItems: "center", minHeight: "2.5rem", paddingRight: canManageAccess ? "2.4rem" : 0, minWidth: 0 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{ display: "block", color: "#ff9aa8", fontSize: "0.58rem", fontWeight: 800, letterSpacing: "0.13em", marginBottom: "0.22rem" }}>ÁRBITRO</span>
+                    <strong style={{ display: "block", fontSize: "clamp(0.76rem, 1.05vw, 0.96rem)", lineHeight: 1.25, overflowWrap: "anywhere" }}>{arbitro.nombre}</strong>
+                  </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "0.3rem", borderBottom: "1px solid #343d4b", paddingBottom: "0.5rem" }}><strong style={{ color: "#fff", fontSize: "1.15rem", fontVariantNumeric: "tabular-nums" }}>{arbitro.partidos}</strong><span style={{ color: "#aeb7c5", fontSize: "0.65rem" }}>PARTIDOS</span></div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.35rem", textAlign: "center" }}>
+                <div className="referee-mini-total" style={{ display: "flex", alignItems: "baseline", gap: "0.4rem", borderBottom: "1px solid #343d4b", paddingBottom: "0.65rem" }}><strong style={{ color: "#fff", fontSize: "1.65rem", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{arbitro.partidos}</strong><span style={{ color: "#aeb7c5", fontSize: "0.64rem", fontWeight: 800, letterSpacing: "0.08em" }}>PARTIDOS DIRIGIDOS</span></div>
+                <div className="referee-mini-metrics" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.45rem", textAlign: "center" }}>
                   <div style={{ background: "#0d1118", border: "1px solid #303947", borderRadius: "7px", padding: "0.45rem 0.1rem" }}>
                     <strong style={{ display: "block", color: "#86efac", fontSize: "1.1rem" }}>{arbitro.victoriasLocales}</strong>
                     <span style={{ color: "#b8c0cc", fontSize: "clamp(0.48rem, 0.7vw, 0.6rem)", display: "block" }}>LOCAL</span>
@@ -478,10 +481,11 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                     <span style={{ color: "#b8c0cc", fontSize: "clamp(0.48rem, 0.7vw, 0.6rem)", display: "block" }}>VISIT.</span>
                   </div>
                 </div>
-                <div style={{ color: "#c7cbd1", fontSize: "0.66rem", lineHeight: 1.4 }}>
-                  Goles: <strong style={{ color: "#fff" }}>{arbitro.golesLocal}</strong> local · <strong style={{ color: "#fff" }}>{arbitro.golesVisitante}</strong> visitante
+                <div className="referee-mini-goals" style={{ color: "#c7cbd1", fontSize: "0.7rem", lineHeight: 1.4, display: "flex", justifyContent: "space-between", gap: "0.4rem", flexWrap: "wrap" }}>
+                  <span>GOLES A FAVOR: <strong style={{ color: "#fff" }}>{arbitro.golesLocal + arbitro.golesVisitante}</strong></span>
+                  <span>LOCAL <strong style={{ color: "#fff" }}>{arbitro.golesLocal}</strong> · VISIT. <strong style={{ color: "#fff" }}>{arbitro.golesVisitante}</strong></span>
                 </div>
-                <span style={{ color: "#ff9aa8", fontSize: "0.65rem", fontWeight: 800, letterSpacing: "0.04em", borderTop: "1px solid #343d4b", paddingTop: "0.5rem" }}>VER DETALLE <span aria-hidden="true">→</span></span>
+                <span className="referee-mini-detail" style={{ color: "#ff9aa8", fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.08em", borderTop: "1px solid #343d4b", paddingTop: "0.65rem", marginTop: "auto", display: "flex", justifyContent: "space-between" }}>CONSULTAR FICHA <span aria-hidden="true">→</span></span>
               </button>
               {canManageAccess && (
                 <button
