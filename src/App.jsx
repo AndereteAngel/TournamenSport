@@ -47,6 +47,7 @@ const adminTournamentButtonStyle = {
 
 function RefereeStats({ onBack }) {
   const [perfiles, setPerfiles] = useState([]);
+  const [carnets, setCarnets] = useState([]);
   const [torneos, setTorneos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -63,11 +64,13 @@ function RefereeStats({ onBack }) {
     const [
       { data: perfilesData, error: perfilesError },
       { data: torneosData, error: torneosError },
+      { data: carnetsData, error: carnetsError },
     ] = await Promise.all([
       supabase.from("profiles")
         .select("id, username, role, approval_status, deactivated_at")
         .order("username", { ascending: true }),
       supabase.from("tournaments").select("*"),
+      supabase.rpc("get_fefutin_referee_carnets"),
     ]);
 
     if (perfilesError || torneosError) {
@@ -79,7 +82,11 @@ function RefereeStats({ onBack }) {
       return;
     }
 
+    if (carnetsError) {
+      console.warn("No se pudieron cargar los nombres de los carnets; se usará el nombre del perfil:", carnetsError);
+    }
     setPerfiles(perfilesData || []);
+    setCarnets(carnetsData || []);
     setTorneos(torneosData || []);
     setLoading(false);
   };
@@ -106,9 +113,10 @@ function RefereeStats({ onBack }) {
 
     if (!estadisticasPorId[refereeId]) {
       const perfil = perfiles.find((item) => item.id === refereeId);
+      const carnet = carnets.find((item) => item.id === refereeId);
       estadisticasPorId[refereeId] = {
         id: refereeId,
-        nombre: perfil?.username || "Árbitro",
+        nombre: [carnet?.first_name, carnet?.last_name].filter(Boolean).join(" ") || perfil?.username || carnet?.username || "Árbitro",
         partidos: 0,
         victoriasLocales: 0,
         victoriasVisitantes: 0,
@@ -145,9 +153,10 @@ function RefereeStats({ onBack }) {
     .filter((perfil) => perfil.role === "arbitro" && perfil.approval_status === "aprobado" && !perfil.deactivated_at)
     .forEach((perfil) => {
       if (!estadisticasPorId[perfil.id]) {
+        const carnet = carnets.find((item) => item.id === perfil.id);
         estadisticasPorId[perfil.id] = {
           id: perfil.id,
-          nombre: perfil.username || "Árbitro",
+          nombre: [carnet?.first_name, carnet?.last_name].filter(Boolean).join(" ") || perfil.username || carnet?.username || "Árbitro",
           partidos: 0,
           victoriasLocales: 0,
           victoriasVisitantes: 0,
