@@ -148,17 +148,40 @@ export function RefereeCarnets({ currentUser, canManage, onBack }) {
           <p style={{ color: "#ddd", textAlign: "center" }}>Todavía no hay árbitros aprobados para mostrar.</p>
         ) : (
           <>
-            <article style={{ border: "2px solid #b5122a", borderRadius: "16px", padding: "1rem", background: "linear-gradient(145deg,#1a1a1a,#080808)", display: "grid", gridTemplateColumns: "minmax(120px, 180px) minmax(0,1fr)", gap: "1rem", alignItems: "center" }}>
-              <div style={{ aspectRatio: "3/4", border: "1px solid #555", borderRadius: "10px", overflow: "hidden", background: "#111", display: "grid", placeItems: "center" }}>
-                {photoUrl ? <img src={photoUrl} alt="Fotografía del árbitro" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ color: "#888", fontSize: "3rem" }}>⚽</span>}
+            <article style={{ width: "100%", maxWidth: "620px", minWidth: 0, boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "18px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)" }}>
+              <div style={{ boxSizing: "border-box", width: "100%", padding: ".8rem 1rem", background: "#b5122a", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem" }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, color: "#fff", fontSize: "clamp(.62rem,2.5vw,.78rem)", fontWeight: 900, letterSpacing: ".1em", overflowWrap: "anywhere" }}>FEFUTIN</p>
+                  <p style={{ margin: ".15rem 0 0", color: "#fff", fontSize: "clamp(.52rem,2.2vw,.66rem)", fontWeight: 700, letterSpacing: ".06em", overflowWrap: "anywhere" }}>FEDERACIÓN DE FÚTBOL INFANTIL</p>
+                </div>
+                <span aria-hidden="true" style={{ flex: "0 0 auto", width: "38px", height: "38px", border: "1px solid rgba(255,255,255,.7)", borderRadius: "50%", display: "grid", placeItems: "center", color: "#fff", fontSize: "1.25rem" }}>⚽</span>
               </div>
-              <div>
-                <p style={{ color: "#b5122a", fontSize: ".7rem", fontWeight: 900, letterSpacing: ".12em", margin: "0 0 .4rem" }}>FEDERACIÓN DE FÚTBOL INFANTIL</p>
-                <h3 style={{ color: "#fff", fontSize: "1.3rem", margin: "0 0 .8rem" }}>{[form.first_name, form.last_name].filter(Boolean).join(" ") || selectedCarnet?.username || "Nombre y apellido"}</h3>
-                <p style={{ color: "#ddd", margin: ".35rem 0" }}><strong>Matrícula:</strong> {form.referee_number || "A completar"}</p>
-                <p style={{ color: "#ddd", margin: ".35rem 0" }}><strong>Localidad:</strong> {form.locality || "A completar"}</p>
-                <p style={{ color: "#ddd", margin: ".35rem 0" }}><strong>Fecha de nacimiento:</strong> {form.birth_date ? new Date(form.birth_date + "T12:00:00").toLocaleDateString("es-AR") : "A completar"}</p>
-                <p style={{ color: "#999", fontSize: ".65rem", marginTop: "1rem" }}>CARNET DIGITAL · FEFUTIN</p>
+              <div style={{ boxSizing: "border-box", width: "100%", padding: "clamp(.75rem,3vw,1.15rem)", display: "grid", gridTemplateColumns: "clamp(82px,25%,132px) minmax(0,1fr)", gap: "clamp(.65rem,3vw,1.1rem)", alignItems: "start" }}>
+                <div style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "grid", placeItems: "center" }}>
+                  {photoUrl ? <img src={photoUrl} alt="Fotografía del árbitro" style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ color: "#888", fontSize: "2.4rem" }}>⚽</span>}
+                </div>
+                <div style={{ minWidth: 0, width: "100%", overflowWrap: "anywhere", wordBreak: "break-word" }}>
+                  <p style={{ color: "#e7a0aa", fontSize: "clamp(.56rem,2.3vw,.68rem)", fontWeight: 900, letterSpacing: ".1em", lineHeight: 1.35, margin: "0 0 .35rem" }}>CREDENCIAL OFICIAL</p>
+                  <h3 style={{ color: "#fff", fontSize: "clamp(1rem,4vw,1.35rem)", lineHeight: 1.15, margin: "0 0 .8rem", overflowWrap: "anywhere" }}>{[form.first_name, form.last_name].filter(Boolean).join(" ") || selectedCarnet?.username || "Nombre y apellido"}</h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr)", gap: ".55rem" }}>
+                    <div style={{ minWidth: 0, borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
+                      <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>MATRÍCULA</p>
+                      <p style={{ color: "#fff", fontSize: ".88rem", fontWeight: 800, margin: ".15rem 0 0", overflowWrap: "anywhere" }}>{form.referee_number || "A completar"}</p>
+                    </div>
+                    <div style={{ minWidth: 0, borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
+                      <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>LOCALIDAD</p>
+                      <p style={{ color: "#fff", fontSize: ".84rem", margin: ".15rem 0 0", overflowWrap: "anywhere" }}>{form.locality || "A completar"}</p>
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>FECHA DE NACIMIENTO</p>
+                      <p style={{ color: "#fff", fontSize: ".84rem", margin: ".15rem 0 0", overflowWrap: "anywhere" }}>{form.birth_date ? new Date(form.birth_date + "T12:00:00").toLocaleDateString("es-AR") : "A completar"}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ boxSizing: "border-box", width: "100%", padding: ".55rem 1rem", borderTop: "1px solid #b5122a", background: "#090909", display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem" }}>
+                <span style={{ color: "#ddd", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em" }}>ÁRBITRO HABILITADO</span>
+                <span style={{ color: "#e7a0aa", fontSize: ".6rem", fontWeight: 800 }}>CARNET DIGITAL · FEFUTIN</span>
               </div>
             </article>
 
