@@ -13,7 +13,6 @@ export function GroupStageView({
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
-  const [matchStatusFilter, setMatchStatusFilter] = useState("all");
   const [targetMatchId, setTargetMatchId] = useState(null);
   const [myMatchesView, setMyMatchesView] = useState("pending");
 
@@ -198,11 +197,7 @@ export function GroupStageView({
   const isMatchPlayed = (match) => match.score1 !== null && match.score1 !== undefined && match.score2 !== null && match.score2 !== undefined;
   const playedTournamentMatches = currentGroup.matches.filter(isMatchPlayed).length;
   const pendingTournamentMatches = currentGroup.matches.length - playedTournamentMatches;
-  const displayMatches = roundFilteredMatches.filter((match) =>
-    matchStatusFilter === "played" ? isMatchPlayed(match)
-      : matchStatusFilter === "pending" ? !isMatchPlayed(match)
-        : true
-  );
+  const displayMatches = roundFilteredMatches;
 
   return (
     <div
@@ -719,7 +714,7 @@ export function GroupStageView({
         >
           {displayMatches.length === 0 ? (
             <p style={{ margin: 0, padding: "1rem", textAlign: "center", color: "#9ca3af", background: "#121019", border: "1px solid #2d2b3b", borderRadius: "10px", fontSize: "0.82rem" }}>
-              {matchStatusFilter === "pending" ? "No hay partidos pendientes en esta selección." : matchStatusFilter === "played" ? "Todavía no hay partidos disputados en esta selección." : "No hay partidos para mostrar."}
+              No hay partidos para mostrar.
             </p>
           ) : displayMatches.map((match, index) => (
             <>
