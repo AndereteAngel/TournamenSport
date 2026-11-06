@@ -13,6 +13,7 @@ export function GroupStageView({
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
+  const [matchStatusFilter, setMatchStatusFilter] = useState("all");
   const [targetMatchId, setTargetMatchId] = useState(null);
   const [myMatchesView, setMyMatchesView] = useState("pending");
 
@@ -191,9 +192,17 @@ export function GroupStageView({
   const availableRounds = isLeague
     ? [...new Set(allMatchesSorted.map((match) => Number(match.round || 1)))].sort((a, b) => a - b)
     : [];
-  const displayMatches = isLeague && selectedRound !== "all"
+  const roundFilteredMatches = isLeague && selectedRound !== "all"
     ? allMatchesSorted.filter((match) => Number(match.round || 1) === Number(selectedRound))
     : allMatchesSorted;
+  const isMatchPlayed = (match) => match.score1 !== null && match.score1 !== undefined && match.score2 !== null && match.score2 !== undefined;
+  const playedTournamentMatches = currentGroup.matches.filter(isMatchPlayed).length;
+  const pendingTournamentMatches = currentGroup.matches.length - playedTournamentMatches;
+  const displayMatches = roundFilteredMatches.filter((match) =>
+    matchStatusFilter === "played" ? isMatchPlayed(match)
+      : matchStatusFilter === "pending" ? !isMatchPlayed(match)
+        : true
+  );
 
   return (
     <div
@@ -678,24 +687,35 @@ export function GroupStageView({
           </span>
         </div>
 
-        {isLeague && (
-          <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
-            <label htmlFor="filtro-fecha-torneo" style={{ color: "#d1d5db", fontSize: "0.78rem", fontWeight: 700 }}>
-              Filtrar por fecha
-            </label>
-            <select
-              id="filtro-fecha-torneo"
-              value={selectedRound}
-              onChange={(e) => setSelectedRound(e.target.value)}
-              style={{ padding: "0.55rem 0.7rem", borderRadius: "8px", border: "1px solid rgba(250,204,21,0.4)", background: "#15141c", color: "#fff", fontSize: "0.8rem" }}
-            >
-              <option value="all">Todas las fechas</option>
-              {availableRounds.map((round) => (
-                <option key={round} value={String(round)}>Fecha {round}</option>
-              ))}
-            </select>
-          </div>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
+          <button type="button" onClick={() => setMatchStatusFilter("all")} aria-pressed={matchStatusFilter === "all"} style={{ padding: "0.48rem 0.7rem", borderRadius: "8px", border: matchStatusFilter === "all" ? "1px solid #fff" : "1px solid #454b57", background: matchStatusFilter === "all" ? "#343a46" : "#151922", color: "#fff", fontSize: "0.72rem", fontWeight: 800, cursor: "pointer" }}>
+            Todos ({currentGroup.matches.length})
+          </button>
+          <button type="button" onClick={() => setMatchStatusFilter("pending")} aria-pressed={matchStatusFilter === "pending"} style={{ padding: "0.48rem 0.7rem", borderRadius: "8px", border: matchStatusFilter === "pending" ? "1px solid #fbbf24" : "1px solid rgba(251,191,36,0.35)", background: matchStatusFilter === "pending" ? "rgba(251,191,36,0.2)" : "#151922", color: "#fbbf24", fontSize: "0.72rem", fontWeight: 800, cursor: "pointer" }}>
+            Pendientes ({pendingTournamentMatches})
+          </button>
+          <button type="button" onClick={() => setMatchStatusFilter("played")} aria-pressed={matchStatusFilter === "played"} style={{ padding: "0.48rem 0.7rem", borderRadius: "8px", border: matchStatusFilter === "played" ? "1px solid #4ade80" : "1px solid rgba(74,222,128,0.35)", background: matchStatusFilter === "played" ? "rgba(74,222,128,0.18)" : "#151922", color: "#4ade80", fontSize: "0.72rem", fontWeight: 800, cursor: "pointer" }}>
+            Disputados ({playedTournamentMatches})
+          </button>
+          {isLeague && (
+            <>
+              <label htmlFor="filtro-fecha-torneo" style={{ color: "#d1d5db", fontSize: "0.78rem", fontWeight: 700, marginLeft: "0.25rem" }}>
+                Fecha
+              </label>
+              <select
+                id="filtro-fecha-torneo"
+                value={selectedRound}
+                onChange={(e) => setSelectedRound(e.target.value)}
+                style={{ padding: "0.55rem 0.7rem", borderRadius: "8px", border: "1px solid rgba(250,204,21,0.4)", background: "#15141c", color: "#fff", fontSize: "0.8rem" }}
+              >
+                <option value="all">Todas</option>
+                {availableRounds.map((round) => (
+                  <option key={round} value={String(round)}>Fecha {round}</option>
+                ))}
+              </select>
+            </>
+          )}
+        </div>
         <div
           style={{
             display: "flex",
@@ -706,7 +726,11 @@ export function GroupStageView({
             paddingRight: "2px",
           }}
         >
-          {displayMatches.map((match, index) => (
+          {displayMatches.length === 0 ? (
+            <p style={{ margin: 0, padding: "1rem", textAlign: "center", color: "#9ca3af", background: "#121019", border: "1px solid #2d2b3b", borderRadius: "10px", fontSize: "0.82rem" }}>
+              {matchStatusFilter === "pending" ? "No hay partidos pendientes en esta selección." : matchStatusFilter === "played" ? "Todavía no hay partidos disputados en esta selección." : "No hay partidos para mostrar."}
+            </p>
+          ) : displayMatches.map((match, index) => (
             <>
               {isLeague && (index === 0 || Number(displayMatches[index - 1].round || 1) !== Number(match.round || 1)) && (
                 <div className="tc-round-heading" key={"fecha-" + (match.round || 1)} style={{ marginTop: index === 0 ? 0 : "0.65rem", padding: "0.65rem 0.8rem", borderRadius: "9px", background: "linear-gradient(90deg, rgba(250,204,21,0.16), rgba(250,204,21,0.04))", border: "1px solid rgba(250,204,21,0.35)", color: "#facc15", fontSize: "0.8rem", fontWeight: 900, letterSpacing: "0.06em" }}>
