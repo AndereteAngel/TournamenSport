@@ -162,6 +162,57 @@ function RefereeStats({ onBack }) {
   const estadisticas = Object.values(estadisticasPorId)
     .sort((a, b) => b.partidos - a.partidos || a.nombre.localeCompare(b.nombre, "es"));
   const arbitroActual = estadisticas.find((item) => item.id === arbitroSeleccionado);
+  const partidosDirigidos = arbitroSeleccionado
+    ? torneos.flatMap((tournament) => {
+        const partidosGrupos = (Array.isArray(tournament.groups) ? tournament.groups : []).flatMap((group, groupIndex) =>
+          (Array.isArray(group?.matches) ? group.matches : [])
+            .filter((match) =>
+              match?.referee_id === arbitroSeleccionado &&
+              match?.score1 !== null && match?.score1 !== undefined &&
+              match?.score2 !== null && match?.score2 !== undefined &&
+              Number.isFinite(Number(match.score1)) &&
+              Number.isFinite(Number(match.score2)) &&
+              String(match.team1 || "").trim() &&
+              String(match.team2 || "").trim() &&
+              String(match.team1 || "").trim().toLocaleLowerCase("es") !== "pasaje directo" &&
+              String(match.team2 || "").trim().toLocaleLowerCase("es") !== "pasaje directo"
+            )
+            .map((match, matchIndex) => ({
+              ...match,
+              torneo: tournament.title || "Torneo sin nombre",
+              rama: String(tournament.game || "").split(" · ")[1] || "Sin rama",
+              instancia: group?.name || `Grupo ${groupIndex + 1}`,
+              orden: match.result_loaded_at ? new Date(match.result_loaded_at).getTime() : 0,
+              clave: `${tournament.id || tournament.title}-grupo-${groupIndex}-partido-${matchIndex}`,
+            }))
+        );
+
+        const partidosPlayoffs = (Array.isArray(tournament.playoffs) ? tournament.playoffs : []).flatMap((round, roundIndex) =>
+          (Array.isArray(round) ? round : [])
+            .filter((match) =>
+              match?.referee_id === arbitroSeleccionado &&
+              match?.score1 !== null && match?.score1 !== undefined &&
+              match?.score2 !== null && match?.score2 !== undefined &&
+              Number.isFinite(Number(match.score1)) &&
+              Number.isFinite(Number(match.score2)) &&
+              String(match.team1 || "").trim() &&
+              String(match.team2 || "").trim() &&
+              String(match.team1 || "").trim().toLocaleLowerCase("es") !== "pasaje directo" &&
+              String(match.team2 || "").trim().toLocaleLowerCase("es") !== "pasaje directo"
+            )
+            .map((match, matchIndex) => ({
+              ...match,
+              torneo: tournament.title || "Torneo sin nombre",
+              rama: String(tournament.game || "").split(" · ")[1] || "Sin rama",
+              instancia: `Eliminatorias · Ronda ${roundIndex + 1}`,
+              orden: match.result_loaded_at ? new Date(match.result_loaded_at).getTime() : 0,
+              clave: `${tournament.id || tournament.title}-playoff-${roundIndex}-partido-${matchIndex}`,
+            }))
+        );
+
+        return [...partidosGrupos, ...partidosPlayoffs];
+      }).sort((a, b) => b.orden - a.orden)
+    : [];
 
   const actividadCalendario = {};
   const obtenerDiaArgentina = (fecha) => {
@@ -330,6 +381,36 @@ function RefereeStats({ onBack }) {
           )}
           {Object.keys(actividadCalendario).length === 0 && (
             <p style={{ color: "#aeb4bf", fontSize: "0.75rem", margin: "0.8rem 0 0" }}>El calendario comenzará a marcar actividad con las próximas cargas de resultados. Los registros anteriores no tienen fecha de carga guardada.</p>
+          )}
+        </section>
+
+        <section className="referee-stat-card" style={{ marginTop: "1rem" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.85rem" }}>
+            <div>
+              <h3 style={{ color: "#fff", margin: 0 }}>Partidos dirigidos</h3>
+              <p style={{ color: "#d1d5db", fontSize: "0.78rem", margin: "0.25rem 0 0" }}>Encuentros con resultado cargado por este árbitro</p>
+            </div>
+            <strong style={{ color: "#fff", background: "#b5122a", borderRadius: "20px", padding: "0.3rem 0.7rem", fontSize: "0.8rem" }}>{partidosDirigidos.length}</strong>
+          </div>
+          {partidosDirigidos.length === 0 ? (
+            <p style={{ color: "#aeb4bf", margin: 0 }}>Todavía no hay partidos con resultados cargados para este árbitro.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem" }}>
+              {partidosDirigidos.map((partido) => (
+                <article key={partido.clave} style={{ background: "#171c27", border: "1px solid #343a46", borderLeft: "3px solid #b5122a", borderRadius: "10px", padding: "0.8rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.55rem" }}>
+                    <strong style={{ color: "#fff", fontSize: "0.82rem" }}>{partido.torneo}</strong>
+                    <span style={{ color: "#aeb4bf", fontSize: "0.7rem" }}>{partido.result_loaded_at && !Number.isNaN(new Date(partido.result_loaded_at).getTime()) ? new Date(partido.result_loaded_at).toLocaleDateString("es-AR") : "Fecha no registrada"}</span>
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)", alignItems: "center", gap: "0.5rem" }}>
+                    <strong style={{ color: "#fff", fontSize: "0.82rem", overflowWrap: "anywhere" }}>{partido.team1}</strong>
+                    <span style={{ color: "#fff", background: "#080808", border: "1px solid #b5122a", borderRadius: "8px", padding: "0.35rem 0.6rem", fontWeight: 900, whiteSpace: "nowrap" }}>{partido.score1} - {partido.score2}</span>
+                    <strong style={{ color: "#fff", fontSize: "0.82rem", textAlign: "right", overflowWrap: "anywhere" }}>{partido.team2}</strong>
+                  </div>
+                  <div style={{ color: "#aeb4bf", fontSize: "0.7rem", marginTop: "0.55rem" }}>{partido.rama} · {partido.instancia}</div>
+                </article>
+              ))}
+            </div>
           )}
         </section>
 
