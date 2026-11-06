@@ -287,15 +287,6 @@ function RefereeStats({ onBack }) {
   );
 }
 
-etroactivamente.
-      </p>
-
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
-        <button type="button" className="tc-form-back" onClick={onBack}>← Volver al inicio</button>
-      </div>
-    </div>
-  );
-}
 
 function AdminStats({ onBack }) {
   const [visitas, setVisitas] = useState([]);
