@@ -3382,7 +3382,7 @@ export function TournamenSportApp() {
           </div>
           <button
             type="button"
-            className="tc-home-about-card"
+            className="tc-home-about-card tc-home-about-card-shine"
             onClick={() => setShowWhoWeAre(true)}
           >
             <span className="tc-home-about-icon">⚽</span>
@@ -3399,7 +3399,15 @@ export function TournamenSportApp() {
               className="tc-home-about-card tc-home-referee-card"
               onClick={() => setActiveView("referee-stats")}
             >
-              <span className="tc-home-about-icon">🧑‍⚖️</span>
+              <span className="tc-home-about-icon tc-home-referee-icon" aria-hidden="true">
+                <svg viewBox="0 0 48 48" width="27" height="27" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="19" cy="12" r="6" stroke="currentColor" strokeWidth="2.8" />
+                  <path d="M8.5 36.5v-4.2c0-6.2 4.7-10.8 10.5-10.8 3.1 0 5.8 1.2 7.7 3.3" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" />
+                  <path d="M29 25.5 39.5 29l-3.2 9.2-10.5-3.6L29 25.5Z" stroke="currentColor" strokeWidth="2.6" strokeLinejoin="round" />
+                  <path d="m31.5 29.5 4.2 1.4M29.8 33.3l4.2 1.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M25.5 25.8 28 22l5.2 1.7-1.4 4.1" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
               <span className="tc-home-about-copy">
                 <strong>ÁRBITROS</strong>
                 <small>Consultá y compará las estadísticas arbitrales</small>
