@@ -1671,12 +1671,12 @@ export function TournamenSportApp() {
     if ((!canManageTournaments && ["create", "edit", "join"].includes(activeView)) ||
         (!canViewStatistics && activeView === "stats") ||
         (!canViewRefereeStats && activeView === "referee-stats") ||
-        (isArbitro && activeView === "referee-carnets") ||
+        (!isArbitro && activeView === "referee-carnets") ||
         (!canManageAccess && activeView === "referee-carnet-directory")) {
       setActiveView("home");
       setActiveTournament(null);
     }
-  }, [authReady, isAdmin, canManageTournaments, canViewStatistics, canViewRefereeStats, canManageAccess, activeView]);
+  }, [authReady, isAdmin, canManageTournaments, canViewStatistics, canViewRefereeStats, canManageAccess, isArbitro, activeView]);
 
   useEffect(() => {
     document.documentElement.dataset.tcTheme = "clash";
