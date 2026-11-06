@@ -88,8 +88,10 @@ export function RefereeCarnets({ currentUser, canManage, onBack }) {
     setMessage("");
     try {
       let path = form.photo_path || null;
+      if (photoFile && photoFile.size > 5 * 1024 * 1024) {
+        throw new Error("La fotografía no puede superar los 5 MB.");
+      }
       if (photoFile) {
-        const extension = photoFile.type === "image/png" ? "png" : photoFile.type === "image/webp" ? "webp" : "jpg";
         path = currentUser.id + "/photo";
         const { error: uploadError } = await supabase.storage.from("fefutin-carnets")
           .upload(path, photoFile, { upsert: true, contentType: photoFile.type });
@@ -142,6 +144,8 @@ export function RefereeCarnets({ currentUser, canManage, onBack }) {
 
         {loading ? <p style={{ color: "#ddd", textAlign: "center" }}>Cargando carnet...</p> : error && !carnets.length ? (
           <p role="alert" style={{ color: "#fca5a5" }}>{error}</p>
+        ) : canManage && carnets.length === 0 ? (
+          <p style={{ color: "#ddd", textAlign: "center" }}>Todavía no hay árbitros aprobados para mostrar.</p>
         ) : (
           <>
             <article style={{ border: "2px solid #b5122a", borderRadius: "16px", padding: "1rem", background: "linear-gradient(145deg,#1a1a1a,#080808)", display: "grid", gridTemplateColumns: "minmax(120px, 180px) minmax(0,1fr)", gap: "1rem", alignItems: "center" }}>
