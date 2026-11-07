@@ -13,7 +13,6 @@ export function GroupStageView({
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
-  const [matchStatusFilter, setMatchStatusFilter] = useState("all");
   const [matchSearch, setMatchSearch] = useState("");
   const [targetMatchId, setTargetMatchId] = useState(null);
   const [myMatchesView, setMyMatchesView] = useState("pending");
@@ -196,9 +195,6 @@ export function GroupStageView({
   const roundFilteredMatches = isLeague && selectedRound !== "all"
     ? allMatchesSorted.filter((match) => Number(match.round || 1) === Number(selectedRound))
     : allMatchesSorted;
-  const isMatchPlayed = (match) => match.score1 !== null && match.score1 !== undefined && match.score2 !== null && match.score2 !== undefined;
-  const playedTournamentMatches = currentGroup.matches.filter(isMatchPlayed).length;
-  const pendingTournamentMatches = currentGroup.matches.length - playedTournamentMatches;
   const normalizeSearchText = (value) => String(value || "")
     .trim()
     .toLocaleLowerCase("es")
@@ -207,14 +203,8 @@ export function GroupStageView({
 
   const normalizedMatchSearch = normalizeSearchText(matchSearch);
   const displayMatches = roundFilteredMatches.filter((match) => {
-    const matchesStatus = matchStatusFilter === "played"
-      ? isMatchPlayed(match)
-      : matchStatusFilter === "pending"
-        ? !isMatchPlayed(match)
-        : true;
     const teamsText = normalizeSearchText(String(match.team1 || "") + " " + String(match.team2 || ""));
-    const matchesTeamSearch = !normalizedMatchSearch || teamsText.includes(normalizedMatchSearch);
-    return matchesStatus && matchesTeamSearch;
+    return !normalizedMatchSearch || teamsText.includes(normalizedMatchSearch);
   });
 
   return (
@@ -710,21 +700,6 @@ export function GroupStageView({
             style={{ width: "100%", boxSizing: "border-box", padding: "0.65rem 0.8rem", borderRadius: "9px", border: "1px solid #B5122A", background: "#fff", color: "#171C27", fontSize: "0.85rem", outline: "none" }}
           />
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-            {[
-              { value: "all", label: "Todos" },
-              { value: "pending", label: "Pendientes" },
-              { value: "played", label: "Disputados" },
-            ].map((filter) => (
-              <button
-                key={filter.value}
-                type="button"
-                onClick={() => setMatchStatusFilter(filter.value)}
-                aria-pressed={matchStatusFilter === filter.value}
-                style={{ padding: "0.5rem 0.75rem", borderRadius: "8px", border: matchStatusFilter === filter.value ? "1px solid #B5122A" : "1px solid rgba(255,255,255,0.18)", background: matchStatusFilter === filter.value ? "#B5122A" : "#171C27", color: "#fff", fontSize: "0.78rem", fontWeight: 800, cursor: "pointer" }}
-              >
-                {filter.label}
-              </button>
-            ))}
             {isLeague && (
               <>
                 <label htmlFor="filtro-fecha-torneo" style={{ color: "#d1d5db", fontSize: "0.78rem", fontWeight: 700, marginLeft: "0.25rem" }}>
