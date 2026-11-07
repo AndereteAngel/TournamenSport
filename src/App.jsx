@@ -4174,8 +4174,8 @@ export function TournamenSportApp() {
                         <button
                           type="button"
                           onClick={() => {
-                            setEditingTournament(false);
-                            setActiveView("home");
+                            setEditingTournament(true);
+                            setActiveView("edit");
                           }}
                           style={{
                             display: "block",
@@ -4191,7 +4191,7 @@ export function TournamenSportApp() {
                             cursor: "pointer",
                           }}
                         >
-                          ← Volver
+                          ← Volver a configuración
                         </button>
                       </>
                     )}
