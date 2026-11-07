@@ -172,7 +172,7 @@ export function CreateTournament({
       [...selectedTeams, ...manualTeams].map((name) => [name.toLocaleLowerCase("es"), name])
     ).values()];
 
-    if (isEditing) {
+    if (isEditing && String(initialData?.status || "").trim().toLocaleLowerCase("es") !== "inscripciones") {
       const minimumParticipants = formData.format === "single_elimination" ? 2 : 4;
       if (teams.length < minimumParticipants) {
         showNotice(
