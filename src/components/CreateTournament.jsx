@@ -168,9 +168,13 @@ export function CreateTournament({
       .map((profile) => String(profile.name || "").trim())
       .filter(Boolean);
 
-    const teams = [...new Map(
+    const enteredTeams = [...new Map(
       [...selectedTeams, ...manualTeams].map((name) => [name.toLocaleLowerCase("es"), name])
     ).values()];
+
+    // Al modificar un torneo, si no se editó la lista, conservar los equipos existentes.
+    const existingTeams = isEditing ? getParticipantsFromTournament() : [];
+    const teams = enteredTeams.length > 0 ? enteredTeams : existingTeams;
 
     if (isEditing && String(initialData?.status || "").trim().toLocaleLowerCase("es") !== "inscripciones") {
       const minimumParticipants = formData.format === "single_elimination" ? 2 : 4;
@@ -592,7 +596,6 @@ export function CreateTournament({
                 participantsInput: e.target.value,
               })
             }
-            required
             className="cr-input"
             style={{
               resize: "vertical",
