@@ -658,6 +658,7 @@ export function GroupStageView({
       </div>
 
       {/* Buscador y filtro de fechas */}
+      <div>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem", marginBottom: "0.75rem" }}>
           <input
             type="search"
