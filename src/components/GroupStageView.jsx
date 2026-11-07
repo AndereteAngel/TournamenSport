@@ -13,6 +13,8 @@ export function GroupStageView({
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
+  const [matchStatusFilter, setMatchStatusFilter] = useState("all");
+  const [matchSearch, setMatchSearch] = useState("");
   const [targetMatchId, setTargetMatchId] = useState(null);
   const [myMatchesView, setMyMatchesView] = useState("pending");
 
@@ -197,7 +199,23 @@ export function GroupStageView({
   const isMatchPlayed = (match) => match.score1 !== null && match.score1 !== undefined && match.score2 !== null && match.score2 !== undefined;
   const playedTournamentMatches = currentGroup.matches.filter(isMatchPlayed).length;
   const pendingTournamentMatches = currentGroup.matches.length - playedTournamentMatches;
-  const displayMatches = roundFilteredMatches;
+  const normalizeSearchText = (value) => String(value || "")
+    .trim()
+    .toLocaleLowerCase("es")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  const normalizedMatchSearch = normalizeSearchText(matchSearch);
+  const displayMatches = roundFilteredMatches.filter((match) => {
+    const matchesStatus = matchStatusFilter === "played"
+      ? isMatchPlayed(match)
+      : matchStatusFilter === "pending"
+        ? !isMatchPlayed(match)
+        : true;
+    const teamsText = normalizeSearchText(String(match.team1 || "") + " " + String(match.team2 || ""));
+    const matchesTeamSearch = !normalizedMatchSearch || teamsText.includes(normalizedMatchSearch);
+    return matchesStatus && matchesTeamSearch;
+  });
 
   return (
     <div
@@ -682,25 +700,50 @@ export function GroupStageView({
           </span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
-          {isLeague && (
-            <>
-              <label htmlFor="filtro-fecha-torneo" style={{ color: "#d1d5db", fontSize: "0.78rem", fontWeight: 700, marginLeft: "0.25rem" }}>
-                Fecha
-              </label>
-              <select
-                id="filtro-fecha-torneo"
-                value={selectedRound}
-                onChange={(e) => setSelectedRound(e.target.value)}
-                style={{ padding: "0.55rem 0.7rem", borderRadius: "8px", border: "1px solid rgba(250,204,21,0.4)", background: "#15141c", color: "#fff", fontSize: "0.8rem" }}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem", marginBottom: "0.75rem" }}>
+          <input
+            type="search"
+            aria-label="Buscar partidos por equipo"
+            placeholder="Buscar equipo..."
+            value={matchSearch}
+            onChange={(e) => setMatchSearch(e.target.value)}
+            style={{ width: "100%", boxSizing: "border-box", padding: "0.65rem 0.8rem", borderRadius: "9px", border: "1px solid #B5122A", background: "#fff", color: "#171C27", fontSize: "0.85rem", outline: "none" }}
+          />
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+            {[
+              { value: "all", label: "Todos" },
+              { value: "pending", label: "Pendientes" },
+              { value: "played", label: "Disputados" },
+            ].map((filter) => (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setMatchStatusFilter(filter.value)}
+                aria-pressed={matchStatusFilter === filter.value}
+                style={{ padding: "0.5rem 0.75rem", borderRadius: "8px", border: matchStatusFilter === filter.value ? "1px solid #B5122A" : "1px solid rgba(255,255,255,0.18)", background: matchStatusFilter === filter.value ? "#B5122A" : "#171C27", color: "#fff", fontSize: "0.78rem", fontWeight: 800, cursor: "pointer" }}
               >
-                <option value="all">Todas</option>
-                {availableRounds.map((round) => (
-                  <option key={round} value={String(round)}>Fecha {round}</option>
-                ))}
-              </select>
-            </>
-          )}
+                {filter.label}
+              </button>
+            ))}
+            {isLeague && (
+              <>
+                <label htmlFor="filtro-fecha-torneo" style={{ color: "#d1d5db", fontSize: "0.78rem", fontWeight: 700, marginLeft: "0.25rem" }}>
+                  Fecha
+                </label>
+                <select
+                  id="filtro-fecha-torneo"
+                  value={selectedRound}
+                  onChange={(e) => setSelectedRound(e.target.value)}
+                  style={{ padding: "0.55rem 0.7rem", borderRadius: "8px", border: "1px solid #B5122A", background: "#fff", color: "#171C27", fontSize: "0.8rem" }}
+                >
+                  <option value="all">Todas</option>
+                  {availableRounds.map((round) => (
+                    <option key={round} value={String(round)}>Fecha {round}</option>
+                  ))}
+                </select>
+              </>
+            )}
+          </div>
         </div>
         <div
           style={{
