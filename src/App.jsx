@@ -2180,8 +2180,8 @@ export function TournamenSportApp() {
       showNotice("Ingresá un email válido y una contraseña de al menos 6 caracteres.");
       return;
     }
-    if (!["directivo", "arbitro"].includes(requestedRole)) {
-      showNotice("Seleccioná si solicitás acceso como directivo o árbitro.");
+    if (!["directivo", "arbitro", "referente"].includes(requestedRole)) {
+      showNotice("Seleccioná si solicitás acceso como directivo, árbitro o referente.");
       return;
     }
 
@@ -3311,9 +3311,10 @@ export function TournamenSportApp() {
               <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "4px" }}>Solicito acceso como</label>
               <select value={registerInput.requestedRole} onChange={(e) => setRegisterInput({ ...registerInput, requestedRole: e.target.value })} className="cr-input" required>
                 <option value="arbitro">Árbitro</option>
+                <option value="referente">Referente de equipo</option>
                 <option value="directivo">Directivo</option>
               </select>
-              <p style={{ color: "#9ca3af", fontSize: "0.75rem", lineHeight: 1.45, margin: "0.35rem 0 0" }}>La solicitud debe ser aprobada por las autoridades de FEFUTIN. Mientras tanto tendrás acceso público como visitante.</p>
+              <p style={{ color: "#9ca3af", fontSize: "0.75rem", lineHeight: 1.45, margin: "0.35rem 0 0" }}>La solicitud debe ser aprobada por un administrador o directivo de FEFUTIN. Mientras tanto tendrás acceso público como visitante.</p>
             </div>}
 
             <button
@@ -3355,7 +3356,7 @@ export function TournamenSportApp() {
               <div style={{ border: "1px solid #555", borderRadius: "12px", padding: "2rem 1rem", textAlign: "center", color: "#fff" }}>
                 <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>✓</div>
                 <strong>No hay solicitudes pendientes</strong>
-                <p style={{ opacity: 0.7, marginBottom: 0 }}>Cuando alguien solicite acceso como árbitro o directivo, aparecerá aquí.</p>
+                <p style={{ opacity: 0.7, marginBottom: 0 }}>Cuando alguien solicite acceso como árbitro, referente o directivo, aparecerá aquí.</p>
               </div>
             ) : (
               <div style={{ display: "grid", gap: "0.85rem" }}>
@@ -3364,7 +3365,7 @@ export function TournamenSportApp() {
                     <div style={{ minWidth: 0 }}>
                       <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>{request.username || "Sin nombre"}</strong>
                       <span style={{ color: "#ddd", display: "block", overflowWrap: "anywhere", fontSize: "0.88rem" }}>{request.email || "Sin email"}</span>
-                      <span style={{ display: "inline-block", marginTop: "0.5rem", color: "#fff", background: "#8f1026", borderRadius: "20px", padding: "0.25rem 0.65rem", fontSize: "0.72rem", fontWeight: 800 }}>{request.requested_role === "directivo" ? "SOLICITA SER DIRECTIVO" : "SOLICITA SER ÁRBITRO"}</span>
+                      <span style={{ display: "inline-block", marginTop: "0.5rem", color: "#fff", background: "#8f1026", borderRadius: "20px", padding: "0.25rem 0.65rem", fontSize: "0.72rem", fontWeight: 800 }}>{request.requested_role === "directivo" ? "SOLICITA SER DIRECTIVO" : request.requested_role === "referente" ? "SOLICITA SER REFERENTE DE EQUIPO" : "SOLICITA SER ÁRBITRO"}</span>
                       <small style={{ display: "block", color: "#aaa", marginTop: "0.4rem" }}>Recibida: {request.created_at ? new Date(request.created_at).toLocaleString("es-AR") : "—"}</small>
                     </div>
                     <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap" }}>
