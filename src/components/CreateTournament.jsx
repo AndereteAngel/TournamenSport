@@ -81,7 +81,7 @@ export function CreateTournament({
       qualifiersPerGroup: initialData.qualifiers_per_group || 2,
       isPublic: initialData.is_public !== false,
       participantsInput: participants.join("\n"),
-      maxParticipants: initialData.max_participants || 16,
+      maxParticipants: initialData.max_participants || initialData.groups?.find((group) => group?.name === "__INSCRIPCIONES__")?.capacity || 16,
     };
   };
 
