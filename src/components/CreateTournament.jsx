@@ -633,8 +633,20 @@ export function CreateTournament({
       </form>
       <button
         type="button"
-        className="tc-form-back"
         onClick={onCancel}
+        style={{
+          display: "block",
+          width: "auto",
+          margin: "1rem 0 0 auto",
+          padding: "0.25rem 0",
+          background: "transparent",
+          border: "none",
+          boxShadow: "none",
+          color: "#fff",
+          fontSize: "0.85rem",
+          fontWeight: 700,
+          cursor: "pointer",
+        }}
       >
         <span aria-hidden="true">←</span> Volver
       </button>
