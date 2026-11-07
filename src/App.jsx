@@ -1658,7 +1658,7 @@ export function TournamenSportApp() {
   const canManageTournaments = isAdmin || isDirectivo;
   const canViewStatistics = isAdmin;
   const canViewRefereeStats = isAdmin || isDirectivo || isArbitro;
-  const canDeleteTournaments = isAdmin;
+  const canDeleteTournaments = isAdmin || isDirectivo;
   const canManageAccess = isAdmin || isDirectivo;
   const [catalogSeeded, setCatalogSeeded] = useState(false);
 
@@ -3837,11 +3837,12 @@ export function TournamenSportApp() {
                     key={t.id}
                     onClick={() => openTournament(t)}
                     style={{
+                      position: "relative",
                       display: "grid",
                       gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
                       alignItems: "center",
                       gap: "8px",
-                      padding: "10px",
+                      padding: canDeleteTournaments ? "42px 10px 10px" : "10px",
                       backgroundColor: "#171c27",
                       border: "1px solid rgba(255,255,255,.28)",
                       borderLeft: "4px solid #b5122a",
@@ -3849,6 +3850,37 @@ export function TournamenSportApp() {
                       cursor: "pointer",
                     }}
                   >
+                    {canDeleteTournaments && (
+                      <button
+                        type="button"
+                        title="Eliminar torneo"
+                        aria-label={`Eliminar torneo ${t.title}`}
+                        disabled={deletingTournamentId === t.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTournament(t);
+                        }}
+                        style={{
+                          position: "absolute",
+                          top: "7px",
+                          right: "7px",
+                          width: "30px",
+                          height: "30px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          background: deletingTournamentId === t.id ? "#374151" : "rgba(127,29,29,.35)",
+                          border: "1px solid rgba(239,68,68,.65)",
+                          borderRadius: "7px",
+                          color: "#f87171",
+                          cursor: deletingTournamentId === t.id ? "not-allowed" : "pointer",
+                          padding: 0,
+                          zIndex: 2,
+                        }}
+                      >
+                        {deletingTournamentId === t.id ? "…" : <TCIcon name="trash" size={17} />}
+                      </button>
+                    )}
                     <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".95rem", fontWeight: 900, lineHeight: 1.25, overflowWrap: "anywhere", letterSpacing: ".02em", textShadow: "0 1px 2px rgba(0,0,0,.65)" }}>
                       {t.title}
                     </div>
@@ -3858,36 +3890,7 @@ export function TournamenSportApp() {
                     <div style={{ minWidth: 0, boxSizing: "border-box", minHeight: "38px", display: "flex", alignItems: "center", justifyContent: "center", padding: "7px 2px", color: "#fff", textAlign: "center", fontSize: ".95rem", fontWeight: 900, lineHeight: 1.25, overflowWrap: "anywhere", letterSpacing: ".02em", textShadow: "0 1px 2px rgba(0,0,0,.65)" }}>
                       {getTournamentDivision(t)}
                     </div>
-                    <div style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "stretch", justifyContent: "center", gap: "6px" }}>
-                      {isAdmin && (
-                        <button
-                          type="button"
-                          title="Eliminar torneo"
-                          aria-label="Eliminar torneo"
-                          disabled={deletingTournamentId === t.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteTournament(t);
-                          }}
-                          style={{
-                            alignSelf: "center",
-                            width: "30px",
-                            height: "30px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            background: deletingTournamentId === t.id ? "#374151" : "rgba(127,29,29,.35)",
-                            border: "1px solid rgba(239,68,68,.55)",
-                            borderRadius: "7px",
-                            color: "#f87171",
-                            cursor: deletingTournamentId === t.id ? "not-allowed" : "pointer",
-                            padding: 0,
-                          }}
-                        >
-                          {deletingTournamentId === t.id ? "…" : <TCIcon name="trash" size={17} />}
-                        </button>
-                      )}
-                    </div>
+
                   </div>
                 ))}
               </div>
