@@ -657,39 +657,7 @@ export function GroupStageView({
         </div>
       </div>
 
-      {/* PARTIDOS */}
-      <div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "1rem",
-            marginBottom: "0.65rem",
-          }}
-        >
-          <h3
-            style={{
-              fontSize: "0.85rem",
-              fontWeight: "bold",
-              textTransform: "uppercase",
-              color: "#d1d5db",
-              margin: 0,
-            }}
-          >
-            Partidos
-          </h3>
-
-          <span
-            style={{
-              fontSize: "0.68rem",
-              color: "#6b7280",
-            }}
-          >
-            {currentGroup.matches.length} encuentros
-          </span>
-        </div>
-
+      {/* Buscador y filtro de fechas */}
         <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem", marginBottom: "0.75rem" }}>
           <input
             type="search"
