@@ -5975,3 +5975,18 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     min-height: 0 !important;
   }
 }
+
+
+/* Jerarquía del encabezado principal: FEFUTIN domina y la leyenda acompaña. */
+.tc-home-screen .tc-home-panel-art span {
+  font-size: clamp(1.45rem, 4vw, 2rem) !important;
+  font-weight: 950 !important;
+  letter-spacing: 0.12em !important;
+  line-height: 1.05 !important;
+}
+.tc-home-screen .tc-home-panel-art strong {
+  font-size: clamp(0.9rem, 2.5vw, 1.2rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.035em !important;
+  line-height: 1.15 !important;
+}
