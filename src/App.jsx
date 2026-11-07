@@ -4156,26 +4156,45 @@ export function TournamenSportApp() {
                     ) : <p style={{ color: "#9ca3af" }}>Todavía no hay jugadores inscriptos.</p>}
                     <p style={{ color: "#9ca3af", fontSize: "0.8rem" }}>El creador dará comienzo al torneo cuando esté listo. Al iniciar, se cerrarán las inscripciones y se sortearán los grupos y partidos.</p>
                     {canManage && (
-                      <button
-                        type="button"
-                        className="tc-form-back"
-                        onClick={() => {
-                          setEditingTournament(true);
-                          setActiveView("edit");
-                        }}
-                        style={{ width: "100%", marginTop: "0.75rem" }}
-                      >
-                        ← Volver a configuración del torneo
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          className="cr-btn-gold"
+                          onClick={() => {
+                            setEditingTournament(true);
+                            setActiveView("edit");
+                          }}
+                          style={{ width: "100%", marginTop: "0.75rem" }}
+                        >
+                          <TCIcon name="users" /> Agregar equipos
+                        </button>
+                        <button type="button" className="cr-btn-gold" onClick={handleStartRegistrationTournament} style={{ width: "100%", marginTop: "0.5rem" }}>
+                          <TCIcon name="flag" /> Dar comienzo al torneo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingTournament(false);
+                            setActiveView("home");
+                          }}
+                          style={{
+                            display: "block",
+                            width: "auto",
+                            margin: "1rem 0 0 auto",
+                            padding: "0.25rem 0",
+                            background: "transparent",
+                            border: "none",
+                            boxShadow: "none",
+                            color: "#fff",
+                            fontSize: "0.85rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          ← Volver
+                        </button>
+                      </>
                     )}
-                    {canManage && (
-                      <button type="button" className="cr-btn-gold" onClick={handleStartRegistrationTournament} style={{ width: "100%", marginTop: "0.5rem" }}>
-                        <TCIcon name="flag" /> Dar comienzo al torneo
-                      </button>
-                    )}
-                    <button type="button" onClick={fetchTournaments} style={{ marginTop: "0.65rem", width: "100%", padding: "0.65rem", borderRadius: "8px", background: "#121019", border: "1px solid #3b82f6", color: "#93c5fd", cursor: "pointer" }}>
-                      <TCIcon name="refresh" /> Actualizar inscriptos
-                    </button>
                   </>
                 );
               })()}
