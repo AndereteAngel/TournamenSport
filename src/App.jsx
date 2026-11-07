@@ -2783,6 +2783,63 @@ export function TournamenSportApp() {
       return;
     }
 
+    if (String(activeTournament.status || "").trim().toLocaleLowerCase("es") === "inscripciones") {
+      const groups = Array.isArray(activeTournament.groups) ? [...activeTournament.groups] : [];
+      const registrationIndex = groups.findIndex((group) => group?.name === "__INSCRIPCIONES__");
+      if (registrationIndex < 0) {
+        showNotice("No se encontró la lista de inscriptos de este torneo.");
+        return;
+      }
+
+      const registration = {
+        ...groups[registrationIndex],
+        teams: Array.isArray(config.teams) ? config.teams : [],
+        capacity: Number(config.maxParticipants),
+        numGroups: config.format === "groups_playoff" ? Number(config.numGroups) : 1,
+      };
+      groups[registrationIndex] = registration;
+
+      const updatedTournament = {
+        ...activeTournament,
+        title: config.title,
+        game: config.game,
+        format: config.format,
+        qualifiers_per_group: config.qualifiersPerGroup,
+        is_public: config.isPublic,
+        groups,
+      };
+
+      const { data, error } = await supabase
+        .from("tournaments")
+        .update({
+          title: updatedTournament.title,
+          game: updatedTournament.game,
+          format: updatedTournament.format,
+          qualifiers_per_group: updatedTournament.qualifiers_per_group,
+          is_public: updatedTournament.is_public,
+          groups: updatedTournament.groups,
+        })
+        .eq("id", updatedTournament.id)
+        .select();
+
+      if (error || !data?.length) {
+        console.error("Error al modificar la configuración de inscripciones:", error);
+        showNotice(error?.message || "No se pudieron guardar los cambios del torneo.");
+        return;
+      }
+
+      const catalogError = await saveTeamsToCatalog(config.teams);
+      setActiveTournament(data[0]);
+      setTournaments((prev) => prev.map((item) => item.id === data[0].id ? data[0] : item));
+      setEditingTournament(false);
+      setActiveView("groups");
+      showNotice(catalogError
+        ? "La configuración se guardó, pero no se pudo actualizar el catálogo de equipos."
+        : "Configuración del torneo actualizada. Las inscripciones siguen abiertas."
+      );
+      return;
+    }
+
     const shuffled = [...config.teams].sort(() => 0.5 - Math.random());
     const isDirectElimination = config.format === "single_elimination";
     const numGroups = config.format === "groups_playoff" ? config.numGroups : 1;
@@ -4099,34 +4156,17 @@ export function TournamenSportApp() {
                     ) : <p style={{ color: "#9ca3af" }}>Todavía no hay jugadores inscriptos.</p>}
                     <p style={{ color: "#9ca3af", fontSize: "0.8rem" }}>El creador dará comienzo al torneo cuando esté listo. Al iniciar, se cerrarán las inscripciones y se sortearán los grupos y partidos.</p>
                     {canManage && (
-                      <div style={{ marginTop: "1rem", padding: "0.85rem", background: "#171522", border: "1px solid #3b82f6", borderRadius: "10px" }}>
-                        <h3 style={{ color: "#fff", margin: "0 0 0.35rem" }}><TCIcon name="users" /> Agregar jugadores registrados</h3>
-                        <p style={{ color: "#9ca3af", fontSize: "0.78rem", marginTop: 0 }}>Seleccioná cuentas existentes por alias. Solo se muestran los nombres públicos y se respeta el cupo.</p>
-                        <button type="button" onClick={handleLoadRegisteredProfiles} disabled={loadingRegisteredProfiles} style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", background: "#1b5fa8", border: "1px solid #60a5fa", color: "#fff", cursor: loadingRegisteredProfiles ? "wait" : "pointer", fontWeight: "bold" }}>
-                          {loadingRegisteredProfiles ? "Cargando usuarios..." : registeredProfiles.length ? "↻ Recargar lista de usuarios" : "Cargar lista de usuarios"}
-                        </button>
-                        {registeredProfiles.length > 0 && (
-                          <>
-                            <input type="search" value={registeredProfilesSearch} onChange={(e) => setRegisteredProfilesSearch(e.target.value)} placeholder="Filtrar por alias o correo..." aria-label="Filtrar usuarios registrados" style={{ width: "100%", boxSizing: "border-box", margin: "0.65rem 0", padding: "0.65rem", borderRadius: "7px", border: "1px solid #4b5563", background: "#121019", color: "#fff" }} />
-                            <div style={{ maxHeight: "260px", overflowY: "auto", display: "grid", gap: "0.35rem" }}>
-                              {registeredProfiles.filter((profile) => {
-                                const query = registeredProfilesSearch.trim().toLocaleLowerCase("es");
-                                return !query || String(profile.username || "").toLocaleLowerCase("es").includes(query);
-                              }).map((profile) => {
-                                const isAlreadyRegistered = participants.some((name) => String(name).toLocaleLowerCase("es") === String(profile.username || "").toLocaleLowerCase("es"));
-                                return (
-                                  <label key={profile.id} style={{ display: "flex", gap: "0.6rem", alignItems: "center", padding: "0.55rem", borderRadius: "7px", background: "#121019", color: isAlreadyRegistered ? "#6b7280" : "#e5e7eb", fontSize: "0.82rem", cursor: isAlreadyRegistered ? "not-allowed" : "pointer" }}>
-                                    <input type="checkbox" checked={isAlreadyRegistered || selectedRegisteredProfileIds.includes(profile.id)} disabled={isAlreadyRegistered} onChange={(e) => setSelectedRegisteredProfileIds((prev) => e.target.checked ? [...prev, profile.id] : prev.filter((id) => id !== profile.id))} />
-                                    <span style={{ flex:  1, minWidth: 0, overflowWrap: "anywhere" }}>{profile.username || "Sin alias"}</span>
-                                    {isAlreadyRegistered && <span>✓ Inscripto</span>}
-                                  </label>
-                                );
-                              })}
-                            </div>
-                            <button type="button" onClick={handleAddSelectedRegisteredProfiles} disabled={!selectedRegisteredProfileIds.length} className="cr-btn-gold" style={{ width: "100%", marginTop: "0.65rem", opacity: selectedRegisteredProfileIds.length ? 1 : 0.55 }}><TCIcon name="plus" size={15} /> Agregar seleccionados ({selectedRegisteredProfileIds.length})</button>
-                          </>
-                        )}
-                      </div>
+                      <button
+                        type="button"
+                        className="tc-form-back"
+                        onClick={() => {
+                          setEditingTournament(true);
+                          setActiveView("edit");
+                        }}
+                        style={{ width: "100%", marginTop: "0.75rem" }}
+                      >
+                        ← Volver a configuración del torneo
+                      </button>
                     )}
                     {canManage && (
                       <button type="button" className="cr-btn-gold" onClick={handleStartRegistrationTournament} style={{ width: "100%", marginTop: "0.5rem" }}>
