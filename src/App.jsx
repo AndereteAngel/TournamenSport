@@ -4157,17 +4157,6 @@ export function TournamenSportApp() {
                     <p style={{ color: "#9ca3af", fontSize: "0.8rem" }}>El creador dará comienzo al torneo cuando esté listo. Al iniciar, se cerrarán las inscripciones y se sortearán los grupos y partidos.</p>
                     {canManage && (
                       <>
-                        <button
-                          type="button"
-                          className="cr-btn-gold"
-                          onClick={() => {
-                            setEditingTournament(true);
-                            setActiveView("edit");
-                          }}
-                          style={{ width: "100%", marginTop: "0.75rem" }}
-                        >
-                          <TCIcon name="users" /> Agregar equipos
-                        </button>
                         <button type="button" className="cr-btn-gold" onClick={handleStartRegistrationTournament} style={{ width: "100%", marginTop: "0.5rem" }}>
                           <TCIcon name="flag" /> Dar comienzo al torneo
                         </button>
