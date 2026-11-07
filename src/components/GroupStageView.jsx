@@ -13,7 +13,6 @@ export function GroupStageView({
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
-  const [matchSearch, setMatchSearch] = useState("");
   const [targetMatchId, setTargetMatchId] = useState(null);
   const [myMatchesView, setMyMatchesView] = useState("pending");
 
@@ -195,22 +194,7 @@ export function GroupStageView({
   const roundFilteredMatches = isLeague && selectedRound !== "all"
     ? allMatchesSorted.filter((match) => Number(match.round || 1) === Number(selectedRound))
     : allMatchesSorted;
-  const normalizeSearchText = (value) => String(value || "")
-    .trim()
-    .toLocaleLowerCase("es")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
-  const normalizedMatchSearch = normalizeSearchText(matchSearch);
-  const displayMatches = roundFilteredMatches.filter((match) => {
-    const teamsText = normalizeSearchText(String(match.team1 || "") + " " + String(match.team2 || ""));
-    return !normalizedMatchSearch || teamsText.includes(normalizedMatchSearch);
-  });
-
-  return (
-    <div
-      className="cr-card"
-      style={{
+  const normalizeSearchText = (value) => String(value   const displayMatches = roundFilteredMatches;style={{
         maxWidth: "700px",
         width: "100%",
         boxSizing: "border-box",
@@ -691,14 +675,6 @@ export function GroupStageView({
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "0.65rem", marginBottom: "0.75rem" }}>
-          <input
-            type="search"
-            aria-label="Buscar partidos por equipo"
-            placeholder="Buscar equipo..."
-            value={matchSearch}
-            onChange={(e) => setMatchSearch(e.target.value)}
-            style={{ width: "100%", boxSizing: "border-box", padding: "0.65rem 0.8rem", borderRadius: "9px", border: "1px solid #B5122A", background: "#fff", color: "#171C27", fontSize: "0.85rem", outline: "none" }}
-          />
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
             {isLeague && (
               <>
