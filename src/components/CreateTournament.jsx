@@ -61,7 +61,7 @@ export function CreateTournament({
     const categoryDetail = String(initialData.category_detail || detailFromStoredGame || "").trim();
     const knownDivisions = ["Primera", "Reserva", "Tercera", "Cuarta", "Quinta", "Sexta", "Otra división"];
     const knownFormative = ["Premini", "Mini", "Infantiles", "Menores", "Cadetes", "Juveniles", "Sub-14", "Sub-16", "Sub-18", "Sub-21", "Otra categoría"];
-    const inferredCategoryType = /^\\d{4}$/.test(categoryDetail)
+    const inferredCategoryType = /^\d{4}$/.test(categoryDetail)
       ? "Año de nacimiento"
       : knownDivisions.includes(categoryDetail)
         ? "División"
