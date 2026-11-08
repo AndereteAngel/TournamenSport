@@ -2349,13 +2349,10 @@ export function TournamenSportApp() {
     }
 
     if (data && data.length > 0) {
-      const catalogError = await saveTeamsToCatalog(config.teams);
       setActiveTournament(data[0]);
       setTournaments((prev) => [data[0], ...prev]);
       setActiveView("groups");
-      if (catalogError) {
-        showNotice("El torneo se creó, pero no se pudo actualizar el catálogo de equipos. Revisá los permisos de teams_catalog.");
-      }
+      showNotice("Torneo creado. Queda abierto para recibir inscripciones; la competencia se inicializará más adelante.");
     }
   };
 
@@ -4189,10 +4186,17 @@ export function TournamenSportApp() {
                 return (
                   <>
                     <h2 className="cr-title" style={{ marginBottom: "0.5rem" }}>📝 Inscripciones abiertas</h2>
-                    <p style={{ color: "#9ca3af", marginTop: 0 }}>{activeTournament.title} · {participants.length}/{capacity} participantes</p>
-                    <div style={{ height: "8px", background: "#272532", borderRadius: "8px", overflow: "hidden", marginBottom: "1rem" }}>
-                      <div style={{ width: `${Math.min(100, capacity ? participants.length / capacity * 100 : 0)}%`, height: "100%", background: "linear-gradient(90deg, #1b5fa8, #ffd700)" }} />
-                    </div>
+                    <p style={{ color: "#9ca3af", marginTop: 0 }}>{activeTournament.title} · Estado: esperando inscripciones</p>
+                    {Array.isArray(registration?.category_config) && registration.category_config.length > 0 && (
+                      <div style={{ display: "grid", gap: "0.5rem", marginBottom: "1rem" }}>
+                        {registration.category_config.map((branch) => (
+                          <div key={branch.division} style={{ padding: "0.65rem", borderRadius: "8px", background: "#121019", border: "1px solid #2d2b3b" }}>
+                            <strong style={{ color: "#fff" }}>{branch.division}</strong>
+                            <p style={{ color: "#d1d5db", fontSize: "0.82rem", margin: "0.35rem 0 0" }}>{(branch.categories || []).join(" · ")}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {participants.length ? (
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.5rem", marginBottom: "1rem" }}>
                         {participants.map((name, index) => (
@@ -4201,12 +4205,12 @@ export function TournamenSportApp() {
                           </div>
                         ))}
                       </div>
-                    ) : <p style={{ color: "#9ca3af" }}>Todavía no hay jugadores inscriptos.</p>}
+                    ) : <p style={{ color: "#9ca3af" }}>Todavía no hay clubes inscriptos.</p>}
                     <p style={{ color: "#9ca3af", fontSize: "0.8rem" }}>El creador dará comienzo al torneo cuando esté listo. Al iniciar, se cerrarán las inscripciones y se sortearán los grupos y partidos.</p>
                     {canManage && (
                       <>
-                        <button type="button" className="cr-btn-gold" onClick={handleStartRegistrationTournament} style={{ width: "100%", marginTop: "0.5rem" }}>
-                          <TCIcon name="flag" /> Dar comienzo al torneo
+                        <button type="button" className="cr-btn-gold" onClick={handleStartRegistrationTournament} disabled={participants.length < 4} style={{ width: "100%", marginTop: "0.5rem", opacity: participants.length < 4 ? 0.55 : 1, cursor: participants.length < 4 ? "not-allowed" : "pointer" }}>
+                          <TCIcon name="flag" /> {participants.length < 4 ? "Esperando inscripciones" : "Inicializar competencia"}
                         </button>
                         <button
                           type="button"
