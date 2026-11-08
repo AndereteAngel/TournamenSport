@@ -277,6 +277,22 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                     <div style={{ minWidth: 0, gridColumn: "2", gridRow: "1", alignSelf: "center" }}>
                                       <strong style={{ display: "block", color: "#fff", fontSize: "1rem", lineHeight: 1.3, overflowWrap: "break-word", wordBreak: "normal" }}>{player.last_name || "Apellido pendiente"}, {player.first_name || "Nombre pendiente"}</strong>
                                       <span style={{ display: "block", color: "#fca5a5", fontSize: ".78rem", marginTop: ".3rem" }}>{item.category_label}</span>
+                                      {player.carnet_number && (
+                                        <div style={{ marginTop: ".35rem", display: "flex", flexWrap: "wrap", alignItems: "center", gap: ".4rem" }}>
+                                          <span style={{ color: "#ddd", fontSize: ".7rem", fontWeight: 700 }}>{player.carnet_number}</span>
+                                          <span style={{
+                                            color: player.carnet_status === "habilitado" ? "#86efac" : player.carnet_status === "no_habilitado" ? "#fca5a5" : player.carnet_status === "en_proceso" ? "#93c5fd" : "#facc15",
+                                            border: "1px solid currentColor",
+                                            borderRadius: "20px",
+                                            padding: ".16rem .45rem",
+                                            fontSize: ".62rem",
+                                            fontWeight: 900,
+                                            letterSpacing: ".02em"
+                                          }}>
+                                            {player.carnet_status === "habilitado" ? "HABILITADO" : player.carnet_status === "no_habilitado" ? "NO HABILITADO" : player.carnet_status === "en_proceso" ? "EN PROCESO" : "PENDIENTE"}
+                                          </span>
+                                        </div>
+                                      )}
                                     </div>
                                     {!readOnly && item.team_status !== "presentada" && (
                                       <button type="button" onClick={() => removePlayer(item.club_tournament_id, player.id)} title="Quitar jugador" aria-label="Quitar jugador" style={{ gridColumn: "3", gridRow: "1", padding: ".55rem .7rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#171c27", color: "#fecaca", cursor: "pointer" }}>✕</button>
