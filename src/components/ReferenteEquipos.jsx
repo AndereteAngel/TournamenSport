@@ -270,14 +270,18 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                               {players.map((player, index) => {
                                 const photoUrl = player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : "";
                                 return (
-                                  <div key={player.id} style={{ display: "flex", alignItems: "center", gap: ".75rem", padding: ".65rem", border: "1px solid #333", borderRadius: "10px", background: "#080808", minWidth: 0 }}>
-                                    {photoUrl ? <img src={photoUrl} alt={`Foto de ${player.first_name} ${player.last_name}`} style={{ width: "58px", height: "68px", objectFit: "cover", borderRadius: "7px", flexShrink: 0 }} /> : <div style={{ width: "58px", height: "68px", borderRadius: "7px", background: "#222", display: "grid", placeItems: "center", color: "#aaa", fontSize: ".65rem", flexShrink: 0 }}>SIN FOTO</div>}
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                      <strong style={{ display: "block", color: "#fff", overflowWrap: "anywhere" }}>{player.last_name || "Apellido pendiente"}, {player.first_name || "Nombre pendiente"}</strong>
-                                      <span style={{ color: "#fca5a5", fontSize: ".78rem" }}>{item.category_label}</span>
+                                  <div key={player.id} style={{ display: "grid", gridTemplateColumns: "64px minmax(0, 1fr)", alignItems: "center", columnGap: ".85rem", rowGap: ".65rem", padding: ".8rem", border: "1px solid #333", borderRadius: "10px", background: "#080808", minWidth: 0 }}>
+                                    {photoUrl ? <img src={photoUrl} alt={`Foto de ${player.first_name} ${player.last_name}`} style={{ width: "64px", height: "76px", objectFit: "cover", borderRadius: "8px", gridColumn: "1", gridRow: "1" }} /> : <div style={{ width: "64px", height: "76px", borderRadius: "8px", background: "#222", display: "grid", placeItems: "center", color: "#aaa", fontSize: ".65rem", gridColumn: "1", gridRow: "1" }}>SIN FOTO</div>}
+                                    <div style={{ minWidth: 0, gridColumn: "2", gridRow: "1", alignSelf: "center" }}>
+                                      <strong style={{ display: "block", color: "#fff", fontSize: "1rem", lineHeight: 1.3, overflowWrap: "break-word", wordBreak: "normal" }}>{player.last_name || "Apellido pendiente"}, {player.first_name || "Nombre pendiente"}</strong>
+                                      <span style={{ display: "block", color: "#fca5a5", fontSize: ".78rem", marginTop: ".3rem" }}>{item.category_label}</span>
                                     </div>
-                                    {!readOnly && item.team_status !== "presentada" && <button type="button" onClick={() => setEditingPlayer({ participationId: item.club_tournament_id, playerId: player.id })} style={{ ...buttonStyle, padding: ".55rem .7rem", flexShrink: 0 }}>Editar</button>}
-                                    {!readOnly && item.team_status !== "presentada" && <button type="button" onClick={() => removePlayer(item.club_tournament_id, player.id)} title="Quitar jugador" style={{ ...buttonStyle, padding: ".55rem .7rem", color: "#fecaca", flexShrink: 0 }}>✕</button>}
+                                    {!readOnly && item.team_status !== "presentada" && (
+                                      <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", gap: ".55rem", alignItems: "center" }}>
+                                        <button type="button" onClick={() => setEditingPlayer({ participationId: item.club_tournament_id, playerId: player.id })} style={{ ...buttonStyle, padding: ".55rem .9rem" }}>Editar</button>
+                                        <button type="button" onClick={() => removePlayer(item.club_tournament_id, player.id)} title="Quitar jugador" aria-label="Quitar jugador" style={{ ...buttonStyle, padding: ".55rem .8rem", color: "#fecaca" }}>✕</button>
+                                      </div>
+                                    )}
                                   </div>
                                 );
                               })}
