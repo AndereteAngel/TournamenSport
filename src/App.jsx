@@ -1629,6 +1629,9 @@ export function TournamenSportApp() {
   const [pendingAccessRequests, setPendingAccessRequests] = useState([]);
   const [loadingAccessRequests, setLoadingAccessRequests] = useState(false);
   const [accessActionError, setAccessActionError] = useState("");
+  const [activeClubs, setActiveClubs] = useState([]);
+  const [loadingActiveClubs, setLoadingActiveClubs] = useState(false);
+  const [removingClubTournamentId, setRemovingClubTournamentId] = useState(null);
   const [activeReferees, setActiveReferees] = useState([]);
   const [loadingActiveReferees, setLoadingActiveReferees] = useState(false);
   const [deactivatingRefereeId, setDeactivatingRefereeId] = useState(null);
@@ -1849,8 +1852,13 @@ export function TournamenSportApp() {
   };
 
   useEffect(() => {
-    if (canManageAccess) loadActiveReferees();
-    else setActiveReferees([]);
+    if (canManageAccess) {
+      loadActiveReferees();
+      loadActiveClubs();
+    } else {
+      setActiveReferees([]);
+      setActiveClubs([]);
+    }
   }, [canManageAccess, currentUser?.id]);
 
   useEffect(() => {
@@ -1872,6 +1880,34 @@ export function TournamenSportApp() {
     loadPendingRequests();
     return () => { cancelled = true; };
   }, [canManageAccess, currentUser?.id]);
+
+  const loadActiveClubs = async () => {
+    if (!canManageAccess) return;
+    setLoadingActiveClubs(true);
+    const { data, error } = await supabase.rpc("get_fefutin_active_clubs");
+    if (error) {
+      console.error("Error al cargar clubes habilitados:", error);
+      setAccessActionError(error.message || "No se pudieron cargar los clubes habilitados.");
+    } else setActiveClubs(data || []);
+    setLoadingActiveClubs(false);
+  };
+
+  const handleRemoveClubTournament = async (club, tournament) => {
+    if (!canManageAccess || !tournament?.id || removingClubTournamentId) return;
+    const confirmado = window.confirm(
+      `¿Querés quitar la inscripción de ${club.club_name} en "${tournament.title}"? El club y sus demás torneos seguirán habilitados.`
+    );
+    if (!confirmado) return;
+    setRemovingClubTournamentId(tournament.id);
+    const { error } = await supabase.rpc("remove_fefutin_club_tournament", { p_club_tournament_id: tournament.id });
+    if (error) setAccessActionError(error.message || "No se pudo quitar la inscripción del torneo.");
+    else {
+      setAccessActionError("");
+      await loadActiveClubs();
+      showNotice("La inscripción del club en ese torneo fue quitada. El club continúa habilitado.");
+    }
+    setRemovingClubTournamentId(null);
+  };
 
   const refreshPendingRequests = async () => {
     if (!canManageAccess) return;
@@ -3517,6 +3553,47 @@ export function TournamenSportApp() {
                 ))}
               </div>
             )}
+
+            <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
+                <div>
+                  <h3 style={{ color: "#fff", margin: 0 }}>CLUBES HABILITADOS</h3>
+                  <p style={{ color: "#aaa", fontSize: "0.82rem", margin: "0.3rem 0 0" }}>Administrá las inscripciones de cada club sin eliminar los torneos de FEFUTIN.</p>
+                </div>
+                <button type="button" className="tc-form-back" onClick={loadActiveClubs} disabled={loadingActiveClubs}>↻ Actualizar clubes</button>
+              </div>
+              {loadingActiveClubs ? (
+                <p style={{ color: "#ddd", textAlign: "center", padding: "1rem" }}>Cargando clubes habilitados...</p>
+              ) : activeClubs.length === 0 ? (
+                <p style={{ color: "#aaa", padding: "0.5rem 0" }}>Todavía no hay clubes habilitados.</p>
+              ) : (
+                <div style={{ display: "grid", gap: "0.8rem" }}>
+                  {activeClubs.map((club) => (
+                    <article key={club.club_id} style={{ border: "1px solid #b5122a", borderRadius: "10px", background: "#111", padding: "0.9rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", flexWrap: "wrap" }}>
+                        {club.logo_path && <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt={`Escudo de ${club.club_name}`} style={{ width: "58px", height: "58px", objectFit: "contain", borderRadius: "8px", background: "#fff" }} />}
+                        <div style={{ minWidth: 0 }}>
+                          <strong style={{ color: "#fff", display: "block" }}>{club.club_name}</strong>
+                          <span style={{ color: "#ccc", fontSize: "0.82rem", display: "block" }}>{club.headquarters_address}</span>
+                          <span style={{ color: "#aaa", fontSize: "0.78rem" }}>Referente: {club.referente_name || "Sin nombre"} · {club.referente_email || "Sin email"}</span>
+                        </div>
+                      </div>
+                      <div style={{ marginTop: "0.8rem", borderTop: "1px solid #3a3a3a", paddingTop: "0.7rem" }}>
+                        <strong style={{ color: "#ffb3bf", fontSize: "0.76rem" }}>TORNEOS INSCRIPTOS</strong>
+                        {Array.isArray(club.tournaments) && club.tournaments.length > 0 ? club.tournaments.map((tournament) => (
+                          <div key={tournament.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.6rem", flexWrap: "wrap", marginTop: "0.55rem", padding: "0.55rem", background: "#1b1b1b", borderRadius: "8px" }}>
+                            <span style={{ color: "#fff", fontSize: "0.84rem" }}>{tournament.title} · {tournament.category_label}</span>
+                            <button type="button" className="tc-form-back" onClick={() => handleRemoveClubTournament(club, tournament)} disabled={removingClubTournamentId === tournament.id} style={{ borderColor: "#b5122a", color: "#fff", background: "#391018", opacity: removingClubTournamentId === tournament.id ? 0.6 : 1 }}>
+                              {removingClubTournamentId === tournament.id ? "Quitando..." : "Quitar inscripción"}
+                            </button>
+                          </div>
+                        )) : <p style={{ color: "#aaa", fontSize: "0.82rem", marginBottom: 0 }}>Este club no tiene torneos vinculados.</p>}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
