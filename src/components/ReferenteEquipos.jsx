@@ -42,6 +42,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [notice, setNotice] = useState("");
   const [uploadingPlayerId, setUploadingPlayerId] = useState(null);
   const [editingPlayer, setEditingPlayer] = useState(null);
+  const [selectedClubId, setSelectedClubId] = useState(null);
 
   const loadParticipations = useCallback(async () => {
     setLoading(true);
@@ -156,22 +157,44 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   };
 
   const isManager = currentUser?.role === "admin" || currentUser?.role === "directivo";
-  const club = participations[0];
+  const clubs = [...new Map(participations.map((item) => [item.club_id, item])).values()];
+  const selectedClub = clubs.find((item) => item.club_id === selectedClubId) || null;
+  const club = selectedClub || participations[0];
+  const visibleParticipations = mode === "equipos" && selectedClubId
+    ? participations.filter((item) => item.club_id === selectedClubId)
+    : participations;
 
   return (
     <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
       <section className="cr-card" style={{ width: "100%", maxWidth: "1100px", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)", boxSizing: "border-box", background: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
-        <button type="button" className="tc-form-back" onClick={onBack}>← Volver al inicio</button>
+        <button
+          type="button"
+          className="tc-form-back"
+          onClick={() => {
+            if (mode === "equipos" && selectedClubId) {
+              setSelectedClubId(null);
+              setEditingPlayer(null);
+            } else {
+              onBack?.();
+            }
+          }}
+        >
+          {mode === "equipos" && selectedClubId ? "← Volver a clubes" : "← Volver al inicio"}
+        </button>
         <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".72rem", margin: "1.25rem 0 .35rem" }}>
           {isManager ? "GESTIÓN DE CLUBES" : "ÁREA DEL REFERENTE"}
         </p>
         <h2 className="cr-title" style={{ color: "#fff", margin: "0 0 .5rem" }}>
-          {mode === "torneos" ? "MIS TORNEOS" : "FICHA DE EQUIPOS"}
+          {mode === "torneos" ? "MIS TORNEOS" : selectedClub ? selectedClub.club_name : "FICHA DE EQUIPOS"}
         </h2>
         <p style={{ color: "#d1d5db", lineHeight: 1.55, marginTop: 0 }}>
           {mode === "torneos"
             ? "Estas son las categorías en las que tu club fue habilitado para participar."
-            : "Los datos institucionales ya están cargados. Completá una lista independiente para cada categoría."}
+            : selectedClub
+              ? "Participaciones, listas de buena fe y fichas personales de este club."
+              : isManager
+                ? "Seleccioná un club para consultar sus torneos y fichas de jugadores."
+                : "Seleccioná tu club para consultar sus torneos y fichas de jugadores."}
         </p>
 
         {error && <p role="alert" style={{ color: "#fecaca", background: "#450a0a", border: "1px solid #b5122a", borderRadius: "8px", padding: ".75rem" }}>{error}</p>}
@@ -186,15 +209,37 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
           </div>
         ) : (
           <>
-            {isManager && club && (
-              <div style={{ display: "flex", alignItems: "center", gap: ".8rem", padding: ".8rem", margin: "1rem 0", background: "#171c27", borderRadius: "10px" }}>
-                {club.logo_path && <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt={club.club_name} style={{ width: "58px", height: "58px", objectFit: "contain", background: "#fff", borderRadius: "8px" }} />}
-                <div><strong>{club.club_name}</strong><div style={{ color: "#ccc", fontSize: ".85rem" }}>{club.headquarters_address}</div></div>
+            {mode === "equipos" && !selectedClubId ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))", gap: ".85rem", marginTop: "1.25rem" }}>
+                {clubs.map((item) => {
+                  const logoUrl = item.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(item.logo_path).data.publicUrl : "";
+                  return (
+                    <button
+                      key={item.club_id}
+                      type="button"
+                      onClick={() => setSelectedClubId(item.club_id)}
+                      title={item.club_name}
+                      style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".55rem", minWidth: 0, minHeight: "132px", padding: ".8rem .45rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#111", color: "#fff", cursor: "pointer" }}
+                    >
+                      <span style={{ width: "76px", height: "76px", display: "grid", placeItems: "center", overflow: "hidden", borderRadius: "9px", background: "#fff" }}>
+                        {logoUrl ? <img src={logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <span style={{ color: "#171c27", fontSize: ".62rem", fontWeight: 900 }}>SIN ESCUDO</span>}
+                      </span>
+                      <strong style={{ color: "#fff", fontSize: ".8rem", lineHeight: 1.25, textAlign: "center", overflowWrap: "anywhere" }}>{item.club_name}</strong>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            ) : (
+              <>
+                {(mode === "equipos" || isManager) && club && (
+                  <div style={{ display: "flex", alignItems: "center", gap: ".8rem", padding: ".8rem", margin: "1rem 0", background: "#171c27", borderRadius: "10px" }}>
+                    {club.logo_path && <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt={club.club_name} style={{ width: "58px", height: "58px", objectFit: "contain", background: "#fff", borderRadius: "8px" }} />}
+                    <div><strong>{club.club_name}</strong><div style={{ color: "#ccc", fontSize: ".85rem" }}>{club.headquarters_address}</div></div>
+                  </div>
+                )}
 
-            <div style={{ display: "grid", gap: "1rem", marginTop: "1rem" }}>
-              {participations.map((item) => {
+                <div style={{ display: "grid", gap: "1rem", marginTop: "1rem" }}>
+              {visibleParticipations.map((item) => {
                 const players = rowsByParticipation[item.club_tournament_id] || [];
                 const logoUrl = item.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(item.logo_path).data.publicUrl : "";
                 const statusLabel = item.team_status === "presentada" ? "LISTA PRESENTADA" : item.team_status === "borrador" ? "BORRADOR" : "PENDIENTE DE CARGA";
@@ -320,7 +365,9 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </article>
                 );
               })}
-            </div>
+                </div>
+              </>
+            )}
           </>
         )}
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
