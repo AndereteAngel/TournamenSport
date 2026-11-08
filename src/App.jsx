@@ -4181,7 +4181,6 @@ export function TournamenSportApp() {
               {(() => {
                 const registration = (activeTournament.groups || []).find((group) => group?.name === "__INSCRIPCIONES__");
                 const participants = Array.isArray(registration?.teams) ? registration.teams : [];
-                const capacity = Number(registration?.capacity || 0);
                 const canManage = canManageTournaments;
                 return (
                   <>
