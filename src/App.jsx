@@ -3483,6 +3483,30 @@ export function TournamenSportApp() {
                       <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>{request.username || "Sin nombre"}</strong>
                       <span style={{ color: "#ddd", display: "block", overflowWrap: "anywhere", fontSize: "0.88rem" }}>{request.email || "Sin email"}</span>
                       <span style={{ display: "inline-block", marginTop: "0.5rem", color: "#fff", background: "#8f1026", borderRadius: "20px", padding: "0.25rem 0.65rem", fontSize: "0.72rem", fontWeight: 800 }}>{request.requested_role === "directivo" ? "SOLICITA SER DIRECTIVO" : request.requested_role === "referente" ? "SOLICITA SER REFERENTE DE EQUIPO" : "SOLICITA SER ÁRBITRO"}</span>
+                      {request.requested_role === "referente" && request.club_name && (
+                        <div style={{ marginTop: ".8rem", padding: ".8rem", border: "1px solid #5b2630", borderRadius: "9px", background: "#1b1114" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: ".8rem" }}>
+                            {request.logo_path && <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(request.logo_path).data.publicUrl} alt={`Escudo de ${request.club_name}`} style={{ width: "64px", height: "64px", objectFit: "contain", borderRadius: "8px", background: "#fff" }} />}
+                            <div>
+                              <strong style={{ color: "#fff", display: "block" }}>{request.club_name}</strong>
+                              <span style={{ color: "#ddd", fontSize: ".82rem" }}>{request.headquarters_address}</span>
+                            </div>
+                          </div>
+                          {Array.isArray(request.selected_tournaments) && request.selected_tournaments.length > 0 && (
+                            <div style={{ marginTop: ".7rem" }}>
+                              <strong style={{ color: "#ffb3bf", fontSize: ".78rem" }}>TORNEOS SOLICITADOS</strong>
+                              {request.selected_tournaments.map((item, index) => (
+                                <div key={`${request.id}-torneo-${index}`} style={{ color: "#eee", fontSize: ".82rem", marginTop: ".25rem" }}>
+                                  {item.title} · {item.category_label}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {request.requested_role === "referente" && !request.club_name && (
+                        <small style={{ display: "block", color: "#fbbf24", marginTop: ".5rem" }}>Todavía no completó la ficha institucional del club.</small>
+                      )}
                       <small style={{ display: "block", color: "#aaa", marginTop: "0.4rem" }}>Recibida: {request.created_at ? new Date(request.created_at).toLocaleString("es-AR") : "—"}</small>
                     </div>
                     <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap" }}>
@@ -3651,6 +3675,13 @@ export function TournamenSportApp() {
           tournaments={tournaments}
           currentUser={currentUser}
           onBack={() => setActiveView("home")}
+          onSubmitted={async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            const refreshedUser = await buildCurrentUser(user);
+            setCurrentUser(refreshedUser);
+            setActiveView("home");
+            showNotice("✅ Inscripción enviada. Quedó pendiente de aprobación por administración o un directivo.");
+          }}
         />
       ) : ["referente-equipos", "referente-torneos"].includes(activeView) && canAccessClubManagement ? (
         <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
