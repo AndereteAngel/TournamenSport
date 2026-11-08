@@ -19,6 +19,15 @@ function getTournamentCategoryLabel(tournament) {
   return parts.length >= 3 ? `${parts[1]} · ${parts.slice(2).join(" · ")}` : "";
 }
 
+function formatSupabaseError(stage, error) {
+  return [
+    stage,
+    error?.message || "Error sin mensaje devuelto por Supabase.",
+    error?.code ? `Código: ${error.code}` : "",
+    error?.details ? `Detalle: ${error.details}` : "",
+    error?.hint ? `Pista: ${error.hint}` : "",
+  ].filter(Boolean).join("\n");
+}
 const inputStyle = {
   width: "100%",
   boxSizing: "border-box",
@@ -96,7 +105,7 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack, on
 
     if (uploadError) {
       console.error("Error al subir el escudo del club:", uploadError);
-      setFormError(uploadError.message || "No se pudo subir el escudo del club.");
+      setFormError(formatSupabaseError("ETAPA 1 — SUBIDA DEL ESCUDO", uploadError));
       setSaving(false);
       return;
     }
@@ -119,7 +128,7 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack, on
     if (registrationError) {
       console.error("Error al enviar la inscripción del club:", registrationError);
       await supabase.storage.from("fefutin-clubs").remove([logoPath]);
-      setFormError(registrationError.message || "No se pudo enviar la inscripción.");
+      setFormError(formatSupabaseError("ETAPA 2 — REGISTRO DEL CLUB (RPC)", registrationError));
       setSaving(false);
       return;
     }
@@ -239,7 +248,7 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack, on
             })}
           </section>
 
-          {formError && <p role="alert" style={{ color: "#ff8a8a", margin: 0, fontWeight: 700 }}>{formError}</p>}
+          {formError && <p role="alert" style={{ color: "#ff8a8a", margin: 0, fontWeight: 700, whiteSpace: "pre-wrap", textAlign: "left" }}>{formError}</p>}
 
           <button type="submit" style={{ width: "100%", padding: ".9rem 1rem", border: "1px solid #fff", borderRadius: "9px", background: "#b5122a", color: "#fff", fontWeight: 900, letterSpacing: ".04em", cursor: "pointer" }}>
             REVISAR INSCRIPCIÓN
@@ -261,7 +270,7 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack, on
             <p style={{ color: "#ffcf7a", fontSize: ".85rem", lineHeight: 1.5, marginBottom: ".9rem" }}>
               Al enviar, la inscripción quedará pendiente de revisión. El club no se habilitará hasta que administración o un directivo la apruebe.
             </p>
-            {formError && <p role="alert" style={{ color: "#ff8a8a", fontWeight: 700 }}>{formError}</p>}
+            {formError && <p role="alert" style={{ color: "#ff8a8a", fontWeight: 700, whiteSpace: "pre-wrap", textAlign: "left" }}>{formError}</p>}
             <button
               type="button"
               onClick={handleSendRegistration}
