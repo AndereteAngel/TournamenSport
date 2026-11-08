@@ -15,6 +15,7 @@ const inputStyle = {
 
 export function ReferenteInscripcion({ tournaments = [], currentUser, onBack }) {
   const [clubName, setClubName] = useState("");
+  const [clubAddress, setClubAddress] = useState("");
   const [clubImage, setClubImage] = useState(null);
   const [selectedTournaments, setSelectedTournaments] = useState({});
   const [showReview, setShowReview] = useState(false);
@@ -71,6 +72,14 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack }) 
       setFormError("Ingresá el nombre de la institución o club.");
       return;
     }
+    if (!clubAddress.trim()) {
+      setFormError("Ingresá el domicilio de la sede del club.");
+      return;
+    }
+    if (!clubImage) {
+      setFormError("Seleccioná el escudo o una imagen del club.");
+      return;
+    }
     if (!selectedItems.length) {
       setFormError("Seleccioná al menos un torneo.");
       return;
@@ -101,11 +110,16 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack }) 
               <input value={clubName} onChange={(event) => { setClubName(event.target.value); setShowReview(false); }} placeholder="Ej.: Club Atlético..." style={inputStyle} maxLength={100} required />
             </label>
 
+            <label style={{ display: "grid", gap: ".45rem", color: "#fff", fontWeight: 700 }}>
+              Domicilio de la sede *
+              <input value={clubAddress} onChange={(event) => { setClubAddress(event.target.value); setShowReview(false); }} placeholder="Calle, número, localidad" style={inputStyle} maxLength={200} required />
+            </label>
+
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: "1rem", alignItems: "center" }}>
               <label style={{ display: "grid", gap: ".5rem", color: "#fff", fontWeight: 700 }}>
-                Escudo o foto del club
+                Escudo o foto del club *
                 <input type="file" accept="image/*" onChange={(event) => { setClubImage(event.target.files?.[0] || null); setShowReview(false); }} style={{ color: "#ddd", maxWidth: "100%" }} />
-                <span style={{ color: "#aaa", fontSize: ".78rem", fontWeight: 400 }}>Seleccioná una imagen desde tu dispositivo.</span>
+                <span style={{ color: "#aaa", fontSize: ".78rem", fontWeight: 400 }}>Imagen obligatoria. Seleccionala desde tu dispositivo.</span>
               </label>
               <div style={{ width: "88px", height: "88px", borderRadius: "12px", border: "1px dashed #777", display: "grid", placeItems: "center", overflow: "hidden", background: "#171c27" }}>
                 {imagePreview
@@ -180,6 +194,7 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack }) 
           <section style={{ marginTop: "1.25rem", border: "1px solid #b5122a", borderRadius: "12px", padding: "1rem", background: "#171717" }}>
             <h3 style={{ color: "#fff", marginTop: 0 }}>Revisión de la inscripción</h3>
             <p style={{ color: "#fff" }}><strong>Club:</strong> {clubName.trim()}</p>
+            <p style={{ color: "#fff" }}><strong>Domicilio:</strong> {clubAddress.trim()}</p>
             <p style={{ color: "#fff" }}><strong>Escudo:</strong> {clubImage?.name || "Sin imagen seleccionada"}</p>
             {selectedItems.map(({ tournament, categories }) => (
               <div key={tournament.id} style={{ borderTop: "1px solid #444", paddingTop: ".65rem", marginTop: ".65rem" }}>
