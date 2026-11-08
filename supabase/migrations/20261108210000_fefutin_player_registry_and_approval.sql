@@ -259,7 +259,7 @@ returns table (
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $fefutin$
 declare v_profile public.profiles%rowtype;
 begin
   select p.* into v_profile from public.profiles p where p.id = auth.uid();
@@ -297,7 +297,7 @@ begin
     and (v_profile.role in ('admin','directivo') or c.id = v_profile.club_id)
   order by c.name, t.title, ct.category_label;
 end;
-$;
+$fefutin$;
 
 revoke all on function public.get_fefutin_pending_players() from public, anon;
 grant execute on function public.get_fefutin_pending_players() to authenticated;
