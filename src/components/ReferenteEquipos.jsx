@@ -189,16 +189,22 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
           {isManager ? "GESTIÓN DE CLUBES" : "ÁREA DEL REFERENTE"}
         </p>
         <h2 className="cr-title" style={{ color: "#fff", margin: "0 0 .5rem" }}>
-          {mode === "torneos" ? "MIS TORNEOS" : selectedClub ? selectedClub.club_name : "FICHA DE EQUIPOS"}
+          {mode === "torneos" ? "MIS TORNEOS" : selectedClub ? selectedSection === "torneos" ? "TORNEOS PARTICIPANTES" : selectedSection === "listas" ? "LISTAS DE BUENA FE" : selectedSection === "datos" ? "DATOS DEL CLUB" : selectedClub.club_name : "FICHA DE EQUIPOS"}
         </h2>
         <p style={{ color: "#d1d5db", lineHeight: 1.55, marginTop: 0 }}>
           {mode === "torneos"
             ? "Estas son las categorías en las que tu club fue habilitado para participar."
-            : selectedClub
-              ? "Participaciones, listas de buena fe y fichas personales de este club."
-              : isManager
-                ? "Seleccioná un club para consultar sus torneos y fichas de jugadores."
-                : "Seleccioná tu club para consultar sus torneos y fichas de jugadores."}
+            : selectedClub && selectedSection === "torneos"
+              ? "Torneos y categorías en las que participa este club."
+              : selectedClub && selectedSection === "listas"
+                ? "Listas de buena fe y fichas personales, organizadas por categoría."
+                : selectedClub && selectedSection === "datos"
+                  ? "Información institucional registrada del club."
+                  : selectedClub
+                    ? "Elegí una sección para consultar la información del club."
+                    : isManager
+                      ? "Seleccioná un club para consultar su información."
+                      : "Seleccioná tu club para consultar su información."}
         </p>
 
         {error && <p role="alert" style={{ color: "#fecaca", background: "#450a0a", border: "1px solid #b5122a", borderRadius: "8px", padding: ".75rem" }}>{error}</p>}
