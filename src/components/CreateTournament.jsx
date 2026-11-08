@@ -4,8 +4,10 @@ import { supabase } from "../supabaseClient";
 import { TournamentNotice, useTournamentNotice } from "./TournamentNotice";
 
 const TOURNAMENT_BRANCHES = ["Infantil", "Femenino", "Mayores"];
+const CURRENT_YEAR = new Date().getFullYear();
+const FIRST_INFANTIL_YEAR = CURRENT_YEAR - 1;
 const CATEGORY_OPTIONS = {
-  Infantil: ["2012", "2013", "2014"],
+  Infantil: Array.from({ length: 10 }, (_, index) => String(FIRST_INFANTIL_YEAR - index)),
   Femenino: ["Sub-15", "Sub-17", "Primera"],
   Mayores: ["Primera", "Reserva"],
 };
