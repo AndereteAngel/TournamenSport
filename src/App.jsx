@@ -14,6 +14,7 @@ import { PlayoffBracket } from "./components/PlayoffBracket";
 import { ChampionCelebration } from "./components/ChampionCelebration";
 import { ReferenteInscripcion } from "./components/ReferenteInscripcion";
 import { ReferenteEquipos } from "./components/ReferenteEquipos";
+import { FefutinPlayerApprovals } from "./components/FefutinPlayerApprovals";
 import { supabase } from "./supabaseClient";
 
 // La categoría se guarda dentro de "game" al crear el torneo (ej.: "Fútbol · 2012").
@@ -3554,6 +3555,8 @@ export function TournamenSportApp() {
                 ))}
               </div>
             )}
+
+            <FefutinPlayerApprovals />
 
             <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
