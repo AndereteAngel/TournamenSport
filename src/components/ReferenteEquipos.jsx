@@ -239,7 +239,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                 <input inputMode="numeric" value={currentEditingPlayer.dni || ""} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "dni", event.target.value)} placeholder="Número de documento" style={inputStyle} />
                               </label>
                               <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Fecha de nacimiento
-                                <input type="date" value={currentEditingPlayer.birth_date || ""} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "birth_date", event.target.value)} style={inputStyle} />
+                                <input type="date" value={currentEditingPlayer.birth_date || ""} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "birth_date", event.target.value)} style={{ ...inputStyle, fontSize: ".82rem", padding: ".45rem .55rem", height: "42px", maxWidth: "100%" }} />
                               </label>
                               <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Número de camiseta
                                 <select value={currentEditingPlayer.jersey_number || "Sin especificar"} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "jersey_number", event.target.value)} style={inputStyle}>
