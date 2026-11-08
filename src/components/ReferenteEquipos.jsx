@@ -8,7 +8,7 @@ const emptyPlayer = () => ({
   dni: "",
   birth_date: "",
   jersey_number: "",
-  carnet_number: "",
+  photo_path: "",
 });
 
 const inputStyle = {
@@ -40,6 +40,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [savingId, setSavingId] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [uploadingPlayerId, setUploadingPlayerId] = useState(null);
 
   const loadParticipations = useCallback(async () => {
     setLoading(true);
@@ -89,6 +90,26 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
     }));
   };
 
+  const uploadPlayerPhoto = async (participationId, playerId, file) => {
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("La foto debe estar en formato JPG, PNG o WEBP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("La foto no puede superar los 5 MB.");
+      return;
+    }
+    setUploadingPlayerId(playerId);
+    setError("");
+    const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${currentUser.id}/${playerId}-${Date.now()}.${extension}`;
+    const { error: uploadError } = await supabase.storage.from("fefutin-player-photos").upload(path, file, { upsert: true, contentType: file.type });
+    if (uploadError) setError(uploadError.message || "No se pudo subir la fotografía.");
+    else updatePlayer(participationId, playerId, "photo_path", path);
+    setUploadingPlayerId(null);
+  };
+
   const removePlayer = (participationId, playerId) => {
     setRowsByParticipation((previous) => ({
       ...previous,
@@ -109,7 +130,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
       dni: player.dni || "",
       birth_date: player.birth_date || "",
       jersey_number: player.jersey_number || "",
-      carnet_number: player.carnet_number || "",
+      photo_path: player.photo_path || "",
     }));
     const { error: saveError } = await supabase.rpc("save_fefutin_team_roster", {
       p_club_tournament_id: item.club_tournament_id,
@@ -201,7 +222,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                         <div style={{ overflowX: "auto", width: "100%" }}>
                           <table style={{ width: "100%", minWidth: "760px", borderCollapse: "collapse", color: "#fff", fontSize: ".82rem" }}>
                             <thead><tr style={{ background: "#b5122a" }}>
-                              {["#", "Apellido", "Nombre", "DNI", "Fecha de nacimiento", "N.º camiseta", "N.º carnet", ""].map((label) => <th key={label} style={{ padding: ".6rem .4rem", textAlign: "left", whiteSpace: "nowrap" }}>{label}</th>)}
+                              {["#", "Apellido", "Nombre", "DNI", "Fecha de nacimiento", "N.º camiseta", "Foto", "Carnet", ""].map((label) => <th key={label} style={{ padding: ".6rem .4rem", textAlign: "left", whiteSpace: "nowrap" }}>{label}</th>)}
                             </tr></thead>
                             <tbody>
                               {players.map((player, index) => (
@@ -213,7 +234,6 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                     ["dni", "DNI"],
                                     ["birth_date", "Fecha", "date"],
                                     ["jersey_number", "Camiseta"],
-                                    ["carnet_number", "Carnet"],
                                   ].map(([field, placeholder, type]) => (
                                     <td key={field} style={{ padding: ".35rem" }}>
                                       <input
@@ -227,12 +247,22 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                       />
                                     </td>
                                   ))}
+                                  <td style={{ padding: ".35rem", minWidth: "125px" }}>
+                                    {player.photo_path ? <img src={supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl} alt="Foto del jugador" style={{ width: "48px", height: "58px", objectFit: "cover", borderRadius: "6px" }} /> : <span style={{ color: "#facc15" }}>Sin foto</span>}
+                                    {!readOnly && <label style={{ display: "block", color: "#ffb3bf", fontSize: ".7rem", cursor: "pointer", marginTop: ".25rem" }}>
+                                      {uploadingPlayerId === player.id ? "Subiendo..." : "Cargar foto"}
+                                      <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPlayerId === player.id} onChange={(event) => uploadPlayerPhoto(item.club_tournament_id, player.id, event.target.files?.[0])} style={{ display: "none" }} />
+                                    </label>}
+                                  </td>
+                                  <td style={{ padding: ".35rem", color: player.approval_status === "aprobado" ? "#86efac" : "#facc15", fontWeight: 800, whiteSpace: "nowrap" }}>
+                                    {player.carnet_number || (player.approval_status === "rechazado" ? "Rechazado" : "Pendiente")}
+                                  </td>
                                   <td style={{ padding: ".35rem" }}>
                                     {!readOnly && <button type="button" onClick={() => removePlayer(item.club_tournament_id, player.id)} title="Quitar jugador" style={{ ...buttonStyle, padding: ".45rem .6rem", color: "#fecaca" }}>✕</button>}
                                   </td>
                                 </tr>
                               ))}
-                              {!players.length && <tr><td colSpan="8" style={{ padding: "1rem", textAlign: "center", color: "#aaa" }}>Todavía no agregaste jugadores a esta categoría.</td></tr>}
+                              {!players.length && <tr><td colSpan="9" style={{ padding: "1rem", textAlign: "center", color: "#aaa" }}>Todavía no agregaste jugadores a esta categoría.</td></tr>}
                             </tbody>
                           </table>
                         </div>
