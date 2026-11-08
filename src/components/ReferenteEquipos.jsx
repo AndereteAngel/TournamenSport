@@ -284,6 +284,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 const currentEditingPlayer = isEditingThis ? players.find((player) => player.id === editingPlayer.playerId) : null;
                 return (
                   <article key={item.club_tournament_id} style={{ border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", minWidth: 0 }}>
+{selectedSection !== "listas" && (
                     <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flexWrap: "wrap" }}>
                       {logoUrl && <img src={logoUrl} alt={`Escudo de ${item.club_name}`} style={{ width: "54px", height: "54px", objectFit: "contain", borderRadius: "8px", background: "#fff" }} />}
                       <div style={{ flex: "1 1 180px", minWidth: 0 }}>
@@ -292,6 +293,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                       </div>
                       <span style={{ color: item.team_status === "presentada" ? "#86efac" : "#fca5a5", border: "1px solid currentColor", borderRadius: "20px", padding: ".3rem .55rem", fontSize: ".68rem", fontWeight: 900 }}>{statusLabel}</span>
                     </div>
+                    )}
 
                     <div style={{ margin: ".9rem 0", padding: ".75rem", borderRadius: "8px", background: "#171c27" }}>
                       <strong style={{ color: "#fff", display: "block" }}>{item.tournament_title}</strong>
