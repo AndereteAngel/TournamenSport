@@ -3190,12 +3190,45 @@ export function TournamenSportApp() {
     return "Infantil";
   };
 
-  const filteredTournaments = tournaments.filter((tournament) => {
-    const matchesCategory = tournamentCategoryFilter === "Todas" ||
-      getTournamentCategory(tournament) === tournamentCategoryFilter;
-    const matchesDivision = tournamentDivisionFilter === "Todas" ||
-      getTournamentDivision(tournament) === tournamentDivisionFilter;
-    return matchesCategory && matchesDivision;
+  const filteredTournaments = tournaments.flatMap((tournament) => {
+    const registrationGroup = (Array.isArray(tournament.groups) ? tournament.groups : [])
+      .find((group) => group?.name === "__INSCRIPCIONES__");
+    const configuredBranches = Array.isArray(registrationGroup?.category_config)
+      ? registrationGroup.category_config
+      : [];
+
+    const categoryEntries = configuredBranches.flatMap((branch) =>
+      (Array.isArray(branch.categories) ? branch.categories : []).map((category) => ({
+        division: String(branch.division || "").trim(),
+        categoryType: String(branch.categoryType || "").trim(),
+        category: String(category || "").trim(),
+      }))
+    ).filter((entry) => entry.division && entry.category);
+
+    const displayTournaments = categoryEntries.length
+      ? categoryEntries.map((entry) => {
+          const displayGame = `Fútbol · ${entry.division} · ${entry.category}`;
+          const displayGroups = (Array.isArray(tournament.groups) ? tournament.groups : []).map((group) =>
+            group?.name === "__INSCRIPCIONES__"
+              ? { ...group, category_config: [{ division: entry.division, categoryType: entry.categoryType, categories: [entry.category] }] }
+              : group
+          );
+          return {
+            ...tournament,
+            game: displayGame,
+            groups: displayGroups,
+            displayKey: `${tournament.id}-${entry.division}-${entry.category}`,
+          };
+        })
+      : [{ ...tournament, displayKey: String(tournament.id) }];
+
+    return displayTournaments.filter((displayTournament) => {
+      const matchesCategory = tournamentCategoryFilter === "Todas" ||
+        getTournamentCategory(displayTournament) === tournamentCategoryFilter;
+      const matchesDivision = tournamentDivisionFilter === "Todas" ||
+        getTournamentDivision(displayTournament) === tournamentDivisionFilter;
+      return matchesCategory && matchesDivision;
+    });
   });
 
   const openTournament = (tournament) => {
@@ -4003,7 +4036,7 @@ export function TournamenSportApp() {
                 {filteredTournaments.map((t) => (
                   <div
                     className="tc-home-tournament-item tc-home-tournament-card"
-                    key={t.id}
+                    key={t.displayKey || t.id}
                     onClick={() => openTournament(t)}
                     style={{
                       position: "relative",
