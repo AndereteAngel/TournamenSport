@@ -240,7 +240,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                         aria-label={`${placeholder} del jugador ${index + 1}`}
                                         type={type || "text"}
                                         value={player[field] || ""}
-                                        disabled={readOnly}
+                                        disabled={readOnly || item.team_status === "presentada"}
                                         onChange={(event) => updatePlayer(item.club_tournament_id, player.id, field, event.target.value)}
                                         placeholder={placeholder}
                                         style={inputStyle}
@@ -249,7 +249,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                   ))}
                                   <td style={{ padding: ".35rem", minWidth: "125px" }}>
                                     {player.photo_path ? <img src={supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl} alt="Foto del jugador" style={{ width: "48px", height: "58px", objectFit: "cover", borderRadius: "6px" }} /> : <span style={{ color: "#facc15" }}>Sin foto</span>}
-                                    {!readOnly && <label style={{ display: "block", color: "#ffb3bf", fontSize: ".7rem", cursor: "pointer", marginTop: ".25rem" }}>
+                                    {!readOnly && item.team_status !== "presentada" && <label style={{ display: "block", color: "#ffb3bf", fontSize: ".7rem", cursor: "pointer", marginTop: ".25rem" }}>
                                       {uploadingPlayerId === player.id ? "Subiendo..." : "Cargar foto"}
                                       <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPlayerId === player.id} onChange={(event) => uploadPlayerPhoto(item.club_tournament_id, player.id, event.target.files?.[0])} style={{ display: "none" }} />
                                     </label>}
@@ -258,7 +258,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                     {player.carnet_number || (player.approval_status === "rechazado" ? "Rechazado" : "Pendiente")}
                                   </td>
                                   <td style={{ padding: ".35rem" }}>
-                                    {!readOnly && <button type="button" onClick={() => removePlayer(item.club_tournament_id, player.id)} title="Quitar jugador" style={{ ...buttonStyle, padding: ".45rem .6rem", color: "#fecaca" }}>✕</button>}
+                                    {!readOnly && item.team_status !== "presentada" && <button type="button" onClick={() => removePlayer(item.club_tournament_id, player.id)} title="Quitar jugador" style={{ ...buttonStyle, padding: ".45rem .6rem", color: "#fecaca" }}>✕</button>}
                                   </td>
                                 </tr>
                               ))}
@@ -266,7 +266,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                             </tbody>
                           </table>
                         </div>
-                        {!readOnly && (
+                        {!readOnly && item.team_status !== "presentada" && (
                           <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", justifyContent: "space-between", marginTop: ".85rem" }}>
                             <button type="button" style={buttonStyle} onClick={() => addPlayer(item.club_tournament_id)}>＋ Agregar jugador</button>
                             <div style={{ display: "flex", gap: ".55rem", flexWrap: "wrap" }}>
@@ -275,6 +275,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                             </div>
                           </div>
                         )}
+                        {item.team_status === "presentada" && <p style={{ color: "#facc15", fontSize: ".78rem" }}>Lista presentada: las modificaciones están bloqueadas mientras se revisan las altas.</p>}
                         {item.submitted_at && <p style={{ color: "#86efac", fontSize: ".78rem", marginBottom: 0 }}>Presentada: {new Date(item.submitted_at).toLocaleString("es-AR")}</p>}
                       </>
                     )}
