@@ -2306,38 +2306,58 @@ export function TournamenSportApp() {
       return;
     }
 
-    const randomCode = "TS-" + Math.floor(1000 + Math.random() * 9000);
-    const registrationGroup = {
-      id: 0,
-      name: "__INSCRIPCIONES__",
-      teams: Array.isArray(config.teams) ? config.teams : [],
-      matches: [],
-      capacity: Number(config.maxParticipants),
-      numGroups: config.format === "groups_playoff" ? Number(config.numGroups) : 1,
-      category_config: Array.isArray(config.category_config) ? config.category_config : [],
-    };
+    const configuredBranches = Array.isArray(config.category_config) ? config.category_config : [];
+    const categoryEntries = configuredBranches.flatMap((branch) =>
+      (Array.isArray(branch.categories) ? branch.categories : []).map((category) => ({
+        division: String(branch.division || "").trim(),
+        categoryType: String(branch.categoryType || config.categoryType || "").trim(),
+        category: String(category || "").trim(),
+      }))
+    ).filter((entry) => entry.division && entry.category);
 
-    const newTournamentObj = {
-      code: randomCode,
-      title: config.title,
-      game: config.game,
-      format: config.format,
-      qualifiers_per_group: config.qualifiersPerGroup,
-      is_public: config.isPublic,
-      created_by_user_id: currentUser.id,
-      created_by: currentUser.username,
-      groups: [registrationGroup],
-      playoffs: null,
-      status: "Inscripciones",
-    };
+    if (!categoryEntries.length) {
+      showNotice("Seleccioná al menos una combinación de rama y categoría.");
+      return;
+    }
+
+    const tournamentsToCreate = categoryEntries.map((entry) => {
+      const randomCode = "TS-" + Math.floor(1000 + Math.random() * 9000);
+      const registrationGroup = {
+        id: 0,
+        name: "__INSCRIPCIONES__",
+        teams: [],
+        matches: [],
+        capacity: Number(config.maxParticipants),
+        numGroups: config.format === "groups_playoff" ? Number(config.numGroups) : 1,
+        category_config: [{
+          division: entry.division,
+          categoryType: entry.categoryType,
+          categories: [entry.category],
+        }],
+      };
+
+      return {
+        code: randomCode,
+        title: config.title,
+        game: `Fútbol · ${entry.division} · ${entry.category}`,
+        format: config.format,
+        qualifiers_per_group: config.qualifiersPerGroup,
+        is_public: config.isPublic,
+        created_by_user_id: currentUser.id,
+        created_by: currentUser.username,
+        groups: [registrationGroup],
+        playoffs: null,
+        status: "Inscripciones",
+      };
+    });
 
     const { data, error } = await supabase
       .from("tournaments")
-      .insert([newTournamentObj])
+      .insert(tournamentsToCreate)
       .select();
 
     if (error) {
-      console.error("Error detallado al guardar el torneo en Supabase:", {
+      console.error("Error detallado al guardar los torneos en Supabase:", {
         code: error.code,
         message: error.message,
         details: error.details,
@@ -2349,10 +2369,12 @@ export function TournamenSportApp() {
     }
 
     if (data && data.length > 0) {
-      setActiveTournament(data[0]);
-      setTournaments((prev) => [data[0], ...prev]);
-      setActiveView("groups");
-      showNotice("Torneo creado. Queda abierto para recibir inscripciones; la competencia se inicializará más adelante.");
+      setActiveTournament(null);
+      setTournaments((prev) => [...data, ...prev]);
+      setTournamentDivisionFilter("Todas");
+      setTournamentCategoryFilter("Todas");
+      setActiveView("division-tournaments");
+      showNotice(`Se crearon ${data.length} torneos, uno por cada combinación de rama y categoría. Todos quedan abiertos para recibir inscripciones.`);
     }
   };
 
