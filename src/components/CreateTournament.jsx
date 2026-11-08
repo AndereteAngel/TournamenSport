@@ -5,10 +5,9 @@ import { TournamentNotice, useTournamentNotice } from "./TournamentNotice";
 
 const TOURNAMENT_BRANCHES = ["Infantil", "Femenino", "Mayores"];
 const CATEGORY_OPTIONS = {
-  "Año de nacimiento": Array.from({ length: 17 }, (_, index) => String(2008 + index)),
-  División: ["Primera", "Reserva", "Tercera", "Cuarta", "Quinta", "Sexta"],
-  Formativa: ["Premini", "Mini", "Infantiles", "Menores", "Cadetes", "Juveniles", "Sub-14", "Sub-16", "Sub-18", "Sub-21"],
-  Personalizada: [],
+  Infantil: ["2012", "2013", "2014"],
+  Femenino: ["Sub-15", "Sub-17", "Primera"],
+  Mayores: ["Primera", "Reserva"],
 };
 
 export function CreateTournament({
@@ -382,7 +381,7 @@ export function CreateTournament({
             {TOURNAMENT_BRANCHES.map((division) => {
               const branch = (formData.categoryConfig || []).find((item) => item.division === division);
               const selectedCategories = branch?.categories || [];
-              const options = CATEGORY_OPTIONS[branch?.categoryType || "Año de nacimiento"] || [];
+              const options = CATEGORY_OPTIONS[division] || [];
               return (
                 <div key={division} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.16)", background: "rgba(0,0,0,0.2)" }}>
                   <label style={{ display: "flex", alignItems: "center", gap: "0.55rem", color: "#fff", fontWeight: 800, cursor: "pointer" }}>
@@ -391,17 +390,7 @@ export function CreateTournament({
                   </label>
                   {branch && (
                     <div style={{ marginTop: "0.75rem" }}>
-                      <label className="sports-label">Tipo de categorías</label>
-                      <select
-                        value={branch.categoryType || "Año de nacimiento"}
-                        onChange={(e) => updateBranchConfig(division, { categoryType: e.target.value, categories: [] })}
-                        className="cr-input sports-input"
-                      >
-                        <option value="Año de nacimiento">Año de nacimiento</option>
-                        <option value="División">División competitiva</option>
-                        <option value="Formativa">Formativas</option>
-                        <option value="Personalizada">Personalizadas</option>
-                      </select>
+                      <label className="sports-label">Categorías disponibles para {division}</label>
                       {options.length > 0 && (
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(105px, 1fr))", gap: "0.4rem", marginTop: "0.65rem" }}>
                           {options.map((category) => (
