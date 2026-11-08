@@ -3,6 +3,14 @@ import { TCIcon } from "./TCIcon";
 import { supabase } from "../supabaseClient";
 import { TournamentNotice, useTournamentNotice } from "./TournamentNotice";
 
+const TOURNAMENT_BRANCHES = ["Infantil", "Femenino", "Mayores"];
+const CATEGORY_OPTIONS = {
+  "Año de nacimiento": Array.from({ length: 17 }, (_, index) => String(2008 + index)),
+  División: ["Primera", "Reserva", "Tercera", "Cuarta", "Quinta", "Sexta"],
+  Formativa: ["Premini", "Mini", "Infantiles", "Menores", "Cadetes", "Juveniles", "Sub-14", "Sub-16", "Sub-18", "Sub-21"],
+  Personalizada: [],
+};
+
 export function CreateTournament({
   onSave,
   onCancel,
@@ -41,6 +49,7 @@ export function CreateTournament({
         division: "Infantil",
         categoryType: "Año de nacimiento",
         categoryDetail: "2008",
+        categoryConfig: [],
         format: "groups_playoff",
         numGroups: 2,
         qualifiersPerGroup: 2,
@@ -51,6 +60,10 @@ export function CreateTournament({
     }
 
     const participants = getParticipantsFromTournament();
+    const registrationGroup = initialData.groups?.find((group) => group?.name === "__INSCRIPCIONES__");
+    const savedCategoryConfig = Array.isArray(registrationGroup?.category_config)
+      ? registrationGroup.category_config
+      : [];
     const sports = ["Fútbol", "Futsal", "Básquet", "Vóley", "Handball", "Hockey", "Rugby", "Tenis", "Atletismo", "Natación", "Otro deporte"];
     const storedGame = String(initialData.game || "Fútbol");
     const gameParts = storedGame.split(" · ").map((part) => part.trim());
@@ -75,6 +88,9 @@ export function CreateTournament({
       division: divisionFromStoredGame,
       categoryType: initialData.category_type || inferredCategoryType,
       categoryDetail,
+      categoryConfig: savedCategoryConfig.length
+        ? savedCategoryConfig
+        : [{ division: divisionFromStoredGame, categoryType: initialData.category_type || inferredCategoryType, categories: categoryDetail ? [categoryDetail] : [] }],
       format: initialData.format || "groups_playoff",
       numGroups:
         initialData.format === "league" ? 1 : initialData.groups?.length || 2,
@@ -92,6 +108,46 @@ export function CreateTournament({
   const [teamSearch, setTeamSearch] = useState("");
   const [selectedTeamIds, setSelectedTeamIds] = useState([]);
   const [teamCatalogError, setTeamCatalogError] = useState("");
+  const [customCategoryInputs, setCustomCategoryInputs] = useState({});
+
+  const updateBranchConfig = (division, changes) => {
+    setFormData((prev) => {
+      const current = prev.categoryConfig || [];
+      const existing = current.find((item) => item.division === division);
+      const updated = existing
+        ? current.map((item) => item.division === division ? { ...item, ...changes } : item)
+        : [...current, { division, categoryType: "Año de nacimiento", categories: [], ...changes }];
+      return { ...prev, categoryConfig: updated };
+    });
+  };
+
+  const toggleBranch = (division, checked) => {
+    setFormData((prev) => ({
+      ...prev,
+      categoryConfig: checked
+        ? [...(prev.categoryConfig || []), { division, categoryType: "Año de nacimiento", categories: [] }]
+        : (prev.categoryConfig || []).filter((item) => item.division !== division),
+    }));
+  };
+
+  const toggleCategory = (division, category, checked) => {
+    const branch = (formData.categoryConfig || []).find((item) => item.division === division);
+    const categories = branch?.categories || [];
+    updateBranchConfig(division, {
+      categories: checked
+        ? [...new Set([...categories, category])]
+        : categories.filter((item) => item !== category),
+    });
+  };
+
+  const addCustomCategory = (division) => {
+    const value = String(customCategoryInputs[division] || "").trim();
+    if (!value) return;
+    const branch = (formData.categoryConfig || []).find((item) => item.division === division);
+    if ((branch?.categories || []).some((item) => item.toLocaleLowerCase("es") === value.toLocaleLowerCase("es"))) return;
+    updateBranchConfig(division, { categories: [...(branch?.categories || []), value] });
+    setCustomCategoryInputs((prev) => ({ ...prev, [division]: "" }));
+  };
 
   const loadTeamsCatalog = async () => {
     setLoadingTeamsCatalog(true);
@@ -202,11 +258,18 @@ export function CreateTournament({
       }
     }
 
+    const validCategoryConfig = (formData.categoryConfig || []).filter(
+      (branch) => Array.isArray(branch.categories) && branch.categories.length > 0
+    );
+    if (!validCategoryConfig.length) {
+      showNotice("Seleccioná al menos una rama y una categoría habilitada para el torneo.");
+      return;
+    }
+
     onSave({
       ...formData,
-      game: `Fútbol · ${formData.division}${formData.categoryDetail ? ` · ${formData.categoryDetail}` : ""}`,
-      category_type: formData.categoryType,
-      category_detail: formData.categoryDetail,
+      game: "Fútbol",
+      category_config: validCategoryConfig,
       maxParticipants: Number(formData.maxParticipants),
       teams,
     });
@@ -311,14 +374,65 @@ export function CreateTournament({
           />
         </div>
 
-        {/* DIVISIÓN DE LA LIGA */}
-        <div>
-          <label className="sports-label">Rama / división de la liga</label>
-          <select value={formData.division} onChange={(e) => setFormData({ ...formData, division: e.target.value })} className="cr-input sports-input" required>
-            <option value="Infantil">Infantil</option>
-            <option value="Femenino">Femenino</option>
-            <option value="Mayores">Mayores</option>
-          </select>
+        {/* RAMAS Y CATEGORÍAS HABILITADAS */}
+        <div style={{ padding: "0.9rem", border: "1px solid rgba(181,18,42,0.55)", borderRadius: "10px", background: "rgba(181,18,42,0.08)" }}>
+          <label className="sports-label">Ramas y categorías del torneo</label>
+          <p className="sports-help">Activá las ramas que tendrá el torneo y elegí las categorías en las que podrán inscribirse los clubes.</p>
+          <div style={{ display: "grid", gap: "0.65rem", marginTop: "0.75rem" }}>
+            {TOURNAMENT_BRANCHES.map((division) => {
+              const branch = (formData.categoryConfig || []).find((item) => item.division === division);
+              const selectedCategories = branch?.categories || [];
+              const options = CATEGORY_OPTIONS[branch?.categoryType || "Año de nacimiento"] || [];
+              return (
+                <div key={division} style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.16)", background: "rgba(0,0,0,0.2)" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.55rem", color: "#fff", fontWeight: 800, cursor: "pointer" }}>
+                    <input type="checkbox" checked={Boolean(branch)} onChange={(e) => toggleBranch(division, e.target.checked)} />
+                    {division}
+                  </label>
+                  {branch && (
+                    <div style={{ marginTop: "0.75rem" }}>
+                      <label className="sports-label">Tipo de categorías</label>
+                      <select
+                        value={branch.categoryType || "Año de nacimiento"}
+                        onChange={(e) => updateBranchConfig(division, { categoryType: e.target.value, categories: [] })}
+                        className="cr-input sports-input"
+                      >
+                        <option value="Año de nacimiento">Año de nacimiento</option>
+                        <option value="División">División competitiva</option>
+                        <option value="Formativa">Formativas</option>
+                        <option value="Personalizada">Personalizadas</option>
+                      </select>
+                      {options.length > 0 && (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(105px, 1fr))", gap: "0.4rem", marginTop: "0.65rem" }}>
+                          {options.map((category) => (
+                            <label key={category} style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#fff", fontSize: "0.8rem" }}>
+                              <input type="checkbox" checked={selectedCategories.includes(category)} onChange={(e) => toggleCategory(division, category, e.target.checked)} />
+                              {category}
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      <div style={{ display: "flex", gap: "0.45rem", marginTop: "0.7rem" }}>
+                        <input
+                          value={customCategoryInputs[division] || ""}
+                          onChange={(e) => setCustomCategoryInputs((prev) => ({ ...prev, [division]: e.target.value }))}
+                          placeholder="Agregar otra categoría"
+                          className="cr-input"
+                          style={{ minWidth: 0, flex: 1 }}
+                        />
+                        <button type="button" onClick={() => addCustomCategory(division)} className="cr-btn-gold" style={{ padding: "0.55rem 0.75rem" }}>Agregar</button>
+                      </div>
+                      {selectedCategories.length > 0 && (
+                        <p style={{ color: "#fff", fontSize: "0.78rem", margin: "0.65rem 0 0" }}>
+                          Habilitadas: {selectedCategories.join(" · ")}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* FÚTBOL ES EL ÚNICO DEPORTE DE FEFUTIN */}
