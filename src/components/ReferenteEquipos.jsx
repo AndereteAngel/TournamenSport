@@ -239,9 +239,36 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   );
                 })}
               </div>
+            ) : mode === "equipos" && selectedClubId && !selectedSection ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "1rem", marginTop: "1.25rem" }}>
+                {[
+                  { id: "torneos", title: "TORNEOS", description: "Torneos y categorías participantes", symbol: "🏆" },
+                  { id: "listas", title: "LISTAS DE BUENA FE", description: "Jugadores organizados por categoría", symbol: "📋" },
+                  { id: "datos", title: "DATOS DEL CLUB", description: "Información institucional y escudo", symbol: "🏟️" },
+                ].map((section) => (
+                  <button key={section.id} type="button" onClick={() => setSelectedSection(section.id)} style={{ minHeight: "155px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".65rem", padding: "1.1rem", border: "1px solid #b5122a", borderRadius: "12px", background: "#111", color: "#fff", cursor: "pointer", textAlign: "center" }}>
+                    <span style={{ fontSize: "2rem" }}>{section.symbol}</span>
+                    <strong style={{ fontSize: ".95rem", letterSpacing: ".04em" }}>{section.title}</strong>
+                    <span style={{ color: "#ccc", fontSize: ".78rem", lineHeight: 1.4 }}>{section.description}</span>
+                  </button>
+                ))}
+              </div>
+            ) : mode === "equipos" && selectedSection === "datos" ? (
+              <div style={{ display: "grid", gap: "1rem", marginTop: "1.25rem" }}>
+                <article style={{ display: "grid", gridTemplateColumns: "minmax(110px, 170px) minmax(0, 1fr)", alignItems: "center", gap: "1rem", padding: "1rem", border: "1px solid #b5122a", borderRadius: "12px", background: "#111" }}>
+                  <div style={{ width: "100%", aspectRatio: "1", display: "grid", placeItems: "center", overflow: "hidden", borderRadius: "10px", background: "#fff" }}>
+                    {club?.logo_path ? <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt={"Escudo de " + club.club_name} style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <span style={{ color: "#171c27", fontSize: ".7rem", fontWeight: 900 }}>SIN ESCUDO</span>}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ color: "#b5122a", fontSize: ".7rem", fontWeight: 900, letterSpacing: ".1em", margin: "0 0 .4rem" }}>INFORMACIÓN INSTITUCIONAL</p>
+                    <h3 style={{ color: "#fff", margin: "0 0 .8rem", overflowWrap: "anywhere" }}>{club?.club_name}</h3>
+                    <p style={{ color: "#ccc", margin: 0, lineHeight: 1.5 }}><strong style={{ color: "#fff" }}>Domicilio:</strong> {club?.headquarters_address || "Sin domicilio registrado"}</p>
+                  </div>
+                </article>
+              </div>
             ) : (
               <>
-                {(mode === "equipos" || isManager) && club && (
+                {(mode === "equipos" && selectedSection !== "listas" || isManager && mode === "torneos") && club && (
                   <div style={{ display: "flex", alignItems: "center", gap: ".8rem", padding: ".8rem", margin: "1rem 0", background: "#171c27", borderRadius: "10px" }}>
                     {club.logo_path && <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt={club.club_name} style={{ width: "58px", height: "58px", objectFit: "contain", background: "#fff", borderRadius: "8px" }} />}
                     <div><strong>{club.club_name}</strong><div style={{ color: "#ccc", fontSize: ".85rem" }}>{club.headquarters_address}</div></div>
