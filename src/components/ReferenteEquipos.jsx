@@ -172,7 +172,10 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
           type="button"
           className="tc-form-back"
           onClick={() => {
-            if (mode === "equipos" && selectedClubId) {
+            if (mode === "equipos" && selectedSection) {
+              setSelectedSection(null);
+              setEditingPlayer(null);
+            } else if (mode === "equipos" && selectedClubId) {
               setSelectedClubId(null);
               setEditingPlayer(null);
             } else {
@@ -180,7 +183,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
             }
           }}
         >
-          {mode === "equipos" && selectedClubId ? "← Volver a clubes" : "← Volver al inicio"}
+          {mode === "equipos" && selectedSection ? "← Volver a la ficha del club" : mode === "equipos" && selectedClubId ? "← Volver a clubes" : "← Volver al inicio"}
         </button>
         <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".72rem", margin: "1.25rem 0 .35rem" }}>
           {isManager ? "GESTIÓN DE CLUBES" : "ÁREA DEL REFERENTE"}
