@@ -4376,7 +4376,11 @@ export function TournamenSportApp() {
               <div className="cr-card-glow"></div>
               {(() => {
                 const registration = (activeTournament.groups || []).find((group) => group?.name === "__INSCRIPCIONES__");
-                const participants = Array.isArray(registration?.teams) ? registration.teams : [];
+                const participants = [...new Set(
+                  (fefutinTournamentClubs || [])
+                    .map((club) => String(club.club_name || "").trim())
+                    .filter(Boolean)
+                )];
                 const canManage = canManageTournaments;
                 return (
                   <>
