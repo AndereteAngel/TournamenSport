@@ -121,7 +121,7 @@ begin
     raise exception 'No se encontró el escudo del club subido a tu carpeta';
   end if;
 
-  if jsonb_typeof(p_tournaments) <> 'array'
+  if coalesce(jsonb_typeof(p_tournaments), '') <> 'array'
      or jsonb_array_length(p_tournaments) = 0 then
     raise exception 'Seleccioná al menos un torneo';
   end if;
