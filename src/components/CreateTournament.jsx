@@ -49,7 +49,7 @@ export function CreateTournament({
         game: "Fútbol",
         division: "Infantil",
         categoryType: "Año de nacimiento",
-        categoryDetail: "2008",
+        categoryDetail: String(FIRST_INFANTIL_YEAR),
         categoryConfig: [],
         format: "groups_playoff",
         numGroups: 2,
@@ -426,49 +426,7 @@ export function CreateTournament({
           </div>
         </div>
 
-        {/* FÚTBOL ES EL ÚNICO DEPORTE DE FEFUTIN */}
-        <input type="hidden" value="Fútbol" />
-        <div>
-          <label className="sports-label">Formato de competencia</label>
-          <select value={formData.format} onChange={(e) => setFormData({ ...formData, format: e.target.value })} className="cr-input sports-input">
-            <option value="groups_playoff">Grupos + eliminatorias</option>
-            <option value="single_elimination">Eliminación directa</option>
-            <option value="league">Todos contra todos</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="sports-label">Tipo de categoría</label>
-          <select value={formData.categoryType} onChange={(e) => setFormData({ ...formData, categoryType: e.target.value, categoryDetail: "" })} className="cr-input sports-input">
-            <option value="Año de nacimiento">Año de nacimiento</option>
-            <option value="División">División competitiva (Primera, Reserva...)</option>
-            <option value="Formativa">Formativas (Mini, Premini...)</option>
-            <option value="Personalizada">Categoría personalizada</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="sports-label">Categoría / división</label>
-          {formData.categoryType === "Año de nacimiento" ? (
-            <select value={formData.categoryDetail} onChange={(e) => setFormData({ ...formData, categoryDetail: e.target.value })} className="cr-input sports-input" required>
-              <option value="">Seleccioná el año</option>
-              {Array.from({ length: 17 }, (_, index) => 2008 + index).map((year) => <option key={year} value={String(year)}>{year}</option>)}
-            </select>
-          ) : formData.categoryType === "División" ? (
-            <select value={formData.categoryDetail} onChange={(e) => setFormData({ ...formData, categoryDetail: e.target.value })} className="cr-input sports-input" required>
-              <option value="">Seleccioná la división</option>
-              {["Primera", "Reserva", "Tercera", "Cuarta", "Quinta", "Sexta", "Otra división"].map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-          ) : formData.categoryType === "Formativa" ? (
-            <select value={formData.categoryDetail} onChange={(e) => setFormData({ ...formData, categoryDetail: e.target.value })} className="cr-input sports-input" required>
-              <option value="">Seleccioná la categoría</option>
-              {["Premini", "Mini", "Infantiles", "Menores", "Cadetes", "Juveniles", "Sub-14", "Sub-16", "Sub-18", "Sub-21", "Otra categoría"].map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-          ) : (
-            <input value={formData.categoryDetail} onChange={(e) => setFormData({ ...formData, categoryDetail: e.target.value })} placeholder="Escribí la categoría o división" className="cr-input sports-input" required />
-          )}
-          <span className="sports-help">Las categorías varían según el deporte y la federación. Podés definir una opción propia.</span>
-        </div>
+        {/* Las ramas y categorías se administran exclusivamente en el bloque superior. */}
 
         {/* ===================================================
             GRUPOS
