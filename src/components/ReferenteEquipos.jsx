@@ -58,17 +58,14 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
       players: Array.isArray(item.players) ? item.players : [],
     }));
     setParticipations(items);
-    setRowsByParticipation((previous) => {
-      const next = {};
-      items.forEach((item) => {
-        const existing = previous[item.club_tournament_id];
-        const source = existing || item.players;
-        next[item.club_tournament_id] = source.length
-          ? source.map((player) => ({ ...player, birth_date: player.birth_date || "" }))
-          : [];
-      });
-      return next;
+    const nextRows = {};
+    items.forEach((item) => {
+      nextRows[item.club_tournament_id] = item.players.map((player) => ({
+        ...player,
+        birth_date: player.birth_date || "",
+      }));
     });
+    setRowsByParticipation(nextRows);
     setLoading(false);
   }, []);
 
