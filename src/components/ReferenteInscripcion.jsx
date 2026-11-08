@@ -82,7 +82,7 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack, on
 
     const safeFileName = clubImage.name
       .normalize("NFD")
-      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-zA-Z0-9._-]/g, "-");
     const logoPath = `${currentUser.id}/${Date.now()}-${safeFileName}`;
 
