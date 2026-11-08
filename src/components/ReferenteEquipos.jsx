@@ -7,7 +7,7 @@ const emptyPlayer = () => ({
   last_name: "",
   dni: "",
   birth_date: "",
-  jersey_number: "",
+  jersey_number: "Sin especificar",
   photo_path: "",
 });
 
@@ -236,15 +236,30 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                     ["jersey_number", "Camiseta"],
                                   ].map(([field, placeholder, type]) => (
                                     <td key={field} style={{ padding: ".35rem" }}>
-                                      <input
-                                        aria-label={`${placeholder} del jugador ${index + 1}`}
-                                        type={type || "text"}
-                                        value={player[field] || ""}
-                                        disabled={readOnly || item.team_status === "presentada"}
-                                        onChange={(event) => updatePlayer(item.club_tournament_id, player.id, field, event.target.value)}
-                                        placeholder={placeholder}
-                                        style={inputStyle}
-                                      />
+                                      {field === "jersey_number" ? (
+                                        <select
+                                          aria-label={`${placeholder} del jugador ${index + 1}`}
+                                          value={player[field] || "Sin especificar"}
+                                          disabled={readOnly || item.team_status === "presentada"}
+                                          onChange={(event) => updatePlayer(item.club_tournament_id, player.id, field, event.target.value)}
+                                          style={inputStyle}
+                                        >
+                                          <option value="Sin especificar">Sin especificar</option>
+                                          {Array.from({ length: 99 }, (_, number) => number + 1).map((number) => (
+                                            <option key={number} value={String(number)}>{number}</option>
+                                          ))}
+                                        </select>
+                                      ) : (
+                                        <input
+                                          aria-label={`${placeholder} del jugador ${index + 1}`}
+                                          type={type || "text"}
+                                          value={player[field] || ""}
+                                          disabled={readOnly || item.team_status === "presentada"}
+                                          onChange={(event) => updatePlayer(item.club_tournament_id, player.id, field, event.target.value)}
+                                          placeholder={placeholder}
+                                          style={inputStyle}
+                                        />
+                                      )}
                                     </td>
                                   ))}
                                   <td style={{ padding: ".35rem", minWidth: "125px" }}>
