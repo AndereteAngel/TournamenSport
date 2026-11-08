@@ -575,70 +575,12 @@ export function CreateTournament({
         )}
 
         {!isEditing ? (
-          <>
-            <div>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "4px" }}>
-                Cupo máximo de participantes
-              </label>
-              <input
-                type="number"
-                min="4"
-                max="256"
-                step="1"
-                value={formData.maxParticipants}
-                onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
-                required
-                className="cr-input"
-              />
-              <span style={{ fontSize: "10px", color: "#9ca3af", marginTop: "4px", display: "block" }}>
-                Podés seleccionar equipos del catálogo o completar la lista manualmente.
-              </span>
-            </div>
-
-            <div style={{ padding: "0.85rem", border: "1px solid rgba(96,165,250,0.45)", borderRadius: "10px", background: "rgba(27,95,168,0.12)" }}>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "8px" }}>
-                Equipos disponibles
-              </label>
-              <button type="button" onClick={loadTeamsCatalog} disabled={loadingTeamsCatalog} style={{ width: "100%", padding: "0.65rem", borderRadius: "8px", background: "#1b5fa8", border: "1px solid #60a5fa", color: "#fff", cursor: loadingTeamsCatalog ? "wait" : "pointer", fontWeight: "bold" }}>
-                {loadingTeamsCatalog ? "Cargando equipos..." : teamsCatalog.length ? "↻ Actualizar catálogo" : "🔎 Cargar catálogo de equipos"}
-              </button>
-              {teamCatalogError && <p role="alert" style={{ color: "#fca5a5", fontSize: "0.75rem", lineHeight: 1.4 }}>{teamCatalogError}</p>}
-              {teamsCatalog.length > 0 && (
-                <>
-                  <input type="search" value={teamSearch} onChange={(e) => setTeamSearch(e.target.value)} placeholder="Buscar equipo..." aria-label="Buscar equipos disponibles" className="cr-input" style={{ marginTop: "0.65rem" }} />
-                  <div style={{ maxHeight: "190px", overflowY: "auto", display: "grid", gap: "0.35rem", marginTop: "0.55rem" }}>
-                    {teamsCatalog.filter((profile) => {
-                      const query = teamSearch.trim().toLocaleLowerCase("es");
-                      return !query || String(profile.name || "").toLocaleLowerCase("es").includes(query);
-                    }).map((profile) => (
-                      <label key={profile.id} style={{ display: "flex", alignItems: "center", gap: "0.55rem", padding: "0.5rem", borderRadius: "7px", background: "#121019", color: "#e5e7eb", fontSize: "0.82rem", cursor: "pointer" }}>
-                        <input type="checkbox" checked={selectedTeamIds.includes(profile.id)} onChange={(e) => setSelectedTeamIds((prev) => e.target.checked ? [...prev, profile.id] : prev.filter((id) => id !== profile.id))} />
-                        <span>{profile.name || "Sin alias"}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <p style={{ color: "#93c5fd", fontSize: "0.75rem", marginBottom: 0 }}>Seleccionados: {selectedTeamIds.length}</p>
-                </>
-              )}
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "4px" }}>
-                Agregar equipos manualmente (opcional)
-              </label>
-              <textarea
-                placeholder={"Club Atlético Norte\nDeportivo Central\nEscuela Municipal"}
-                rows={4}
-                value={formData.participantsInput}
-                onChange={(e) => setFormData({ ...formData, participantsInput: e.target.value })}
-                className="cr-input"
-                style={{ resize: "vertical", fontFamily: "inherit" }}
-              />
-              <span style={{ fontSize: "10px", color: "#9ca3af", marginTop: "4px", display: "block" }}>
-                Escribí un equipo o participante por línea. Los duplicados se eliminan automáticamente.
-              </span>
-            </div>
-          </>
+          <div style={{ padding: "0.9rem", border: "1px solid rgba(181,18,42,0.55)", borderRadius: "10px", background: "rgba(181,18,42,0.08)" }}>
+            <strong style={{ color: "#fff", display: "block", marginBottom: "0.4rem" }}>El torneo quedará abierto a inscripciones</strong>
+            <p style={{ color: "#d1d5db", fontSize: "0.82rem", lineHeight: 1.5, margin: 0 }}>
+              No necesitás cargar equipos ahora. Una vez creado, los clubes podrán inscribirse en las ramas y categorías habilitadas. La organización de grupos y partidos se realizará más adelante, cuando las inscripciones estén confirmadas.
+            </p>
+          </div>
         ) : (
         <>
         {/* ===================================================
