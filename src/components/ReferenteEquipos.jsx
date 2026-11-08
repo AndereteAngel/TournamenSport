@@ -41,6 +41,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [uploadingPlayerId, setUploadingPlayerId] = useState(null);
+  const [editingPlayer, setEditingPlayer] = useState(null);
 
   const loadParticipations = useCallback(async () => {
     setLoading(true);
@@ -84,10 +85,12 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   };
 
   const addPlayer = (participationId) => {
+    const player = emptyPlayer();
     setRowsByParticipation((previous) => ({
       ...previous,
-      [participationId]: [...(previous[participationId] || []), emptyPlayer()],
+      [participationId]: [...(previous[participationId] || []), player],
     }));
+    setEditingPlayer({ participationId, playerId: player.id });
   };
 
   const uploadPlayerPhoto = async (participationId, playerId, file) => {
@@ -195,6 +198,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 const players = rowsByParticipation[item.club_tournament_id] || [];
                 const logoUrl = item.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(item.logo_path).data.publicUrl : "";
                 const statusLabel = item.team_status === "presentada" ? "LISTA PRESENTADA" : item.team_status === "borrador" ? "BORRADOR" : "PENDIENTE DE CARGA";
+                const isEditingThis = editingPlayer?.participationId === item.club_tournament_id;
+                const currentEditingPlayer = isEditingThis ? players.find((player) => player.id === editingPlayer.playerId) : null;
                 return (
                   <article key={item.club_tournament_id} style={{ border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flexWrap: "wrap" }}>
@@ -218,77 +223,76 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                       </div>
                     ) : (
                       <>
-                        <h3 style={{ color: "#fff", fontSize: ".95rem", margin: "1rem 0 .65rem" }}>LISTA DE BUENA FE</h3>
-                        <div style={{ overflowX: "auto", width: "100%" }}>
-                          <table style={{ width: "100%", minWidth: "760px", borderCollapse: "collapse", color: "#fff", fontSize: ".82rem" }}>
-                            <thead><tr style={{ background: "#b5122a" }}>
-                              {["#", "Apellido", "Nombre", "DNI", "Fecha de nacimiento", "N.º camiseta", "Foto", "Carnet", ""].map((label) => <th key={label} style={{ padding: ".6rem .4rem", textAlign: "left", whiteSpace: "nowrap" }}>{label}</th>)}
-                            </tr></thead>
-                            <tbody>
-                              {players.map((player, index) => (
-                                <tr key={player.id} style={{ borderBottom: "1px solid #333" }}>
-                                  <td style={{ padding: ".45rem", color: "#aaa" }}>{index + 1}</td>
-                                  {[
-                                    ["last_name", "Apellido"],
-                                    ["first_name", "Nombre"],
-                                    ["dni", "DNI"],
-                                    ["birth_date", "Fecha", "date"],
-                                    ["jersey_number", "Camiseta"],
-                                  ].map(([field, placeholder, type]) => (
-                                    <td key={field} style={{ padding: ".35rem" }}>
-                                      {field === "jersey_number" ? (
-                                        <select
-                                          aria-label={`${placeholder} del jugador ${index + 1}`}
-                                          value={player[field] || "Sin especificar"}
-                                          disabled={readOnly || item.team_status === "presentada"}
-                                          onChange={(event) => updatePlayer(item.club_tournament_id, player.id, field, event.target.value)}
-                                          style={inputStyle}
-                                        >
-                                          <option value="Sin especificar">Sin especificar</option>
-                                          {Array.from({ length: 99 }, (_, number) => number + 1).map((number) => (
-                                            <option key={number} value={String(number)}>{number}</option>
-                                          ))}
-                                        </select>
-                                      ) : (
-                                        <input
-                                          aria-label={`${placeholder} del jugador ${index + 1}`}
-                                          type={type || "text"}
-                                          value={player[field] || ""}
-                                          disabled={readOnly || item.team_status === "presentada"}
-                                          onChange={(event) => updatePlayer(item.club_tournament_id, player.id, field, event.target.value)}
-                                          placeholder={placeholder}
-                                          style={inputStyle}
-                                        />
-                                      )}
-                                    </td>
-                                  ))}
-                                  <td style={{ padding: ".35rem", minWidth: "125px" }}>
-                                    {player.photo_path ? <img src={supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl} alt="Foto del jugador" style={{ width: "48px", height: "58px", objectFit: "cover", borderRadius: "6px" }} /> : <span style={{ color: "#facc15" }}>Sin foto</span>}
-                                    {!readOnly && item.team_status !== "presentada" && <label style={{ display: "block", color: "#ffb3bf", fontSize: ".7rem", cursor: "pointer", marginTop: ".25rem" }}>
-                                      {uploadingPlayerId === player.id ? "Subiendo..." : "Cargar foto"}
-                                      <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPlayerId === player.id} onChange={(event) => uploadPlayerPhoto(item.club_tournament_id, player.id, event.target.files?.[0])} style={{ display: "none" }} />
-                                    </label>}
-                                  </td>
-                                  <td style={{ padding: ".35rem", color: player.approval_status === "aprobado" ? "#86efac" : "#facc15", fontWeight: 800, whiteSpace: "nowrap" }}>
-                                    {player.carnet_number || (player.approval_status === "rechazado" ? "Rechazado" : "Pendiente")}
-                                  </td>
-                                  <td style={{ padding: ".35rem" }}>
-                                    {!readOnly && item.team_status !== "presentada" && <button type="button" onClick={() => removePlayer(item.club_tournament_id, player.id)} title="Quitar jugador" style={{ ...buttonStyle, padding: ".45rem .6rem", color: "#fecaca" }}>✕</button>}
-                                  </td>
-                                </tr>
-                              ))}
-                              {!players.length && <tr><td colSpan="9" style={{ padding: "1rem", textAlign: "center", color: "#aaa" }}>Todavía no agregaste jugadores a esta categoría.</td></tr>}
-                            </tbody>
-                          </table>
-                        </div>
-                        {!readOnly && item.team_status !== "presentada" && (
-                          <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", justifyContent: "space-between", marginTop: ".85rem" }}>
-                            <button type="button" style={buttonStyle} onClick={() => addPlayer(item.club_tournament_id)}>＋ Agregar jugador</button>
-                            <div style={{ display: "flex", gap: ".55rem", flexWrap: "wrap" }}>
-                              <button type="button" style={buttonStyle} disabled={savingId === item.club_tournament_id} onClick={() => saveRoster(item, false)}>{savingId === item.club_tournament_id ? "Guardando..." : "Guardar borrador"}</button>
-                              <button type="button" className="cr-btn-gold" disabled={savingId === item.club_tournament_id} onClick={() => saveRoster(item, true)}>{savingId === item.club_tournament_id ? "Enviando..." : "Presentar lista"}</button>
+                        {isEditingThis && currentEditingPlayer ? (
+                          <div style={{ marginTop: "1rem", padding: "1rem", border: "1px solid #b5122a", borderRadius: "12px", background: "#080808" }}>
+                            <button type="button" onClick={() => setEditingPlayer(null)} style={{ ...buttonStyle, marginBottom: "1rem" }}>← Volver a la lista</button>
+                            <p style={{ color: "#b5122a", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".1em", margin: "0 0 .35rem" }}>FICHA INDIVIDUAL</p>
+                            <h3 style={{ color: "#fff", margin: "0 0 1rem" }}>{currentEditingPlayer.first_name || currentEditingPlayer.last_name ? `${currentEditingPlayer.last_name} ${currentEditingPlayer.first_name}` : "Nuevo jugador"}</h3>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: ".85rem" }}>
+                              <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Apellido
+                                <input value={currentEditingPlayer.last_name || ""} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "last_name", event.target.value)} placeholder="Apellido" style={inputStyle} />
+                              </label>
+                              <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Nombre
+                                <input value={currentEditingPlayer.first_name || ""} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "first_name", event.target.value)} placeholder="Nombre" style={inputStyle} />
+                              </label>
+                              <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>DNI
+                                <input inputMode="numeric" value={currentEditingPlayer.dni || ""} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "dni", event.target.value)} placeholder="Número de documento" style={inputStyle} />
+                              </label>
+                              <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Fecha de nacimiento
+                                <input type="date" value={currentEditingPlayer.birth_date || ""} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "birth_date", event.target.value)} style={inputStyle} />
+                              </label>
+                              <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Número de camiseta
+                                <select value={currentEditingPlayer.jersey_number || "Sin especificar"} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "jersey_number", event.target.value)} style={inputStyle}>
+                                  <option value="Sin especificar">Sin especificar</option>
+                                  {Array.from({ length: 99 }, (_, number) => number + 1).map((number) => <option key={number} value={String(number)}>{number}</option>)}
+                                </select>
+                              </label>
                             </div>
+                            <div style={{ marginTop: "1rem", display: "grid", gap: ".55rem" }}>
+                              <span style={{ color: "#eee", fontSize: ".82rem", fontWeight: 700 }}>Fotografía individual</span>
+                              {currentEditingPlayer.photo_path ? (
+                                <img src={supabase.storage.from("fefutin-player-photos").getPublicUrl(currentEditingPlayer.photo_path).data.publicUrl} alt="Foto del jugador" style={{ width: "112px", height: "132px", objectFit: "cover", borderRadius: "8px", border: "1px solid #b5122a" }} />
+                              ) : <span style={{ color: "#facc15", fontSize: ".82rem" }}>Todavía no se cargó una fotografía.</span>}
+                              {!readOnly && item.team_status !== "presentada" && (
+                                <label style={{ ...buttonStyle, display: "inline-block", width: "fit-content", cursor: "pointer" }}>
+                                  {uploadingPlayerId === currentEditingPlayer.id ? "Subiendo fotografía..." : currentEditingPlayer.photo_path ? "Cambiar fotografía" : "＋ Cargar fotografía"}
+                                  <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPlayerId === currentEditingPlayer.id} onChange={(event) => uploadPlayerPhoto(item.club_tournament_id, currentEditingPlayer.id, event.target.files?.[0])} style={{ display: "none" }} />
+                                </label>
+                              )}
+                              <span style={{ color: "#aaa", fontSize: ".72rem" }}>Formatos JPG, PNG o WEBP. Máximo 5 MB.</span>
+                            </div>
+                            <button type="button" onClick={() => setEditingPlayer(null)} style={{ ...buttonStyle, marginTop: "1.2rem", width: "100%" }}>Guardar datos y volver a la lista</button>
                           </div>
+                        ) : (
+                          <>
+                            <h3 style={{ color: "#fff", fontSize: ".95rem", margin: "1rem 0 .65rem" }}>LISTA DE BUENA FE</h3>
+                            <div style={{ display: "grid", gap: ".65rem" }}>
+                              {players.map((player, index) => {
+                                const photoUrl = player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : "";
+                                return (
+                                  <div key={player.id} style={{ display: "flex", alignItems: "center", gap: ".75rem", padding: ".65rem", border: "1px solid #333", borderRadius: "10px", background: "#080808", minWidth: 0 }}>
+                                    {photoUrl ? <img src={photoUrl} alt={`Foto de ${player.first_name} ${player.last_name}`} style={{ width: "58px", height: "68px", objectFit: "cover", borderRadius: "7px", flexShrink: 0 }} /> : <div style={{ width: "58px", height: "68px", borderRadius: "7px", background: "#222", display: "grid", placeItems: "center", color: "#aaa", fontSize: ".65rem", flexShrink: 0 }}>SIN FOTO</div>}
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <strong style={{ display: "block", color: "#fff", overflowWrap: "anywhere" }}>{player.last_name || "Apellido pendiente"}, {player.first_name || "Nombre pendiente"}</strong>
+                                      <span style={{ color: "#fca5a5", fontSize: ".78rem" }}>{item.category_label}</span>
+                                    </div>
+                                    {!readOnly && item.team_status !== "presentada" && <button type="button" onClick={() => setEditingPlayer({ participationId: item.club_tournament_id, playerId: player.id })} style={{ ...buttonStyle, padding: ".55rem .7rem", flexShrink: 0 }}>Editar</button>}
+                                    {!readOnly && item.team_status !== "presentada" && <button type="button" onClick={() => removePlayer(item.club_tournament_id, player.id)} title="Quitar jugador" style={{ ...buttonStyle, padding: ".55rem .7rem", color: "#fecaca", flexShrink: 0 }}>✕</button>}
+                                  </div>
+                                );
+                              })}
+                              {!players.length && <p style={{ padding: "1rem", textAlign: "center", color: "#aaa" }}>Todavía no agregaste jugadores a esta categoría.</p>}
+                            </div>
+                            {!readOnly && item.team_status !== "presentada" && (
+                              <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", justifyContent: "space-between", marginTop: ".85rem" }}>
+                                <button type="button" style={buttonStyle} onClick={() => addPlayer(item.club_tournament_id)}>＋ Agregar jugador</button>
+                                <div style={{ display: "flex", gap: ".55rem", flexWrap: "wrap" }}>
+                                  <button type="button" style={buttonStyle} disabled={savingId === item.club_tournament_id} onClick={() => saveRoster(item, false)}>{savingId === item.club_tournament_id ? "Guardando..." : "Guardar borrador"}</button>
+                                  <button type="button" className="cr-btn-gold" disabled={savingId === item.club_tournament_id} onClick={() => saveRoster(item, true)}>{savingId === item.club_tournament_id ? "Enviando..." : "Presentar lista"}</button>
+                                </div>
+                              </div>
+                            )}
+                          </>
                         )}
                         {item.team_status === "presentada" && <p style={{ color: "#facc15", fontSize: ".78rem" }}>Lista presentada: las modificaciones están bloqueadas mientras se revisan las altas.</p>}
                         {item.submitted_at && <p style={{ color: "#86efac", fontSize: ".78rem", marginBottom: 0 }}>Presentada: {new Date(item.submitted_at).toLocaleString("es-AR")}</p>}
