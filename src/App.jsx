@@ -2598,16 +2598,21 @@ export function TournamenSportApp() {
       return;
     }
 
+    const participants = [...new Set(
+      (fefutinTournamentClubs || [])
+        .map((club) => String(club.club_name || "").trim())
+        .filter(Boolean)
+    )];
     const registration = (activeTournament.groups || []).find((group) => group?.name === "__INSCRIPCIONES__");
-    const participants = Array.isArray(registration?.teams) ? registration.teams : [];
-    const numGroups = activeTournament.format === "groups_playoff" ? Number(registration?.numGroups || 2) : 1;
+    const configuredGroups = activeTournament.format === "groups_playoff"
+      ? Number(registration?.numGroups || 2)
+      : 1;
+    const numGroups = activeTournament.format === "groups_playoff"
+      ? Math.max(1, Math.min(configuredGroups, Math.floor(participants.length / 2)))
+      : 1;
 
-    if (participants.length < 4) {
-      showNotice("Necesitás al menos 4 participantes inscriptos para dar comienzo.");
-      return;
-    }
-    if (participants.length < numGroups) {
-      showNotice(`Para armar ${numGroups} grupos necesitás al menos ${numGroups} participantes.`);
+    if (participants.length < 2) {
+      showNotice("Se necesitan al menos 2 clubes aprobados e inscriptos para iniciar la competencia.");
       return;
     }
 
@@ -4426,8 +4431,8 @@ export function TournamenSportApp() {
                     <p style={{ color: "#9ca3af", fontSize: "0.8rem" }}>El creador dará comienzo al torneo cuando esté listo. Al iniciar, se cerrarán las inscripciones y se sortearán los grupos y partidos.</p>
                     {canManage && (
                       <>
-                        <button type="button" className="cr-btn-gold" onClick={handleStartRegistrationTournament} disabled={participants.length < 4} style={{ width: "100%", marginTop: "0.5rem", opacity: participants.length < 4 ? 0.55 : 1, cursor: participants.length < 4 ? "not-allowed" : "pointer" }}>
-                          <TCIcon name="flag" /> {participants.length < 4 ? "Esperando inscripciones" : "Inicializar competencia"}
+                        <button type="button" className="cr-btn-gold" onClick={handleStartRegistrationTournament} disabled={loadingFefutinTournamentClubs || fefutinTournamentClubs.length < 2} style={{ width: "100%", marginTop: "0.5rem", opacity: loadingFefutinTournamentClubs || fefutinTournamentClubs.length < 2 ? 0.55 : 1, cursor: loadingFefutinTournamentClubs || fefutinTournamentClubs.length < 2 ? "not-allowed" : "pointer" }}>
+                          <TCIcon name="flag" /> {loadingFefutinTournamentClubs ? "Cargando clubes..." : fefutinTournamentClubs.length < 2 ? "Esperando 2 clubes aprobados" : "Cerrar inscripción e iniciar torneo"}
                         </button>
                         <button
                           type="button"
