@@ -299,7 +299,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                       <div style={{ color: "#aaa", fontSize: ".78rem", marginTop: ".25rem" }}>Equipo: {item.club_name} · {item.category_label}</div>
                     </div>
 
-                    {mode === "torneos" ? (
+                    {mode === "torneos" || selectedSection === "torneos" ? (
                       <div style={{ display: "flex", justifyContent: "flex-end" }}>
                         <button type="button" style={buttonStyle} onClick={() => onOpenTeams?.()}>Abrir ficha y lista de buena fe →</button>
                       </div>
@@ -347,7 +347,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                           </div>
                         ) : (
                           <>
-                            <h3 style={{ color: "#fff", fontSize: ".95rem", margin: "1rem 0 .65rem" }}>LISTA DE BUENA FE</h3>
+                            <h3 style={{ color: "#fff", fontSize: ".95rem", margin: "1rem 0 .65rem" }}>LISTA DE BUENA FE · {item.category_label}</h3>
                             <div style={{ display: "grid", gap: ".65rem" }}>
                               {players.map((player, index) => {
                                 const photoUrl = player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : "";
