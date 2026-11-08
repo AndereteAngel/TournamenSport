@@ -1,6 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 
-const CATEGORIES = ["Infantil", "Femenino", "Mayores"];
+function getTournamentCategoryLabel(tournament) {
+  const registrationGroup = (Array.isArray(tournament?.groups) ? tournament.groups : [])
+    .find((group) => group?.name === "__INSCRIPCIONES__");
+  const categoryConfig = Array.isArray(registrationGroup?.category_config)
+    ? registrationGroup.category_config
+    : [];
+  const branch = categoryConfig[0];
+  const division = String(branch?.division || "").trim();
+  const category = Array.isArray(branch?.categories)
+    ? String(branch.categories[0] || "").trim()
+    : "";
+
+  if (division && category) return `${division} · ${category}`;
+
+  const parts = String(tournament?.game || "").split(" · ").map((part) => part.trim());
+  return parts.length >= 3 ? `${parts[1]} · ${parts.slice(2).join(" · ")}` : "";
+}
 
 const inputStyle = {
   width: "100%",
@@ -48,20 +64,11 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack }) 
       if (next[tournamentId]) {
         delete next[tournamentId];
       } else {
-        next[tournamentId] = [];
+        const tournament = tournaments.find((item) => item.id === tournamentId);
+        const categoryLabel = getTournamentCategoryLabel(tournament);
+        next[tournamentId] = categoryLabel ? [categoryLabel] : [];
       }
       return next;
-    });
-    setShowReview(false);
-  };
-
-  const toggleCategory = (tournamentId, category) => {
-    setSelectedTournaments((previous) => {
-      const current = previous[tournamentId] || [];
-      const nextCategories = current.includes(category)
-        ? current.filter((item) => item !== category)
-        : [...current, category];
-      return { ...previous, [tournamentId]: nextCategories };
     });
     setShowReview(false);
   };
@@ -166,16 +173,10 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack }) 
                     </span>
                   </label>
                   {isSelected && (
-                    <div style={{ marginTop: ".85rem", paddingLeft: "1.7rem" }}>
-                      <p style={{ color: "#ddd", fontSize: ".85rem", margin: "0 0 .55rem" }}>Seleccioná una o más categorías:</p>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: ".55rem" }}>
-                        {CATEGORIES.map((category) => (
-                          <label key={category} style={{ display: "inline-flex", gap: ".4rem", alignItems: "center", border: "1px solid #555", borderRadius: "20px", padding: ".4rem .7rem", color: "#fff", fontSize: ".82rem", cursor: "pointer" }}>
-                            <input type="checkbox" checked={(selectedTournaments[tournament.id] || []).includes(category)} onChange={() => toggleCategory(tournament.id, category)} style={{ accentColor: "#b5122a" }} />
-                            {category}
-                          </label>
-                        ))}
-                      </div>
+                    <div style={{ marginTop: ".75rem", paddingLeft: "1.7rem" }}>
+                      <span style={{ color: "#fff", fontSize: ".88rem" }}>
+                        Rama y categoría asignadas: <strong style={{ color: "#ffb3bf" }}>{getTournamentCategoryLabel(tournament) || "No se pudo identificar la categoría de este torneo"}</strong>
+                      </span>
                     </div>
                   )}
                 </article>
