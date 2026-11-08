@@ -43,6 +43,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [uploadingPlayerId, setUploadingPlayerId] = useState(null);
   const [editingPlayer, setEditingPlayer] = useState(null);
   const [selectedClubId, setSelectedClubId] = useState(null);
+  const [selectedSection, setSelectedSection] = useState(null);
 
   const loadParticipations = useCallback(async () => {
     setLoading(true);
