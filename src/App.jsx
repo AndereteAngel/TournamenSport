@@ -12,6 +12,7 @@ import { TCIcon } from "./components/TCIcon";
 import { TournamentNotice, useTournamentNotice } from "./components/TournamentNotice";
 import { PlayoffBracket } from "./components/PlayoffBracket";
 import { ChampionCelebration } from "./components/ChampionCelebration";
+import { ReferenteInscripcion } from "./components/ReferenteInscripcion";
 import { supabase } from "./supabaseClient";
 
 // La categoría se guarda dentro de "game" al crear el torneo (ej.: "Fútbol · 2012").
@@ -3587,26 +3588,30 @@ export function TournamenSportApp() {
             })()}
           </section>
         </div>
-      ) : ["referente-inscripcion", "referente-equipos", "referente-torneos"].includes(activeView) && isReferente ? (
+      ) : activeView === "referente-inscripcion" && isReferente ? (
+        <ReferenteInscripcion
+          tournaments={tournaments}
+          currentUser={currentUser}
+          onBack={() => setActiveView("home")}
+        />
+      ) : ["referente-equipos", "referente-torneos"].includes(activeView) && isReferente ? (
         <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
           <section className="cr-card" style={{ width: "100%", maxWidth: "980px", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)", background: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
             <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>← Volver al inicio</button>
             <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".72rem", margin: "1.25rem 0 .35rem" }}>ÁREA DEL REFERENTE</p>
             <h2 className="cr-title" style={{ color: "#fff", margin: "0 0 .75rem" }}>
-              {activeView === "referente-inscripcion" ? "INSCRIPCIÓN" : activeView === "referente-equipos" ? "FICHA DE EQUIPOS" : "MIS TORNEOS"}
+              {activeView === "referente-equipos" ? "FICHA DE EQUIPOS" : "MIS TORNEOS"}
             </h2>
             <p style={{ color: "#d1d5db", lineHeight: 1.6 }}>
-              {activeView === "referente-inscripcion"
-                ? "En este espacio vas a poder inscribir a tu club en las competencias disponibles y seleccionar una o varias categorías."
-                : activeView === "referente-equipos"
-                  ? "Aquí se mostrarán los datos de tu club, sus equipos y los jugadores registrados."
-                  : "Aquí vas a encontrar los torneos en los que participa tu club y la gestión de sus listas de buena fe."}
+              {activeView === "referente-equipos"
+                ? "Aquí se mostrarán las fichas de los clubes, sus equipos y los jugadores registrados."
+                : "Aquí vas a encontrar los torneos en los que participa tu club y la gestión de sus listas de buena fe."}
             </p>
             <div style={{ minHeight: "180px", display: "grid", placeItems: "center", border: "1px dashed rgba(255,255,255,.3)", borderRadius: "12px", padding: "1.5rem", marginTop: "1.25rem", textAlign: "center", color: "#9ca3af" }}>
               <div>
                 <div style={{ fontSize: "2rem", marginBottom: ".5rem" }}>⚽</div>
                 <strong style={{ display: "block", color: "#fff" }}>Espacio preparado</strong>
-                <span style={{ fontSize: ".9rem" }}>Todavía no hay información cargada. Vamos a completar esta pantalla por etapas.</span>
+                <span style={{ fontSize: ".9rem" }}>Esta pantalla se conectará con la ficha del club en la siguiente etapa.</span>
               </div>
             </div>
           </section>
