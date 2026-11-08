@@ -4396,7 +4396,7 @@ export function TournamenSportApp() {
                           {fefutinTournamentClubs.map((club) => (
                             <div key={club.club_tournament_id} style={{ display: "flex", alignItems: "center", gap: "0.7rem", padding: "0.7rem", borderRadius: "8px", background: "#121019", border: "1px solid #4b2029", color: "#fff" }}>
                               {club.logo_path ? (
-                                <img src={club.logo_path} alt="" style={{ width: "42px", height: "42px", objectFit: "contain", borderRadius: "6px", background: "#fff", flexShrink: 0 }} />
+                                <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt="" style={{ width: "42px", height: "42px", objectFit: "contain", borderRadius: "6px", background: "#fff", flexShrink: 0 }} />
                               ) : (
                                 <div style={{ width: "42px", height: "42px", display: "grid", placeItems: "center", borderRadius: "6px", background: "#2a1117", color: "#fff", fontSize: "1.2rem", flexShrink: 0 }}>⚽</div>
                               )}
