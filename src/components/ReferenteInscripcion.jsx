@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../supabaseClient";
 
 function getTournamentCategoryLabel(tournament) {
   const registrationGroup = (Array.isArray(tournament?.groups) ? tournament.groups : [])
@@ -29,7 +30,7 @@ const inputStyle = {
   fontSize: "1rem",
 };
 
-export function ReferenteInscripcion({ tournaments = [], currentUser, onBack }) {
+export function ReferenteInscripcion({ tournaments = [], currentUser, onBack, onSubmitted }) {
   const [clubName, setClubName] = useState("");
   const [clubAddress, setClubAddress] = useState("");
   const [clubImage, setClubImage] = useState(null);
@@ -37,6 +38,7 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack }) 
   const [showReview, setShowReview] = useState(false);
   const [formError, setFormError] = useState("");
   const [imagePreview, setImagePreview] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!clubImage) {
@@ -71,6 +73,59 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack }) 
       return next;
     });
     setShowReview(false);
+  };
+
+  const handleSendRegistration = async () => {
+    if (saving) return;
+    setSaving(true);
+    setFormError("");
+
+    const safeFileName = clubImage.name
+      .normalize("NFD")
+      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9._-]/g, "-");
+    const logoPath = `${currentUser.id}/${Date.now()}-${safeFileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("fefutin-clubs")
+      .upload(logoPath, clubImage, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: clubImage.type || "image/png",
+      });
+
+    if (uploadError) {
+      console.error("Error al subir el escudo del club:", uploadError);
+      setFormError(uploadError.message || "No se pudo subir el escudo del club.");
+      setSaving(false);
+      return;
+    }
+
+    const tournamentSelections = selectedItems.map(({ tournament, categories }) => ({
+      tournament_id: tournament.id,
+      category_label: categories.join(" · "),
+    }));
+
+    const { error: registrationError } = await supabase.rpc(
+      "submit_fefutin_club_registration",
+      {
+        p_name: clubName.trim(),
+        p_headquarters_address: clubAddress.trim(),
+        p_logo_path: logoPath,
+        p_tournaments: tournamentSelections,
+      }
+    );
+
+    if (registrationError) {
+      console.error("Error al enviar la inscripción del club:", registrationError);
+      await supabase.storage.from("fefutin-clubs").remove([logoPath]);
+      setFormError(registrationError.message || "No se pudo enviar la inscripción.");
+      setSaving(false);
+      return;
+    }
+
+    if (onSubmitted) await onSubmitted();
+    setSaving(false);
   };
 
   const handleReview = (event) => {
@@ -203,9 +258,18 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack }) 
                 <p style={{ color: "#ddd", margin: ".3rem 0 0" }}>{categories.join(" · ")}</p>
               </div>
             ))}
-            <p style={{ color: "#ffcf7a", fontSize: ".85rem", lineHeight: 1.5, marginBottom: 0 }}>
-              La pantalla y las selecciones ya están preparadas. El guardado definitivo se conecta en el siguiente paso, una vez verificada la estructura de las tablas de clubes en Supabase.
+            <p style={{ color: "#ffcf7a", fontSize: ".85rem", lineHeight: 1.5, marginBottom: ".9rem" }}>
+              Al enviar, la inscripción quedará pendiente de revisión. El club no se habilitará hasta que administración o un directivo la apruebe.
             </p>
+            {formError && <p role="alert" style={{ color: "#ff8a8a", fontWeight: 700 }}>{formError}</p>}
+            <button
+              type="button"
+              onClick={handleSendRegistration}
+              disabled={saving}
+              style={{ width: "100%", padding: ".9rem 1rem", border: "1px solid #fff", borderRadius: "9px", background: saving ? "#555" : "#b5122a", color: "#fff", fontWeight: 900, cursor: saving ? "wait" : "pointer" }}
+            >
+              {saving ? "ENVIANDO INSCRIPCIÓN..." : "ENVIAR INSCRIPCIÓN PARA APROBACIÓN"}
+            </button>
           </section>
         )}
       </section>
