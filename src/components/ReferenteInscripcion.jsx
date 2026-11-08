@@ -1,0 +1,198 @@
+import { useEffect, useMemo, useState } from "react";
+
+const CATEGORIES = ["Infantil", "Femenino", "Mayores"];
+
+const inputStyle = {
+  width: "100%",
+  boxSizing: "border-box",
+  padding: "0.85rem 1rem",
+  borderRadius: "9px",
+  border: "1px solid #555",
+  background: "#fff",
+  color: "#171c27",
+  fontSize: "1rem",
+};
+
+export function ReferenteInscripcion({ tournaments = [], currentUser, onBack }) {
+  const [clubName, setClubName] = useState("");
+  const [clubImage, setClubImage] = useState(null);
+  const [selectedTournaments, setSelectedTournaments] = useState({});
+  const [showReview, setShowReview] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [imagePreview, setImagePreview] = useState("");
+
+  useEffect(() => {
+    if (!clubImage) {
+      setImagePreview("");
+      return undefined;
+    }
+    const previewUrl = URL.createObjectURL(clubImage);
+    setImagePreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [clubImage]);
+
+  const selectedItems = useMemo(
+    () => tournaments
+      .filter((tournament) => selectedTournaments[tournament.id])
+      .map((tournament) => ({
+        tournament,
+        categories: selectedTournaments[tournament.id] || [],
+      })),
+    [tournaments, selectedTournaments]
+  );
+
+  const toggleTournament = (tournamentId) => {
+    setSelectedTournaments((previous) => {
+      const next = { ...previous };
+      if (next[tournamentId]) {
+        delete next[tournamentId];
+      } else {
+        next[tournamentId] = [];
+      }
+      return next;
+    });
+    setShowReview(false);
+  };
+
+  const toggleCategory = (tournamentId, category) => {
+    setSelectedTournaments((previous) => {
+      const current = previous[tournamentId] || [];
+      const nextCategories = current.includes(category)
+        ? current.filter((item) => item !== category)
+        : [...current, category];
+      return { ...previous, [tournamentId]: nextCategories };
+    });
+    setShowReview(false);
+  };
+
+  const handleReview = (event) => {
+    event.preventDefault();
+    if (!clubName.trim()) {
+      setFormError("Ingresá el nombre de la institución o club.");
+      return;
+    }
+    if (!selectedItems.length) {
+      setFormError("Seleccioná al menos un torneo.");
+      return;
+    }
+    if (selectedItems.some((item) => item.categories.length === 0)) {
+      setFormError("Elegí al menos una categoría en cada torneo seleccionado.");
+      return;
+    }
+    setFormError("");
+    setShowReview(true);
+  };
+
+  return (
+    <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
+      <section className="cr-card" style={{ width: "100%", maxWidth: "980px", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)", background: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
+        <button type="button" className="tc-form-back" onClick={onBack}>← Volver al inicio</button>
+        <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".72rem", margin: "1.25rem 0 .35rem" }}>ÁREA DEL REFERENTE</p>
+        <h2 className="cr-title" style={{ color: "#fff", margin: "0 0 .5rem" }}>INSCRIPCIÓN DEL CLUB</h2>
+        <p style={{ color: "#d1d5db", lineHeight: 1.6, marginTop: 0 }}>
+          Completá los datos institucionales y seleccioná los torneos y categorías en los que querés participar.
+        </p>
+
+        <form onSubmit={handleReview} style={{ display: "grid", gap: "1.25rem" }}>
+          <section style={{ border: "1px solid #343434", borderRadius: "12px", padding: "1rem", display: "grid", gap: ".9rem" }}>
+            <h3 style={{ color: "#fff", margin: 0 }}>Datos de la institución</h3>
+            <label style={{ display: "grid", gap: ".45rem", color: "#fff", fontWeight: 700 }}>
+              Nombre del club o institución *
+              <input value={clubName} onChange={(event) => { setClubName(event.target.value); setShowReview(false); }} placeholder="Ej.: Club Atlético..." style={inputStyle} maxLength={100} required />
+            </label>
+
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: "1rem", alignItems: "center" }}>
+              <label style={{ display: "grid", gap: ".5rem", color: "#fff", fontWeight: 700 }}>
+                Escudo o foto del club
+                <input type="file" accept="image/*" onChange={(event) => { setClubImage(event.target.files?.[0] || null); setShowReview(false); }} style={{ color: "#ddd", maxWidth: "100%" }} />
+                <span style={{ color: "#aaa", fontSize: ".78rem", fontWeight: 400 }}>Seleccioná una imagen desde tu dispositivo.</span>
+              </label>
+              <div style={{ width: "88px", height: "88px", borderRadius: "12px", border: "1px dashed #777", display: "grid", placeItems: "center", overflow: "hidden", background: "#171c27" }}>
+                {imagePreview
+                  ? <img src={imagePreview} alt="Vista previa del escudo del club" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  : <span style={{ fontSize: "2rem" }}>⚽</span>}
+              </div>
+            </div>
+          </section>
+
+          <section style={{ border: "1px solid #343434", borderRadius: "12px", padding: "1rem", display: "grid", gap: ".85rem" }}>
+            <div>
+              <h3 style={{ color: "#fff", margin: "0 0 .3rem" }}>Datos del referente</h3>
+              <p style={{ color: "#aaa", fontSize: ".82rem", margin: 0 }}>Estos datos se toman de tu cuenta y no hace falta volver a ingresarlos.</p>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: ".75rem" }}>
+              <label style={{ display: "grid", gap: ".35rem", color: "#bbb", fontSize: ".85rem" }}>
+                Usuario
+                <input value={currentUser?.username || ""} readOnly style={{ ...inputStyle, background: "#242424", color: "#fff", borderColor: "#444" }} />
+              </label>
+              <label style={{ display: "grid", gap: ".35rem", color: "#bbb", fontSize: ".85rem" }}>
+                Correo electrónico
+                <input value={currentUser?.email || ""} readOnly style={{ ...inputStyle, background: "#242424", color: "#fff", borderColor: "#444" }} />
+              </label>
+            </div>
+          </section>
+
+          <section style={{ border: "1px solid #343434", borderRadius: "12px", padding: "1rem", display: "grid", gap: ".9rem" }}>
+            <div>
+              <h3 style={{ color: "#fff", margin: "0 0 .3rem" }}>Torneos disponibles</h3>
+              <p style={{ color: "#aaa", fontSize: ".82rem", margin: 0 }}>Se muestran todos los torneos creados, sin filtrar por estado. Podés elegir más de uno.</p>
+            </div>
+
+            {tournaments.length === 0 ? (
+              <p style={{ color: "#ddd", margin: 0 }}>Todavía no hay torneos creados.</p>
+            ) : tournaments.map((tournament) => {
+              const isSelected = Boolean(selectedTournaments[tournament.id]);
+              return (
+                <article key={tournament.id} style={{ border: isSelected ? "1px solid #b5122a" : "1px solid #444", borderRadius: "10px", padding: ".85rem", background: isSelected ? "rgba(181,18,42,.10)" : "#111" }}>
+                  <label style={{ display: "flex", gap: ".7rem", alignItems: "flex-start", cursor: "pointer", color: "#fff" }}>
+                    <input type="checkbox" checked={isSelected} onChange={() => toggleTournament(tournament.id)} style={{ accentColor: "#b5122a", width: "18px", height: "18px", marginTop: ".15rem" }} />
+                    <span style={{ display: "grid", gap: ".2rem" }}>
+                      <strong>{tournament.title || "Torneo sin nombre"}</strong>
+                      <span style={{ color: "#aaa", fontSize: ".82rem" }}>{tournament.game || "Fútbol"} · {tournament.status || "Sin estado"}</span>
+                    </span>
+                  </label>
+                  {isSelected && (
+                    <div style={{ marginTop: ".85rem", paddingLeft: "1.7rem" }}>
+                      <p style={{ color: "#ddd", fontSize: ".85rem", margin: "0 0 .55rem" }}>Seleccioná una o más categorías:</p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: ".55rem" }}>
+                        {CATEGORIES.map((category) => (
+                          <label key={category} style={{ display: "inline-flex", gap: ".4rem", alignItems: "center", border: "1px solid #555", borderRadius: "20px", padding: ".4rem .7rem", color: "#fff", fontSize: ".82rem", cursor: "pointer" }}>
+                            <input type="checkbox" checked={(selectedTournaments[tournament.id] || []).includes(category)} onChange={() => toggleCategory(tournament.id, category)} style={{ accentColor: "#b5122a" }} />
+                            {category}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </section>
+
+          {formError && <p role="alert" style={{ color: "#ff8a8a", margin: 0, fontWeight: 700 }}>{formError}</p>}
+
+          <button type="submit" style={{ width: "100%", padding: ".9rem 1rem", border: "1px solid #fff", borderRadius: "9px", background: "#b5122a", color: "#fff", fontWeight: 900, letterSpacing: ".04em", cursor: "pointer" }}>
+            REVISAR INSCRIPCIÓN
+          </button>
+        </form>
+
+        {showReview && (
+          <section style={{ marginTop: "1.25rem", border: "1px solid #b5122a", borderRadius: "12px", padding: "1rem", background: "#171717" }}>
+            <h3 style={{ color: "#fff", marginTop: 0 }}>Revisión de la inscripción</h3>
+            <p style={{ color: "#fff" }}><strong>Club:</strong> {clubName.trim()}</p>
+            <p style={{ color: "#fff" }}><strong>Escudo:</strong> {clubImage?.name || "Sin imagen seleccionada"}</p>
+            {selectedItems.map(({ tournament, categories }) => (
+              <div key={tournament.id} style={{ borderTop: "1px solid #444", paddingTop: ".65rem", marginTop: ".65rem" }}>
+                <strong style={{ color: "#fff" }}>{tournament.title}</strong>
+                <p style={{ color: "#ddd", margin: ".3rem 0 0" }}>{categories.join(" · ")}</p>
+              </div>
+            ))}
+            <p style={{ color: "#ffcf7a", fontSize: ".85rem", lineHeight: 1.5, marginBottom: 0 }}>
+              La pantalla y las selecciones ya están preparadas. El guardado definitivo se conecta en el siguiente paso, una vez verificada la estructura de las tablas de clubes en Supabase.
+            </p>
+          </section>
+        )}
+      </section>
+    </div>
+  );
+}
