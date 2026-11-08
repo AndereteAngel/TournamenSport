@@ -1645,6 +1645,8 @@ export function TournamenSportApp() {
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeTournament, setActiveTournament] = useState(null);
+  const [fefutinTournamentClubs, setFefutinTournamentClubs] = useState([]);
+  const [loadingFefutinTournamentClubs, setLoadingFefutinTournamentClubs] = useState(false);
   const [showChampionCard, setShowChampionCard] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
   const [tournaments, setTournaments] = useState([]);
@@ -2104,6 +2106,38 @@ export function TournamenSportApp() {
   useEffect(() => {
     fetchTournaments();
   }, [currentUser]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadFefutinTournamentClubs = async () => {
+      const tournamentId = activeTournament?.id;
+      const status = String(activeTournament?.status || "").trim().toLocaleLowerCase("es");
+      if (!tournamentId || status !== "inscripciones") {
+        setFefutinTournamentClubs([]);
+        setLoadingFefutinTournamentClubs(false);
+        return;
+      }
+
+      setLoadingFefutinTournamentClubs(true);
+      const { data, error } = await supabase.rpc("get_fefutin_tournament_clubs", {
+        p_tournament_id: tournamentId,
+      });
+
+      if (cancelled) return;
+      if (error) {
+        console.error("Error al cargar clubes FEFUTIN del torneo:", error);
+        setFefutinTournamentClubs([]);
+      } else {
+        setFefutinTournamentClubs(data || []);
+      }
+      setLoadingFefutinTournamentClubs(false);
+    };
+
+    loadFefutinTournamentClubs();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTournament?.id, activeTournament?.status]);
 
   const fetchTournaments = async () => {
     setLoading(true);
@@ -4353,6 +4387,33 @@ export function TournamenSportApp() {
                         ))}
                       </div>
                     )}
+                    <section style={{ marginBottom: "1rem", padding: "0.85rem", borderRadius: "10px", background: "#10090b", border: "1px solid #b5122a" }}>
+                      <h3 style={{ color: "#fff", fontSize: "0.95rem", margin: "0 0 0.65rem" }}>🏟️ CLUBES INSCRIPTOS · FEFUTIN</h3>
+                      {loadingFefutinTournamentClubs ? (
+                        <p style={{ color: "#d1d5db", margin: 0 }}>Cargando clubes inscriptos...</p>
+                      ) : fefutinTournamentClubs.length > 0 ? (
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "0.6rem" }}>
+                          {fefutinTournamentClubs.map((club) => (
+                            <div key={club.club_tournament_id} style={{ display: "flex", alignItems: "center", gap: "0.7rem", padding: "0.7rem", borderRadius: "8px", background: "#121019", border: "1px solid #4b2029", color: "#fff" }}>
+                              {club.logo_path ? (
+                                <img src={club.logo_path} alt="" style={{ width: "42px", height: "42px", objectFit: "contain", borderRadius: "6px", background: "#fff", flexShrink: 0 }} />
+                              ) : (
+                                <div style={{ width: "42px", height: "42px", display: "grid", placeItems: "center", borderRadius: "6px", background: "#2a1117", color: "#fff", fontSize: "1.2rem", flexShrink: 0 }}>⚽</div>
+                              )}
+                              <div style={{ minWidth: 0 }}>
+                                <strong style={{ display: "block", color: "#fff", overflowWrap: "anywhere" }}>{club.club_name}</strong>
+                                <span style={{ display: "block", color: "#f1b5c0", fontSize: "0.78rem", marginTop: "0.2rem" }}>{club.category_label || "Categoría sin especificar"}</span>
+                                <span style={{ display: "block", color: "#9ca3af", fontSize: "0.72rem", marginTop: "0.2rem" }}>
+                                  {club.team_status === "presentada" ? `Lista de buena fe presentada · ${club.player_count || 0} jugadores` : club.team_status === "borrador" ? "Lista de buena fe en preparación" : "Equipo todavía sin ficha"}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={{ color: "#9ca3af", margin: 0 }}>Todavía no hay clubes habilitados inscriptos en este torneo.</p>
+                      )}
+                    </section>
                     {participants.length ? (
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.5rem", marginBottom: "1rem" }}>
                         {participants.map((name, index) => (
