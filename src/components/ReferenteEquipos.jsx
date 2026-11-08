@@ -302,9 +302,15 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                     </div>
 
                     {mode === "torneos" || selectedSection === "torneos" ? (
-                      <div style={{ color: "#aaa", fontSize: ".8rem", marginTop: ".65rem" }}>
-                        {item.team_status === "presentada" ? "Lista de buena fe presentada" : item.team_status === "borrador" ? "Lista en preparación" : "Lista pendiente de carga"}
-                      </div>
+                      {mode === "torneos" ? (
+                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                          <button type="button" style={buttonStyle} onClick={() => onOpenTeams?.()}>Abrir ficha y lista de buena fe →</button>
+                        </div>
+                      ) : (
+                        <div style={{ color: "#aaa", fontSize: ".8rem", marginTop: ".65rem" }}>
+                          {item.team_status === "presentada" ? "Lista de buena fe presentada" : item.team_status === "borrador" ? "Lista en preparación" : "Lista pendiente de carga"}
+                        </div>
+                      )}
                     ) : (
                       <>
                         {isEditingThis && currentEditingPlayer ? (
