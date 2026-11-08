@@ -576,7 +576,19 @@ export function CreateTournament({
 
         {!isEditing ? (
           <div style={{ padding: "0.9rem", border: "1px solid rgba(181,18,42,0.55)", borderRadius: "10px", background: "rgba(181,18,42,0.08)" }}>
-            <strong style={{ color: "#fff", display: "block", marginBottom: "0.4rem" }}>El torneo quedará abierto a inscripciones</strong>
+            <label className="sports-label">Cupo máximo total del torneo</label>
+            <input
+              type="number"
+              min="4"
+              max="256"
+              step="1"
+              value={formData.maxParticipants}
+              onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
+              required
+              className="cr-input"
+            />
+            <span className="sports-help">Este límite es general para el torneo. No cargues equipos en esta etapa.</span>
+            <strong style={{ color: "#fff", display: "block", margin: "0.7rem 0 0.4rem" }}>El torneo quedará abierto a inscripciones</strong>
             <p style={{ color: "#d1d5db", fontSize: "0.82rem", lineHeight: 1.5, margin: 0 }}>
               No necesitás cargar equipos ahora. Una vez creado, los clubes podrán inscribirse en las ramas y categorías habilitadas. La organización de grupos y partidos se realizará más adelante, cuando las inscripciones estén confirmadas.
             </p>
