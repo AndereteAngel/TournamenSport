@@ -2314,6 +2314,7 @@ export function TournamenSportApp() {
       matches: [],
       capacity: Number(config.maxParticipants),
       numGroups: config.format === "groups_playoff" ? Number(config.numGroups) : 1,
+      category_config: Array.isArray(config.category_config) ? config.category_config : [],
     };
 
     const newTournamentObj = {
@@ -2798,6 +2799,7 @@ export function TournamenSportApp() {
         teams: Array.isArray(config.teams) ? config.teams : [],
         capacity: Number(config.maxParticipants),
         numGroups: config.format === "groups_playoff" ? Number(config.numGroups) : 1,
+        category_config: Array.isArray(config.category_config) ? config.category_config : [],
       };
       groups[registrationIndex] = registration;
 
