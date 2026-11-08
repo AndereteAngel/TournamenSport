@@ -306,7 +306,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                               )}
                               <span style={{ color: "#aaa", fontSize: ".72rem" }}>Formatos JPG, PNG o WEBP. Máximo 5 MB.</span>
                             </div>
-                            <button type="button" onClick={() => setEditingPlayer(null)} style={{ ...buttonStyle, marginTop: "1.2rem", width: "100%" }}>Guardar datos y volver a la lista</button>
+                            <button type="button" onClick={() => setEditingPlayer(null)} style={{ ...buttonStyle, marginTop: "1.2rem", width: "100%" }}>{readOnly || item.team_status === "presentada" ? "Volver a la lista" : "Guardar datos y volver a la lista"}</button>
                           </div>
                         ) : (
                           <>
