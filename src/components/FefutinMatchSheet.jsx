@@ -284,9 +284,6 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
   const rowCount = Math.max(localPlayers.length, visitorPlayers.length);
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Planilla de partido" style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,.82)", overflowY: "auto", padding: "1rem", display: "grid", placeItems: "start center" }}>
-      <div className="fefutin-print-sheet" style={{ width: "100%", maxWidth: "1000px", boxSizing: "border-box", margin: "1rem auto", padding: "1rem", borderRadius: "14px", background: "#080808", border: "1px solid #b5122a", color: "#fff" }}>
-        <style>{`@page { size: A4 landscape; margin: 9mm; } @media print { body * { visibility: hidden !important; } .fefutin-print-sheet, .fefutin-print-sheet * { visibility: visible !important; } .fefutin-print-sheet { position: absolute !important; inset: 0 !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding:  return (
     <div role="dialog" aria-modal="true" aria-label="Planilla oficial de partido" className="fefutin-sheet-overlay">
       <style>{`
         .fefutin-sheet-overlay{position:fixed;inset:0;z-index:10000;overflow:auto;padding:18px;background:rgba(0,0,0,.86)}
@@ -379,5 +376,4 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
       </div>
     </div>
   );
-}
 }
