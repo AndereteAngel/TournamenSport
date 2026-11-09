@@ -319,7 +319,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
         .fefutin-observations textarea{width:100%;border:1px solid #777!important;min-height:48px;padding:6px;background:#fff!important;color:#111!important;font-size:11px!important}
         .fefutin-sheet-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
         .fefutin-sheet-actions button{padding:10px 16px;border-radius:5px;border:1px solid #333;cursor:pointer;font-weight:800}
-        @page{size:A4 landscape;margin:7mm}
+        @page{size:A4 landscape;margin:4mm 6mm}
         @media(max-width:700px){.fefutin-print-sheet{padding:12px}.fefutin-sheet-meta{grid-template-columns:76px minmax(0,1fr);gap:8px}.fefutin-sheet-meta label{grid-column:auto!important}.fefutin-sheet-meta label:nth-child(3),.fefutin-sheet-meta label:nth-child(4){grid-column:1 / -1!important}.fefutin-sheet-title h2{font-size:17px}.fefutin-sheet-table{min-width:680px}}
         @media print{
           html,body{background:#fff!important;margin:0!important;padding:0!important}
@@ -328,14 +328,39 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
           .fefutin-sheet-overlay{position:absolute!important;inset:0!important;overflow:visible!important;padding:0!important;background:#fff!important}
           .fefutin-print-sheet{position:relative!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;box-shadow:none!important;border-radius:0!important}
           .fefutin-no-print,.fefutin-sheet-actions{display:none!important}
+          .fefutin-sheet-title{padding-bottom:5px!important;margin-bottom:6px!important}
+          .fefutin-sheet-title .brand{font-size:10px!important}
+          .fefutin-sheet-title h2{font-size:14px!important;margin:2px 0!important}
+          .fefutin-sheet-title p{font-size:9px!important;margin:1px 0!important}
           .fefutin-sheet-table-wrap{overflow:visible!important}
           .fefutin-sheet-table{width:100%!important;min-width:0!important;font-size:8px!important}
           .fefutin-sheet-table th,.fefutin-sheet-table td{padding:3px 2px!important}
           .fefutin-sheet-table thead th{font-size:8px!important}
-          .fefutin-sheet-table tbody tr{height:30px!important;break-inside:avoid}
-          .fefutin-sheet-title h2{font-size:17px!important}
+          .fefutin-sheet-table tbody tr{height:25px!important;break-inside:avoid}
+          .fefutin-sheet-title h2{font-size:14px!important}
+          .fefutin-sheet-meta{margin:4px 0!important}
+          .fefutin-observations{margin-top:6px!important;gap:3px!important}
+          .fefutin-observations textarea{min-height:28px!important;height:28px!important}
           .fefutin-sheet-meta{grid-template-columns:76px minmax(0,1.35fr) 135px minmax(0,1.35fr)!important;gap:8px!important;margin:7px 0!important;width:100%!important}.fefutin-sheet-meta label{min-width:0!important;width:100%!important;overflow:hidden!important}.fefutin-sheet-meta input{box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;height:23px!important;min-height:23px!important;max-height:23px!important;font-size:9px!important;padding:2px 4px!important;margin:0!important}
-          .fefutin-sheet-meta input,.fefutin-observations textarea{border:0!important;border-bottom:1px solid #777!important}
+          .fefutin-sheet-meta input,.fefutin-observations textarea,
+          .fefutin-sheet-table input:not([type="checkbox"]){
+            appearance:none!important;
+            -webkit-appearance:none!important;
+            color:transparent!important;
+            -webkit-text-fill-color:transparent!important;
+            background:transparent!important;
+            box-shadow:none!important;
+            border:0!important;
+            border-bottom:1px solid #777!important;
+            border-radius:0!important;
+            outline:none!important;
+          }
+          .fefutin-sheet-table input:not([type="checkbox"]){height:18px!important;min-height:18px!important;padding:0!important}
+          .fefutin-sheet-table .fefutin-shirt-number input{width:90%!important}
+          .fefutin-sheet-table .fefutin-cards input{width:32px!important;max-width:90%!important}
+          .fefutin-sheet-table input[type="checkbox"]{display:none!important}
+          .fefutin-sheet-meta input{height:17px!important;min-height:17px!important;padding:0!important}
+          .fefutin-observations textarea{resize:none!important}
         }
 
         /* Refuerzo de contraste: evita que los estilos globales de la app blanqueen la planilla */
