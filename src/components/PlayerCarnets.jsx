@@ -15,7 +15,7 @@ const statusColor = {
   no_habilitado: "#fca5a5",
 };
 
-export function PlayerCarnets({ currentUser, canManage = false, onBack }) {
+export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId = null, embedded = false }) {
   const [participations, setParticipations] = useState([]);
   const [selectedKey, setSelectedKey] = useState("");
   const [loading, setLoading] = useState(true);
@@ -47,6 +47,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack }) {
   const players = useMemo(() => {
     const unique = new Map();
     participations.forEach((item) => {
+      if (clubId && item.club_id !== clubId) return;
       item.players.forEach((player) => {
         if (player.approval_status !== "aprobado" || !player.carnet_number) return;
         const key = player.carnet_number;
@@ -66,7 +67,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack }) {
       (a.last_name || "").localeCompare(b.last_name || "", "es") ||
       (a.first_name || "").localeCompare(b.first_name || "", "es")
     );
-  }, [participations]);
+  }, [participations, clubId]);
 
   const selectedPlayer = players.find((player) => player.carnet_number === selectedKey) || players[0] || null;
   const photoUrl = selectedPlayer?.photo_path
@@ -92,7 +93,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack }) {
   return (
     <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
       <section className="cr-card" style={{ width: "100%", maxWidth: "850px", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)", boxSizing: "border-box", background: "#090909", color: "#fff", border: "1px solid #b5122a" }}>
-        <button type="button" className="tc-form-back" onClick={onBack}>← Volver</button>
+        {!embedded && <button type="button" className="tc-form-back" onClick={onBack}>← Volver</button>}
         <header style={{ textAlign: "center", margin: "1.2rem 0" }}>
           <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".15em", margin: 0 }}>FEFUTIN · IDENTIFICACIÓN OFICIAL</p>
           <h2 className="cr-title" style={{ margin: ".35rem 0" }}>CARNET DE JUGADOR</h2>
