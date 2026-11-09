@@ -49,7 +49,9 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
     participations.forEach((item) => {
       if (clubId && item.club_id !== clubId) return;
       item.players.forEach((player) => {
-        if (player.approval_status !== "aprobado" || !player.carnet_number) return;
+        // El carnet_number proviene del registro oficial fefutin_players.
+        // Si existe, el jugador ya tiene carnet; no filtramos por el estado de la fila de lista de buena fe.
+        if (!String(player.carnet_number || "").trim()) return;
         const key = player.carnet_number;
         if (!unique.has(key)) {
           unique.set(key, {
