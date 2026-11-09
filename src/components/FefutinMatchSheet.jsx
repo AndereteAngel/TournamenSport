@@ -56,6 +56,23 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
           throw new Error("No se pudo identificar el torneo o los dos clubes del partido.");
         }
 
+        let assignedRefereeName = "";
+        if (match?.referee_id) {
+          const [
+            { data: refereeProfile, error: refereeProfileError },
+            { data: refereeCarnets, error: refereeCarnetsError },
+          ] = await Promise.all([
+            supabase.from("profiles").select("id, username").eq("id", match.referee_id).maybeSingle(),
+            supabase.rpc("get_fefutin_referee_carnets"),
+          ]);
+          if (refereeProfileError) throw refereeProfileError;
+          if (refereeCarnetsError) throw refereeCarnetsError;
+          const refereeCarnet = (refereeCarnets || []).find((item) => item.id === match.referee_id);
+          assignedRefereeName = [refereeCarnet?.first_name, refereeCarnet?.last_name].filter(Boolean).join(" ").trim()
+            || refereeProfile?.username
+            || "";
+        }
+
         const { data: registrations, error: registrationsError } = await supabase
           .from("fefutin_club_tournaments")
           .select("id, category_label, club_id")
@@ -150,7 +167,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
             jornada: existingSheet.jornada || String(match?.round || ""),
             sede: existingSheet.sede || localClub.headquarters_address || "",
             fecha_partido: existingSheet.fecha_partido || "",
-            arbitro_designado: existingSheet.arbitro_designado || "",
+            arbitro_designado: assignedRefereeName || existingSheet.arbitro_designado || "",
             observaciones: existingSheet.observaciones || "",
           });
           const { data: savedPlayers, error: savedPlayersError } = await supabase
@@ -166,7 +183,11 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
           local = mergeSaved(local);
           visitor = mergeSaved(visitor);
         } else {
-          setMetadata((current) => ({ ...current, sede: current.sede || localClub.headquarters_address || "" }));
+          setMetadata((current) => ({
+            ...current,
+            sede: current.sede || localClub.headquarters_address || "",
+            arbitro_designado: assignedRefereeName || current.arbitro_designado || "",
+          }));
         }
 
         if (!cancelled) {
