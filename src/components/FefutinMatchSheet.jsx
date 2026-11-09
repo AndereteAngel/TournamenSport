@@ -336,6 +336,35 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
           .fefutin-sheet-meta{margin:7px 0!important}
           .fefutin-sheet-meta input,.fefutin-observations textarea{border:0!important;border-bottom:1px solid #777!important}
         }
+
+        /* Refuerzo de contraste: evita que los estilos globales de la app blanqueen la planilla */
+        .fefutin-print-sheet,
+        .fefutin-print-sheet table,
+        .fefutin-print-sheet thead,
+        .fefutin-print-sheet tbody,
+        .fefutin-print-sheet tr,
+        .fefutin-print-sheet td,
+        .fefutin-print-sheet label,
+        .fefutin-print-sheet strong,
+        .fefutin-print-sheet small,
+        .fefutin-print-sheet p,
+        .fefutin-print-sheet h2,
+        .fefutin-print-sheet span { color:#111111!important; -webkit-text-fill-color:#111111!important; }
+        .fefutin-print-sheet .fefutin-sheet-title .brand{color:#b5122a!important;-webkit-text-fill-color:#b5122a!important}
+        .fefutin-print-sheet .fefutin-sheet-table thead th{color:#ffffff!important;-webkit-text-fill-color:#ffffff!important}
+        .fefutin-print-sheet .fefutin-sheet-table thead .team-local{background:#b5122a!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+        .fefutin-print-sheet .fefutin-sheet-table thead .team-visitor{background:#343a40!important;color:#fff!important;-webkit-text-fill-color:#fff!important}
+        .fefutin-print-sheet .fefutin-player-name,
+        .fefutin-print-sheet .fefutin-player-name strong,
+        .fefutin-print-sheet .fefutin-player-name small,
+        .fefutin-print-sheet .fefutin-captain{color:#111!important;-webkit-text-fill-color:#111!important}
+        .fefutin-print-sheet .fefutin-status{color:#111!important;-webkit-text-fill-color:#111!important}
+        .fefutin-print-sheet input:not([type="checkbox"]),
+        .fefutin-print-sheet textarea,
+        .fefutin-print-sheet select{appearance:auto!important;background:#fff!important;background-color:#fff!important;color:#111!important;-webkit-text-fill-color:#111!important;border:1px solid #888!important;box-shadow:none!important;text-shadow:none!important;opacity:1!important}
+        .fefutin-print-sheet input[type="checkbox"]{appearance:auto!important;accent-color:#b5122a!important;opacity:1!important}
+        .fefutin-print-sheet .fefutin-goals input,
+        .fefutin-print-sheet .fefutin-cards input{background:#fff!important;color:#111!important;-webkit-text-fill-color:#111!important;border:1px solid #777!important;border-radius:3px!important}
       `}</style>
       <div className="fefutin-print-sheet">
         <div className="fefutin-sheet-title">
