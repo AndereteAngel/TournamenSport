@@ -60,6 +60,10 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
     return new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   });
   const [diaCalendarioSeleccionado, setDiaCalendarioSeleccionado] = useState(null);
+  const [mostrarDesignacion, setMostrarDesignacion] = useState(false);
+  const [partidoParaDesignar, setPartidoParaDesignar] = useState("");
+  const [guardandoDesignacion, setGuardandoDesignacion] = useState(false);
+  const [mensajeDesignacion, setMensajeDesignacion] = useState("");
 
   const cargarEstadisticas = async () => {
     setLoading(true);
@@ -175,6 +179,86 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
   const estadisticas = Object.values(estadisticasPorId)
     .sort((a, b) => b.partidos - a.partidos || a.nombre.localeCompare(b.nombre, "es"));
   const arbitroActual = estadisticas.find((item) => item.id === arbitroSeleccionado);
+  const partidosDisponibles = torneos.flatMap((tournament) => {
+    const partidosGrupo = (Array.isArray(tournament.groups) ? tournament.groups : []).flatMap((group, groupIndex) =>
+      (Array.isArray(group?.matches) ? group.matches : []).map((match, matchIndex) => ({
+        tournamentId: tournament.id,
+        tournamentTitle: tournament.title || "Torneo sin nombre",
+        rama: String(tournament.game || "").split(" · ")[1] || "Sin rama",
+        instancia: group?.name || `Grupo ${groupIndex + 1}`,
+        team1: match?.team1 || "",
+        team2: match?.team2 || "",
+        refereeId: match?.referee_id || "",
+        key: `${tournament.id}::grupo::${groupIndex}::${matchIndex}`,
+        phase: "grupo",
+        groupIndex,
+        matchIndex,
+      })).filter((match) => match.team1 && match.team2 &&
+        String(match.team1).trim().toLocaleLowerCase("es") !== "pasaje directo" &&
+        String(match.team2).trim().toLocaleLowerCase("es") !== "pasaje directo")
+    );
+    const partidosPlayoff = (Array.isArray(tournament.playoffs) ? tournament.playoffs : []).flatMap((round, roundIndex) =>
+      (Array.isArray(round) ? round : []).map((match, matchIndex) => ({
+        tournamentId: tournament.id,
+        tournamentTitle: tournament.title || "Torneo sin nombre",
+        rama: String(tournament.game || "").split(" · ")[1] || "Sin rama",
+        instancia: `Eliminatorias · Ronda ${roundIndex + 1}`,
+        team1: match?.team1 || "",
+        team2: match?.team2 || "",
+        refereeId: match?.referee_id || "",
+        key: `${tournament.id}::playoff::${roundIndex}::${matchIndex}`,
+        phase: "playoff",
+        roundIndex,
+        matchIndex,
+      })).filter((match) => match.team1 && match.team2 &&
+        String(match.team1).trim().toLocaleLowerCase("es") !== "pasaje directo" &&
+        String(match.team2).trim().toLocaleLowerCase("es") !== "pasaje directo")
+    );
+    return [...partidosGrupo, ...partidosPlayoff];
+  });
+
+  const guardarDesignacion = async () => {
+    if (!canManageAccess || !arbitroSeleccionado || !partidoParaDesignar) return;
+    const [tournamentId, phase, firstIndex, secondIndex] = partidoParaDesignar.split("::");
+    const tournament = torneos.find((item) => String(item.id) === tournamentId);
+    if (!tournament) {
+      setMensajeDesignacion("No se encontró el torneo seleccionado. Actualizá la ficha e intentá nuevamente.");
+      return;
+    }
+    const groups = Array.isArray(tournament.groups) ? tournament.groups.map((group) => ({
+      ...group,
+      matches: Array.isArray(group?.matches) ? [...group.matches] : [],
+    })) : [];
+    const playoffs = Array.isArray(tournament.playoffs) ? tournament.playoffs.map((round) => Array.isArray(round) ? [...round] : []) : [];
+    if (phase === "grupo" && groups[Number(firstIndex)]?.matches?.[Number(secondIndex)]) {
+      groups[Number(firstIndex)].matches[Number(secondIndex)] = {
+        ...groups[Number(firstIndex)].matches[Number(secondIndex)],
+        referee_id: arbitroSeleccionado,
+      };
+    } else if (phase === "playoff" && playoffs[Number(firstIndex)]?.[Number(secondIndex)]) {
+      playoffs[Number(firstIndex)][Number(secondIndex)] = {
+        ...playoffs[Number(firstIndex)][Number(secondIndex)],
+        referee_id: arbitroSeleccionado,
+      };
+    } else {
+      setMensajeDesignacion("No se encontró el partido seleccionado.");
+      return;
+    }
+    setGuardandoDesignacion(true);
+    setMensajeDesignacion("");
+    const { error: updateError } = await supabase.from("tournaments")
+      .update({ groups, playoffs })
+      .eq("id", tournament.id);
+    setGuardandoDesignacion(false);
+    if (updateError) {
+      console.error("Error al guardar designación arbitral:", updateError);
+      setMensajeDesignacion(updateError.message || "No se pudo guardar la designación.");
+      return;
+    }
+    setTorneos((previous) => previous.map((item) => item.id === tournament.id ? { ...item, groups, playoffs } : item));
+    setPartidoParaDesignar("");
+    setMensajeDesignacion("Designación guardada correctamente.");
+  };
   const partidosDirigidos = arbitroSeleccionado
     ? torneos.flatMap((tournament) => {
         const partidosGrupos = (Array.isArray(tournament.groups) ? tournament.groups : []).flatMap((group, groupIndex) =>
@@ -396,6 +480,43 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
             <p style={{ color: "#aeb4bf", fontSize: "0.75rem", margin: "0.8rem 0 0" }}>El calendario comenzará a marcar actividad con las próximas cargas de resultados. Los registros anteriores no tienen fecha de carga guardada.</p>
           )}
         </section>
+
+        {canManageAccess && (
+          <section className="referee-stat-card" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+              <div>
+                <h3 style={{ color: "#fff", margin: 0 }}>Designación arbitral</h3>
+                <p style={{ color: "#d1d5db", fontSize: "0.78rem", margin: "0.25rem 0 0" }}>Asigná o reemplazá a este árbitro en cualquier partido del fixture.</p>
+              </div>
+              <button type="button" className="cr-btn-gold" onClick={() => { setMostrarDesignacion((value) => !value); setMensajeDesignacion(""); }} style={{ padding: "0.65rem 1rem" }}>
+                {mostrarDesignacion ? "Cerrar" : "＋ Designar partido"}
+              </button>
+            </div>
+            {mostrarDesignacion && (
+              <div style={{ display: "grid", gap: "0.7rem", marginTop: "0.9rem" }}>
+                <label htmlFor="referee-match-assignment" style={{ color: "#fff", fontSize: "0.78rem", fontWeight: 800 }}>Seleccioná el partido</label>
+                <select id="referee-match-assignment" value={partidoParaDesignar} onChange={(event) => setPartidoParaDesignar(event.target.value)} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: "0.8rem", borderRadius: "8px", border: "1px solid #b5122a", background: "#080808", color: "#fff" }}>
+                  <option value="">Elegir torneo y partido...</option>
+                  {partidosDisponibles.map((partido) => (
+                    <option key={partido.key} value={partido.key}>
+                      {partido.tournamentTitle} · {partido.rama} · {partido.instancia} · {partido.team1} vs. {partido.team2}{partido.refereeId ? " · Ya tiene árbitro (se reemplazará)" : " · Sin designar"}
+                    </option>
+                  ))}
+                </select>
+                {partidoParaDesignar && (
+                  <p style={{ color: "#f1b5c0", fontSize: "0.75rem", margin: 0 }}>
+                    {(() => { const seleccionado = partidosDisponibles.find((item) => item.key === partidoParaDesignar); const actual = seleccionado?.refereeId ? estadisticas.find((item) => item.id === seleccionado.refereeId)?.nombre || "otro árbitro" : "Sin árbitro asignado"; return `Asignar a ${arbitroActual.nombre}. Actualmente: ${actual}.`; })()}
+                  </p>
+                )}
+                <button type="button" className="cr-btn-gold" disabled={!partidoParaDesignar || guardandoDesignacion} onClick={guardarDesignacion} style={{ opacity: !partidoParaDesignar || guardandoDesignacion ? 0.55 : 1 }}>
+                  {guardandoDesignacion ? "Guardando..." : "Confirmar designación"}
+                </button>
+                {mensajeDesignacion && <p role="status" style={{ color: mensajeDesignacion.includes("correctamente") ? "#86efac" : "#fca5a5", fontSize: "0.8rem", margin: 0 }}>{mensajeDesignacion}</p>}
+                {partidosDisponibles.length === 0 && <p style={{ color: "#aeb4bf", margin: 0 }}>No hay partidos disponibles en los torneos cargados.</p>}
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="referee-stat-card" style={{ marginTop: "1rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.85rem" }}>
