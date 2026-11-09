@@ -45,6 +45,11 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [editingPlayer, setEditingPlayer] = useState(null);
   const [selectedClubId, setSelectedClubId] = useState(null);
   const [selectedSection, setSelectedSection] = useState(null);
+  const [tournamentSearch, setTournamentSearch] = useState("");
+  const [tournamentCategory, setTournamentCategory] = useState("todas");
+  const [tournamentStatus, setTournamentStatus] = useState("todos");
+  const [rosterSearch, setRosterSearch] = useState("");
+  const [rosterCategory, setRosterCategory] = useState("todas");
 
   const loadParticipations = useCallback(async () => {
     setLoading(true);
@@ -165,6 +170,26 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const visibleParticipations = mode === "equipos" && selectedClubId
     ? participations.filter((item) => item.club_id === selectedClubId)
     : participations;
+  const categoryOptions = [...new Set(visibleParticipations.map((item) => item.category_label).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const filteredParticipations = visibleParticipations.filter((item) => {
+    if (mode === "torneos" || selectedSection === "torneos") {
+      const query = tournamentSearch.trim().toLocaleLowerCase("es");
+      const matchesSearch = !query || [item.tournament_title, item.category_label, item.club_name].some((value) => String(value || "").toLocaleLowerCase("es").includes(query));
+      const matchesCategory = tournamentCategory === "todas" || item.category_label === tournamentCategory;
+      const matchesStatus = tournamentStatus === "todos" || (tournamentStatus === "pendiente" ? !["presentada", "borrador"].includes(item.team_status) : item.team_status === tournamentStatus);
+      return matchesSearch && matchesCategory && matchesStatus;
+    }
+    if (selectedSection === "listas") return rosterCategory === "todas" || item.category_label === rosterCategory;
+    return true;
+  });
+  const filteredPlayersFor = (item) => {
+    const query = rosterSearch.trim().toLocaleLowerCase("es");
+    return (rowsByParticipation[item.club_tournament_id] || []).filter((player) =>
+      !query || [player.first_name, player.last_name, player.dni].some((value) => String(value || "").toLocaleLowerCase("es").includes(query))
+    );
+  };
+  const filterInputStyle = { ...inputStyle, background: "#fff", color: "#111", marginTop: 0 };
+  const filterLabelStyle = { display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 };
 
   return (
     <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
@@ -312,9 +337,50 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </div>
                 )}
 
+                {(mode === "torneos" || selectedSection === "torneos" || selectedSection === "listas") && (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: ".7rem", padding: ".85rem", marginTop: "1rem", border: "1px solid #444", borderRadius: "10px", background: "#171717" }}>
+                    {(mode === "torneos" || selectedSection === "torneos") ? (
+                      <>
+                        <label style={filterLabelStyle}>Buscar torneo
+                          <input value={tournamentSearch} onChange={(event) => setTournamentSearch(event.target.value)} placeholder="Nombre del torneo..." style={filterInputStyle} />
+                        </label>
+                        <label style={filterLabelStyle}>Categoría
+                          <select value={tournamentCategory} onChange={(event) => setTournamentCategory(event.target.value)} style={filterInputStyle}>
+                            <option value="todas">Todas las categorías</option>
+                            {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
+                          </select>
+                        </label>
+                        <label style={filterLabelStyle}>Estado
+                          <select value={tournamentStatus} onChange={(event) => setTournamentStatus(event.target.value)} style={filterInputStyle}>
+                            <option value="todos">Todos los estados</option>
+                            <option value="presentada">Lista presentada</option>
+                            <option value="borrador">Borrador</option>
+                            <option value="pendiente">Pendiente de carga</option>
+                          </select>
+                        </label>
+                        <button type="button" style={buttonStyle} onClick={() => { setTournamentSearch(""); setTournamentCategory("todas"); setTournamentStatus("todos"); }}>Limpiar filtros</button>
+                      </>
+                    ) : (
+                      <>
+                        <label style={filterLabelStyle}>Buscar jugador
+                          <input value={rosterSearch} onChange={(event) => setRosterSearch(event.target.value)} placeholder="Nombre, apellido o DNI..." style={filterInputStyle} />
+                        </label>
+                        <label style={filterLabelStyle}>Categoría
+                          <select value={rosterCategory} onChange={(event) => setRosterCategory(event.target.value)} style={filterInputStyle}>
+                            <option value="todas">Todas las categorías</option>
+                            {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
+                          </select>
+                        </label>
+                        <button type="button" style={buttonStyle} onClick={() => { setRosterSearch(""); setRosterCategory("todas"); }}>Limpiar filtros</button>
+                      </>
+                    )}
+                  </div>
+                )}
+
                 <div style={{ display: "grid", gap: "1rem", marginTop: "1rem" }}>
-              {visibleParticipations.map((item) => {
-                const players = rowsByParticipation[item.club_tournament_id] || [];
+              {filteredParticipations.map((item) => {
+                const allPlayers = rowsByParticipation[item.club_tournament_id] || [];
+                const players = selectedSection === "listas" ? filteredPlayersFor(item) : allPlayers;
                 const logoUrl = item.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(item.logo_path).data.publicUrl : "";
                 const statusLabel = item.team_status === "presentada" ? "LISTA PRESENTADA" : item.team_status === "borrador" ? "BORRADOR" : "PENDIENTE DE CARGA";
                 const isEditingThis = editingPlayer?.participationId === item.club_tournament_id;
@@ -427,7 +493,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                   </div>
                                 );
                               })}
-                              {!players.length && <p style={{ padding: "1rem", textAlign: "center", color: "#aaa" }}>Todavía no agregaste jugadores a esta categoría.</p>}
+                              {!players.length && <p style={{ padding: "1rem", textAlign: "center", color: "#aaa" }}>{rosterSearch.trim() ? "No hay jugadores que coincidan con la búsqueda." : "Todavía no agregaste jugadores a esta categoría."}</p>}
                             </div>
                             {!readOnly && item.team_status !== "presentada" && (
                               <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", justifyContent: "space-between", marginTop: ".85rem" }}>
@@ -448,6 +514,9 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 );
               })}
                 </div>
+                {filteredParticipations.length === 0 && (mode === "torneos" || selectedSection === "torneos" || selectedSection === "listas") && (
+                  <p style={{ color: "#aaa", textAlign: "center", padding: "1.2rem" }}>No hay resultados para los filtros seleccionados.</p>
+                )}
               </>
             )}
           </>
