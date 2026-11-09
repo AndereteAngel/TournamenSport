@@ -43,13 +43,28 @@ export function FefutinPlayerApprovals() {
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
-    const { data, error: rpcError } = await supabase.rpc("get_fefutin_player_admin_list");
+    const { data, error: rpcError } = await supabase.rpc("get_fefutin_my_teams");
     if (rpcError) {
       console.error("Error al cargar jugadores FEFUTIN:", rpcError);
       setError(rpcError.message || "No se pudo cargar la lista de jugadores.");
       setPlayers([]);
     } else {
-      setPlayers(data || []);
+      const rows = (data || []).flatMap((team) => {
+        let teamPlayers = team.players || [];
+        if (typeof teamPlayers === "string") {
+          try { teamPlayers = JSON.parse(teamPlayers); } catch { teamPlayers = []; }
+        }
+        return (Array.isArray(teamPlayers) ? teamPlayers : []).map((player) => ({
+          ...player,
+          player_entry_id: player.id,
+          club_id: team.club_id,
+          club_name: team.club_name,
+          tournament_id: team.tournament_id,
+          tournament_title: team.tournament_title,
+          category_label: team.category_label,
+        }));
+      });
+      setPlayers(rows);
     }
     setLoading(false);
   }, []);
@@ -70,21 +85,20 @@ export function FefutinPlayerApprovals() {
       && matchesSearch;
   }), [players, statusFilter, clubFilter, categoryFilter, search]);
 
-  const decide = async (player, approve) => {
-    const action = approve ? "activar" : "rechazar";
-    if (!window.confirm(`¿Confirmás ${action} a ${player.first_name} ${player.last_name}?${approve ? " Se generará su carnet FEFUTIN con estado PENDIENTE." : ""}`)) return;
+  const decide = async (player) => {
+    if (!window.confirm(`¿Confirmás activar a ${player.first_name} ${player.last_name}? Se generará su carnet FEFUTIN con estado PENDIENTE.`)) return;
     setWorkingId(player.player_entry_id);
     setError("");
     setMessage("");
     const { data, error: rpcError } = await supabase.rpc("decide_fefutin_player", {
       p_player_entry_id: player.player_entry_id,
-      p_approve: approve,
+      p_approve: true,
     });
     if (rpcError) {
-      console.error("Error al resolver alta:", rpcError);
-      setError(rpcError.message || "No se pudo resolver el alta.");
+      console.error("Error al activar jugador:", rpcError);
+      setError(rpcError.message || "No se pudo activar al jugador.");
     } else {
-      setMessage(approve ? `Jugador activado. Carnet asignado: ${data}. Estado: PENDIENTE DE VERIFICACIÓN.` : "Solicitud rechazada.");
+      setMessage(`Jugador activado. Carnet asignado: ${data}. Estado: PENDIENTE DE VERIFICACIÓN.`);
       await load();
     }
     setWorkingId(null);
@@ -101,7 +115,7 @@ export function FefutinPlayerApprovals() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
         <div>
           <h3 style={{ color: "#fff", margin: 0 }}>ALTAS DE JUGADORES</h3>
-          <p style={{ color: "#aaa", fontSize: ".82rem", margin: ".3rem 0 0" }}>Administrá las altas y consultá el estado de cada carnet.</p>
+          <p style={{ color: "#aaa", fontSize: ".82rem", margin: ".3rem 0 0" }}>Consultá y filtrá los estados de los jugadores y sus carnets.</p>
         </div>
         <button type="button" className="tc-form-back" onClick={load} disabled={loading}>↻ Actualizar</button>
       </div>
@@ -141,14 +155,11 @@ export function FefutinPlayerApprovals() {
                   <strong style={{ display: "block", fontSize: ".92rem" }}>{player.last_name}, {player.first_name}</strong>
                   <span style={{ display: "block", color: "#bbb", fontSize: ".76rem", marginTop: ".15rem" }}>DNI: {player.dni || "—"}{player.carnet_number ? ` · Carnet: ${player.carnet_number}` : ""}</span>
                   <span style={{ display: "block", color: "#ffb3bf", fontSize: ".76rem", marginTop: ".15rem" }}>{player.club_name || "Sin equipo"} · {player.category_label || "Sin categoría"}</span>
-                  <span style={{ display: "inline-block", marginTop: ".35rem", color: status === "habilitado" ? "#86efac" : status === "no_habilitado" || status === "rechazado" ? "#fca5a5" : "#fcd34d", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".02em" }}>{statusLabel(status)}</span>
+                  <span style={{ display: "inline-block", marginTop: ".35rem", color: status === "habilitado" ? "#86efac" : status === "no_habilitado" || status === "rechazado" ? "#fca5a5" : "#fcd34d", fontSize: ".68rem", fontWeight: 800 }}>{statusLabel(status)}</span>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: ".35rem" }}>
-                  {canActivate ? <>
-                    <button type="button" className="cr-btn-gold" disabled={busy} onClick={() => decide(player, true)} style={{ whiteSpace: "nowrap", padding: ".55rem .75rem", fontSize: ".75rem" }}>{busy ? "Procesando..." : "ACTIVAR"}</button>
-                    <button type="button" className="tc-form-back" disabled={busy} onClick={() => decide(player, false)} style={{ whiteSpace: "nowrap", padding: ".4rem .65rem", fontSize: ".7rem" }}>Rechazar</button>
-                  </> : <span style={{ color: "#aaa", fontSize: ".7rem", textAlign: "right" }}>Sin acciones</span>}
-                </div>
+                {canActivate ? (
+                  <button type="button" className="cr-btn-gold" disabled={busy} onClick={() => decide(player)} style={{ whiteSpace: "nowrap", padding: ".55rem .75rem", fontSize: ".75rem" }}>{busy ? "Procesando..." : "ACTIVAR"}</button>
+                ) : <span style={{ color: "#888", fontSize: ".7rem", textAlign: "right" }}>—</span>}
               </article>
             );
           })}
