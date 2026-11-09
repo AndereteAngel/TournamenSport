@@ -309,7 +309,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
         .fefutin-captain input{appearance:auto!important;width:11px!important;height:11px!important;min-height:11px!important;margin:0!important;padding:0!important;accent-color:#b5122a}
         .fefutin-sheet-table .fefutin-status{ text-align:center;font-size:7px!important;line-height:1.2;font-weight:900;color:#111!important;overflow-wrap:anywhere}
         .fefutin-goals{text-align:center}
-        .fefutin-cards{text-align:center;white-space:nowrap}
+        .fefutin-cards{text-align:center;white-space:normal;vertical-align:middle}.fefutin-cards label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;margin:2px 0;font-size:7px!important;line-height:1!important}.fefutin-cards input{width:30px!important;max-width:100%!important;height:20px!important;min-height:20px!important}
         .fefutin-goals input,.fefutin-cards input{appearance:none!important;width:24px!important;max-width:45%!important;height:24px!important;min-height:24px!important;padding:2px!important;text-align:center!important;border:1px solid #999!important;border-radius:3px!important;background:#fff!important;color:#111!important;font-size:10px!important;box-shadow:none!important}
         .fefutin-cards label{display:inline-flex;align-items:center;gap:2px;margin:0 1px;font-size:8px!important;color:#111!important}
         .fefutin-sheet-table tbody tr{height:35px}
