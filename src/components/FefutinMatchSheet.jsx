@@ -293,11 +293,11 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
         .fefutin-sheet-title .brand{color:#b5122a!important;font-size:13px;font-weight:900;letter-spacing:2px}
         .fefutin-sheet-title h2{margin:5px 0;font-size:23px;color:#111!important;text-transform:uppercase}
         .fefutin-sheet-title p{margin:3px 0;font-size:12px;color:#333!important}
-        .fefutin-sheet-meta{display:grid;grid-template-columns:minmax(72px,.55fr) minmax(150px,1.7fr) minmax(125px,1.15fr) minmax(150px,1.6fr);gap:8px;margin:14px 0;align-items:end}
-        .fefutin-sheet-meta label{display:grid;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;color:#333!important;min-width:0}
-        .fefutin-sheet-meta input{display:block;width:100%;min-width:0;height:28px!important;min-height:28px!important;max-height:28px!important;line-height:20px!important;border:1px solid #999!important;border-radius:3px!important;padding:3px 6px!important;background:#fff!important;color:#111!important;font-size:11px!important;box-shadow:none!important}.fefutin-sheet-meta label:first-child input{max-width:76px}.fefutin-sheet-meta label:nth-child(3) input{max-width:145px}
+        .fefutin-sheet-meta{display:grid;grid-template-columns:76px minmax(0,1.35fr) 135px minmax(0,1.35fr);gap:10px;margin:14px 0;align-items:end;width:100%;min-width:0}
+        .fefutin-sheet-meta label{display:grid;grid-template-rows:auto 28px;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;color:#333!important;min-width:0;width:100%;overflow:hidden}
+        .fefutin-sheet-meta input{display:block;box-sizing:border-box;width:100%!important;max-width:100%!important;min-width:0!important;height:28px!important;min-height:28px!important;max-height:28px!important;line-height:20px!important;border:1px solid #999!important;border-radius:3px!important;padding:3px 6px!important;background:#fff!important;color:#111!important;font-size:11px!important;box-shadow:none!important;margin:0!important}
         .fefutin-sheet-table-wrap{width:100%;overflow-x:auto}
-        .fefutin-sheet-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;background:#fff!important}.fefutin-sheet-table th:nth-child(1),.fefutin-sheet-table td:nth-child(1),.fefutin-sheet-table th:nth-child(5),.fefutin-sheet-table td:nth-child(5){width:22%}.fefutin-sheet-table th:nth-child(2),.fefutin-sheet-table td:nth-child(2),.fefutin-sheet-table th:nth-child(6),.fefutin-sheet-table td:nth-child(6){width:12%}.fefutin-sheet-table th:nth-child(3),.fefutin-sheet-table td:nth-child(3),.fefutin-sheet-table th:nth-child(7),.fefutin-sheet-table td:nth-child(7){width:6%}.fefutin-sheet-table th:nth-child(4),.fefutin-sheet-table td:nth-child(4),.fefutin-sheet-table th:nth-child(8),.fefutin-sheet-table td:nth-child(8){width:10%}
+        .fefutin-sheet-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;background:#fff!important}.fefutin-sheet-table th:nth-child(1),.fefutin-sheet-table td:nth-child(1),.fefutin-sheet-table th:nth-child(5),.fefutin-sheet-table td:nth-child(5){width:20%}.fefutin-sheet-table th:nth-child(2),.fefutin-sheet-table td:nth-child(2),.fefutin-sheet-table th:nth-child(3),.fefutin-sheet-table td:nth-child(3),.fefutin-sheet-table th:nth-child(4),.fefutin-sheet-table td:nth-child(4),.fefutin-sheet-table th:nth-child(6),.fefutin-sheet-table td:nth-child(6),.fefutin-sheet-table th:nth-child(7),.fefutin-sheet-table td:nth-child(7),.fefutin-sheet-table th:nth-child(8),.fefutin-sheet-table td:nth-child(8){width:10%}
         .fefutin-sheet-table th,.fefutin-sheet-table td{border:1px solid #777!important;padding:5px 4px;vertical-align:middle;color:#111!important;background-clip:padding-box}
         .fefutin-sheet-table thead th{background:#292929!important;color:#fff!important;text-align:center;font-weight:800;font-size:10px;line-height:1.2}
         .fefutin-sheet-table thead .team-local{background:#b5122a!important;color:#fff!important;font-size:11px}
@@ -319,7 +319,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
         .fefutin-sheet-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
         .fefutin-sheet-actions button{padding:10px 16px;border-radius:5px;border:1px solid #333;cursor:pointer;font-weight:800}
         @page{size:A4 landscape;margin:7mm}
-        @media(max-width:700px){.fefutin-print-sheet{padding:12px}.fefutin-sheet-meta{grid-template-columns:76px minmax(130px,1fr);gap:8px}.fefutin-sheet-meta label:nth-child(3),.fefutin-sheet-meta label:nth-child(4){grid-column:auto}.fefutin-sheet-title h2{font-size:17px}.fefutin-sheet-table{min-width:680px}}
+        @media(max-width:700px){.fefutin-print-sheet{padding:12px}.fefutin-sheet-meta{grid-template-columns:76px minmax(0,1fr);gap:8px}.fefutin-sheet-meta label{grid-column:auto!important}.fefutin-sheet-meta label:nth-child(3),.fefutin-sheet-meta label:nth-child(4){grid-column:1 / -1!important}.fefutin-sheet-title h2{font-size:17px}.fefutin-sheet-table{min-width:680px}}
         @media print{
           html,body{background:#fff!important;margin:0!important;padding:0!important}
           body *{visibility:hidden!important}
@@ -333,7 +333,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
           .fefutin-sheet-table thead th{font-size:8px!important}
           .fefutin-sheet-table tbody tr{height:30px!important;break-inside:avoid}
           .fefutin-sheet-title h2{font-size:17px!important}
-          .fefutin-sheet-meta{grid-template-columns:76px minmax(0,1.7fr) 135px minmax(0,1.6fr)!important;gap:6px!important;margin:7px 0!important}.fefutin-sheet-meta input{height:23px!important;min-height:23px!important;max-height:23px!important;font-size:9px!important;padding:2px 4px!important}
+          .fefutin-sheet-meta{grid-template-columns:76px minmax(0,1.35fr) 135px minmax(0,1.35fr)!important;gap:8px!important;margin:7px 0!important;width:100%!important}.fefutin-sheet-meta label{min-width:0!important;width:100%!important;overflow:hidden!important}.fefutin-sheet-meta input{box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;height:23px!important;min-height:23px!important;max-height:23px!important;font-size:9px!important;padding:2px 4px!important;margin:0!important}
           .fefutin-sheet-meta input,.fefutin-observations textarea{border:0!important;border-bottom:1px solid #777!important}
         }
 
