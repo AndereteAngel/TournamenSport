@@ -391,6 +391,43 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
         .fefutin-print-sheet input[type="checkbox"]{appearance:auto!important;accent-color:#b5122a!important;opacity:1!important}
         .fefutin-print-sheet .fefutin-goals input,
         .fefutin-print-sheet .fefutin-cards input{background:#fff!important;color:#111!important;-webkit-text-fill-color:#111!important;border:1px solid #777!important;border-radius:3px!important}
+
+        /* Reglas finales: prioridad exclusiva para la hoja impresa */
+        @media print{
+          @page{size:A4 landscape;margin:3mm 5mm}
+          .fefutin-sheet-overlay{padding:0!important;margin:0!important}
+          .fefutin-print-sheet{padding:0!important;margin:0!important}
+          .fefutin-sheet-title{padding-bottom:3px!important;margin-bottom:4px!important}
+          .fefutin-sheet-title .brand{font-size:9px!important}
+          .fefutin-sheet-title h2{font-size:13px!important;margin:1px 0!important}
+          .fefutin-sheet-title p{font-size:8px!important;margin:0!important}
+          .fefutin-sheet-meta{margin:3px 0!important;gap:5px!important}
+          .fefutin-sheet-meta label{font-size:8px!important;grid-template-rows:auto 15px!important;gap:2px!important}
+          .fefutin-print-sheet .fefutin-sheet-meta input,
+          .fefutin-print-sheet .fefutin-observations textarea,
+          .fefutin-print-sheet .fefutin-sheet-table input:not([type="checkbox"]){
+            appearance:none!important;-webkit-appearance:none!important;
+            background:transparent!important;background-color:transparent!important;
+            color:transparent!important;-webkit-text-fill-color:transparent!important;
+            border:0!important;border-bottom:1px solid #555!important;
+            border-radius:0!important;box-shadow:none!important;text-shadow:none!important;outline:none!important;
+          }
+          .fefutin-print-sheet .fefutin-sheet-table input:not([type="checkbox"]){height:14px!important;min-height:14px!important;padding:0!important}
+          .fefutin-print-sheet .fefutin-sheet-table .fefutin-shirt-number input{width:90%!important}
+          .fefutin-print-sheet .fefutin-sheet-table .fefutin-cards input{width:30px!important;max-width:90%!important}
+          .fefutin-print-sheet .fefutin-sheet-table input[type="checkbox"]{display:none!important}
+          .fefutin-print-sheet .fefutin-sheet-table th,.fefutin-print-sheet .fefutin-sheet-table td{padding:1px 2px!important}
+          .fefutin-print-sheet .fefutin-sheet-table thead th{font-size:7px!important;line-height:1.1!important}
+          .fefutin-print-sheet .fefutin-sheet-table tbody tr{height:18px!important;break-inside:avoid!important}
+          .fefutin-print-sheet .fefutin-sheet-table .fefutin-player-name,
+          .fefutin-print-sheet .fefutin-sheet-table .fefutin-player-name strong{font-size:7px!important;line-height:1.05!important}
+          .fefutin-print-sheet .fefutin-sheet-table .fefutin-player-name small{font-size:6px!important;margin-top:1px!important}
+          .fefutin-print-sheet .fefutin-sheet-table .fefutin-status{font-size:6px!important;line-height:1!important}
+          .fefutin-print-sheet .fefutin-cards label{gap:0!important;margin:0!important;font-size:6px!important;line-height:1!important}
+          .fefutin-print-sheet .fefutin-observations{margin-top:4px!important;gap:2px!important;font-size:8px!important}
+          .fefutin-print-sheet .fefutin-observations textarea{height:20px!important;min-height:20px!important;padding:0!important}
+          .fefutin-print-sheet .fefutin-sheet-table,.fefutin-print-sheet .fefutin-sheet-table-wrap,.fefutin-print-sheet .fefutin-observations{break-inside:avoid!important;page-break-inside:avoid!important}
+        }
       `}</style>
       <div className="fefutin-print-sheet">
         <div className="fefutin-sheet-title">
