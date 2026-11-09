@@ -55,6 +55,8 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [arbitroSeleccionado, setArbitroSeleccionado] = useState(null);
+  const [arbitroDesignacionAbierto, setArbitroDesignacionAbierto] = useState(null);
+  const [arbitroParaDesignar, setArbitroParaDesignar] = useState(null);
   const [mesCalendario, setMesCalendario] = useState(() => {
     const hoy = new Date();
     return new Date(hoy.getFullYear(), hoy.getMonth(), 1);
@@ -218,7 +220,7 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
   });
 
   const guardarDesignacion = async () => {
-    if (!canManageAccess || !arbitroSeleccionado || !partidoParaDesignar) return;
+    if (!canManageAccess || !arbitroParaDesignar || !partidoParaDesignar) return;
     const [tournamentId, phase, firstIndex, secondIndex] = partidoParaDesignar.split("::");
     const tournament = torneos.find((item) => String(item.id) === tournamentId);
     if (!tournament) {
@@ -233,7 +235,7 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
     if (phase === "grupo" && groups[Number(firstIndex)]?.matches?.[Number(secondIndex)]) {
       groups[Number(firstIndex)].matches[Number(secondIndex)] = {
         ...groups[Number(firstIndex)].matches[Number(secondIndex)],
-        referee_id: arbitroSeleccionado,
+        referee_id: arbitroParaDesignar,
       };
     } else if (phase === "playoff" && playoffs[Number(firstIndex)]?.[Number(secondIndex)]) {
       playoffs[Number(firstIndex)][Number(secondIndex)] = {
@@ -257,6 +259,8 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
     }
     setTorneos((previous) => previous.map((item) => item.id === tournament.id ? { ...item, groups, playoffs } : item));
     setPartidoParaDesignar("");
+    setArbitroDesignacionAbierto(null);
+    setArbitroParaDesignar(null);
     setMensajeDesignacion("Designación guardada correctamente.");
   };
   const partidosDirigidos = arbitroSeleccionado
@@ -481,42 +485,6 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
           )}
         </section>
 
-        {canManageAccess && (
-          <section className="referee-stat-card" style={{ marginTop: "1rem", marginBottom: "1rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
-              <div>
-                <h3 style={{ color: "#fff", margin: 0 }}>Designación arbitral</h3>
-                <p style={{ color: "#d1d5db", fontSize: "0.78rem", margin: "0.25rem 0 0" }}>Asigná o reemplazá a este árbitro en cualquier partido del fixture.</p>
-              </div>
-              <button type="button" className="cr-btn-gold" onClick={() => { setMostrarDesignacion((value) => !value); setMensajeDesignacion(""); }} style={{ padding: "0.65rem 1rem" }}>
-                {mostrarDesignacion ? "Cerrar" : "＋ Designar partido"}
-              </button>
-            </div>
-            {mostrarDesignacion && (
-              <div style={{ display: "grid", gap: "0.7rem", marginTop: "0.9rem" }}>
-                <label htmlFor="referee-match-assignment" style={{ color: "#fff", fontSize: "0.78rem", fontWeight: 800 }}>Seleccioná el partido</label>
-                <select id="referee-match-assignment" value={partidoParaDesignar} onChange={(event) => setPartidoParaDesignar(event.target.value)} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: "0.8rem", borderRadius: "8px", border: "1px solid #b5122a", background: "#080808", color: "#fff" }}>
-                  <option value="">Elegir torneo y partido...</option>
-                  {partidosDisponibles.map((partido) => (
-                    <option key={partido.key} value={partido.key}>
-                      {partido.tournamentTitle} · {partido.rama} · {partido.instancia} · {partido.team1} vs. {partido.team2}{partido.refereeId ? " · Ya tiene árbitro (se reemplazará)" : " · Sin designar"}
-                    </option>
-                  ))}
-                </select>
-                {partidoParaDesignar && (
-                  <p style={{ color: "#f1b5c0", fontSize: "0.75rem", margin: 0 }}>
-                    {(() => { const seleccionado = partidosDisponibles.find((item) => item.key === partidoParaDesignar); const actual = seleccionado?.refereeId ? estadisticas.find((item) => item.id === seleccionado.refereeId)?.nombre || "otro árbitro" : "Sin árbitro asignado"; return `Asignar a ${arbitroActual.nombre}. Actualmente: ${actual}.`; })()}
-                  </p>
-                )}
-                <button type="button" className="cr-btn-gold" disabled={!partidoParaDesignar || guardandoDesignacion} onClick={guardarDesignacion} style={{ opacity: !partidoParaDesignar || guardandoDesignacion ? 0.55 : 1 }}>
-                  {guardandoDesignacion ? "Guardando..." : "Confirmar designación"}
-                </button>
-                {mensajeDesignacion && <p role="status" style={{ color: mensajeDesignacion.includes("correctamente") ? "#86efac" : "#fca5a5", fontSize: "0.8rem", margin: 0 }}>{mensajeDesignacion}</p>}
-                {partidosDisponibles.length === 0 && <p style={{ color: "#aeb4bf", margin: 0 }}>No hay partidos disponibles en los torneos cargados.</p>}
-              </div>
-            )}
-          </section>
-        )}
 
         <section className="referee-stat-card" style={{ marginTop: "1rem" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.85rem" }}>
@@ -608,6 +576,52 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                 </div>
                 <span className="referee-mini-detail" style={{ color: "#ff9aa8", fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.08em", borderTop: "1px solid #343d4b", paddingTop: "0.65rem", marginTop: "auto", display: "flex", justifyContent: "space-between" }}>CONSULTAR FICHA <span aria-hidden="true">→</span></span>
               </button>
+              {canManageAccess && (
+                <div style={{ display: "grid", gap: "0.5rem", marginTop: "auto" }}>
+                  <button
+                    type="button"
+                    className="cr-btn-gold"
+                    onClick={() => {
+                      const abrir = arbitroDesignacionAbierto !== arbitro.id;
+                      setArbitroDesignacionAbierto(abrir ? arbitro.id : null);
+                      setArbitroParaDesignar(abrir ? arbitro.id : null);
+                      setPartidoParaDesignar("");
+                      setMensajeDesignacion("");
+                    }}
+                    style={{ width: "100%", padding: "0.65rem 0.75rem", fontSize: "0.78rem" }}
+                  >
+                    {arbitroDesignacionAbierto === arbitro.id ? "Cerrar designación" : "＋ Designar partido"}
+                  </button>
+                  {arbitroDesignacionAbierto === arbitro.id && (
+                    <div style={{ display: "grid", gap: "0.5rem", padding: "0.7rem", borderRadius: "9px", background: "#080808", border: "1px solid #b5122a" }}>
+                      <strong style={{ color: "#fff", fontSize: "0.78rem" }}>Asignar partido a {arbitro.nombre}</strong>
+                      <select
+                        aria-label={`Seleccionar partido para ${arbitro.nombre}`}
+                        value={partidoParaDesignar}
+                        onChange={(event) => setPartidoParaDesignar(event.target.value)}
+                        style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: "0.7rem", borderRadius: "8px", border: "1px solid #b5122a", background: "#171c27", color: "#fff", fontSize: "0.75rem" }}
+                      >
+                        <option value="">Elegir torneo y partido...</option>
+                        {partidosDisponibles.map((partido) => (
+                          <option key={partido.key} value={partido.key}>
+                            {partido.tournamentTitle} · {partido.rama} · {partido.instancia} · {partido.team1} vs. {partido.team2}{partido.refereeId ? " · Ya tiene árbitro (se reemplazará)" : " · Sin designar"}
+                          </option>
+                        ))}
+                      </select>
+                      {partidoParaDesignar && (
+                        <p style={{ color: "#f1b5c0", fontSize: "0.7rem", margin: 0 }}>
+                          {(() => { const seleccionado = partidosDisponibles.find((item) => item.key === partidoParaDesignar); const actual = seleccionado?.refereeId ? estadisticas.find((item) => item.id === seleccionado.refereeId)?.nombre || "otro árbitro" : "Sin árbitro asignado"; return `Actualmente: ${actual}. Se asignará a ${arbitro.nombre}.`; })()}
+                        </p>
+                      )}
+                      <button type="button" className="cr-btn-gold" disabled={!partidoParaDesignar || guardandoDesignacion} onClick={guardarDesignacion} style={{ opacity: !partidoParaDesignar || guardandoDesignacion ? 0.55 : 1, padding: "0.6rem", fontSize: "0.75rem" }}>
+                        {guardandoDesignacion ? "Guardando..." : "Confirmar designación"}
+                      </button>
+                      {mensajeDesignacion && <p role="status" style={{ color: mensajeDesignacion.includes("correctamente") ? "#86efac" : "#fca5a5", fontSize: "0.72rem", margin: 0 }}>{mensajeDesignacion}</p>}
+                      {partidosDisponibles.length === 0 && <p style={{ color: "#aeb4bf", fontSize: "0.72rem", margin: 0 }}>No hay partidos disponibles en los torneos cargados.</p>}
+                    </div>
+                  )}
+                </div>
+              )}
               {canManageAccess && (
                 <button
                   type="button"
