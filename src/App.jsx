@@ -3862,6 +3862,22 @@ export function TournamenSportApp() {
             </section>
           )}
 
+          {canManageAccess && (
+            <button
+              type="button"
+              className="tc-home-about-card tc-home-referee-card"
+              onClick={() => { setAccessActionError(""); setActiveView("access-requests"); }}
+              aria-label="Abrir altas de jugadores"
+            >
+              <span className="tc-home-about-icon tc-home-referee-icon" aria-hidden="true">⚽</span>
+              <span className="tc-home-about-copy">
+                <strong>ALTAS DE JUGADORES</strong>
+                <small>Revisá solicitudes, aprobá jugadores y generá sus carnets</small>
+              </span>
+              <span className="tc-home-about-arrow">→</span>
+            </button>
+          )}
+
           {(isAdmin || isDirectivo || isArbitro) && (
             <button
               type="button"
