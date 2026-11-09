@@ -42,6 +42,8 @@ const inputStyle = {
 export function ReferenteInscripcion({ tournaments = [], currentUser, onBack, onSubmitted }) {
   const [clubName, setClubName] = useState("");
   const [clubAddress, setClubAddress] = useState("");
+  const [courtType, setCourtType] = useState("");
+  const [referentePhone, setReferentePhone] = useState("");
   const [clubImage, setClubImage] = useState(null);
   const [selectedTournaments, setSelectedTournaments] = useState({});
   const [showReview, setShowReview] = useState(false);
@@ -121,6 +123,8 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack, on
         p_name: clubName.trim(),
         p_headquarters_address: clubAddress.trim(),
         p_logo_path: logoPath,
+        p_court_type: courtType.trim(),
+        p_referente_phone: referentePhone.trim(),
         p_tournaments: tournamentSelections,
       }
     );
@@ -184,6 +188,16 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack, on
             <label style={{ display: "grid", gap: ".45rem", color: "#fff", fontWeight: 700 }}>
               Domicilio de la sede *
               <input value={clubAddress} onChange={(event) => { setClubAddress(event.target.value); setShowReview(false); }} placeholder="Calle, número, localidad" style={inputStyle} maxLength={200} required />
+            </label>
+
+            <label style={{ display: "grid", gap: ".45rem", color: "#fff", fontWeight: 700 }}>
+              Tipo de cancha
+              <input value={courtType} onChange={(event) => { setCourtType(event.target.value); setShowReview(false); }} placeholder="Ej.: césped natural, sintético, salón..." style={inputStyle} maxLength={100} />
+            </label>
+
+            <label style={{ display: "grid", gap: ".45rem", color: "#fff", fontWeight: 700 }}>
+              Teléfono de contacto del referente
+              <input value={referentePhone} onChange={(event) => { setReferentePhone(event.target.value); setShowReview(false); }} placeholder="Código de área + número" style={inputStyle} maxLength={40} inputMode="tel" />
             </label>
 
             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: "1rem", alignItems: "center" }}>
@@ -260,6 +274,8 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack, on
             <h3 style={{ color: "#fff", marginTop: 0 }}>Revisión de la inscripción</h3>
             <p style={{ color: "#fff" }}><strong>Club:</strong> {clubName.trim()}</p>
             <p style={{ color: "#fff" }}><strong>Domicilio:</strong> {clubAddress.trim()}</p>
+            <p style={{ color: "#fff" }}><strong>Tipo de cancha:</strong> {courtType.trim() || "No informado"}</p>
+            <p style={{ color: "#fff" }}><strong>Contacto del referente:</strong> {referentePhone.trim() || "No informado"}</p>
             <p style={{ color: "#fff" }}><strong>Escudo:</strong> {clubImage?.name || "Sin imagen seleccionada"}</p>
             {selectedItems.map(({ tournament, categories }) => (
               <div key={tournament.id} style={{ borderTop: "1px solid #444", paddingTop: ".65rem", marginTop: ".65rem" }}>
