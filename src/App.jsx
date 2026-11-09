@@ -3694,7 +3694,6 @@ export function TournamenSportApp() {
                 <RefereeStats onBack={() => setManagementInboxTab("arbitros")} canManageAccess={true} onDeactivateReferee={handleDeactivateReferee} />
               </div>
             </div>}
-            </div>
           </section>
         </div>
       ) : activeView === "referee-carnets" && isArbitro ? (
