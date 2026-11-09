@@ -1,5 +1,33 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
+
+const STATUS_OPTIONS = [
+  { value: "todos", label: "Todos los estados" },
+  { value: "pendiente_alta", label: "Pendientes de activar" },
+  { value: "activo_pendiente", label: "Activos · Pendientes" },
+  { value: "habilitado", label: "Activos · Habilitados" },
+  { value: "no_habilitado", label: "No habilitados" },
+  { value: "rechazado", label: "Rechazados" },
+];
+
+const getStatus = (player) => {
+  if (player.approval_status === "pendiente") return "pendiente_alta";
+  if (player.approval_status === "rechazado") return "rechazado";
+  if (player.approval_status === "aprobado") {
+    if (player.carnet_status === "habilitado") return "habilitado";
+    if (player.carnet_status === "no_habilitado") return "no_habilitado";
+    return "activo_pendiente";
+  }
+  return "pendiente_alta";
+};
+
+const statusLabel = (status) => ({
+  pendiente_alta: "PENDIENTE DE ACTIVAR",
+  activo_pendiente: "ACTIVO · PENDIENTE",
+  habilitado: "ACTIVO · HABILITADO",
+  no_habilitado: "NO HABILITADO",
+  rechazado: "RECHAZADO",
+}[status] || "SIN ESTADO");
 
 export function FefutinPlayerApprovals() {
   const [players, setPlayers] = useState([]);
@@ -7,14 +35,18 @@ export function FefutinPlayerApprovals() {
   const [workingId, setWorkingId] = useState(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [statusFilter, setStatusFilter] = useState("pendiente_alta");
+  const [clubFilter, setClubFilter] = useState("todos");
+  const [categoryFilter, setCategoryFilter] = useState("todas");
+  const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
-    const { data, error: rpcError } = await supabase.rpc("get_fefutin_pending_players");
+    const { data, error: rpcError } = await supabase.rpc("get_fefutin_player_admin_list");
     if (rpcError) {
-      console.error("Error al cargar altas de jugadores:", rpcError);
-      setError(rpcError.message || "No se pudieron cargar las altas pendientes.");
+      console.error("Error al cargar jugadores FEFUTIN:", rpcError);
+      setError(rpcError.message || "No se pudo cargar la lista de jugadores.");
       setPlayers([]);
     } else {
       setPlayers(data || []);
@@ -24,9 +56,23 @@ export function FefutinPlayerApprovals() {
 
   useEffect(() => { load(); }, [load]);
 
+  const clubs = useMemo(() => [...new Set(players.map((p) => p.club_name).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es")), [players]);
+  const categories = useMemo(() => [...new Set(players.map((p) => p.category_label).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es")), [players]);
+
+  const filteredPlayers = useMemo(() => players.filter((player) => {
+    const status = getStatus(player);
+    const term = search.trim().toLocaleLowerCase("es");
+    const matchesSearch = !term || [player.first_name, player.last_name, player.dni, player.carnet_number]
+      .some((value) => String(value || "").toLocaleLowerCase("es").includes(term));
+    return (statusFilter === "todos" || status === statusFilter)
+      && (clubFilter === "todos" || player.club_name === clubFilter)
+      && (categoryFilter === "todas" || player.category_label === categoryFilter)
+      && matchesSearch;
+  }), [players, statusFilter, clubFilter, categoryFilter, search]);
+
   const decide = async (player, approve) => {
-    const action = approve ? "aprobar el alta" : "rechazar el alta";
-    if (!window.confirm(`¿Confirmás ${action} de ${player.first_name} ${player.last_name}?${approve ? " Se asignará su carnet FEFUTIN automáticamente." : ""}`)) return;
+    const action = approve ? "activar" : "rechazar";
+    if (!window.confirm(`¿Confirmás ${action} a ${player.first_name} ${player.last_name}?${approve ? " Se generará su carnet FEFUTIN con estado PENDIENTE." : ""}`)) return;
     setWorkingId(player.player_entry_id);
     setError("");
     setMessage("");
@@ -38,47 +84,74 @@ export function FefutinPlayerApprovals() {
       console.error("Error al resolver alta:", rpcError);
       setError(rpcError.message || "No se pudo resolver el alta.");
     } else {
-      setMessage(approve ? `Alta aprobada. Carnet asignado: ${data}` : "Alta rechazada.");
+      setMessage(approve ? `Jugador activado. Carnet asignado: ${data}. Estado: PENDIENTE DE VERIFICACIÓN.` : "Solicitud rechazada.");
       await load();
     }
     setWorkingId(null);
   };
 
-  const photoUrl = (path) => path
-    ? supabase.storage.from("fefutin-player-photos").getPublicUrl(path).data.publicUrl
-    : "";
+  const fieldStyle = {
+    width: "100%", minWidth: 0, boxSizing: "border-box", padding: ".7rem .8rem",
+    borderRadius: "8px", border: "1px solid #666", background: "#fff", color: "#171717",
+    fontSize: ".88rem",
+  };
 
   return (
     <section style={{ marginTop: "1.5rem", borderTop: "1px solid #3a3a3a", paddingTop: "1.3rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
         <div>
           <h3 style={{ color: "#fff", margin: 0 }}>ALTAS DE JUGADORES</h3>
-          <p style={{ color: "#aaa", fontSize: ".82rem", margin: ".3rem 0 0" }}>Revisá cada ficha. Al aprobarla se genera su carnet único FEFUTIN.</p>
+          <p style={{ color: "#aaa", fontSize: ".82rem", margin: ".3rem 0 0" }}>Administrá las altas y consultá el estado de cada carnet.</p>
         </div>
         <button type="button" className="tc-form-back" onClick={load} disabled={loading}>↻ Actualizar</button>
       </div>
+
       {error && <p role="alert" style={{ color: "#fecaca", background: "#391018", padding: ".7rem", borderRadius: "8px" }}>{error}</p>}
       {message && <p role="status" style={{ color: "#bbf7d0", background: "#052e16", padding: ".7rem", borderRadius: "8px" }}>{message}</p>}
-      {loading ? <p style={{ color: "#ddd" }}>Cargando altas pendientes...</p> :
-        players.length === 0 ? <p style={{ color: "#aaa" }}>No hay jugadores pendientes de aprobación.</p> :
-        <div style={{ display: "grid", gap: ".8rem", marginTop: ".8rem" }}>
-          {players.map((player) => (
-            <article key={player.player_entry_id} style={{ display: "flex", gap: ".9rem", alignItems: "center", flexWrap: "wrap", border: "1px solid #b5122a", borderRadius: "10px", background: "#111", padding: ".9rem" }}>
-              {photoUrl(player.photo_path) ? <img src={photoUrl(player.photo_path)} alt={`Foto de ${player.first_name} ${player.last_name}`} style={{ width: "88px", height: "108px", objectFit: "cover", borderRadius: "8px", background: "#222" }} /> :
-                <div style={{ width: "88px", height: "108px", display: "grid", placeItems: "center", color: "#aaa", border: "1px dashed #666", borderRadius: "8px", fontSize: ".75rem" }}>Sin foto</div>}
-              <div style={{ flex: "1 1 220px", minWidth: 0, color: "#fff" }}>
-                <strong style={{ fontSize: "1rem" }}>{player.last_name}, {player.first_name}</strong>
-                <div style={{ color: "#ddd", fontSize: ".82rem", marginTop: ".25rem" }}>DNI: {player.dni} · Nacimiento: {player.birth_date || "—"}</div>
-                <div style={{ color: "#ddd", fontSize: ".82rem" }}>Camiseta: {player.jersey_number || "—"}</div>
-                <div style={{ color: "#ffb3bf", fontSize: ".82rem", marginTop: ".35rem" }}>{player.club_name} · {player.tournament_title} · {player.category_label}</div>
-                <span style={{ color: "#facc15", fontSize: ".72rem", fontWeight: 800 }}>PENDIENTE DE ALTA · SIN CARNET</span>
-              </div>
-              <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
-                <button type="button" className="cr-btn-gold" disabled={workingId === player.player_entry_id} onClick={() => decide(player, true)}>{workingId === player.player_entry_id ? "Procesando..." : "Aprobar y generar carnet"}</button>
-                <button type="button" className="tc-form-back" disabled={workingId === player.player_entry_id} onClick={() => decide(player, false)}>Rechazar</button>
-              </div>
-            </article>
-          ))}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 190px), 1fr))", gap: ".65rem", margin: "1rem 0" }}>
+        <select aria-label="Filtrar por estado" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={fieldStyle}>
+          {STATUS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+        <select aria-label="Filtrar por equipo" value={clubFilter} onChange={(e) => setClubFilter(e.target.value)} style={fieldStyle}>
+          <option value="todos">Todos los equipos</option>
+          {clubs.map((club) => <option key={club} value={club}>{club}</option>)}
+        </select>
+        <select aria-label="Filtrar por categoría" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} style={fieldStyle}>
+          <option value="todas">Todas las categorías</option>
+          {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+        </select>
+        <input aria-label="Buscar jugador" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar jugador o DNI..." style={fieldStyle} />
+      </div>
+
+      <div style={{ display: "flex", justifyContent: "space-between", color: "#ddd", fontSize: ".82rem", margin: "0 0 .55rem" }}>
+        <span>JUGADORES</span><strong>{loading ? "…" : filteredPlayers.length}</strong>
+      </div>
+
+      {loading ? <p style={{ color: "#ddd" }}>Cargando jugadores...</p> :
+        filteredPlayers.length === 0 ? <p style={{ color: "#aaa", border: "1px solid #444", borderRadius: "9px", padding: "1.2rem", textAlign: "center" }}>No hay jugadores para los filtros seleccionados.</p> :
+        <div style={{ display: "grid", gap: ".45rem" }}>
+          {filteredPlayers.map((player) => {
+            const status = getStatus(player);
+            const canActivate = status === "pendiente_alta";
+            const busy = workingId === player.player_entry_id;
+            return (
+              <article key={player.player_entry_id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "center", gap: ".7rem", border: "1px solid #4a4a4a", borderLeft: "3px solid #b5122a", borderRadius: "8px", background: "#151515", padding: ".7rem .8rem" }}>
+                <div style={{ minWidth: 0, color: "#fff" }}>
+                  <strong style={{ display: "block", fontSize: ".92rem" }}>{player.last_name}, {player.first_name}</strong>
+                  <span style={{ display: "block", color: "#bbb", fontSize: ".76rem", marginTop: ".15rem" }}>DNI: {player.dni || "—"}{player.carnet_number ? ` · Carnet: ${player.carnet_number}` : ""}</span>
+                  <span style={{ display: "block", color: "#ffb3bf", fontSize: ".76rem", marginTop: ".15rem" }}>{player.club_name || "Sin equipo"} · {player.category_label || "Sin categoría"}</span>
+                  <span style={{ display: "inline-block", marginTop: ".35rem", color: status === "habilitado" ? "#86efac" : status === "no_habilitado" || status === "rechazado" ? "#fca5a5" : "#fcd34d", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".02em" }}>{statusLabel(status)}</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "stretch", gap: ".35rem" }}>
+                  {canActivate ? <>
+                    <button type="button" className="cr-btn-gold" disabled={busy} onClick={() => decide(player, true)} style={{ whiteSpace: "nowrap", padding: ".55rem .75rem", fontSize: ".75rem" }}>{busy ? "Procesando..." : "ACTIVAR"}</button>
+                    <button type="button" className="tc-form-back" disabled={busy} onClick={() => decide(player, false)} style={{ whiteSpace: "nowrap", padding: ".4rem .65rem", fontSize: ".7rem" }}>Rechazar</button>
+                  </> : <span style={{ color: "#aaa", fontSize: ".7rem", textAlign: "right" }}>Sin acciones</span>}
+                </div>
+              </article>
+            );
+          })}
         </div>}
     </section>
   );
