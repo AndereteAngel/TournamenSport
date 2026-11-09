@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { PlayerCarnets } from "./PlayerCarnets";
-import { ClubCarnet } from "./ClubCarnet";
 
 const emptyPlayer = () => ({
   id: `nuevo-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -191,7 +190,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
           {isManager ? "GESTIÓN DE CLUBES" : "ÁREA DEL REFERENTE"}
         </p>
         <h2 className="cr-title" style={{ color: "#fff", margin: "0 0 .5rem" }}>
-          {mode === "torneos" ? "MIS TORNEOS" : selectedClub ? selectedSection === "torneos" ? "TORNEOS PARTICIPANTES" : selectedSection === "listas" ? "LISTAS DE BUENA FE" : selectedSection === "datos" ? "DATOS DEL CLUB" : selectedSection === "carnets" ? "CARNETS DE JUGADORES" : selectedSection === "club-carnet" ? "CARNET DEL CLUB" : selectedClub.club_name : "FICHA DE EQUIPOS"}
+          {mode === "torneos" ? "MIS TORNEOS" : selectedClub ? selectedSection === "torneos" ? "TORNEOS PARTICIPANTES" : selectedSection === "listas" ? "LISTAS DE BUENA FE" : selectedSection === "datos" ? "DATOS DEL CLUB" : selectedSection === "carnets" ? "CARNETS DE JUGADORES" : selectedClub.club_name : "FICHA DE EQUIPOS"}
         </h2>
         <p style={{ color: "#d1d5db", lineHeight: 1.55, marginTop: 0 }}>
           {mode === "torneos"
@@ -204,8 +203,6 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   ? "Información institucional registrada del club."
                   : selectedClub && selectedSection === "carnets"
                     ? "Credenciales digitales de los jugadores aprobados de este club."
-                    : selectedClub && selectedSection === "club-carnet"
-                      ? "Credencial institucional y número único de afiliación FEFUTIN."
                   : selectedClub
                     ? "Elegí una sección para consultar la información del club."
                     : isManager
@@ -252,7 +249,6 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   { id: "listas", title: "LISTAS DE BUENA FE", description: "Jugadores organizados por categoría", symbol: "📋" },
                   { id: "datos", title: "DATOS DEL CLUB", description: "Información institucional y escudo", symbol: "🏟️" },
                   { id: "carnets", title: "CARNETS", description: "Credenciales digitales de los jugadores", symbol: "🪪" },
-                  { id: "club-carnet", title: "CARNET DEL CLUB", description: "Credencial institucional y afiliación FEFUTIN", symbol: "🏅" },
                 ].map((section) => (
                   <button key={section.id} type="button" onClick={() => setSelectedSection(section.id)} style={{ minHeight: "155px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".65rem", padding: "1.1rem", border: "1px solid #b5122a", borderRadius: "12px", background: "#111", color: "#fff", cursor: "pointer", textAlign: "center" }}>
                     <span style={{ fontSize: "2rem" }}>{section.symbol}</span>
@@ -261,26 +257,52 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </button>
                 ))}
               </div>
-             ) : mode === "equipos" && selectedSection === "club-carnet" ? (
-              <ClubCarnet club={club} />
             ) : mode === "equipos" && selectedSection === "carnets" ? (
               <div style={{ marginTop: "1.25rem" }}>
                 <PlayerCarnets currentUser={currentUser} canManage={isManager} clubId={selectedClubId} embedded />
               </div>
             ) : mode === "equipos" && selectedSection === "datos" ? (
-              <div style={{ display: "grid", gap: "1rem", marginTop: "1.25rem" }}>
-                <article style={{ display: "grid", gridTemplateColumns: "minmax(110px, 170px) minmax(0, 1fr)", alignItems: "center", gap: "1rem", padding: "1rem", border: "1px solid #b5122a", borderRadius: "12px", background: "#111" }}>
-                  <div style={{ width: "100%", aspectRatio: "1", display: "grid", placeItems: "center", overflow: "hidden", borderRadius: "10px", background: "#fff" }}>
-                    {club?.logo_path ? <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt={"Escudo de " + club.club_name} style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <span style={{ color: "#171c27", fontSize: ".7rem", fontWeight: 900 }}>SIN ESCUDO</span>}
+              <div style={{ display: "grid", gap: "1.1rem", marginTop: "1.25rem" }}>
+                <article style={{ overflow: "hidden", border: "2px solid #b5122a", borderRadius: "18px", background: "linear-gradient(135deg,#292929 0%,#111 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", maxWidth: "680px", width: "100%", margin: "0 auto" }}>
+                  <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".8rem", padding: ".9rem 1rem", background: "#b5122a" }}>
+                    <div>
+                      <p style={{ margin: 0, color: "#fff", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN</p>
+                      <p style={{ margin: ".2rem 0 0", color: "#fff", fontSize: ".65rem", fontWeight: 800, letterSpacing: ".06em" }}>CREDENCIAL INSTITUCIONAL</p>
+                    </div>
+                    <span style={{ fontSize: "1.8rem" }}>🏅</span>
+                  </header>
+                  <div style={{ display: "grid", gridTemplateColumns: "clamp(105px,28%,160px) minmax(0,1fr)", gap: "clamp(.8rem,3vw,1.2rem)", alignItems: "center", padding: "clamp(.9rem,3vw,1.3rem)" }}>
+                    <div style={{ aspectRatio: "1", display: "grid", placeItems: "center", overflow: "hidden", border: "2px solid #b5122a", borderRadius: "12px", background: "#fff" }}>
+                      {club?.logo_path ? <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt={"Escudo de " + club.club_name} style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <span style={{ color: "#171c27", fontWeight: 900, fontSize: ".7rem" }}>SIN ESCUDO</span>}
+                    </div>
+                    <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+                      <h3 style={{ margin: "0 0 .8rem", color: "#fff", fontSize: "clamp(1.05rem,4vw,1.4rem)", lineHeight: 1.2 }}>{club?.club_name}</h3>
+                      <p style={{ margin: 0, color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em" }}>NÚMERO DE AFILIACIÓN FEFUTIN</p>
+                      <p style={{ margin: ".2rem 0 0", color: "#fff", fontSize: "1.15rem", fontWeight: 900, letterSpacing: ".06em" }}>{club?.affiliate_number || "PENDIENTE DE ASIGNACIÓN"}</p>
+                    </div>
                   </div>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ color: "#b5122a", fontSize: ".7rem", fontWeight: 900, letterSpacing: ".1em", margin: "0 0 .4rem" }}>INFORMACIÓN INSTITUCIONAL</p>
-                    <h3 style={{ color: "#fff", margin: "0 0 .8rem", overflowWrap: "anywhere" }}>{club?.club_name}</h3>
-                    <p style={{ color: "#ccc", margin: 0, lineHeight: 1.5 }}><strong style={{ color: "#fff" }}>Domicilio:</strong> {club?.headquarters_address || "Sin domicilio registrado"}</p>
-                  </div>
+                  <footer style={{ padding: ".65rem 1rem", borderTop: "1px solid #b5122a", background: "#090909", color: "#ddd", fontSize: ".65rem", fontWeight: 800, letterSpacing: ".08em" }}>CLUB REGISTRADO EN FEFUTIN · CARNET DIGITAL</footer>
                 </article>
-              </div>
-            ) : (
+
+                <section style={{ border: "1px solid #b5122a", borderRadius: "12px", background: "#111", padding: "1rem" }}>
+                  <p style={{ color: "#b5122a", fontSize: ".7rem", fontWeight: 900, letterSpacing: ".1em", margin: "0 0 .8rem" }}>DATOS INSTITUCIONALES Y DE CONTACTO</p>
+                  <h3 style={{ color: "#fff", margin: "0 0 1rem", overflowWrap: "anywhere" }}>{club?.club_name}</h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: ".9rem" }}>
+                    {[
+                      ["Domicilio de la sede", club?.headquarters_address],
+                      ["Tipo de cancha", club?.court_type],
+                      ["Referente del club", club?.referente_name],
+                      ["Teléfono del referente", club?.referente_phone],
+                      ["Correo del referente", club?.referente_email],
+                    ].map(([label, value]) => (
+                      <div key={label} style={{ padding: ".75rem", borderRadius: "8px", background: "#1b1b1b", minWidth: 0 }}>
+                        <p style={{ margin: "0 0 .25rem", color: "#aaa", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".04em" }}>{label}</p>
+                        <p style={{ margin: 0, color: "#fff", overflowWrap: "anywhere", lineHeight: 1.45 }}>{value || "No registrado"}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>            ) : (
               <>
                 {(mode === "equipos" && selectedSection !== "listas" || isManager && mode === "torneos") && club && (
                   <div style={{ display: "flex", alignItems: "center", gap: ".8rem", padding: ".8rem", margin: "1rem 0", background: "#171c27", borderRadius: "10px" }}>
