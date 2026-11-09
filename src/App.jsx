@@ -8,7 +8,6 @@ import { CreateTournament } from "./components/CreateTournament";
 import { GroupStageView } from "./components/GroupStageView";
 import { Navbar } from "./components/Navbar";
 import { RefereeCarnets } from "./components/RefereeCarnets";
-import { PlayerCarnets } from "./components/PlayerCarnets";
 import { TCIcon } from "./components/TCIcon";
 import { TournamentNotice, useTournamentNotice } from "./components/TournamentNotice";
 import { PlayoffBracket } from "./components/PlayoffBracket";
@@ -1723,8 +1722,7 @@ export function TournamenSportApp() {
         (!canViewRefereeStats && activeView === "referee-stats") ||
         (!canAccessClubManagement && ["referente-inscripcion", "referente-equipos", "referente-torneos"].includes(activeView)) ||
         (!isArbitro && activeView === "referee-carnets") ||
-        (!canManageAccess && activeView === "referee-carnet-directory") ||
-        (!canAccessClubManagement && activeView === "player-carnets")) {
+        (!canManageAccess && activeView === "referee-carnet-directory")) {
       setActiveView("home");
       setActiveTournament(null);
     }
@@ -3379,9 +3377,7 @@ export function TournamenSportApp() {
           onGoAccessRequests={() => { setAccessActionError(""); setActiveView("access-requests"); }}
           onGoStats={() => setActiveView("stats")}
           isArbitro={isArbitro}
-          isReferente={isReferente}
           onGoMyCarnet={() => setActiveView("referee-carnets")}
-          onGoPlayerCarnets={() => setActiveView("player-carnets")}
           onGoCarnetDirectory={() => setActiveView("referee-carnet-directory")}
           onAdminClick={() => setActiveView("admin-login")}
           onLogout={handleLogout}
@@ -3683,8 +3679,6 @@ export function TournamenSportApp() {
         <RefereeCarnets currentUser={currentUser} canManage={false} onBack={() => setActiveView("home")} />
       ) : activeView === "referee-carnet-directory" && canManageAccess ? (
         <RefereeCarnets currentUser={currentUser} canManage={true} onBack={() => setActiveView("home")} />
-      ) : activeView === "player-carnets" && canAccessClubManagement ? (
-        <PlayerCarnets currentUser={currentUser} canManage={canManageAccess} onBack={() => setActiveView("home")} />
       ) : activeView === "stats" && isAdmin ? (
         <div className="tc-form-screen tc-stats-screen">
           <AdminStats onBack={() => setActiveView("home")} />
