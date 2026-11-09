@@ -11,7 +11,9 @@ export function Navbar({
   isAdmin = false,
   canManageAccess = false,
   isArbitro = false,
+  isReferente = false,
   onGoMyCarnet,
+  onGoPlayerCarnets,
   onGoCarnetDirectory,
   pendingAccessCount = 0,
   onGoAccessRequests,
@@ -221,8 +223,13 @@ export function Navbar({
             <TCIcon name="user" size={16} /> <span>Mi carnet</span>
           </button>
         )}
+        {(canManageAccess || isReferente) && (
+          <button type="button" onClick={onGoPlayerCarnets} style={medalButtonStyle}>
+            <TCIcon name="users" size={16} /> <span>Carnets de jugadores</span>
+          </button>
+        )}
         {canManageAccess && (
-          <button type="button" onClick={onGoCarnetDirectory} style={medalButtonStyle}>
+          <button type="button" onClick={onGoCarnetDirectory style={medalButtonStyle}>
             <TCIcon name="users" size={16} /> <span>Carnets de árbitros</span>
           </button>
         )}
@@ -363,6 +370,11 @@ export function Navbar({
           {isArbitro && (
             <button type="button" onClick={() => { setMenuOpen(false); onGoMyCarnet?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem" }}>
               <TCIcon name="user" size={16} /> <span>Mi carnet de árbitro</span>
+            </button>
+          )}
+          {(canManageAccess || isReferente) && (
+            <button type="button" onClick={() => { setMenuOpen(false); onGoPlayerCarnets?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem" }}>
+              <TCIcon name="users" size={16} /> <span>Carnets de jugadores</span>
             </button>
           )}
           {canManageAccess && (
