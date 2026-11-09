@@ -273,7 +273,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
         <small>{player.carnet_number || "Sin carnet"} · Camiseta {player.numero_camiseta || "—"}</small>
         <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>
       </td>
-      <td className="fefutin-status" style={{ color:statusColor }}>{player.estado_habilitacion}</td>
+      <td className="fefutin-status" style={{ color:statusColor }}>{player.estado_habilitacion === "HABILITADO" ? "HABIL." : player.estado_habilitacion === "NO HABILITADO" ? "NO HABIL." : "PEND. VERIF."}</td>
       <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" value={player.goles ?? 0} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
       <td className="fefutin-cards">
         <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" value={player.tarjetas_amarillas ?? 0} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
@@ -287,52 +287,54 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
     <div role="dialog" aria-modal="true" aria-label="Planilla oficial de partido" className="fefutin-sheet-overlay">
       <style>{`
         .fefutin-sheet-overlay{position:fixed;inset:0;z-index:10000;overflow:auto;padding:18px;background:rgba(0,0,0,.86)}
-        .fefutin-print-sheet{width:100%;max-width:1500px;margin:0 auto;padding:24px;box-sizing:border-box;background:#fff;color:#111;border-radius:4px;box-shadow:0 8px 35px #0008;font-family:Arial,sans-serif}
-        .fefutin-print-sheet *{box-sizing:border-box}
+        .fefutin-print-sheet{width:100%;max-width:1500px;margin:0 auto;padding:24px;box-sizing:border-box;background:#fff!important;color:#111!important;border-radius:4px;box-shadow:0 8px 35px #0008;font-family:Arial,sans-serif}
+        .fefutin-print-sheet *{box-sizing:border-box;color:#111}
         .fefutin-sheet-title{text-align:center;border-bottom:3px solid #b5122a;padding-bottom:12px;margin-bottom:14px}
-        .fefutin-sheet-title .brand{color:#b5122a;font-size:13px;font-weight:900;letter-spacing:2px}
-        .fefutin-sheet-title h2{margin:5px 0;font-size:23px;color:#111;text-transform:uppercase}
-        .fefutin-sheet-title p{margin:3px 0;font-size:12px;color:#333}
+        .fefutin-sheet-title .brand{color:#b5122a!important;font-size:13px;font-weight:900;letter-spacing:2px}
+        .fefutin-sheet-title h2{margin:5px 0;font-size:23px;color:#111!important;text-transform:uppercase}
+        .fefutin-sheet-title p{margin:3px 0;font-size:12px;color:#333!important}
         .fefutin-sheet-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
-        .fefutin-sheet-meta label{display:grid;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;color:#333}
-        .fefutin-sheet-meta input{width:100%;min-width:0;border:0;border-bottom:1px solid #777;border-radius:0;padding:5px 2px;background:#fff;color:#111;font-size:12px}
+        .fefutin-sheet-meta label{display:grid;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;color:#333!important;min-width:0}
+        .fefutin-sheet-meta input{width:100%;min-width:0;height:27px!important;min-height:27px!important;border:0!important;border-bottom:1px solid #777!important;border-radius:0!important;padding:4px 3px!important;background:#fff!important;color:#111!important;font-size:11px!important;box-shadow:none!important}
         .fefutin-sheet-table-wrap{width:100%;overflow-x:auto}
-        .fefutin-sheet-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px}
-        .fefutin-sheet-table th,.fefutin-sheet-table td{border:1px solid #777;padding:5px 4px;vertical-align:middle;color:#111}
-        .fefutin-sheet-table thead th{background:#222;color:#fff;text-align:center;font-weight:800}
-        .fefutin-sheet-table thead .team-local{background:#b5122a}
-        .fefutin-sheet-table thead .team-visitor{background:#343a40}
-        .fefutin-sheet-table .fefutin-player-name{width:19%;font-size:10px}
-        .fefutin-player-name strong{display:block;font-size:10px}
-        .fefutin-player-name small{display:block;margin-top:3px;color:#555;font-size:8px}
-        .fefutin-captain{display:flex;align-items:center;gap:3px;margin-top:3px;font-size:8px;font-weight:400}
-        .fefutin-captain input{width:10px;height:10px;margin:0}
-        .fefutin-sheet-table .fefutin-status{width:11%;text-align:center;font-size:8px;font-weight:900}
-        .fefutin-goals{width:5%;text-align:center}
-        .fefutin-cards{width:10%;text-align:center;white-space:nowrap}
-        .fefutin-goals input,.fefutin-cards input{width:28px;max-width:45%;padding:3px 1px;text-align:center;border:1px solid #999;background:#fff;color:#111}
-        .fefutin-cards label{display:inline-flex;align-items:center;gap:2px;margin:0 2px;font-size:9px}
-        .fefutin-sheet-table tbody tr{height:42px}
-        .fefutin-sheet-table tbody tr:nth-child(even){background:#f3f3f3}
-        .fefutin-observations{display:grid;gap:5px;margin-top:14px;font-size:10px;font-weight:700}
-        .fefutin-observations textarea{width:100%;border:1px solid #777;min-height:55px;padding:6px;color:#111;background:#fff}
+        .fefutin-sheet-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px;background:#fff!important}
+        .fefutin-sheet-table th,.fefutin-sheet-table td{border:1px solid #777!important;padding:5px 4px;vertical-align:middle;color:#111!important;background-clip:padding-box}
+        .fefutin-sheet-table thead th{background:#292929!important;color:#fff!important;text-align:center;font-weight:800;font-size:10px;line-height:1.2}
+        .fefutin-sheet-table thead .team-local{background:#b5122a!important;color:#fff!important;font-size:11px}
+        .fefutin-sheet-table thead .team-visitor{background:#343a40!important;color:#fff!important;font-size:11px}
+        .fefutin-sheet-table .fefutin-player-name{font-size:9px!important;line-height:1.25;color:#111!important}
+        .fefutin-player-name strong{display:block;font-size:9px!important;color:#111!important;white-space:normal;overflow-wrap:anywhere}
+        .fefutin-player-name small{display:block;margin-top:3px;color:#555!important;font-size:7px!important}
+        .fefutin-captain{display:flex;align-items:center;gap:3px;margin-top:4px;font-size:7px!important;font-weight:600;color:#333!important}
+        .fefutin-captain input{appearance:auto!important;width:11px!important;height:11px!important;min-height:11px!important;margin:0!important;padding:0!important;accent-color:#b5122a}
+        .fefutin-sheet-table .fefutin-status{ text-align:center;font-size:7px!important;line-height:1.2;font-weight:900;color:#111!important;overflow-wrap:anywhere}
+        .fefutin-goals{text-align:center}
+        .fefutin-cards{text-align:center;white-space:nowrap}
+        .fefutin-goals input,.fefutin-cards input{appearance:none!important;width:24px!important;max-width:45%!important;height:24px!important;min-height:24px!important;padding:2px!important;text-align:center!important;border:1px solid #999!important;border-radius:3px!important;background:#fff!important;color:#111!important;font-size:10px!important;box-shadow:none!important}
+        .fefutin-cards label{display:inline-flex;align-items:center;gap:2px;margin:0 1px;font-size:8px!important;color:#111!important}
+        .fefutin-sheet-table tbody tr{height:35px}
+        .fefutin-sheet-table tbody tr:nth-child(even) td{background:#f3f3f3!important}
+        .fefutin-observations{display:grid;gap:5px;margin-top:14px;font-size:10px;font-weight:700;color:#222!important}
+        .fefutin-observations textarea{width:100%;border:1px solid #777!important;min-height:48px;padding:6px;background:#fff!important;color:#111!important;font-size:11px!important}
         .fefutin-sheet-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
         .fefutin-sheet-actions button{padding:10px 16px;border-radius:5px;border:1px solid #333;cursor:pointer;font-weight:800}
-        @page{size:A4 landscape;margin:8mm}
+        @page{size:A4 landscape;margin:7mm}
+        @media(max-width:700px){.fefutin-print-sheet{padding:12px}.fefutin-sheet-meta{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.fefutin-sheet-title h2{font-size:17px}.fefutin-sheet-table{min-width:760px}}
         @media print{
+          html,body{background:#fff!important;margin:0!important;padding:0!important}
           body *{visibility:hidden!important}
           .fefutin-print-sheet,.fefutin-print-sheet *{visibility:visible!important}
           .fefutin-sheet-overlay{position:absolute!important;inset:0!important;overflow:visible!important;padding:0!important;background:#fff!important}
           .fefutin-print-sheet{position:relative!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;box-shadow:none!important;border-radius:0!important}
-          .fefutin-no-print{display:none!important}
+          .fefutin-no-print,.fefutin-sheet-actions{display:none!important}
           .fefutin-sheet-table-wrap{overflow:visible!important}
-          .fefutin-sheet-table{font-size:8px!important}
+          .fefutin-sheet-table{width:100%!important;min-width:0!important;font-size:8px!important}
           .fefutin-sheet-table th,.fefutin-sheet-table td{padding:3px 2px!important}
-          .fefutin-sheet-table tbody tr{height:34px!important;break-inside:avoid}
-          .fefutin-sheet-title h2{font-size:18px!important}
-          .fefutin-sheet-meta{margin:8px 0!important}
+          .fefutin-sheet-table thead th{font-size:8px!important}
+          .fefutin-sheet-table tbody tr{height:30px!important;break-inside:avoid}
+          .fefutin-sheet-title h2{font-size:17px!important}
+          .fefutin-sheet-meta{margin:7px 0!important}
           .fefutin-sheet-meta input,.fefutin-observations textarea{border:0!important;border-bottom:1px solid #777!important}
-          .fefutin-sheet-actions{display:none!important}
         }
       `}</style>
       <div className="fefutin-print-sheet">
@@ -355,7 +357,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
             <table className="fefutin-sheet-table">
               <thead>
                 <tr><th className="team-local" colSpan={4}>EQUIPO LOCAL · {localName}</th><th className="team-visitor" colSpan={4}>EQUIPO VISITANTE · {visitorName}</th></tr>
-                <tr><th>Nombre y apellido</th><th>Estado</th><th>Goles</th><th>Tarjetas</th><th>Nombre y apellido</th><th>Estado</th><th>Goles</th><th>Tarjetas</th></tr>
+                <tr><th>JUGADOR</th><th>EST.</th><th>G</th><th>T A/R</th><th>JUGADOR</th><th>EST.</th><th>G</th><th>T A/R</th></tr>
               </thead>
               <tbody>{Array.from({length:rowCount},(_,index)=><tr key={index}>
                 {renderPlayerCell(localPlayers[index],"local")}{renderPlayerCell(visitorPlayers[index],"visitante")}
