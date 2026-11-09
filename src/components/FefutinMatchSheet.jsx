@@ -268,7 +268,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
     if (!player) return <><td></td><td></td><td></td><td></td><td></td></>;
     const statusColor = player.estado_habilitacion === "HABILITADO" ? "#166534" : player.estado_habilitacion === "NO HABILITADO" ? "#b91c1c" : "#92400e";
     return <>
-      <td className="fefutin-shirt-number">{player.numero_camiseta || "—"}</td>
+      <td className="fefutin-shirt-number"><input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" /></td>
       <td className="fefutin-player-name">
         <strong>{player.apellido}, {player.nombre}</strong>
         <small>{player.carnet_number || "Sin carnet"} · Camiseta {player.numero_camiseta || "—"}</small>
@@ -303,14 +303,14 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
         .fefutin-sheet-table thead th{background:#292929!important;color:#fff!important;text-align:center;font-weight:800;font-size:10px;line-height:1.2}
         .fefutin-sheet-table thead .team-local{background:#b5122a!important;color:#fff!important;font-size:11px}
         .fefutin-sheet-table thead .team-visitor{background:#343a40!important;color:#fff!important;font-size:11px}
-        .fefutin-sheet-table .fefutin-shirt-number{text-align:center;font-size:9px!important;font-weight:800;white-space:nowrap}.fefutin-sheet-table .fefutin-player-name{font-size:9px!important;line-height:1.25;color:#111!important}
+        .fefutin-sheet-table .fefutin-shirt-number{text-align:center;font-size:9px!important;font-weight:800;white-space:nowrap}.fefutin-shirt-number input{width:100%!important;max-width:100%!important;height:22px!important;min-height:22px!important;padding:1px!important;text-align:center!important;border:1px solid #999!important;border-radius:3px!important;background:#fff!important;color:#111!important;font-size:10px!important;box-shadow:none!important}.fefutin-sheet-table .fefutin-player-name{font-size:9px!important;line-height:1.25;color:#111!important}
         .fefutin-player-name strong{display:block;font-size:9px!important;color:#111!important;white-space:normal;overflow-wrap:anywhere}
         .fefutin-player-name small{display:block;margin-top:3px;color:#555!important;font-size:7px!important}
         .fefutin-captain{display:flex;align-items:center;gap:3px;margin-top:4px;font-size:7px!important;font-weight:600;color:#333!important}
         .fefutin-captain input{appearance:auto!important;width:11px!important;height:11px!important;min-height:11px!important;margin:0!important;padding:0!important;accent-color:#b5122a}
         .fefutin-sheet-table .fefutin-status{ text-align:center;font-size:7px!important;line-height:1.2;font-weight:900;color:#111!important;overflow-wrap:anywhere}
         .fefutin-goals{text-align:center}
-        .fefutin-cards{text-align:center;white-space:normal;vertical-align:middle}.fefutin-cards label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;margin:2px 0;font-size:7px!important;line-height:1!important}.fefutin-cards input{width:30px!important;max-width:100%!important;height:20px!important;min-height:20px!important}
+        .fefutin-cards{text-align:center;white-space:normal;vertical-align:middle}.fefutin-cards label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;margin:2px 0;font-size:7px!important;line-height:1!important}.fefutin-cards input{width:38px!important;max-width:100%!important;height:24px!important;min-height:24px!important}
         .fefutin-goals input,.fefutin-cards input{appearance:none!important;width:24px!important;max-width:45%!important;height:24px!important;min-height:24px!important;padding:2px!important;text-align:center!important;border:1px solid #999!important;border-radius:3px!important;background:#fff!important;color:#111!important;font-size:10px!important;box-shadow:none!important}
         .fefutin-cards label{display:inline-flex;align-items:center;gap:2px;margin:0 1px;font-size:8px!important;color:#111!important}
         .fefutin-sheet-table tbody tr{height:35px}
