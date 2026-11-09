@@ -298,7 +298,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
         .fefutin-sheet-meta label{display:grid;grid-template-rows:auto 28px;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;color:#333!important;min-width:0;width:100%;overflow:hidden}
         .fefutin-sheet-meta input{display:block;box-sizing:border-box;width:100%!important;max-width:100%!important;min-width:0!important;height:28px!important;min-height:28px!important;max-height:28px!important;line-height:20px!important;border:1px solid #999!important;border-radius:3px!important;padding:3px 6px!important;background:#fff!important;color:#111!important;font-size:11px!important;box-shadow:none!important;margin:0!important}
 
-        .fefutin-sheet-signatures{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:8px 0 10px;align-items:end}
+        .fefutin-sheet-signatures{display:none;grid-template-columns:1fr 1fr;gap:24px;margin:8px 0 10px;align-items:end}
         .fefutin-sheet-signature{display:flex;flex-direction:column;gap:4px;text-align:center;font-size:9px;font-weight:800;text-transform:uppercase}
         .fefutin-sheet-signature .line{height:22px;border-bottom:1px solid #333}
         .fefutin-sheet-table-wrap{width:100%;overflow-x:auto}
@@ -406,7 +406,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
           .fefutin-sheet-title h2{font-size:13px!important;margin:1px 0!important}
           .fefutin-sheet-title p{font-size:8px!important;margin:0!important}
           .fefutin-sheet-meta{margin:3px 0!important;gap:5px!important}
-          .fefutin-sheet-signatures{margin:4px 0 6px!important;gap:24px!important}
+          .fefutin-sheet-signatures{display:grid!important;margin:4px 0 6px!important;gap:24px!important}
           .fefutin-sheet-signature{font-size:7px!important;gap:2px!important}
           .fefutin-sheet-signature .line{height:16px!important}
 
