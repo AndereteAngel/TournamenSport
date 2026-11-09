@@ -62,7 +62,6 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
     return new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   });
   const [diaCalendarioSeleccionado, setDiaCalendarioSeleccionado] = useState(null);
-  const [mostrarDesignacion, setMostrarDesignacion] = useState(false);
   const [partidoParaDesignar, setPartidoParaDesignar] = useState("");
   const [guardandoDesignacion, setGuardandoDesignacion] = useState(false);
   const [mensajeDesignacion, setMensajeDesignacion] = useState("");
