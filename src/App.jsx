@@ -1642,6 +1642,7 @@ export function TournamenSportApp() {
   const [authMode, setAuthMode] = useState("login");
   const [registerInput, setRegisterInput] = useState({ username: "", requestedRole: "arbitro" });
   const [activeView, setActiveView] = useState("home");
+  const [managementInboxTab, setManagementInboxTab] = useState("torneos");
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeTournament, setActiveTournament] = useState(null);
@@ -3538,23 +3539,39 @@ export function TournamenSportApp() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", margin: "1rem 0 1.5rem" }}>
               <div>
                 <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: "0.12em", fontSize: "0.72rem", margin: 0 }}>GESTIÓN DE USUARIOS</p>
-                <h2 className="cr-title" style={{ margin: "0.35rem 0" }}>SOLICITUDES DE ACCESO</h2>
-                <p style={{ color: "var(--tc-text, #fff)", opacity: 0.75, margin: 0 }}>Revisá y resolvé los pedidos de ingreso a FEFUTIN.</p>
+                <h2 className="cr-title" style={{ margin: "0.35rem 0" }}>CENTRO DE GESTIÓN FEFUTIN</h2>
+                <p style={{ color: "var(--tc-text, #fff)", opacity: 0.75, margin: 0 }}>Organizá todos los llamados y registros desde estas tres secciones.</p>
               </div>
               <button type="button" className="tc-form-back" onClick={refreshPendingRequests} disabled={loadingAccessRequests}>↻ Actualizar</button>
             </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 210px), 1fr))", gap: ".8rem", margin: "1rem 0 1.4rem" }}>
+              {[
+                { id: "torneos", title: "TORNEOS", subtitle: "Clubes e inscripciones", count: activeClubs.length + pendingAccessRequests.filter((r) => r.requested_role === "referente" || r.requested_role === "directivo").length, icon: "🏆" },
+                { id: "jugadores", title: "JUGADORES", subtitle: "Llamados, altas y carnets", count: "GESTIÓN", icon: "⚽" },
+                { id: "arbitros", title: "ÁRBITROS", subtitle: "Solicitudes, carnets y estadísticas", count: activeReferees.length + pendingAccessRequests.filter((r) => r.requested_role === "arbitro").length, icon: "🟨" },
+              ].map((item) => {
+                const selected = managementInboxTab === item.id;
+                return <button key={item.id} type="button" onClick={() => setManagementInboxTab(item.id)} aria-pressed={selected}
+                  style={{ textAlign: "left", cursor: "pointer", border: selected ? "2px solid #b5122a" : "1px solid #555", borderRadius: "12px", background: selected ? "#391018" : "#111", color: "#fff", padding: "1rem", boxShadow: selected ? "0 0 0 2px rgba(181,18,42,.18)" : "none" }}>
+                  <span style={{ fontSize: "1.5rem" }}>{item.icon}</span>
+                  <strong style={{ display: "block", marginTop: ".45rem", fontSize: ".95rem", letterSpacing: ".06em" }}>{item.title}</strong>
+                  <span style={{ display: "block", color: "#ccc", fontSize: ".76rem", marginTop: ".2rem" }}>{item.subtitle}</span>
+                  <span style={{ display: "inline-block", marginTop: ".7rem", color: "#fff", background: "#b5122a", borderRadius: "20px", padding: ".22rem .6rem", fontSize: ".68rem", fontWeight: 800 }}>{item.count}</span>
+                </button>;
+              })}
+            </div>
             {accessActionError && <div role="alert" style={{ border: "1px solid #b5122a", color: "#fff", background: "#391018", borderRadius: "8px", padding: "0.8rem", marginBottom: "1rem" }}>{accessActionError}</div>}
-            {loadingAccessRequests ? (
+            {managementInboxTab !== "jugadores" && (loadingAccessRequests ? (
               <p style={{ color: "#fff", textAlign: "center", padding: "2rem" }}>Cargando solicitudes...</p>
-            ) : pendingAccessRequests.length === 0 ? (
+            ) : pendingAccessRequests.filter((request) => managementInboxTab === "arbitros" ? request.requested_role === "arbitro" : request.requested_role !== "arbitro").length === 0 ? (
               <div style={{ border: "1px solid #555", borderRadius: "12px", padding: "2rem 1rem", textAlign: "center", color: "#fff" }}>
                 <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>✓</div>
-                <strong>No hay solicitudes pendientes</strong>
+                <strong>{managementInboxTab === "arbitros" ? "No hay solicitudes de árbitros pendientes" : "No hay solicitudes de clubes o directivos pendientes"}</strong>
                 <p style={{ opacity: 0.7, marginBottom: 0 }}>Cuando alguien solicite acceso como árbitro, referente o directivo, aparecerá aquí.</p>
               </div>
             ) : (
               <div style={{ display: "grid", gap: "0.85rem" }}>
-                {pendingAccessRequests.map((request) => (
+                {pendingAccessRequests.filter((request) => managementInboxTab === "arbitros" ? request.requested_role === "arbitro" : request.requested_role !== "arbitro").map((request) => (
                   <article key={request.id} style={{ border: "1px solid #b5122a", borderRadius: "12px", background: "#111", padding: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
                     <div style={{ minWidth: 0 }}>
                       <strong style={{ color: "#fff", display: "block", fontSize: "1rem" }}>{request.username || "Sin nombre"}</strong>
@@ -3593,11 +3610,13 @@ export function TournamenSportApp() {
                   </article>
                 ))}
               </div>
-            )}
+            ))}
 
-            <FefutinPlayerApprovals />
+            {managementInboxTab === "jugadores" && <FefutinPlayerApprovals />}
 
-            <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
+            {managementInboxTab === "torneos" && </div>}
+
+            {managementInboxTab === "arbitros" && <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
                 <div>
                   <h3 style={{ color: "#fff", margin: 0 }}>CLUBES HABILITADOS</h3>
@@ -3672,6 +3691,11 @@ export function TournamenSportApp() {
                   ))}
                 </div>
               )}
+              <div style={{ marginTop: "1.2rem" }}>
+                <RefereeCarnets currentUser={currentUser} canManage={true} onBack={() => setManagementInboxTab("arbitros")} />
+                <RefereeStats onBack={() => setManagementInboxTab("arbitros")} canManageAccess={true} onDeactivateReferee={handleDeactivateReferee} />
+              </div>
+            </div>}
             </div>
           </section>
         </div>
