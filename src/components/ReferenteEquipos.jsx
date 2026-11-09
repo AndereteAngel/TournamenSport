@@ -302,7 +302,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                     ))}
                   </div>
                 </section>
-              </div>            ) : (
+              </div>
+            ) : (
               <>
                 {(mode === "equipos" && selectedSection !== "listas" || isManager && mode === "torneos") && club && (
                   <div style={{ display: "flex", alignItems: "center", gap: ".8rem", padding: ".8rem", margin: "1rem 0", background: "#171c27", borderRadius: "10px" }}>
