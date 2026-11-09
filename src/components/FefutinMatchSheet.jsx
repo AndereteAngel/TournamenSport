@@ -265,9 +265,10 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
   };
 
   const renderPlayerCell = (player, side) => {
-    if (!player) return <><td></td><td></td><td></td><td></td></>;
+    if (!player) return <><td></td><td></td><td></td><td></td><td></td></>;
     const statusColor = player.estado_habilitacion === "HABILITADO" ? "#166534" : player.estado_habilitacion === "NO HABILITADO" ? "#b91c1c" : "#92400e";
     return <>
+      <td className="fefutin-shirt-number">{player.numero_camiseta || "—"}</td>
       <td className="fefutin-player-name">
         <strong>{player.apellido}, {player.nombre}</strong>
         <small>{player.carnet_number || "Sin carnet"} · Camiseta {player.numero_camiseta || "—"}</small>
@@ -297,12 +298,12 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
         .fefutin-sheet-meta label{display:grid;grid-template-rows:auto 28px;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;color:#333!important;min-width:0;width:100%;overflow:hidden}
         .fefutin-sheet-meta input{display:block;box-sizing:border-box;width:100%!important;max-width:100%!important;min-width:0!important;height:28px!important;min-height:28px!important;max-height:28px!important;line-height:20px!important;border:1px solid #999!important;border-radius:3px!important;padding:3px 6px!important;background:#fff!important;color:#111!important;font-size:11px!important;box-shadow:none!important;margin:0!important}
         .fefutin-sheet-table-wrap{width:100%;overflow-x:auto}
-        .fefutin-sheet-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;background:#fff!important}.fefutin-sheet-table col:nth-child(1),.fefutin-sheet-table col:nth-child(5){width:26%!important}.fefutin-sheet-table col:nth-child(2),.fefutin-sheet-table col:nth-child(3),.fefutin-sheet-table col:nth-child(4),.fefutin-sheet-table col:nth-child(6),.fefutin-sheet-table col:nth-child(7),.fefutin-sheet-table col:nth-child(8){width:8%!important}
+        .fefutin-sheet-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;background:#fff!important}.fefutin-sheet-table col:nth-child(1),.fefutin-sheet-table col:nth-child(6){width:4%!important}.fefutin-sheet-table col:nth-child(2),.fefutin-sheet-table col:nth-child(7){width:22%!important}.fefutin-sheet-table col:nth-child(3),.fefutin-sheet-table col:nth-child(4),.fefutin-sheet-table col:nth-child(5),.fefutin-sheet-table col:nth-child(8),.fefutin-sheet-table col:nth-child(9),.fefutin-sheet-table col:nth-child(10){width:8%!important}
         .fefutin-sheet-table th,.fefutin-sheet-table td{border:1px solid #777!important;padding:5px 4px;vertical-align:middle;color:#111!important;background-clip:padding-box}
         .fefutin-sheet-table thead th{background:#292929!important;color:#fff!important;text-align:center;font-weight:800;font-size:10px;line-height:1.2}
         .fefutin-sheet-table thead .team-local{background:#b5122a!important;color:#fff!important;font-size:11px}
         .fefutin-sheet-table thead .team-visitor{background:#343a40!important;color:#fff!important;font-size:11px}
-        .fefutin-sheet-table .fefutin-player-name{font-size:9px!important;line-height:1.25;color:#111!important}
+        .fefutin-sheet-table .fefutin-shirt-number{text-align:center;font-size:9px!important;font-weight:800;white-space:nowrap}.fefutin-sheet-table .fefutin-player-name{font-size:9px!important;line-height:1.25;color:#111!important}
         .fefutin-player-name strong{display:block;font-size:9px!important;color:#111!important;white-space:normal;overflow-wrap:anywhere}
         .fefutin-player-name small{display:block;margin-top:3px;color:#555!important;font-size:7px!important}
         .fefutin-captain{display:flex;align-items:center;gap:3px;margin-top:4px;font-size:7px!important;font-weight:600;color:#333!important}
@@ -385,12 +386,12 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
           <div className="fefutin-sheet-table-wrap">
             <table className="fefutin-sheet-table">
               <colgroup>
-                <col style={{width:"26%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} />
-                <col style={{width:"26%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} />
+                <col style={{width:"4%"}} /><col style={{width:"22%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} />
+                <col style={{width:"4%"}} /><col style={{width:"22%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} />
               </colgroup>
               <thead>
-                <tr><th className="team-local" colSpan={4}>EQUIPO LOCAL · {localName}</th><th className="team-visitor" colSpan={4}>EQUIPO VISITANTE · {visitorName}</th></tr>
-                <tr><th>JUGADOR</th><th>EST.</th><th>G</th><th>T A/R</th><th>JUGADOR</th><th>EST.</th><th>G</th><th>T A/R</th></tr>
+                <tr><th className="team-local" colSpan={5}>EQUIPO LOCAL · {localName}</th><th className="team-visitor" colSpan={5}>EQUIPO VISITANTE · {visitorName}</th></tr>
+                <tr><th>N°</th><th>JUGADOR</th><th>EST.</th><th>G</th><th>T A/R</th><th>N°</th><th>JUGADOR</th><th>EST.</th><th>G</th><th>T A/R</th></tr>
               </thead>
               <tbody>{Array.from({length:rowCount},(_,index)=><tr key={index}>
                 {renderPlayerCell(localPlayers[index],"local")}{renderPlayerCell(visitorPlayers[index],"visitante")}
