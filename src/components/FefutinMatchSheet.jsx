@@ -67,7 +67,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
         );
         const clubIds = [...new Set(matchingRegistrations.map((item) => item.club_id).filter(Boolean))];
         const { data: clubs, error: clubsError } = clubIds.length
-          ? await supabase.from("fefutin_clubs").select("id, name").in("id", clubIds)
+          ? await supabase.from("fefutin_clubs").select("id, name, headquarters_address, court_type").in("id", clubIds)
           : { data: [], error: null };
         if (clubsError) throw clubsError;
 
@@ -148,7 +148,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
           setSheetId(existingSheet.id);
           setMetadata({
             jornada: existingSheet.jornada || String(match?.round || ""),
-            sede: existingSheet.sede || "",
+            sede: existingSheet.sede || localClub.headquarters_address || "",
             fecha_partido: existingSheet.fecha_partido || "",
             arbitro_designado: existingSheet.arbitro_designado || "",
             observaciones: existingSheet.observaciones || "",
@@ -165,11 +165,14 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
           });
           local = mergeSaved(local);
           visitor = mergeSaved(visitor);
+        } else {
+          setMetadata((current) => ({ ...current, sede: current.sede || localClub.headquarters_address || "" }));
         }
 
         if (!cancelled) {
           setLocalPlayers(local);
           setVisitorPlayers(visitor);
+          setMetadata((current) => ({ ...current, sede: current.sede || localClub.headquarters_address || "" }));
         }
       } catch (err) {
         console.error("Error al generar la planilla:", err);
@@ -302,8 +305,9 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Planilla de partido" style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,.82)", overflowY: "auto", padding: "1rem", display: "grid", placeItems: "start center" }}>
-      <div style={{ width: "100%", maxWidth: "1000px", boxSizing: "border-box", margin: "1rem auto", padding: "1rem", borderRadius: "14px", background: "#080808", border: "1px solid #b5122a", color: "#fff" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap" }}>
+      <div className="fefutin-print-sheet" style={{ width: "100%", maxWidth: "1000px", boxSizing: "border-box", margin: "1rem auto", padding: "1rem", borderRadius: "14px", background: "#080808", border: "1px solid #b5122a", color: "#fff" }}>
+        <style>{`@page { size: A4 landscape; margin: 9mm; } @media print { body * { visibility: hidden !important; } .fefutin-print-sheet, .fefutin-print-sheet * { visibility: visible !important; } .fefutin-print-sheet { position: absolute !important; inset: 0 !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: #fff !important; color: #111 !important; box-shadow: none !important; } .fefutin-print-sheet h2, .fefutin-print-sheet h3, .fefutin-print-sheet p, .fefutin-print-sheet strong, .fefutin-print-sheet small, .fefutin-print-sheet label, .fefutin-print-sheet span { color: #111 !important; } .fefutin-no-print { display: none !important; } .fefutin-print-sheet .fefutin-team-grid { grid-template-columns: 1fr 1fr !important; gap: 8mm !important; } .fefutin-print-sheet section { background: #fff !important; border: 1px solid #333 !important; break-inside: avoid; } .fefutin-print-sheet article { color: #111 !important; border-top: 1px solid #bbb !important; padding: 3px 0 !important; } .fefutin-print-sheet input, .fefutin-print-sheet textarea { color: #111 !important; background: #fff !important; border: 0 !important; box-shadow: none !important; padding: 1px !important; } .fefutin-print-sheet input[type=checkbox] { appearance: none; width: 10px !important; height: 10px !important; border: 1px solid #111 !important; } .fefutin-print-sheet input[type=number] { width: 35px !important; } }`}</style>
+        <div className="fefutin-no-print" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap" }}>
           <div>
             <span style={{ color: "#f2aab5", fontSize: ".72rem", fontWeight: 800 }}>FEFUTIN · PLANILLA OFICIAL</span>
             <h2 style={{ margin: ".25rem 0", color: "#fff", fontSize: "1.2rem" }}>{localName} vs. {visitorName}</h2>
@@ -329,7 +333,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
                 </label>
               ))}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: ".75rem" }}>
+            <div className="fefutin-team-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: ".75rem" }}>
               {renderTeam(localPlayers, "local")}
               {renderTeam(visitorPlayers, "visitante")}
             </div>
@@ -339,9 +343,10 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
             </label>
             {notice && <p style={{ color: "#86efac", fontWeight: 700 }}>{notice}</p>}
             {error && <p style={{ color: "#fca5a5" }}>{error}</p>}
-            <button type="button" onClick={save} disabled={saving} style={{ width: "100%", marginTop: "1rem", padding: ".8rem", borderRadius: "8px", border: "1px solid #e45a70", background: "#b5122a", color: "#fff", fontWeight: 900, cursor: saving ? "wait" : "pointer", opacity: saving ? .65 : 1 }}>
+            <div className="fefutin-no-print" style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", marginTop: "1rem" }}><button type="button" onClick={() => window.print()} style={{ flex: "1 1 220px", padding: ".8rem", borderRadius: "8px", border: "1px solid #fff", background: "#333", color: "#fff", fontWeight: 900, cursor: "pointer" }}>IMPRIMIR / GUARDAR PDF</button>
+            <button type="button" onClick={save} disabled={saving} style={{ flex: "1 1 220px", padding: ".8rem", borderRadius: "8px", border: "1px solid #e45a70", background: "#b5122a", color: "#fff", fontWeight: 900, cursor: saving ? "wait" : "pointer", opacity: saving ? .65 : 1 }}>
               {saving ? "Guardando planilla..." : "GUARDAR PLANILLA"}
-            </button>
+            </button></div>
           </>
         )}
       </div>
