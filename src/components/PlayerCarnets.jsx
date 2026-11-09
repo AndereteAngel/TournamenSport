@@ -146,6 +146,10 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                       <p style={{ color: "#fff", fontSize: ".95rem", fontWeight: 900, margin: ".15rem 0 0" }}>{selectedPlayer.carnet_number}</p>
                     </div>
                     <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
+                      <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>DNI</p>
+                      <p style={{ color: "#fff", fontSize: ".9rem", fontWeight: 800, margin: ".15rem 0 0" }}>{selectedPlayer.dni || "NO REGISTRADO"}</p>
+                    </div>
+                    <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
                       <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>CLUB</p>
                       <div style={{ display: "flex", alignItems: "center", gap: ".45rem", marginTop: ".2rem" }}>
                         {logoUrl && <img src={logoUrl} alt="" style={{ width: "28px", height: "28px", objectFit: "contain", background: "#fff", borderRadius: "5px" }} />}
@@ -180,7 +184,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                 .fefutin-carnet-motion { animation: none !important; }
               }
             `}</style>
-            <p style={{ color: "#aaa", fontSize: ".78rem", textAlign: "center", marginTop: "1rem" }}>Credencial generada desde el registro oficial de jugadores. Los datos personales sensibles no se muestran en el carnet.</p>
+            <p style={{ color: "#aaa", fontSize: ".78rem", textAlign: "center", marginTop: "1rem" }}>Credencial generada desde el registro oficial de jugadores.</p>
           </>
         )}
       </section>
