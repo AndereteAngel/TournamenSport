@@ -20,6 +20,9 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
   const [selectedKey, setSelectedKey] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("todas");
+  const [statusFilter, setStatusFilter] = useState("todos");
 
   useEffect(() => {
     let active = true;
@@ -71,7 +74,18 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
     );
   }, [participations, clubId]);
 
-  const selectedPlayer = players.find((player) => player.carnet_number === selectedKey) || players[0] || null;
+  const categoryOptions = [...new Set(players.map((player) => player.category_label).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const filteredPlayers = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase("es");
+    return players.filter((player) => {
+      const matchesSearch = !query || [player.first_name, player.last_name, player.dni, player.carnet_number, player.club_name].some((value) => String(value || "").toLocaleLowerCase("es").includes(query));
+      const matchesCategory = categoryFilter === "todas" || player.category_label === categoryFilter;
+      const matchesStatus = statusFilter === "todos" || (player.carnet_status || "pendiente") === statusFilter;
+      return matchesSearch && matchesCategory && matchesStatus;
+    });
+  }, [players, search, categoryFilter, statusFilter]);
+
+  const selectedPlayer = filteredPlayers.find((player) => player.carnet_number === selectedKey) || filteredPlayers[0] || null;
   const photoUrl = selectedPlayer?.photo_path
     ? supabase.storage.from("fefutin-player-photos").getPublicUrl(selectedPlayer.photo_path).data.publicUrl
     : "";
@@ -101,11 +115,36 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
           <h2 className="cr-title" style={{ margin: ".35rem 0" }}>CARNET DE JUGADOR</h2>
         </header>
 
-        {canManage && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))", gap: ".7rem", marginBottom: "1rem", padding: ".85rem", border: "1px solid #444", borderRadius: "10px", background: "#171717" }}>
+          <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
+            Buscar carnet o jugador
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nombre, DNI o N° de carnet..." style={fieldStyle} />
+          </label>
+          <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
+            Categoría
+            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} style={fieldStyle}>
+              <option value="todas">Todas las categorías</option>
+              {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
+            </select>
+          </label>
+          <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
+            Estado del carnet
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} style={fieldStyle}>
+              <option value="todos">Todos los estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="en_proceso">En proceso</option>
+              <option value="habilitado">Habilitado</option>
+              <option value="no_habilitado">No habilitado</option>
+            </select>
+          </label>
+          <button type="button" onClick={() => { setSearch(""); setCategoryFilter("todas"); setStatusFilter("todos"); }} style={{ alignSelf: "end", border: "1px solid #b5122a", borderRadius: "8px", padding: ".7rem .9rem", background: "#171c27", color: "#fff", fontWeight: 800, cursor: "pointer" }}>Limpiar filtros</button>
+        </div>
+
+        {filteredPlayers.length > 0 && (
           <label style={{ display: "block", color: "#ddd", fontSize: ".78rem", fontWeight: 800, marginBottom: "1rem" }}>
-            Seleccionar jugador
+            Seleccionar carnet
             <select value={selectedPlayer?.carnet_number || ""} onChange={(event) => setSelectedKey(event.target.value)} style={fieldStyle}>
-              {players.map((player) => (
+              {filteredPlayers.map((player) => (
                 <option key={player.carnet_number} value={player.carnet_number}>
                   {[player.last_name, player.first_name].filter(Boolean).join(", ")} · {player.carnet_number}
                 </option>
@@ -120,7 +159,9 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
           <p role="alert" style={{ color: "#fca5a5" }}>{error}</p>
         ) : !selectedPlayer ? (
           <p style={{ color: "#ddd", textAlign: "center", padding: "1.5rem" }}>
-            Todavía no hay jugadores aprobados con carnet para mostrar. El carnet aparece cuando Admin o Directivo aprueba al jugador.
+            {players.length === 0
+              ? "Todavía no hay jugadores aprobados con carnet para mostrar. El carnet aparece cuando Admin o Directivo aprueba al jugador."
+              : "No hay carnets que coincidan con los filtros seleccionados."}
           </p>
         ) : (
           <>
