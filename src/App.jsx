@@ -3614,9 +3614,7 @@ export function TournamenSportApp() {
 
             {managementInboxTab === "jugadores" && <FefutinPlayerApprovals />}
 
-            {managementInboxTab === "torneos" && </div>}
-
-            {managementInboxTab === "arbitros" && <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
+            {managementInboxTab === "torneos" && <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
                 <div>
                   <h3 style={{ color: "#fff", margin: 0 }}>CLUBES HABILITADOS</h3>
@@ -3657,7 +3655,9 @@ export function TournamenSportApp() {
               )}
             </div>
 
-            <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
+            </div>}
+
+            {managementInboxTab === "arbitros" && <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
                 <div>
                   <h3 style={{ color: "#fff", margin: 0 }}>ÁRBITROS ACTIVOS</h3>
