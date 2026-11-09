@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
+import { PlayerCarnets } from "./PlayerCarnets";
 
 const emptyPlayer = () => ({
   id: `nuevo-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -189,7 +190,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
           {isManager ? "GESTIÓN DE CLUBES" : "ÁREA DEL REFERENTE"}
         </p>
         <h2 className="cr-title" style={{ color: "#fff", margin: "0 0 .5rem" }}>
-          {mode === "torneos" ? "MIS TORNEOS" : selectedClub ? selectedSection === "torneos" ? "TORNEOS PARTICIPANTES" : selectedSection === "listas" ? "LISTAS DE BUENA FE" : selectedSection === "datos" ? "DATOS DEL CLUB" : selectedClub.club_name : "FICHA DE EQUIPOS"}
+          {mode === "torneos" ? "MIS TORNEOS" : selectedClub ? selectedSection === "torneos" ? "TORNEOS PARTICIPANTES" : selectedSection === "listas" ? "LISTAS DE BUENA FE" : selectedSection === "datos" ? "DATOS DEL CLUB" : selectedSection === "carnets" ? "CARNETS DE JUGADORES" : selectedClub.club_name : "FICHA DE EQUIPOS"}
         </h2>
         <p style={{ color: "#d1d5db", lineHeight: 1.55, marginTop: 0 }}>
           {mode === "torneos"
@@ -200,6 +201,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 ? "Listas de buena fe y fichas personales, organizadas por categoría."
                 : selectedClub && selectedSection === "datos"
                   ? "Información institucional registrada del club."
+                  : selectedClub && selectedSection === "carnets"
+                    ? "Credenciales digitales de los jugadores aprobados de este club."
                   : selectedClub
                     ? "Elegí una sección para consultar la información del club."
                     : isManager
@@ -245,6 +248,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   { id: "torneos", title: "TORNEOS", description: "Torneos y categorías participantes", symbol: "🏆" },
                   { id: "listas", title: "LISTAS DE BUENA FE", description: "Jugadores organizados por categoría", symbol: "📋" },
                   { id: "datos", title: "DATOS DEL CLUB", description: "Información institucional y escudo", symbol: "🏟️" },
+                  { id: "carnets", title: "CARNETS", description: "Credenciales digitales de los jugadores", symbol: "🪪" },
                 ].map((section) => (
                   <button key={section.id} type="button" onClick={() => setSelectedSection(section.id)} style={{ minHeight: "155px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".65rem", padding: "1.1rem", border: "1px solid #b5122a", borderRadius: "12px", background: "#111", color: "#fff", cursor: "pointer", textAlign: "center" }}>
                     <span style={{ fontSize: "2rem" }}>{section.symbol}</span>
@@ -252,6 +256,10 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                     <span style={{ color: "#ccc", fontSize: ".78rem", lineHeight: 1.4 }}>{section.description}</span>
                   </button>
                 ))}
+              </div>
+            ) : mode === "equipos" && selectedSection === "carnets" ? (
+              <div style={{ marginTop: "1.25rem" }}>
+                <PlayerCarnets currentUser={currentUser} canManage={isManager} clubId={selectedClubId} embedded />
               </div>
             ) : mode === "equipos" && selectedSection === "datos" ? (
               <div style={{ display: "grid", gap: "1rem", marginTop: "1.25rem" }}>
