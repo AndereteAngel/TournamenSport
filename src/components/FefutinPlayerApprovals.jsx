@@ -100,6 +100,12 @@ export function FefutinPlayerApprovals() {
     } else {
       setMessage(`Jugador activado. Carnet asignado: ${data}. Estado: PENDIENTE DE VERIFICACIÓN.`);
       await load();
+      // Refleja la aprobación en pantalla incluso si la consulta RPC devuelve datos desactualizados.
+      setPlayers((current) => current.map((item) =>
+        item.player_entry_id === player.player_entry_id
+          ? { ...item, approval_status: "aprobado", carnet_number: data, carnet_status: "pendiente" }
+          : item
+      ));
     }
     setWorkingId(null);
   };
