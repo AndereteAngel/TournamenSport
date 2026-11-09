@@ -1,6 +1,7 @@
 import { calculateGroupStandings } from "../utils/tournamentLogic";
 import { TCIcon } from "./TCIcon";
 import { useEffect, useState } from "react";
+import { FefutinMatchSheet } from "./FefutinMatchSheet";
 
 export function GroupStageView({
   tournament,
@@ -16,6 +17,7 @@ export function GroupStageView({
   const [matchSearch, setMatchSearch] = useState("");
   const [targetMatchId, setTargetMatchId] = useState(null);
   const [myMatchesView, setMyMatchesView] = useState("pending");
+  const [selectedSheetMatch, setSelectedSheetMatch] = useState(null);
 
   useEffect(() => {
     if (!targetMatchId) return;
@@ -789,6 +791,26 @@ export function GroupStageView({
                 <span style={{ display: "block", color: "#93c5fd", fontSize: "0.58rem", fontWeight: 900, letterSpacing: "0.05em", marginBottom: "3px" }}>VISITANTE</span>
                 {match.team2}
               </span>
+              {(isAdmin || isReferee) && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedSheetMatch(match)}
+                  style={{
+                    gridColumn: "1 / -1",
+                    width: "100%",
+                    padding: "0.55rem 0.7rem",
+                    borderRadius: "7px",
+                    border: "1px solid #b5122a",
+                    background: "#241015",
+                    color: "#fff",
+                    fontSize: "0.72rem",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                  }}
+                >
+                  📋 ABRIR PLANILLA
+                </button>
+              )}
             </div>
             </>
           ))}
@@ -807,6 +829,13 @@ export function GroupStageView({
         >
           <TCIcon name="trophy" size={16} /> Avanzar a Playoff · Eliminación Directa
         </button>
+      )}
+      {selectedSheetMatch && (
+        <FefutinMatchSheet
+          tournament={tournament}
+          match={selectedSheetMatch}
+          onClose={() => setSelectedSheetMatch(null)}
+        />
       )}
     </div>
   );
