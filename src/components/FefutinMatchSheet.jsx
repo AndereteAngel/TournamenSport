@@ -264,94 +264,120 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
     }
   };
 
-  const renderTeam = (players, side) => (
-    <section style={{ minWidth: 0, border: "1px solid #b5122a", borderRadius: "10px", padding: ".7rem", background: "#111" }}>
-      <h3 style={{ color: "#fff", margin: "0 0 .7rem", fontSize: ".95rem" }}>
-        {side === "local" ? "LOCAL" : "VISITANTE"} · {side === "local" ? localName : visitorName}
-      </h3>
-      {players.map((player) => (
-        <article key={player.player_id} style={{ padding: ".65rem 0", borderTop: "1px solid #383838", color: "#fff" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", alignItems: "flex-start" }}>
-            <div style={{ minWidth: 0 }}>
-              <strong>{player.nombre} {player.apellido}</strong>
-              <small style={{ display: "block", color: "#e7a8b2", marginTop: ".15rem" }}>
-                {player.carnet_number || "Sin número de carnet"} · Camiseta {player.numero_camiseta || "—"}
-              </small>
-            </div>
-            <span style={{ flexShrink: 0, fontSize: ".62rem", fontWeight: 800, color: player.estado_habilitacion === "HABILITADO" ? "#86efac" : player.estado_habilitacion === "NO HABILITADO" ? "#fca5a5" : "#fcd34d" }}>
-              {player.estado_habilitacion}
-            </span>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: ".4rem", marginTop: ".55rem" }}>
-            {[
-              ["goles", "Goles"],
-              ["tarjetas_amarillas", "Amarillas"],
-              ["tarjetas_rojas", "Rojas"],
-            ].map(([field, label]) => (
-              <label key={field} style={{ color: "#ddd", fontSize: ".65rem", display: "grid", gap: ".2rem" }}>
-                {label}
-                <input type="number" min="0" value={player[field] ?? 0} onChange={(event) => updatePlayer(side, player.player_id, field, event.target.value)} style={{ width: "100%", boxSizing: "border-box", background: "#fff", color: "#171c27", border: "1px solid #777", borderRadius: "5px", padding: ".35rem" }} />
-              </label>
-            ))}
-            <label style={{ color: "#ddd", fontSize: ".65rem", display: "grid", gap: ".2rem", alignContent: "end" }}>
-              Capitán
-              <input type="checkbox" checked={Boolean(player.es_capitan)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} style={{ width: "20px", height: "20px" }} />
-            </label>
-          </div>
-        </article>
-      ))}
-    </section>
-  );
+  const renderPlayerCell = (player, side) => {
+    if (!player) return <><td></td><td></td><td></td><td></td></>;
+    const statusColor = player.estado_habilitacion === "HABILITADO" ? "#166534" : player.estado_habilitacion === "NO HABILITADO" ? "#b91c1c" : "#92400e";
+    return <>
+      <td className="fefutin-player-name">
+        <strong>{player.apellido}, {player.nombre}</strong>
+        <small>{player.carnet_number || "Sin carnet"} · Camiseta {player.numero_camiseta || "—"}</small>
+        <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>
+      </td>
+      <td className="fefutin-status" style={{ color:statusColor }}>{player.estado_habilitacion}</td>
+      <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" value={player.goles ?? 0} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
+      <td className="fefutin-cards">
+        <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" value={player.tarjetas_amarillas ?? 0} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
+        <label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" value={player.tarjetas_rojas ?? 0} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label>
+      </td>
+    </>;
+  };
+  const rowCount = Math.max(localPlayers.length, visitorPlayers.length);
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Planilla de partido" style={{ position: "fixed", inset: 0, zIndex: 10000, background: "rgba(0,0,0,.82)", overflowY: "auto", padding: "1rem", display: "grid", placeItems: "start center" }}>
       <div className="fefutin-print-sheet" style={{ width: "100%", maxWidth: "1000px", boxSizing: "border-box", margin: "1rem auto", padding: "1rem", borderRadius: "14px", background: "#080808", border: "1px solid #b5122a", color: "#fff" }}>
-        <style>{`@page { size: A4 landscape; margin: 9mm; } @media print { body * { visibility: hidden !important; } .fefutin-print-sheet, .fefutin-print-sheet * { visibility: visible !important; } .fefutin-print-sheet { position: absolute !important; inset: 0 !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important; background: #fff !important; color: #111 !important; box-shadow: none !important; } .fefutin-print-sheet h2, .fefutin-print-sheet h3, .fefutin-print-sheet p, .fefutin-print-sheet strong, .fefutin-print-sheet small, .fefutin-print-sheet label, .fefutin-print-sheet span { color: #111 !important; } .fefutin-no-print { display: none !important; } .fefutin-print-sheet .fefutin-team-grid { grid-template-columns: 1fr 1fr !important; gap: 8mm !important; } .fefutin-print-sheet section { background: #fff !important; border: 1px solid #333 !important; break-inside: avoid; } .fefutin-print-sheet article { color: #111 !important; border-top: 1px solid #bbb !important; padding: 3px 0 !important; } .fefutin-print-sheet input, .fefutin-print-sheet textarea { color: #111 !important; background: #fff !important; border: 0 !important; box-shadow: none !important; padding: 1px !important; } .fefutin-print-sheet input[type=checkbox] { appearance: none; width: 10px !important; height: 10px !important; border: 1px solid #111 !important; } .fefutin-print-sheet input[type=number] { width: 35px !important; } }`}</style>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap" }}>
-          <div>
-            <span style={{ color: "#f2aab5", fontSize: ".72rem", fontWeight: 800 }}>FEFUTIN · PLANILLA OFICIAL</span>
-            <h2 style={{ margin: ".25rem 0", color: "#fff", fontSize: "1.2rem" }}>{localName} vs. {visitorName}</h2>
-            <p style={{ margin: 0, color: "#bbb", fontSize: ".8rem" }}>{category || "Categoría sin especificar"} · {metadata.jornada ? "Fecha " + metadata.jornada : "Jornada sin asignar"}</p>
-          </div>
-          <button className="fefutin-no-print" type="button" onClick={onClose} style={{ background: "#261015", border: "1px solid #b5122a", color: "#fff", borderRadius: "7px", padding: ".5rem .75rem", cursor: "pointer" }}>Cerrar ✕</button>
+        <style>{`@page { size: A4 landscape; margin: 9mm; } @media print { body * { visibility: hidden !important; } .fefutin-print-sheet, .fefutin-print-sheet * { visibility: visible !important; } .fefutin-print-sheet { position: absolute !important; inset: 0 !important; width: 100% !important; max-width: none !important; margin: 0 !important; padding:  return (
+    <div role="dialog" aria-modal="true" aria-label="Planilla oficial de partido" className="fefutin-sheet-overlay">
+      <style>{`
+        .fefutin-sheet-overlay{position:fixed;inset:0;z-index:10000;overflow:auto;padding:18px;background:rgba(0,0,0,.86)}
+        .fefutin-print-sheet{width:100%;max-width:1500px;margin:0 auto;padding:24px;box-sizing:border-box;background:#fff;color:#111;border-radius:4px;box-shadow:0 8px 35px #0008;font-family:Arial,sans-serif}
+        .fefutin-print-sheet *{box-sizing:border-box}
+        .fefutin-sheet-title{text-align:center;border-bottom:3px solid #b5122a;padding-bottom:12px;margin-bottom:14px}
+        .fefutin-sheet-title .brand{color:#b5122a;font-size:13px;font-weight:900;letter-spacing:2px}
+        .fefutin-sheet-title h2{margin:5px 0;font-size:23px;color:#111;text-transform:uppercase}
+        .fefutin-sheet-title p{margin:3px 0;font-size:12px;color:#333}
+        .fefutin-sheet-meta{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+        .fefutin-sheet-meta label{display:grid;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;color:#333}
+        .fefutin-sheet-meta input{width:100%;min-width:0;border:0;border-bottom:1px solid #777;border-radius:0;padding:5px 2px;background:#fff;color:#111;font-size:12px}
+        .fefutin-sheet-table-wrap{width:100%;overflow-x:auto}
+        .fefutin-sheet-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px}
+        .fefutin-sheet-table th,.fefutin-sheet-table td{border:1px solid #777;padding:5px 4px;vertical-align:middle;color:#111}
+        .fefutin-sheet-table thead th{background:#222;color:#fff;text-align:center;font-weight:800}
+        .fefutin-sheet-table thead .team-local{background:#b5122a}
+        .fefutin-sheet-table thead .team-visitor{background:#343a40}
+        .fefutin-sheet-table .fefutin-player-name{width:19%;font-size:10px}
+        .fefutin-player-name strong{display:block;font-size:10px}
+        .fefutin-player-name small{display:block;margin-top:3px;color:#555;font-size:8px}
+        .fefutin-captain{display:flex;align-items:center;gap:3px;margin-top:3px;font-size:8px;font-weight:400}
+        .fefutin-captain input{width:10px;height:10px;margin:0}
+        .fefutin-sheet-table .fefutin-status{width:11%;text-align:center;font-size:8px;font-weight:900}
+        .fefutin-goals{width:5%;text-align:center}
+        .fefutin-cards{width:10%;text-align:center;white-space:nowrap}
+        .fefutin-goals input,.fefutin-cards input{width:28px;max-width:45%;padding:3px 1px;text-align:center;border:1px solid #999;background:#fff;color:#111}
+        .fefutin-cards label{display:inline-flex;align-items:center;gap:2px;margin:0 2px;font-size:9px}
+        .fefutin-sheet-table tbody tr{height:42px}
+        .fefutin-sheet-table tbody tr:nth-child(even){background:#f3f3f3}
+        .fefutin-observations{display:grid;gap:5px;margin-top:14px;font-size:10px;font-weight:700}
+        .fefutin-observations textarea{width:100%;border:1px solid #777;min-height:55px;padding:6px;color:#111;background:#fff}
+        .fefutin-sheet-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+        .fefutin-sheet-actions button{padding:10px 16px;border-radius:5px;border:1px solid #333;cursor:pointer;font-weight:800}
+        @page{size:A4 landscape;margin:8mm}
+        @media print{
+          body *{visibility:hidden!important}
+          .fefutin-print-sheet,.fefutin-print-sheet *{visibility:visible!important}
+          .fefutin-sheet-overlay{position:absolute!important;inset:0!important;overflow:visible!important;padding:0!important;background:#fff!important}
+          .fefutin-print-sheet{position:relative!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;box-shadow:none!important;border-radius:0!important}
+          .fefutin-no-print{display:none!important}
+          .fefutin-sheet-table-wrap{overflow:visible!important}
+          .fefutin-sheet-table{font-size:8px!important}
+          .fefutin-sheet-table th,.fefutin-sheet-table td{padding:3px 2px!important}
+          .fefutin-sheet-table tbody tr{height:34px!important;break-inside:avoid}
+          .fefutin-sheet-title h2{font-size:18px!important}
+          .fefutin-sheet-meta{margin:8px 0!important}
+          .fefutin-sheet-meta input,.fefutin-observations textarea{border:0!important;border-bottom:1px solid #777!important}
+          .fefutin-sheet-actions{display:none!important}
+        }
+      `}</style>
+      <div className="fefutin-print-sheet">
+        <div className="fefutin-sheet-title">
+          <div className="brand">FEFUTIN · PLANILLA OFICIAL</div>
+          <h2>{localName} vs. {visitorName}</h2>
+          <p>{category || "Categoría sin especificar"} · {metadata.jornada ? "Fecha " + metadata.jornada : "Jornada sin asignar"}</p>
         </div>
-
-        {loading ? <p style={{ color: "#ddd", padding: "1rem 0" }}>Cargando listas oficiales de ambos clubes...</p> : error ? (
-          <div style={{ marginTop: "1rem", padding: ".8rem", border: "1px solid #b5122a", borderRadius: "8px", color: "#fecaca", background: "#210b10" }}>{error}</div>
-        ) : (
-          <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: ".65rem", margin: "1rem 0" }}>
-              {[
-                ["jornada", "Jornada"],
-                ["sede", "Sede"],
-                ["fecha_partido", "Fecha del partido"],
-                ["arbitro_designado", "Árbitro designado"],
-              ].map(([field, label]) => (
-                <label key={field} style={{ display: "grid", gap: ".3rem", color: "#ddd", fontSize: ".75rem" }}>
-                  {label}
-                  <input type={field === "fecha_partido" ? "date" : "text"} value={metadata[field]} onChange={(event) => setMetadata((current) => ({ ...current, [field]: event.target.value }))} style={{ width: "100%", boxSizing: "border-box", padding: ".55rem", borderRadius: "6px", border: "1px solid #555", background: "#fff", color: "#171c27" }} />
-                </label>
-              ))}
-            </div>
-            <div className="fefutin-team-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: ".75rem" }}>
-              {renderTeam(localPlayers, "local")}
-              {renderTeam(visitorPlayers, "visitante")}
-            </div>
-            <label style={{ display: "grid", gap: ".3rem", marginTop: ".8rem", color: "#ddd", fontSize: ".75rem" }}>
-              Observaciones generales
-              <textarea value={metadata.observaciones} onChange={(event) => setMetadata((current) => ({ ...current, observaciones: event.target.value }))} rows={3} style={{ width: "100%", boxSizing: "border-box", padding: ".6rem", borderRadius: "6px", border: "1px solid #555", background: "#fff", color: "#171c27" }} />
-            </label>
-            {notice && <p style={{ color: "#86efac", fontWeight: 700 }}>{notice}</p>}
-            {error && <p style={{ color: "#fca5a5" }}>{error}</p>}
-            <div className="fefutin-no-print" style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", marginTop: "1rem" }}><button type="button" onClick={() => window.print()} style={{ flex: "1 1 220px", padding: ".8rem", borderRadius: "8px", border: "1px solid #fff", background: "#333", color: "#fff", fontWeight: 900, cursor: "pointer" }}>IMPRIMIR / GUARDAR PDF</button>
-            <button type="button" onClick={save} disabled={saving} style={{ flex: "1 1 220px", padding: ".8rem", borderRadius: "8px", border: "1px solid #e45a70", background: "#b5122a", color: "#fff", fontWeight: 900, cursor: saving ? "wait" : "pointer", opacity: saving ? .65 : 1 }}>
-              {saving ? "Guardando planilla..." : "GUARDAR PLANILLA"}
-            </button></div>
-          </>
-        )}
+        {loading ? <p>Cargando listas oficiales de ambos clubes...</p> : error ? (
+          <div style={{padding:12,border:"1px solid #b5122a",color:"#b91c1c"}}>{error}</div>
+        ) : <>
+          <div className="fefutin-sheet-meta">
+            {[
+              ["jornada","Jornada"],["sede","Sede / cancha"],["fecha_partido","Fecha del partido"],["arbitro_designado","Árbitro designado"],
+            ].map(([field,label]) => <label key={field}>{label}
+              <input type={field==="fecha_partido"?"date":"text"} value={metadata[field]} onChange={(event)=>setMetadata((current)=>({...current,[field]:event.target.value}))}/>
+            </label>)}
+          </div>
+          <div className="fefutin-sheet-table-wrap">
+            <table className="fefutin-sheet-table">
+              <thead>
+                <tr><th className="team-local" colSpan={4}>EQUIPO LOCAL · {localName}</th><th className="team-visitor" colSpan={4}>EQUIPO VISITANTE · {visitorName}</th></tr>
+                <tr><th>Nombre y apellido</th><th>Estado</th><th>Goles</th><th>Tarjetas</th><th>Nombre y apellido</th><th>Estado</th><th>Goles</th><th>Tarjetas</th></tr>
+              </thead>
+              <tbody>{Array.from({length:rowCount},(_,index)=><tr key={index}>
+                {renderPlayerCell(localPlayers[index],"local")}{renderPlayerCell(visitorPlayers[index],"visitante")}
+              </tr>)}</tbody>
+            </table>
+          </div>
+          <label className="fefutin-observations">OBSERVACIONES
+            <textarea value={metadata.observaciones} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>
+          </label>
+          {notice&&<p className="fefutin-no-print" style={{color:"#166534",fontWeight:700}}>{notice}</p>}
+          {error&&<p className="fefutin-no-print" style={{color:"#b91c1c"}}>{error}</p>}
+          <div className="fefutin-sheet-actions fefutin-no-print">
+            <button type="button" onClick={onClose}>Cerrar</button>
+            <button type="button" onClick={save} disabled={saving} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>{saving?"Guardando...":"GUARDAR PLANILLA"}</button>
+            <button type="button" onClick={()=>window.print()} style={{background:"#222",color:"#fff"}}>IMPRIMIR / GUARDAR PDF</button>
+          </div>
+        </>}
       </div>
     </div>
   );
 }
-
-export default FefutinMatchSheet;
+}
