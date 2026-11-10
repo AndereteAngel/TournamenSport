@@ -59,24 +59,25 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
 
         let assignedRefereeName = "";
         if (match?.referee_id) {
-          const { data: refereeProfile, error: refereeProfileError } = await supabase
-            .from("profiles")
-            .select("id, username")
-            .eq("id", match.referee_id)
-            .maybeSingle();
-          if (refereeProfileError) throw refereeProfileError;
-
-          // El referente solo necesita identificar al árbitro en la planilla.
-          // No debe consultar el registro privado de carnets de árbitros.
-          let refereeCarnet = null;
-          if (!readOnly) {
+          if (readOnly) {
+            const { data: refereeName, error: refereeNameError } = await supabase.rpc(
+              "get_fefutin_match_sheet_referee_name",
+              {
+                p_tournament_id: tournament.id,
+                p_match_id: String(match.id),
+                p_referee_id: match.referee_id,
+              }
+            );
+            if (refereeNameError) throw refereeNameError;
+            assignedRefereeName = String(refereeName || "").trim();
+          } else {
             const { data: refereeCarnets, error: refereeCarnetsError } = await supabase.rpc("get_fefutin_referee_carnets");
             if (refereeCarnetsError) throw refereeCarnetsError;
-            refereeCarnet = (refereeCarnets || []).find((item) => item.id === match.referee_id);
+            const refereeCarnet = (refereeCarnets || []).find((item) => item.id === match.referee_id);
+            assignedRefereeName = [refereeCarnet?.first_name, refereeCarnet?.last_name].filter(Boolean).join(" ").trim()
+              || refereeCarnet?.username
+              || "";
           }
-          assignedRefereeName = [refereeCarnet?.first_name, refereeCarnet?.last_name].filter(Boolean).join(" ").trim()
-            || refereeProfile?.username
-            || "";
         }
 
         // Los referentes no tienen SELECT directo sobre las inscripciones de otros clubes
@@ -85,12 +86,26 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           .rpc("get_fefutin_tournament_clubs", { p_tournament_id: tournament.id });
         if (publicRegistrationsError) throw publicRegistrationsError;
 
+        const { data: clubAddresses, error: clubAddressesError } = await supabase.rpc(
+          "get_fefutin_match_sheet_club_addresses",
+          { p_tournament_id: tournament.id }
+        );
+        if (clubAddressesError) throw clubAddressesError;
+
         const categoryBase = String(category || "").split("·")[0].trim();
         const allRegistrations = (publicRegistrations || []).map((item) => ({
           id: item.club_tournament_id,
           club_name: item.club_name,
           category_label: item.category_label,
         }));
+        const findClubAddress = (clubName) => {
+          const registration = allRegistrations.find((item) => normalize(item.club_name) === normalize(clubName));
+          const address = (clubAddresses || []).find((item) =>
+            normalize(item.club_name) === normalize(clubName) &&
+            (!registration || normalize(item.category_label) === normalize(registration.category_label))
+          );
+          return address?.headquarters_address || "";
+        };
         const localRegistrations = allRegistrations.filter((item) => normalize(item.club_name) === normalize(localName));
         const visitorRegistrations = allRegistrations.filter((item) => normalize(item.club_name) === normalize(visitorName));
         if (!localRegistrations.length || !visitorRegistrations.length) {
@@ -107,8 +122,8 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         };
         const localRegistration = chooseRegistration(localRegistrations);
         const visitorRegistration = chooseRegistration(visitorRegistrations);
-        const localClub = { name: localName, headquarters_address: "" };
-        const visitorClub = { name: visitorName, headquarters_address: "" };
+        const localClub = { name: localName, headquarters_address: findClubAddress(localName) };
+        const visitorClub = { name: visitorName, headquarters_address: findClubAddress(visitorName) };
         if (!localRegistration || !visitorRegistration) {
           throw new Error("No encontramos la inscripción de ambos clubes en la categoría " + (category || "del torneo") + ".");
         }
@@ -323,10 +338,10 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     if (!player) return <><td></td><td></td><td></td><td></td><td></td></>;
     const statusColor = player.estado_habilitacion === "HABILITADO" ? "#166534" : player.estado_habilitacion === "NO HABILITADO" ? "#b91c1c" : "#92400e";
     return <>
-      <td className="fefutin-shirt-number">{readOnly ? <span className="fefutin-print-value">{player.numero_camiseta || ""}</span> : <input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" disabled={Boolean(match?.referee_closed)} />}</td>
+      <td className="fefutin-shirt-number">{readOnly ? <span className="fefutin-print-value"></span> : <input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" disabled={Boolean(match?.referee_closed)} />}</td>
       <td className="fefutin-player-name">
         <strong>{player.apellido}, {player.nombre}</strong>
-        <small>{player.carnet_number || "Sin carnet"} · Camiseta {player.numero_camiseta || "—"}</small>
+        <small>{player.carnet_number || "Sin carnet"}{!readOnly && player.numero_camiseta ? " · Camiseta " + player.numero_camiseta : ""}</small>
         {readOnly ? (player.es_capitan ? <small className="fefutin-print-captain">CAPITÁN</small> : null) : <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>}
       </td>
       <td className="fefutin-status" style={{ color:statusColor }}>{player.estado_habilitacion === "HABILITADO" ? "HABIL." : player.estado_habilitacion === "NO HABILITADO" ? "NO HABIL." : "PEND. VERIF."}</td>
