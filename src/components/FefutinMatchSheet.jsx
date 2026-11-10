@@ -24,7 +24,7 @@ const getPlayerStatus = (player) => {
   return "PENDIENTE DE VERIFICACIÓN";
 };
 
-export function FefutinMatchSheet({ tournament, match, onClose, isReferee = false, onCloseMatch }) {
+export function FefutinMatchSheet({ tournament, match, onClose, isReferee = false, readOnly = false, onCloseMatch }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [closingMatch, setClosingMatch] = useState(false);
@@ -215,7 +215,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
   };
 
   const save = async () => {
-    if (!supabase || saving || match?.referee_closed) return false;
+    if (!supabase || saving || readOnly || match?.referee_closed) return false;
     setSaving(true);
     setError("");
     setNotice("");
@@ -307,17 +307,17 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     if (!player) return <><td></td><td></td><td></td><td></td><td></td></>;
     const statusColor = player.estado_habilitacion === "HABILITADO" ? "#166534" : player.estado_habilitacion === "NO HABILITADO" ? "#b91c1c" : "#92400e";
     return <>
-      <td className="fefutin-shirt-number"><input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" disabled={Boolean(match?.referee_closed)} /></td>
+      <td className="fefutin-shirt-number"><input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" disabled={Boolean(readOnly || match?.referee_closed)} /></td>
       <td className="fefutin-player-name">
         <strong>{player.apellido}, {player.nombre}</strong>
         <small>{player.carnet_number || "Sin carnet"} · Camiseta {player.numero_camiseta || "—"}</small>
-        <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>
+        <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>
       </td>
       <td className="fefutin-status" style={{ color:statusColor }}>{player.estado_habilitacion === "HABILITADO" ? "HABIL." : player.estado_habilitacion === "NO HABILITADO" ? "NO HABIL." : "PEND. VERIF."}</td>
-      <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" value={player.goles ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
+      <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" value={player.goles ?? 0} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
       <td className="fefutin-cards">
-        <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" value={player.tarjetas_amarillas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
-        <label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" value={player.tarjetas_rojas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label>
+        <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" value={player.tarjetas_amarillas ?? 0} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
+        <label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" value={player.tarjetas_rojas ?? 0} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label>
       </td>
     </>;
   };
@@ -490,7 +490,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
             {[
               ["jornada","Jornada"],["sede","Sede / cancha"],["fecha_partido","Fecha del partido"],["arbitro_designado","Árbitro designado"],
             ].map(([field,label]) => <label key={field}>{label}
-              <input type={field==="fecha_partido"?"date":"text"} value={metadata[field]} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,[field]:event.target.value}))}/>
+              <input type={field==="fecha_partido"?"date":"text"} value={metadata[field]} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,[field]:event.target.value}))}/>
             </label>)}
           </div>
           <div className="fefutin-sheet-signatures">
@@ -519,13 +519,13 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
             </table>
           </div>
           <label className="fefutin-observations">OBSERVACIONES
-            <textarea value={metadata.observaciones} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>
+            <textarea value={metadata.observaciones} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>
           </label>
           {notice&&<p className="fefutin-no-print" style={{color:"#166534",fontWeight:700}}>{notice}</p>}
           {error&&<p className="fefutin-no-print" style={{color:"#b91c1c"}}>{error}</p>}
           <div className="fefutin-sheet-actions fefutin-no-print">
             <button type="button" onClick={onClose}>Cerrar</button>
-            {!match?.referee_closed && <button type="button" onClick={save} disabled={saving || closingMatch} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>{saving?"Guardando...":"GUARDAR PLANILLA"}</button>}
+            {!readOnly && !match?.referee_closed && <button type="button" onClick={save} disabled={saving || closingMatch} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>{saving?"Guardando...":"GUARDAR PLANILLA"}</button>}
             {isReferee && !match?.referee_closed && <button type="button" onClick={closeMatch} disabled={saving || closingMatch} style={{background:"#166534",color:"#fff",borderColor:"#166534"}}>{closingMatch?"CERRANDO...":"CERRAR PARTIDO"}</button>}
             {match?.referee_closed && <strong style={{color:"#166534",alignSelf:"center"}}>✓ PARTIDO CERRADO · SOLO LECTURA</strong>}
             <button type="button" onClick={()=>window.print()} style={{background:"#222",color:"#fff"}}>IMPRIMIR / GUARDAR PDF</button>
