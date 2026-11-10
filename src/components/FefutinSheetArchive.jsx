@@ -171,6 +171,43 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     visitor: (players || []).filter((player) => String(player.club || "").trim().toLocaleLowerCase("es") === String(sheet.club_visitante || "").trim().toLocaleLowerCase("es")).reduce((sum, player) => sum + Number(player.goles || 0), 0),
   });
 
+  const [filterTournament, setFilterTournament] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterJornada, setFilterJornada] = useState("");
+  const [filterSearch, setFilterSearch] = useState("");
+  const [documentViewBySheet, setDocumentViewBySheet] = useState({});
+
+  const categories = [...new Set(sheets.map((sheet) => String(sheet.categoria || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const jornadas = [...new Set(sheets.map((sheet) => String(sheet.jornada || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+
+  const filteredSheets = sheets.filter((sheet) => {
+    const search = filterSearch.trim().toLocaleLowerCase("es");
+    const haystack = [
+      sheet.club_local, sheet.club_visitante, sheet.arbitro_designado,
+      getTournamentTitle(sheet.tournament_id), sheet.categoria, sheet.jornada,
+    ].join(" ").toLocaleLowerCase("es");
+    return (!filterTournament || String(sheet.tournament_id) === String(filterTournament)) &&
+      (!filterCategory || String(sheet.categoria || "") === filterCategory) &&
+      (!filterJornada || String(sheet.jornada || "") === filterJornada) &&
+      (!search || haystack.includes(search));
+  });
+
+  const filteredPhotos = photos.filter((photo) => {
+    const search = filterSearch.trim().toLocaleLowerCase("es");
+    const haystack = [
+      getTournamentTitle(photo.tournament_id), photo.jornada_label,
+      photo.referee_name, formatDate(photo.jornada_date),
+    ].join(" ").toLocaleLowerCase("es");
+    return (!filterTournament || String(photo.tournament_id) === String(filterTournament)) &&
+      (!search || haystack.includes(search));
+  });
+
+  const photosForSheet = (sheet) => photos.filter((photo) =>
+    String(photo.tournament_id) === String(sheet.tournament_id) &&
+    (photo.jornada_date === sheet.fecha_partido ||
+      (photo.jornada_label && String(photo.jornada_label).toLocaleLowerCase("es") === `jornada ${String(sheet.jornada || "").toLocaleLowerCase("es")}`))
+  );
+
   return (
     <main className="tc-form-screen" style={{ minHeight: "70vh", padding: "1rem", color: "#fff" }}>
       <section style={{ width: "100%", maxWidth: "980px", margin: "auto", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "14px", boxSizing: "border-box" }}>
@@ -181,7 +218,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
         <p style={{ color: "#bbb", fontSize: ".82rem", marginTop: 0, lineHeight: 1.5 }}>
           {mode === "upload"
             ? "Subí una foto legible de la planilla general de la jornada, firmada por los dos referentes."
-            : "Resguardo institucional de las planillas oficiales cerradas y las fotos de cada jornada."}
+            : "Buscá una jornada o partido y elegí qué documento querés consultar."}
         </p>
 
         {mode === "upload" ? (
@@ -214,30 +251,60 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
           </form>
         ) : (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: ".65rem", margin: "1rem 0" }}>
-              <button type="button" onClick={() => setSection("digital")} style={{ padding: ".8rem .5rem", border: "1px solid #b5122a", borderRadius: "8px", background: section === "digital" ? "#b5122a" : "#171c27", color: "#fff", fontWeight: 900 }}>PLANILLAS DIGITALES</button>
-              <button type="button" onClick={() => setSection("photos")} style={{ padding: ".8rem .5rem", border: "1px solid #b5122a", borderRadius: "8px", background: section === "photos" ? "#b5122a" : "#171c27", color: "#fff", fontWeight: 900 }}>FOTOS DE JORNADA</button>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: ".65rem", margin: "1rem 0" }}>
+              <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
+                TORNEO
+                <select value={filterTournament} onChange={(event) => setFilterTournament(event.target.value)} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
+                  <option value="">Todos los torneos</option>
+                  {tournaments.map((item) => <option key={item.id} value={item.id}>{item.title || "Torneo sin nombre"}</option>)}
+                </select>
+              </label>
+              <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
+                CATEGORÍA
+                <select value={filterCategory} onChange={(event) => setFilterCategory(event.target.value)} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
+                  <option value="">Todas</option>
+                  {categories.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+              </label>
+              <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
+                JORNADA
+                <select value={filterJornada} onChange={(event) => setFilterJornada(event.target.value)} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
+                  <option value="">Todas</option>
+                  {jornadas.map((item) => <option key={item} value={item}>Jornada {item}</option>)}
+                </select>
+              </label>
+              <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
+                PARTIDO / CLUB
+                <input value={filterSearch} onChange={(event) => setFilterSearch(event.target.value)} placeholder="Buscar equipo o partido..." style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }} />
+              </label>
             </div>
-            {loading ? <p style={{ color: "#ccc", textAlign: "center", padding: "1.5rem" }}>Cargando archivo...</p> : error ? <p role="alert" style={{ color: "#fca5a5" }}>{error}</p> : section === "digital" ? (
-              sheets.length ? (
-                <div style={{ display: "grid", gap: ".75rem" }}>
-                  {sheets.map((sheet) => {
-                    const players = playersBySheet[sheet.id] || [];
-                    const score = getScore(sheet, players);
-                    return (
-                      <details key={sheet.id} style={{ border: "1px solid #444", borderLeft: "3px solid #b5122a", borderRadius: "9px", background: "#171c27", padding: ".8rem" }}>
-                        <summary style={{ cursor: "pointer", color: "#fff", fontWeight: 900, lineHeight: 1.5 }}>
-                          {sheet.club_local} {score.local} - {score.visitor} {sheet.club_visitante}
-                          <small style={{ display: "block", color: "#bbb", fontWeight: 500 }}>{getTournamentTitle(sheet.tournament_id)} · {sheet.categoria || "Sin categoría"} · {sheet.jornada ? `Jornada ${sheet.jornada}` : "Jornada sin indicar"} · {formatDate(sheet.fecha_partido)}</small>
-                        </summary>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", margin: "1rem 0 .7rem" }}>
+              <strong style={{ color: "#fff", fontSize: ".85rem" }}>PARTIDOS ENCONTRADOS</strong>
+              <span style={{ color: "#bbb", fontSize: ".75rem" }}>{filteredSheets.length} resultado(s)</span>
+            </div>
+            {loading ? <p style={{ color: "#ccc", textAlign: "center", padding: "1.5rem" }}>Cargando archivo...</p> : error ? <p role="alert" style={{ color: "#fca5a5" }}>{error}</p> : (
+              <div style={{ display: "grid", gap: ".75rem" }}>
+                {filteredSheets.map((sheet) => {
+                  const players = playersBySheet[sheet.id] || [];
+                  const score = getScore(sheet, players);
+                  const relatedPhotos = photosForSheet(sheet);
+                  const selectedView = documentViewBySheet[sheet.id] || "digital";
+                  return (
+                    <article key={sheet.id} style={{ border: "1px solid #b5122a", borderRadius: "10px", background: "#171c27", padding: ".85rem" }}>
+                      <strong style={{ color: "#fff", display: "block", lineHeight: 1.45 }}>{sheet.club_local} {score.local} - {score.visitor} {sheet.club_visitante}</strong>
+                      <small style={{ display: "block", color: "#bbb", marginTop: ".25rem" }}>{getTournamentTitle(sheet.tournament_id)} · {sheet.categoria || "Sin categoría"} · {sheet.jornada ? `Jornada ${sheet.jornada}` : "Jornada sin indicar"} · {formatDate(sheet.fecha_partido)}</small>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".55rem", marginTop: ".8rem" }}>
+                        <button type="button" onClick={() => setDocumentViewBySheet((previous) => ({ ...previous, [sheet.id]: "digital" }))} style={{ padding: ".65rem .35rem", border: "1px solid #b5122a", borderRadius: "8px", background: selectedView === "digital" ? "#b5122a" : "#101010", color: "#fff", fontWeight: 900, fontSize: ".75rem" }}>PLANILLA DIGITAL</button>
+                        <button type="button" onClick={() => setDocumentViewBySheet((previous) => ({ ...previous, [sheet.id]: "physical" }))} style={{ padding: ".65rem .35rem", border: "1px solid #b5122a", borderRadius: "8px", background: selectedView === "physical" ? "#b5122a" : "#101010", color: "#fff", fontWeight: 900, fontSize: ".75rem" }}>PLANILLA FÍSICA</button>
+                      </div>
+                      {selectedView === "digital" ? (
                         <div style={{ marginTop: ".8rem", borderTop: "1px solid #444", paddingTop: ".7rem" }}>
-                          <p style={{ margin: ".2rem 0", color: "#ddd", fontSize: ".8rem" }}>Sede: {sheet.sede || "Sin registrar"}</p>
-                          <p style={{ margin: ".2rem 0", color: "#ddd", fontSize: ".8rem" }}>Árbitro: {sheet.arbitro_designado || "Sin registrar"}</p>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".7rem", marginTop: ".8rem" }}>
+                          <p style={{ margin: ".2rem 0", color: "#ddd", fontSize: ".8rem" }}>Sede: {sheet.sede || "Sin registrar"} · Árbitro: {sheet.arbitro_designado || "Sin registrar"}</p>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".7rem", marginTop: ".65rem" }}>
                             {[sheet.club_local, sheet.club_visitante].map((club) => (
                               <div key={club}>
                                 <strong style={{ color: "#f3a0ad", fontSize: ".78rem" }}>{club}</strong>
-                                {(players.filter((player) => String(player.club || "").trim().toLocaleLowerCase("es") === String(club || "").trim().toLocaleLowerCase("es"))).map((player) => (
+                                {players.filter((player) => String(player.club || "").trim().toLocaleLowerCase("es") === String(club || "").trim().toLocaleLowerCase("es")).map((player) => (
                                   <div key={player.id} style={{ display: "flex", justifyContent: "space-between", gap: ".4rem", padding: ".25rem 0", borderBottom: "1px solid #333", color: "#eee", fontSize: ".76rem" }}>
                                     <span>{player.apellido} {player.nombre}</span><strong>{Number(player.goles || 0)} gol(es)</strong>
                                   </div>
@@ -246,27 +313,35 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
                             ))}
                           </div>
                         </div>
-                      </details>
-                    );
-                  })}
-                </div>
-              ) : <p style={{ color: "#bbb", textAlign: "center", padding: "1.2rem" }}>Todavía no hay planillas digitales cerradas para archivar.</p>
-            ) : (
-              photos.length ? (
-                <div style={{ display: "grid", gap: ".75rem" }}>
-                  {photos.map((photo) => (
-                    <article key={photo.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(110px, 180px)", gap: ".8rem", alignItems: "center", padding: ".75rem", border: "1px solid #444", borderRadius: "9px", background: "#171c27" }}>
-                      <div>
-                        <strong style={{ color: "#fff", display: "block" }}>{getTournamentTitle(photo.tournament_id)}</strong>
-                        <span style={{ color: "#ccc", fontSize: ".8rem" }}>{photo.jornada_label || "Jornada"} · {formatDate(photo.jornada_date)}</span>
-                        <small style={{ display: "block", color: "#aaa", marginTop: ".25rem" }}>Árbitro: {photo.referee_name || "Sin identificar"}</small>
-                        {photo.signedUrl ? <a href={photo.signedUrl} target="_blank" rel="noreferrer" style={{ color: "#f3a0ad", display: "inline-block", marginTop: ".45rem", fontSize: ".8rem" }}>Abrir foto</a> : <small style={{ color: "#fca5a5" }}>No se pudo generar el acceso a la imagen.</small>}
-                      </div>
-                      {photo.signedUrl ? <a href={photo.signedUrl} target="_blank" rel="noreferrer"><img src={photo.signedUrl} alt="Planilla general firmada" style={{ width: "100%", maxHeight: "130px", objectFit: "cover", borderRadius: "6px" }} /></a> : <div style={{ minHeight: "80px", display: "grid", placeItems: "center", color: "#888" }}>Sin vista previa</div>}
+                      ) : (
+                        <div style={{ marginTop: ".8rem", borderTop: "1px solid #444", paddingTop: ".7rem" }}>
+                          {relatedPhotos.length ? relatedPhotos.map((photo) => (
+                            <div key={photo.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(100px, 160px)", gap: ".7rem", alignItems: "center", marginTop: ".4rem" }}>
+                              <div>
+                                <strong style={{ color: "#fff", fontSize: ".8rem" }}>{photo.jornada_label || "Planilla general de jornada"}</strong>
+                                <small style={{ display: "block", color: "#aaa", marginTop: ".2rem" }}>Firmada · {formatDate(photo.jornada_date)} · {photo.referee_name || "Árbitro sin identificar"}</small>
+                                {photo.signedUrl && <a href={photo.signedUrl} target="_blank" rel="noreferrer" style={{ color: "#f3a0ad", display: "inline-block", marginTop: ".35rem", fontSize: ".78rem" }}>Abrir foto</a>}
+                              </div>
+                              {photo.signedUrl ? <a href={photo.signedUrl} target="_blank" rel="noreferrer"><img src={photo.signedUrl} alt="Planilla general de jornada firmada" style={{ width: "100%", maxHeight: "125px", objectFit: "cover", borderRadius: "6px" }} /></a> : <span style={{ color: "#fca5a5", fontSize: ".75rem" }}>Foto sin acceso disponible</span>}
+                            </div>
+                          )) : <p style={{ color: "#f0c3ca", fontSize: ".8rem", margin: 0 }}>Pendiente de archivo: todavía no se cargó la foto física de esta jornada.</p>}
+                        </div>
+                      )}
                     </article>
-                  ))}
-                </div>
-              ) : <p style={{ color: "#bbb", textAlign: "center", padding: "1.2rem" }}>Todavía no hay fotos de jornadas cargadas.</p>
+                  );
+                })}
+                {filteredPhotos.filter((photo) => !sheets.some((sheet) =>
+                  String(sheet.tournament_id) === String(photo.tournament_id) &&
+                  (sheet.fecha_partido === photo.jornada_date)
+                )).map((photo) => (
+                  <article key={`photo-${photo.id}`} style={{ border: "1px solid #555", borderRadius: "10px", background: "#171c27", padding: ".85rem" }}>
+                    <strong style={{ color: "#fff" }}>{getTournamentTitle(photo.tournament_id)} · {photo.jornada_label || "Jornada"}</strong>
+                    <small style={{ display: "block", color: "#bbb", margin: ".25rem 0 .6rem" }}>{formatDate(photo.jornada_date)} · {photo.referee_name || "Árbitro sin identificar"}</small>
+                    {photo.signedUrl ? <a href={photo.signedUrl} target="_blank" rel="noreferrer" style={{ color: "#f3a0ad" }}>Abrir planilla física de la jornada</a> : <span style={{ color: "#fca5a5", fontSize: ".8rem" }}>Foto sin acceso disponible</span>}
+                  </article>
+                ))}
+                {!filteredSheets.length && !filteredPhotos.length && <p style={{ color: "#bbb", textAlign: "center", padding: "1.2rem" }}>No hay documentos que coincidan con esos filtros.</p>}
+              </div>
             )}
             <button type="button" className="tc-form-back" onClick={loadArchive} disabled={loading} style={{ marginTop: "1rem" }}>↻ Actualizar archivo</button>
           </>
