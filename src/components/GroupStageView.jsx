@@ -2,7 +2,6 @@ import { calculateGroupStandings } from "../utils/tournamentLogic";
 import { TCIcon } from "./TCIcon";
 import { useEffect, useState } from "react";
 import { FefutinMatchSheet } from "./FefutinMatchSheet";
-import { FefutinPrintableMatchSheet } from "./FefutinPrintableMatchSheet";
 
 export function GroupStageView({
   tournament,
@@ -23,7 +22,6 @@ export function GroupStageView({
   const [targetMatchId, setTargetMatchId] = useState(null);
   const [myMatchesView, setMyMatchesView] = useState("pending");
   const [selectedSheetMatch, setSelectedSheetMatch] = useState(null);
-  const [selectedPrintableMatch, setSelectedPrintableMatch] = useState(null);
 
   useEffect(() => {
     if (!targetMatchId) return;
@@ -801,7 +799,7 @@ export function GroupStageView({
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedPrintableMatch(match);
+                    setSelectedSheetMatch(match);
                   }}
                   style={{
                     gridColumn: "1 / -1",
@@ -861,10 +859,7 @@ export function GroupStageView({
           <TCIcon name="trophy" size={16} /> Avanzar a Playoff · Eliminación Directa
         </button>
       )}
-      {selectedPrintableMatch && (
-        <FefutinPrintableMatchSheet tournament={tournament} match={selectedPrintableMatch} onClose={() => setSelectedPrintableMatch(null)} />
-      )}
-      {!isReferente && selectedSheetMatch && (
+      {selectedSheetMatch && (
         <FefutinMatchSheet
           tournament={tournament}
           match={selectedSheetMatch}
