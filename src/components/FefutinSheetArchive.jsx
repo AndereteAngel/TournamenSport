@@ -52,7 +52,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     ] = await Promise.all([
       supabase.from("fefutin_match_sheets").select("*").order("updated_at", { ascending: false }),
       supabase.from("fefutin_jornada_photos").select("*").order("jornada_date", { ascending: false }),
-      supabase.from("tournaments").select("id, title, game"),
+      supabase.from("tournaments").select("id, title, game, category_detail, category_type"),
     ]);
 
     if (sheetsError || photosError || tournamentsError) {
@@ -177,7 +177,16 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   const [filterSearch, setFilterSearch] = useState("");
   const [documentViewBySheet, setDocumentViewBySheet] = useState({});
 
-  const categories = [...new Set(sheets.map((sheet) => String(sheet.categoria || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const categories = [...new Set([
+    ...tournaments.map((tournament) => {
+      const explicit = String(tournament?.category_detail || tournament?.category_type || "").trim();
+      if (explicit) return explicit;
+      const game = String(tournament?.game || "");
+      const separator = game.indexOf(" · ");
+      return separator >= 0 ? game.slice(separator + 3).trim() : "";
+    }),
+    ...sheets.map((sheet) => String(sheet.categoria || "").trim()),
+  ].filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
   const jornadas = [...new Set(sheets.map((sheet) => String(sheet.jornada || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
 
   const filteredSheets = sheets.filter((sheet) => {
