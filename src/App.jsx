@@ -4745,18 +4745,6 @@ export function TournamenSportApp() {
             gap: "1rem",
           }}
         >
-          <div style={{ width: "100%", maxWidth: "900px", display: "flex", justifyContent: "flex-end", margin: "0 auto 0.25rem" }}>
-            <button
-              type="button"
-              onClick={() => {
-                setTopScorersReturnView("groups");
-                setActiveView("top-scorers");
-              }}
-              style={{ padding: "0.65rem 1rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "8px", color: "#fff", fontWeight: 800, cursor: "pointer" }}
-            >
-              ⚽ Goleadores
-            </button>
-          </div>
           {String(activeTournament?.status || "").trim().toLocaleLowerCase("es") === "inscripciones" ? (
             <div className="cr-card" style={{ width: "100%", maxWidth: "900px", boxSizing: "border-box", background: "#080808", backgroundColor: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
               <div className="cr-card-glow"></div>
@@ -4857,6 +4845,10 @@ export function TournamenSportApp() {
               tournament={activeTournament}
               onUpdateTournament={handleUpdateTournamentInSupabase}
               onProceedToPlayoffs={handleProceedToPlayoffs}
+              onOpenTopScorers={() => {
+                setTopScorersReturnView("groups");
+                setActiveView("top-scorers");
+              }}
               currentUser={currentUser}
               isAdmin={canManageTournaments}
               isReferee={isArbitro}
