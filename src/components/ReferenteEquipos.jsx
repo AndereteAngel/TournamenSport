@@ -398,7 +398,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </div>
                 )}
 
-                <div style={{ display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gap: "1rem", marginTop: "1rem" }}>
+                <div style={mode === "torneos" ? { display: "flex", flexDirection: "row", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gap: "1rem", marginTop: "1rem", overflowX: "auto", overflowY: "hidden", padding: "0 0 .75rem", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" } : { display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gap: "1rem", marginTop: "1rem" }}>
               {filteredParticipations.map((item) => {
                 const allPlayers = rowsByParticipation[item.club_tournament_id] || [];
                 const players = selectedSection === "listas" ? filteredPlayersFor(item) : allPlayers;
@@ -419,7 +419,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                         onOpenTournament?.(item);
                       }
                     } : undefined}
-                    style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", cursor: mode === "torneos" ? "pointer" : "default" }}
+                    style={mode === "torneos" ? { flex: "0 0 clamp(260px, 34%, 380px)", width: "clamp(260px, 34%, 380px)", maxWidth: "380px", minWidth: "260px", boxSizing: "border-box", alignSelf: "stretch", scrollSnapAlign: "start", border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", cursor: "pointer" } : { width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", cursor: "default" }}
                   >
 {selectedSection !== "listas" && (
                     <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flexWrap: "wrap" }}>
