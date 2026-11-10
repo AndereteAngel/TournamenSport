@@ -15,6 +15,7 @@ export function PlayoffBracket({
 }) {
   const rounds = tournament.playoffs || [];
   const [selectedSheetMatch, setSelectedSheetMatch] = useState(null);
+  const [selectedPrintMatch, setSelectedPrintMatch] = useState(null);
   const getClubLogo = (teamName) => {
     const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
     return clubLogos.find((club) => normalize(club.name) === normalize(teamName))?.url || "";
@@ -315,7 +316,7 @@ export function PlayoffBracket({
                   {(isAdmin || isReferente || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
                     <button
                       type="button"
-                      onClick={() => setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx })}
+                      onClick={() => isReferente ? setSelectedPrintMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx }) : setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx })}
                       style={{ width: "100%", marginTop: "0.55rem", padding: "0.5rem 0.65rem", borderRadius: "7px", border: "1px solid #b5122a", background: "#241015", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer" }}
                     >
                       📄 PLANILLA PARTIDO
@@ -370,6 +371,15 @@ export function PlayoffBracket({
         <button onClick={onFinishTournament} className="cr-btn-gold">
           <TCIcon name="sword" size={16} /> Guardar y Salir al Lobby
         </button>
+      )}
+      {selectedPrintMatch && (
+        <FefutinMatchSheet
+          tournament={tournament}
+          match={selectedPrintMatch}
+          readOnly={true}
+          printOnly={true}
+          onClose={() => setSelectedPrintMatch(null)}
+        />
       )}
       {selectedSheetMatch && (
         <FefutinMatchSheet
