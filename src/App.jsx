@@ -4057,7 +4057,7 @@ export function TournamenSportApp() {
                     marginTop: "1rem",
                     overflowX: "auto",
                     overflowY: "hidden",
-                    padding: "1.2rem max(1rem, calc((100% - 300px) / 2)) 1.5rem",
+                    padding: "2rem max(1rem, calc((100% - 300px) / 2)) 1.5rem",
                     scrollSnapType: "x mandatory",
                     scrollPaddingInline: "max(1rem, calc((100% - 300px) / 2))",
                     WebkitOverflowScrolling: "touch",
