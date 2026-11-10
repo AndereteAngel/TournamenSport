@@ -309,7 +309,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
                       {selectedView === "digital" ? (
                         <div style={{ marginTop: ".8rem", borderTop: "1px solid #444", paddingTop: ".7rem" }}>
                           <p style={{ margin: ".2rem 0", color: "#ddd", fontSize: ".8rem" }}>Sede: {sheet.sede || "Sin registrar"} · Árbitro: {sheet.arbitro_designado || "Sin registrar"}</p>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".7rem", marginTop: ".65rem" }}>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: ".7rem", marginTop: ".65rem" }}>
                             {[sheet.club_local, sheet.club_visitante].map((club) => (
                               <div key={club}>
                                 <strong style={{ color: "#f3a0ad", fontSize: ".78rem" }}>{club}</strong>
