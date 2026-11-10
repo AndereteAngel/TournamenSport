@@ -88,7 +88,11 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
 
         const { data: clubAddresses, error: clubAddressesError } = await supabase.rpc(
           "get_fefutin_match_sheet_club_addresses",
-          { p_tournament_id: tournament.id }
+          {
+            p_tournament_id: tournament.id,
+            p_local_club_name: localName,
+            p_visitor_club_name: visitorName,
+          }
         );
         if (clubAddressesError) throw clubAddressesError;
 
@@ -194,7 +198,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
             setSheetId(existingSheet.id);
             setMetadata({
               jornada: existingSheet.jornada || String(match?.round || ""),
-              sede: existingSheet.sede || localClub.headquarters_address || "",
+              sede: existingSheet.sede || localClub.headquarters_address || visitorClub.headquarters_address || "",
               fecha_partido: existingSheet.fecha_partido || "",
               arbitro_designado: assignedRefereeName || existingSheet.arbitro_designado || "",
               observaciones: existingSheet.observaciones || "",
@@ -214,7 +218,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           } else {
             setMetadata((current) => ({
               ...current,
-              sede: current.sede || localClub.headquarters_address || "",
+              sede: current.sede || localClub.headquarters_address || visitorClub.headquarters_address || "",
               arbitro_designado: assignedRefereeName || current.arbitro_designado || "",
             }));
           }
@@ -225,7 +229,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         if (!cancelled) {
           setLocalPlayers(local);
           setVisitorPlayers(visitor);
-          setMetadata((current) => ({ ...current, sede: current.sede || localClub.headquarters_address || "" }));
+          setMetadata((current) => ({ ...current, sede: current.sede || localClub.headquarters_address || visitorClub.headquarters_address || "" }));
         }
       } catch (err) {
         console.error("Error al generar la planilla:", err);
