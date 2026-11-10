@@ -60,17 +60,17 @@ begin
       and (
         exists (
           select 1
-          from jsonb_array_elements(coalesce(t.groups, '[]'::jsonb)) g
-          cross join lateral jsonb_array_elements(coalesce(g -> 'matches', '[]'::jsonb)) m
-          where m ->> 'id' = p_match_id
-            and m ->> 'referee_id' = p_referee_id::text
+          from jsonb_array_elements(coalesce(t.groups, '[]'::jsonb)) as grp(group_data)
+          cross join lateral jsonb_array_elements(coalesce(grp.group_data -> 'matches', '[]'::jsonb)) as mt(match_data)
+          where mt.match_data ->> 'id' = p_match_id
+            and mt.match_data ->> 'referee_id' = p_referee_id::text
         )
         or exists (
           select 1
-          from jsonb_array_elements(coalesce(t.playoffs, '[]'::jsonb)) r
-          cross join lateral jsonb_array_elements(coalesce(r, '[]'::jsonb)) m
-          where m ->> 'id' = p_match_id
-            and m ->> 'referee_id' = p_referee_id::text
+          from jsonb_array_elements(coalesce(t.playoffs, '[]'::jsonb)) as rnd(round_data)
+          cross join lateral jsonb_array_elements(coalesce(rnd.round_data, '[]'::jsonb)) as mt(match_data)
+          where mt.match_data ->> 'id' = p_match_id
+            and mt.match_data ->> 'referee_id' = p_referee_id::text
         )
       )
   )
