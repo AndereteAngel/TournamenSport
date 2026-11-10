@@ -6011,3 +6011,41 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
 #root .tc-home-screen button.tc-home-designations-card > span:last-child {
   color: #b5122a !important;
 }
+
+/* FEFUTIN — centrado definitivo del icono hamburguesa.
+   Solo presentación: conserva el tamaño y el comportamiento del botón. */
+.tc-navbar .mobile-menu-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+}
+.tc-navbar .mobile-menu-btn > .tc-icon-frame {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 24px !important;
+  width: 24px !important;
+  height: 24px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: none !important;
+}
+.tc-navbar .mobile-menu-btn > .tc-icon-frame > .tc-icon-core {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+}
+.tc-navbar .mobile-menu-btn > .tc-icon-frame svg {
+  display: block !important;
+  flex: 0 0 22px !important;
+  width: 22px !important;
+  height: 22px !important;
+  margin: 0 !important;
+}
