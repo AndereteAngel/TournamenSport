@@ -7,8 +7,13 @@ export function PlayoffBracket({
   isAdmin = false,
   isReferee = false,
   onUpdateMatchResult,
+  clubLogos = [],
 }) {
   const rounds = tournament.playoffs || [];
+  const getClubLogo = (teamName) => {
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
+    return clubLogos.find((club) => normalize(club.name) === normalize(teamName))?.url || "";
+  };
   const isFinalized = String(tournament.status || "").trim().toLocaleLowerCase("es") === "finalizado";
   const canEditResults = (isAdmin || isReferee) && !isFinalized;
 
@@ -278,18 +283,12 @@ export function PlayoffBracket({
                       alignItems: "center",
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: "0.8rem",
-                        fontWeight: "bold",
-                        width: "38%",
-                        textAlign: "right",
-                        color:
-                          match.winner === match.team1 ? "#4ade80" : "#fff",
-                      }}
-                    >
-                      {match.winner === match.team1 && <><TCIcon name="crown" size={13} /> </>} {match.team1}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "0.4rem", width: "38%", minWidth: 0 }}>
+                      {getClubLogo(match.team1) ? <img src={getClubLogo(match.team1)} alt={`Escudo de ${match.team1}`} style={{ width: "38px", height: "38px", objectFit: "contain", borderRadius: "5px", background: "#fff", padding: "2px", boxSizing: "border-box", flexShrink: 0 }} /> : null}
+                      <span style={{ minWidth: 0, fontSize: "0.8rem", fontWeight: "bold", textAlign: "left", overflowWrap: "anywhere", color: match.winner === match.team1 ? "#4ade80" : "#fff" }}>
+                        {match.winner === match.team1 && <><TCIcon name="crown" size={13} /> </>}{match.team1}
+                      </span>
+                    </div>
 
                     <div
                       style={{
@@ -313,18 +312,12 @@ export function PlayoffBracket({
                       )}
                     </div>
 
-                    <span
-                      style={{
-                        fontSize: "0.8rem",
-                        fontWeight: "bold",
-                        width: "38%",
-                        textAlign: "left",
-                        color:
-                          match.winner === match.team2 ? "#4ade80" : "#fff",
-                      }}
-                    >
-                      {match.team2} {match.winner === match.team2 && <TCIcon name="crown" size={14} />}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.4rem", width: "38%", minWidth: 0 }}>
+                      <span style={{ minWidth: 0, fontSize: "0.8rem", fontWeight: "bold", textAlign: "right", overflowWrap: "anywhere", color: match.winner === match.team2 ? "#4ade80" : "#fff" }}>
+                        {match.team2}{match.winner === match.team2 && <> <TCIcon name="crown" size={14} /></>}
+                      </span>
+                      {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "38px", height: "38px", objectFit: "contain", borderRadius: "5px", background: "#fff", padding: "2px", boxSizing: "border-box", flexShrink: 0 }} /> : null}
+                    </div>
                   </div>
                 </div>
               ))}
