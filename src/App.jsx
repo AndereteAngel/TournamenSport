@@ -3245,6 +3245,46 @@ export function TournamenSportApp() {
     setTournaments((prev) => prev.map((item) => item.id === updatedTournament.id ? updatedTournament : item));
   };
 
+  const handleCloseMatch = async ({ phase, groupIndex, roundIndex, matchId, score1, score2 }) => {
+    if (!isArbitro || !activeTournament?.id) {
+      showNotice("No tenés permisos para cerrar partidos.");
+      return false;
+    }
+    const { data: resultData, error: resultError } = await supabase.rpc("referee_update_match_result", {
+      p_tournament_id: activeTournament.id,
+      p_phase: phase,
+      p_match_id: matchId,
+      p_score1: score1,
+      p_score2: score2,
+      p_group_index: groupIndex ?? null,
+      p_round_index: roundIndex ?? null,
+    });
+    if (resultError) {
+      showNotice(resultError.message || "No se pudo guardar el resultado.");
+      return false;
+    }
+    const { data, error } = await supabase.rpc("referee_close_match", {
+      p_tournament_id: activeTournament.id,
+      p_phase: phase,
+      p_match_id: matchId,
+      p_group_index: groupIndex ?? null,
+      p_round_index: roundIndex ?? null,
+    });
+    if (error) {
+      showNotice(error.message || "No se pudo cerrar el partido.");
+      return false;
+    }
+    const updatedTournament = data?.id ? data : Array.isArray(data) ? data[0] : null;
+    if (!updatedTournament?.id) {
+      showNotice("Supabase no devolvió el torneo actualizado.");
+      return false;
+    }
+    setActiveTournament(updatedTournament);
+    setTournaments((prev) => prev.map((item) => item.id === updatedTournament.id ? updatedTournament : item));
+    showNotice("Partido cerrado correctamente. La planilla quedó bloqueada.");
+    return true;
+  };
+
   // =========================================================
   // UNIRSE A TORNEO
   // =========================================================
@@ -4646,6 +4686,7 @@ export function TournamenSportApp() {
               isAdmin={canManageTournaments}
               isReferee={isArbitro}
               onUpdateMatchResult={handleUpdateMatchResult}
+              onCloseMatch={handleCloseMatch}
             />
           )}
 
