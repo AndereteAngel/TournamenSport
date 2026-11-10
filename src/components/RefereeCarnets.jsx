@@ -124,7 +124,7 @@ export function RefereeCarnets({ currentUser, canManage, onBack }) {
   const labelStyle = { display: "block", color: "#ddd", fontSize: "0.75rem", fontWeight: 800, marginBottom: "0.8rem" };
 
   return (
-    <div className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", minWidth: 0, padding: "1rem", minHeight: "70vh", boxSizing: "border-box" }}>
+    <div className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", minWidth: 0, padding: "0", minHeight: "70vh", boxSizing: "border-box" }}>
       <section className="cr-card" style={{ width: "100%", maxWidth: "100%", minWidth: 0, margin: 0, padding: "clamp(1rem, 2.5vw, 2rem)", boxSizing: "border-box", background: "#090909", color: "#fff", border: "1px solid #b5122a" }}>
         <button type="button" className="tc-form-back" onClick={onBack}>← Volver</button>
         <header style={{ textAlign: "center", margin: "1.2rem 0" }}>
