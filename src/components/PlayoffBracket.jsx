@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TCIcon } from "./TCIcon";
-import { FefutinMatchSheet, FefutinPrintableMatchSheet } from "./FefutinMatchSheet";
+import { FefutinMatchSheet } from "./FefutinMatchSheet";
 
 export function PlayoffBracket({
   tournament,
@@ -15,7 +15,6 @@ export function PlayoffBracket({
 }) {
   const rounds = tournament.playoffs || [];
   const [selectedSheetMatch, setSelectedSheetMatch] = useState(null);
-  const [selectedPrintMatch, setSelectedPrintMatch] = useState(null);
   const getClubLogo = (teamName) => {
     const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
     return clubLogos.find((club) => normalize(club.name) === normalize(teamName))?.url || "";
@@ -317,8 +316,7 @@ export function PlayoffBracket({
                     <button
                       type="button"
                       onClick={() => {
-                        setSelectedSheetMatch(null);
-                        setSelectedPrintMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx });
+                        setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx });
                       }}
                       style={{ width: "100%", marginTop: "0.55rem", padding: "0.5rem 0.65rem", borderRadius: "7px", border: "1px solid #b5122a", background: "#b5122a", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer" }}
                     >
@@ -387,21 +385,12 @@ export function PlayoffBracket({
           <TCIcon name="sword" size={16} /> Guardar y Salir al Lobby
         </button>
       )}
-      {selectedPrintMatch && (
-        <FefutinPrintableMatchSheet
-          key={String(selectedPrintMatch.id)}
-          tournament={tournament}
-          match={selectedPrintMatch}
-          onClose={() => setSelectedPrintMatch(null)}
-        />
-      )}
-      {selectedSheetMatch && !isReferente && (
+      {selectedSheetMatch && (
         <FefutinMatchSheet
           tournament={tournament}
           match={selectedSheetMatch}
-          isReferee={isReferee}
-          readOnly={false}
-          printOnly={false}
+          isReferee={isReferee && !isReferente}
+          readOnly={isReferente}
           onCloseMatch={async ({ score1, score2 }) => {
             const closed = await onCloseMatch?.({
               phase: "playoffs",
