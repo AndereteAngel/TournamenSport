@@ -1791,6 +1791,8 @@ export function TournamenSportApp() {
   const [activeTournament, setActiveTournament] = useState(null);
   const [refereeMatchToOpen, setRefereeMatchToOpen] = useState(null);
   const [fefutinTournamentClubs, setFefutinTournamentClubs] = useState([]);
+  const [referenteParticipations, setReferenteParticipations] = useState([]);
+  const [referenteMatchClubs, setReferenteMatchClubs] = useState([]);
   const [loadingFefutinTournamentClubs, setLoadingFefutinTournamentClubs] = useState(false);
   const [showChampionCard, setShowChampionCard] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
@@ -2251,6 +2253,27 @@ export function TournamenSportApp() {
   useEffect(() => {
     fetchTournaments();
   }, [currentUser]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadReferenteParticipations = async () => {
+      if (!isReferente) {
+        setReferenteParticipations([]);
+        setReferenteMatchClubs([]);
+        return;
+      }
+      const { data, error } = await supabase.rpc("get_fefutin_my_teams");
+      if (cancelled) return;
+      if (error) {
+        console.error("Error al cargar las inscripciones del referente:", error);
+        setReferenteParticipations([]);
+      } else {
+        setReferenteParticipations(data || []);
+      }
+    };
+    loadReferenteParticipations();
+    return () => { cancelled = true; };
+  }, [isReferente, currentUser?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -3522,6 +3545,53 @@ export function TournamenSportApp() {
     )
   ) : [];
   const hasPendingRefereeAssignments = assignedRefereeMatches.some((match) => !match.refereeClosed);
+  const referenteNextMatch = (() => {
+    if (!isReferente || !referenteParticipations.length || !tournaments.length) return null;
+    const today = new Date();
+    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
+    const candidates = [];
+    referenteParticipations.forEach((participation) => {
+      const tournament = tournaments.find((item) =>
+        normalize(item.title) === normalize(participation.tournament_title) &&
+        normalize(getTournamentCategory(item)) === normalize(participation.category_label)
+      );
+      if (!tournament) return;
+      (tournament.groups || []).forEach((group, groupIndex) => {
+        (group?.matches || []).forEach((match) => {
+          const isMyClub = normalize(match.team1) === normalize(participation.club_name) || normalize(match.team2) === normalize(participation.club_name);
+          if (!isMyClub || !match.team1 || !match.team2) return;
+          const round = Number(match.round || 1);
+          const matchDate = match.match_date || getFefutinMatchDate(round);
+          if (matchDate < todayKey) return;
+          if (match.score1 !== null && match.score1 !== undefined && match.score2 !== null && match.score2 !== undefined) return;
+          candidates.push({ tournament, participation, match, groupIndex, round, matchDate });
+        });
+      });
+    });
+    candidates.sort((a, b) => a.matchDate.localeCompare(b.matchDate) || a.round - b.round);
+    return candidates[0] || null;
+  })();
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadMatchClubs = async () => {
+      if (!isReferente || !referenteNextMatch?.tournament?.id) {
+        setReferenteMatchClubs([]);
+        return;
+      }
+      const { data, error } = await supabase.rpc("get_fefutin_tournament_clubs", {
+        p_tournament_id: referenteNextMatch.tournament.id,
+      });
+      if (cancelled) return;
+      if (error) {
+        console.error("No se pudieron cargar los escudos del próximo encuentro:", error);
+        setReferenteMatchClubs([]);
+      } else setReferenteMatchClubs(data || []);
+    };
+    loadMatchClubs();
+    return () => { cancelled = true; };
+  }, [isReferente, referenteNextMatch?.tournament?.id]);
 
   const openTournament = (tournament) => {
     setActiveTournament(tournament);
@@ -4095,6 +4165,39 @@ export function TournamenSportApp() {
             {renderDivisionCard("Femenino", "/WhatsApp%20Image%202026-10-30%20at%2021.11.20.jpeg", "FEMENINO")}
             {renderDivisionCard("Mayores", "/WhatsApp%20Image%202026-10-30%20at%2020.59.32.jpeg", "MAYORES")}
           </div>
+          {isReferente && (
+            <section aria-label="Próximo encuentro de mi club" style={{ margin: "1rem 0", padding: "1rem", border: "2px solid #b5122a", borderRadius: "14px", background: "linear-gradient(135deg, #171c27, #090a0e)", color: "#fff", overflow: "hidden" }}>
+              <div style={{ color: "#f3a0ad", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".12em", textAlign: "center", marginBottom: ".8rem" }}>PRÓXIMO ENCUENTRO</div>
+              {referenteNextMatch ? (() => {
+                const { match, participation, tournament, round, matchDate } = referenteNextMatch;
+                const homeIsMine = String(match.team1).trim().toLocaleLowerCase("es") === String(participation.club_name).trim().toLocaleLowerCase("es");
+                const homeName = match.team1;
+                const awayName = match.team2;
+                const homeClub = referenteMatchClubs.find((club) => String(club.club_name).trim().toLocaleLowerCase("es") === String(homeName).trim().toLocaleLowerCase("es"));
+                const awayClub = referenteMatchClubs.find((club) => String(club.club_name).trim().toLocaleLowerCase("es") === String(awayName).trim().toLocaleLowerCase("es"));
+                const homeLogo = homeClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(homeClub.logo_path).data.publicUrl : homeIsMine && participation.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(participation.logo_path).data.publicUrl : "";
+                const awayLogo = awayClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(awayClub.logo_path).data.publicUrl : !homeIsMine && participation.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(participation.logo_path).data.publicUrl : "";
+                const formattedDate = new Date(matchDate + "T12:00:00").toLocaleDateString("es-AR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+                return <>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".6rem" }}>
+                    {[{ name: homeName, logo: homeLogo }, { name: awayName, logo: awayLogo }].map((club, index) => (
+                      <div key={club.name} style={{ minWidth: 0, textAlign: "center", animation: "fefutinNextShield 2.8s ease-in-out infinite", animationDelay: index ? ".25s" : "0s" }}>
+                        <div style={{ height: "76px", display: "grid", placeItems: "center", marginBottom: ".35rem" }}>
+                          {club.logo ? <img src={club.logo} alt={`Escudo de ${club.name}`} style={{ maxWidth: "72px", maxHeight: "72px", objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,.4))" }} /> : <span style={{ fontSize: "2.5rem" }}>⚽</span>}
+                        </div>
+                        <strong style={{ display: "block", fontSize: ".82rem", lineHeight: 1.25, overflowWrap: "anywhere" }}>{club.name}</strong>
+                      </div>
+                    ))}
+                    <strong style={{ color: "#f3a0ad", fontSize: "1.1rem", gridColumn: "2", gridRow: "1" }}>VS</strong>
+                  </div>
+                  <div style={{ textAlign: "center", marginTop: ".85rem", color: "#fff", fontSize: ".82rem", fontWeight: 800, textTransform: "capitalize" }}>{formattedDate}</div>
+                  <div style={{ textAlign: "center", marginTop: ".25rem", color: "#f3a0ad", fontSize: ".76rem", fontWeight: 800 }}>{getTournamentCategory(tournament)} · FECHA {round}</div>
+                  <style>{`@keyframes fefutinNextShield { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }`}</style>
+                </>;
+              })() : <p style={{ margin: 0, color: "#e5e7eb", fontSize: ".82rem", lineHeight: 1.5, textAlign: "center" }}>Todavía no hay un próximo encuentro programado para tu club. Cuando se cargue el fixture, aparecerá acá.</p>}
+            </section>
+          )}
+
           <button
             type="button"
             className="tc-home-about-card tc-home-about-card-shine"
