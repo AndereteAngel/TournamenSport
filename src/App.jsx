@@ -4745,6 +4745,18 @@ export function TournamenSportApp() {
             gap: "1rem",
           }}
         >
+          <div style={{ width: "100%", maxWidth: "900px", display: "flex", justifyContent: "flex-end", margin: "0 auto 0.25rem" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setTopScorersReturnView("groups");
+                setActiveView("top-scorers");
+              }}
+              style={{ padding: "0.65rem 1rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "8px", color: "#fff", fontWeight: 800, cursor: "pointer" }}
+            >
+              ⚽ Goleadores
+            </button>
+          </div>
           {String(activeTournament?.status || "").trim().toLocaleLowerCase("es") === "inscripciones" ? (
             <div className="cr-card" style={{ width: "100%", maxWidth: "900px", boxSizing: "border-box", background: "#080808", backgroundColor: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
               <div className="cr-card-glow"></div>
@@ -4917,6 +4929,18 @@ export function TournamenSportApp() {
             gap: "1rem",
           }}
         >
+          <div style={{ width: "100%", maxWidth: "900px", display: "flex", justifyContent: "flex-end", margin: "0 auto 0.25rem" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setTopScorersReturnView("playoffs");
+                setActiveView("top-scorers");
+              }}
+              style={{ padding: "0.65rem 1rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "8px", color: "#fff", fontWeight: 800, cursor: "pointer" }}
+            >
+              ⚽ Goleadores
+            </button>
+          </div>
           <PlayoffBracket
             tournament={activeTournament}
             onUpdateTournament={handleUpdateTournamentInSupabase}
@@ -4981,17 +5005,7 @@ export function TournamenSportApp() {
       )}
 
       {(activeView === "groups" || activeView === "playoffs") && (
-        <div style={{ width: "100%", maxWidth: "900px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.6rem", margin: "0.75rem auto 1.25rem", padding: "0 0.25rem", boxSizing: "border-box" }}>
-          <button
-            type="button"
-            onClick={() => {
-              setTopScorersReturnView(activeView);
-              setActiveView("top-scorers");
-            }}
-            style={{ padding: "0.65rem 1rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "8px", color: "#fff", fontWeight: 800, cursor: "pointer" }}
-          >
-            ⚽ Tabla de goleadores
-          </button>
+        <div style={{ width: "100%", maxWidth: "900px", display: "flex", justifyContent: "flex-end", margin: "0.75rem auto 1.25rem", padding: "0 0.25rem", boxSizing: "border-box" }}>
           <button
             type="button"
             className="tc-form-back"
