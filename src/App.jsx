@@ -3246,39 +3246,7 @@ export function TournamenSportApp() {
     }
   };
 
-  const handleUpdateMatchResult = async ({ phase, groupIndex, roundIndex, matchId, score1, score2 }) => {
-    if (!isArbitro || !activeTournament?.id) {
-      showNotice("No tenés permisos para cargar resultados.");
-      return;
-    }
-
-    const { data, error } = await supabase.rpc("referee_update_match_result", {
-      p_tournament_id: activeTournament.id,
-      p_phase: phase,
-      p_match_id: matchId,
-      p_score1: score1,
-      p_score2: score2,
-      p_group_index: groupIndex ?? null,
-      p_round_index: roundIndex ?? null,
-    });
-
-    if (error) {
-      console.error("Error al guardar resultado arbitral:", error);
-      showNotice(error.message || "No se pudo guardar el resultado. Verificá los permisos del árbitro.");
-      return;
-    }
-
-    const updatedTournament = data?.id ? data : Array.isArray(data) ? data[0] : null;
-    if (!updatedTournament?.id) {
-      showNotice("Supabase no devolvió el torneo actualizado. Actualizá la pantalla antes de continuar.");
-      return;
-    }
-
-    setActiveTournament(updatedTournament);
-    setTournaments((prev) => prev.map((item) => item.id === updatedTournament.id ? updatedTournament : item));
-  };
-
-  const handleCloseMatch = async ({ phase, groupIndex, roundIndex, matchId, score1, score2 }) => {
+  const handleCloseMatch = async ({ phase, groupIndex, roundIndex, matchId }) => {
     if (!isArbitro || !activeTournament?.id) {
       showNotice("No tenés permisos para cerrar partidos.");
       return false;
@@ -4873,7 +4841,6 @@ export function TournamenSportApp() {
               currentUser={currentUser}
               isAdmin={canManageTournaments}
               isReferee={isArbitro}
-              onUpdateMatchResult={handleUpdateMatchResult}
               onCloseMatch={handleCloseMatch}
               openAssignedMatch={refereeMatchToOpen}
               onAssignedMatchOpened={() => setRefereeMatchToOpen(null)}
@@ -4948,7 +4915,7 @@ export function TournamenSportApp() {
             onFinishTournament={handleFinishTournament}
             isAdmin={canManageTournaments}
             isReferee={isArbitro}
-            onUpdateMatchResult={handleUpdateMatchResult}
+            currentUser={currentUser}
             onCloseMatch={handleCloseMatch}
             clubLogos={fefutinTournamentClubs.map((club) => ({
               name: club.club_name,
