@@ -27,6 +27,20 @@ declare
   v_local_count integer := 0;
   v_visitor_count integer := 0;
   v_winner text;
+  v_round_match_count integer := 0;
+  v_round_complete boolean := false;
+  v_has_final boolean := false;
+  v_ranked_matches jsonb := '[]'::jsonb;
+  v_next_round jsonb := '[]'::jsonb;
+  v_ranked_count integer := 0;
+  v_left integer := 0;
+  v_right integer := -1;
+  v_first_match jsonb;
+  v_second_match jsonb;
+  v_loser1 text;
+  v_loser2 text;
+  v_round_number integer;
+  v_ranked_match jsonb;
 begin
   if auth.uid() is null or not public.has_fefutin_role(array['arbitro']) then
     raise exception 'Se requiere un arbitro aprobado y activo.';
@@ -195,6 +209,127 @@ begin
       v_match,
       false
     );
+
+    -- Al completarse una ronda, generar la siguiente llave con la misma
+    -- regla de clasificación que utiliza el organizador en la interfaz.
+    select
+      count(*)::integer,
+      coalesce(bool_and(
+        nullif(e.value ->> 'winner', '') is not null
+        and e.value ->> 'winner' <> 'Empate (Definir)'
+      ), false),
+      coalesce(bool_or(e.value ->> 'stage' in ('final', 'third_place')), false)
+    into v_round_match_count, v_round_complete, v_has_final
+    from jsonb_array_elements(v_matches) as e(value);
+
+    if v_round_complete
+       and v_round_match_count > 1
+       and not v_has_final
+       and jsonb_array_length(v_rounds) = p_round_index + 1 then
+      v_round_number := p_round_index + 2;
+
+      if v_round_match_count = 2
+         and (v_matches -> 0 ->> 'team1') <> 'Pasaje Directo'
+         and (v_matches -> 0 ->> 'team2') <> 'Pasaje Directo'
+         and (v_matches -> 1 ->> 'team1') <> 'Pasaje Directo'
+         and (v_matches -> 1 ->> 'team2') <> 'Pasaje Directo' then
+        v_first_match := v_matches -> 0;
+        v_second_match := v_matches -> 1;
+
+        v_loser1 := case
+          when v_first_match ->> 'winner' = v_first_match ->> 'team1'
+            then v_first_match ->> 'team2'
+          else v_first_match ->> 'team1'
+        end;
+        v_loser2 := case
+          when v_second_match ->> 'winner' = v_second_match ->> 'team1'
+            then v_second_match ->> 'team2'
+          else v_second_match ->> 'team1'
+        end;
+
+        v_next_round := jsonb_build_array(
+          jsonb_build_object(
+            'id', 'r' || v_round_number::text || '-final',
+            'stage', 'final',
+            'team1', v_first_match ->> 'winner',
+            'team2', v_second_match ->> 'winner',
+            'score1', null,
+            'score2', null,
+            'winner', null
+          ),
+          jsonb_build_object(
+            'id', 'r' || v_round_number::text || '-third-place',
+            'stage', 'third_place',
+            'team1', v_loser1,
+            'team2', v_loser2,
+            'score1', null,
+            'score2', null,
+            'winner', null
+          )
+        );
+      else
+        select coalesce(
+          jsonb_agg(q.value order by q.goal_difference desc, q.winner_goals desc, q.ordinality asc),
+          '[]'::jsonb
+        )
+        into v_ranked_matches
+        from (
+          select
+            e.value,
+            abs(
+              coalesce((e.value ->> 'score1')::integer, 0)
+              - coalesce((e.value ->> 'score2')::integer, 0)
+            ) as goal_difference,
+            case
+              when e.value ->> 'winner' = e.value ->> 'team1'
+                then coalesce((e.value ->> 'score1')::integer, 0)
+              else coalesce((e.value ->> 'score2')::integer, 0)
+            end as winner_goals,
+            e.ordinality
+          from jsonb_array_elements(v_matches) with ordinality as e(value, ordinality)
+        ) q;
+
+        v_ranked_count := jsonb_array_length(v_ranked_matches);
+        v_left := 0;
+        v_right := v_ranked_count - 1;
+        v_next_round := '[]'::jsonb;
+
+        while v_left < v_right loop
+          v_first_match := v_ranked_matches -> v_left;
+          v_second_match := v_ranked_matches -> v_right;
+
+          v_next_round := v_next_round || jsonb_build_array(
+            jsonb_build_object(
+              'id', 'r' || v_round_number::text || '-m' || (jsonb_array_length(v_next_round) + 1)::text,
+              'team1', v_first_match ->> 'winner',
+              'team2', v_second_match ->> 'winner',
+              'score1', null,
+              'score2', null,
+              'winner', null
+            )
+          );
+
+          v_left := v_left + 1;
+          v_right := v_right - 1;
+        end loop;
+
+        if v_left = v_right then
+          v_ranked_match := v_ranked_matches -> v_left;
+          v_next_round := v_next_round || jsonb_build_array(
+            jsonb_build_object(
+              'id', 'r' || v_round_number::text || '-m' || (jsonb_array_length(v_next_round) + 1)::text,
+              'team1', v_ranked_match ->> 'winner',
+              'team2', 'Pasaje Directo',
+              'score1', 1,
+              'score2', 0,
+              'winner', v_ranked_match ->> 'winner'
+            )
+          );
+        end if;
+      end if;
+
+      v_rounds := v_rounds || jsonb_build_array(v_next_round);
+    end if;
 
     update public.tournaments
     set playoffs = v_rounds
