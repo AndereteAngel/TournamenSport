@@ -243,7 +243,7 @@ export function FefutinPlayerApprovals() {
                       const canActivate = status === "pendiente_alta";
                       const busy = workingId === player.player_entry_id;
                       return (
-                        <div key={player.player_entry_id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "center", gap: ".7rem", border: "1px solid #454545", borderRadius: "8px", background: "#151515", padding: ".7rem .8rem" }}>
+                        <div key={player.player_entry_id} style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: ".7rem", border: "1px solid #454545", borderRadius: "8px", background: "#151515", padding: ".7rem .8rem", boxSizing: "border-box" }}>
                           <div style={{ minWidth: 0, color: "#fff" }}>
                             <strong style={{ display: "block", fontSize: ".9rem" }}>{player.last_name}, {player.first_name}</strong>
                             <span style={{ display: "block", color: "#bbb", fontSize: ".74rem", marginTop: ".15rem" }}>
