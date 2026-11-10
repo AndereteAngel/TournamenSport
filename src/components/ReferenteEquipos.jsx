@@ -34,7 +34,7 @@ const buttonStyle = {
   cursor: "pointer",
 };
 
-export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpenTeams, readOnly = false }) {
+export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpenTeams, onOpenTournament, readOnly = false }) {
   const [participations, setParticipations] = useState([]);
   const [rowsByParticipation, setRowsByParticipation] = useState({});
   const [loading, setLoading] = useState(true);
@@ -407,7 +407,20 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 const isEditingThis = editingPlayer?.participationId === item.club_tournament_id;
                 const currentEditingPlayer = isEditingThis ? players.find((player) => player.id === editingPlayer.playerId) : null;
                 return (
-                  <article key={item.club_tournament_id} style={{ border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", minWidth: 0 }}>
+                  <article
+                    key={item.club_tournament_id}
+                    role={mode === "torneos" ? "button" : undefined}
+                    tabIndex={mode === "torneos" ? 0 : undefined}
+                    aria-label={mode === "torneos" ? `Abrir torneo ${item.tournament_title}` : undefined}
+                    onClick={mode === "torneos" ? () => onOpenTournament?.(item) : undefined}
+                    onKeyDown={mode === "torneos" ? (event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onOpenTournament?.(item);
+                      }
+                    } : undefined}
+                    style={{ border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", minWidth: 0, cursor: mode === "torneos" ? "pointer" : "default" }}
+                  >
 {selectedSection !== "listas" && (
                     <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flexWrap: "wrap" }}>
                       {logoUrl && <img src={logoUrl} alt={`Escudo de ${item.club_name}`} style={{ width: "54px", height: "54px", objectFit: "contain", borderRadius: "8px", background: "#fff" }} />}
@@ -427,8 +440,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
 
                     {mode === "torneos" || selectedSection === "torneos" ? (
                       mode === "torneos" ? (
-                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                          <button type="button" style={buttonStyle} onClick={() => onOpenTeams?.()}>Abrir ficha y lista de buena fe →</button>
+                        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: ".2rem" }}>
+                          <span style={{ color: "#fff", fontSize: ".78rem", fontWeight: 900, letterSpacing: ".04em" }}>ABRIR TORNEO →</span>
                         </div>
                       ) : (
                         <div style={{ color: "#aaa", fontSize: ".8rem", marginTop: ".65rem" }}>
