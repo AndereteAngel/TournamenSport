@@ -172,7 +172,7 @@ export function FefutinPlayerApprovals() {
   };
 
   return (
-    <section style={{ marginTop: "1.5rem", borderTop: "1px solid #3a3a3a", paddingTop: "1.3rem" }}>
+    <section style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", marginTop: "1.5rem", borderTop: "1px solid #3a3a3a", paddingTop: "1.3rem" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap", marginBottom: "1rem" }}>
         <div>
           <h3 style={{ color: "#fff", margin: 0 }}>BUZÓN DE SOLICITUDES Y ACTIVACIONES</h3>
