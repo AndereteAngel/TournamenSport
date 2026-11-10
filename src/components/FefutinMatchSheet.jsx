@@ -85,10 +85,11 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           .eq("tournament_id", tournament.id);
         if (registrationsError) throw registrationsError;
 
-        const matchingRegistrations = (registrations || []).filter((item) =>
-          normalize(item.category_label) === normalize(category)
-        );
-        const clubIds = [...new Set(matchingRegistrations.map((item) => item.club_id).filter(Boolean))];
+        // El año (por ejemplo, 2018) forma parte de la descripción del torneo,
+        // pero category_label puede guardar solamente la categoría base ("Infantil").
+        const categoryBase = String(category || "").split("·")[0].trim();
+        const allRegistrations = registrations || [];
+        const clubIds = [...new Set(allRegistrations.map((item) => item.club_id).filter(Boolean))];
         const { data: clubs, error: clubsError } = clubIds.length
           ? await supabase.from("fefutin_clubs").select("id, name, headquarters_address, court_type").in("id", clubIds)
           : { data: [], error: null };
@@ -97,12 +98,28 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         const localClub = (clubs || []).find((club) => normalize(club.name) === normalize(localName));
         const visitorClub = (clubs || []).find((club) => normalize(club.name) === normalize(visitorName));
         if (!localClub || !visitorClub) {
-          throw new Error("No encontramos la inscripción de ambos clubes en la categoría " + (category || "del torneo") + ". Revisá que los nombres del fixture coincidan con los nombres institucionales.");
+          throw new Error("No encontramos la inscripción de ambos clubes en el torneo. Revisá que los nombres del fixture coincidan con los nombres institucionales.");
         }
 
-        const localRegistration = matchingRegistrations.find((item) => item.club_id === localClub.id);
-        const visitorRegistration = matchingRegistrations.find((item) => item.club_id === visitorClub.id);
-        const registrationIds = [localRegistration?.id, visitorRegistration?.id].filter(Boolean);
+        const categoryRegistrations = allRegistrations.filter((item) => {
+          const savedCategory = normalize(String(item.category_label || "").split("·")[0].trim());
+          return savedCategory === normalize(categoryBase);
+        });
+        const registrationsForClub = (clubId) => allRegistrations.filter((item) => item.club_id === clubId);
+        const chooseRegistration = (clubId) => {
+          const categoryMatch = categoryRegistrations.find((item) => item.club_id === clubId);
+          if (categoryMatch) return categoryMatch;
+          // En torneos de prueba con una sola inscripción por club, no descartarla
+          // por una diferencia de formato entre categoría y año.
+          const clubRegistrations = registrationsForClub(clubId);
+          return clubRegistrations.length === 1 ? clubRegistrations[0] : null;
+        };
+        const localRegistration = chooseRegistration(localClub.id);
+        const visitorRegistration = chooseRegistration(visitorClub.id);
+        if (!localRegistration || !visitorRegistration) {
+          throw new Error("No encontramos la inscripción de ambos clubes en la categoría " + (category || "del torneo") + ".");
+        }
+        const registrationIds = [localRegistration.id, visitorRegistration.id];
         const { data: teams, error: teamsError } = await supabase
           .from("fefutin_teams")
           .select("id, club_tournament_id, status")
