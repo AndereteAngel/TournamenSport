@@ -1780,6 +1780,7 @@ export function TournamenSportApp() {
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeTournament, setActiveTournament] = useState(null);
+  const [refereeMatchToOpen, setRefereeMatchToOpen] = useState(null);
   const [fefutinTournamentClubs, setFefutinTournamentClubs] = useState([]);
   const [loadingFefutinTournamentClubs, setLoadingFefutinTournamentClubs] = useState(false);
   const [showChampionCard, setShowChampionCard] = useState(false);
@@ -3487,6 +3488,31 @@ export function TournamenSportApp() {
     });
   });
 
+  const assignedRefereeMatches = isArbitro ? tournaments.flatMap((tournament) =>
+    (Array.isArray(tournament.groups) ? tournament.groups : []).flatMap((group, groupIndex) =>
+      (Array.isArray(group?.matches) ? group.matches : [])
+        .map((match) => ({
+          tournament,
+          tournamentTitle: tournament.title || "Torneo FEFUTIN",
+          category: getTournamentCategory(tournament),
+          groupName: group?.name || `Grupo ${groupIndex + 1}`,
+          groupIndex,
+          matchId: match?.id,
+          team1: match?.team1 || "",
+          team2: match?.team2 || "",
+          refereeClosed: Boolean(match?.referee_closed),
+          round: match?.round || null,
+        }))
+        .filter((item) => item.matchId != null && item.team1 && item.team2 &&
+          item.team1.toLocaleLowerCase("es") !== "pasaje directo" &&
+          item.team2.toLocaleLowerCase("es") !== "pasaje directo" &&
+          (tournament.groups[groupIndex].matches || []).some((candidate) =>
+            candidate?.id === item.matchId && candidate?.referee_id === currentUser?.id
+          ))
+    )
+  ) : [];
+  const hasPendingRefereeAssignments = assignedRefereeMatches.some((match) => !match.refereeClosed);
+
   const openTournament = (tournament) => {
     setActiveTournament(tournament);
     setActiveView(
@@ -3882,6 +3908,37 @@ export function TournamenSportApp() {
         <div className="tc-form-screen tc-stats-screen">
           <RefereeStats onBack={() => setActiveView("home")} canManageAccess={canManageAccess} onDeactivateReferee={handleDeactivateReferee} />
         </div>
+      ) : activeView === "referee-designations" && isArbitro ? (
+        <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
+          <section style={{ width: "100%", maxWidth: "900px", margin: "auto", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff" }}>
+            <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>← Volver</button>
+            <h2 style={{ color: "#fff", margin: "1rem 0 .35rem", letterSpacing: ".06em" }}>MIS DESIGNACIONES</h2>
+            <p style={{ color: "#ccc", fontSize: ".82rem", marginTop: 0 }}>Partidos asignados a tu cuenta arbitral.</p>
+            {assignedRefereeMatches.length === 0 ? (
+              <p style={{ color: "#ddd", padding: "1rem 0" }}>No tenés partidos designados actualmente.</p>
+            ) : (
+              <div style={{ display: "grid", gap: ".7rem" }}>
+                {assignedRefereeMatches.map((item, index) => (
+                  <article key={`${item.tournament.id}-${item.groupIndex}-${item.matchId}`} style={{ border: "1px solid #b5122a", borderRadius: "10px", padding: ".85rem", background: "#171c27" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", alignItems: "center", flexWrap: "wrap" }}>
+                      <strong style={{ color: "#fff", fontSize: ".8rem" }}>{item.tournamentTitle}</strong>
+                      <span style={{ color: item.refereeClosed ? "#86efac" : "#fca5a5", fontSize: ".68rem", fontWeight: 900 }}>{item.refereeClosed ? "PARTIDO CERRADO" : "PENDIENTE"}</span>
+                    </div>
+                    <div style={{ color: "#ddd", fontSize: ".75rem", margin: ".35rem 0" }}>{item.category} · {item.groupName}{item.round ? ` · Fecha ${item.round}` : ""}</div>
+                    <div style={{ color: "#fff", fontWeight: 900, textAlign: "center", padding: ".55rem 0" }}>{item.team1} <span style={{ color: "#b5122a" }}>VS.</span> {item.team2}</div>
+                    <button type="button" onClick={() => {
+                      setActiveTournament(item.tournament);
+                      setRefereeMatchToOpen({ groupIndex: item.groupIndex, matchId: item.matchId });
+                      setActiveView("groups");
+                    }} style={{ width: "100%", padding: ".65rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#fff", color: "#171c27", fontWeight: 900, cursor: "pointer" }}>
+                      {item.refereeClosed ? "VER PLANILLA" : "ABRIR PLANILLA"}
+                    </button>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       ) : activeView === "division-tournaments" ? (
         <div className="tc-form-screen tc-division-tournaments-screen">
           <section className="cr-card" style={{ width: "100%", maxWidth: "980px", margin: "auto", background: "#080808", backgroundColor: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
@@ -4040,6 +4097,22 @@ export function TournamenSportApp() {
             </span>
             <span className="tc-home-about-arrow">→</span>
           </button>
+
+          {isArbitro && assignedRefereeMatches.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveView("referee-designations")}
+              aria-label={`Ver mis designaciones: ${assignedRefereeMatches.length} partidos`}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: ".8rem", margin: "1rem 0", padding: "1rem", background: "#fff", border: "2px solid #b5122a", borderRadius: "12px", color: "#171c27", textAlign: "left", cursor: "pointer", boxShadow: "0 3px 12px rgba(181,18,42,.12)" }}
+            >
+              <span aria-hidden="true" style={{ width: "12px", height: "12px", flex: "0 0 12px", borderRadius: "50%", background: hasPendingRefereeAssignments ? "#dc2626" : "#9ca3af", boxShadow: hasPendingRefereeAssignments ? "0 0 0 4px rgba(220,38,38,.12)" : "none" }} />
+              <span style={{ flex: 1 }}>
+                <strong style={{ display: "block", color: "#171c27", fontSize: ".9rem", letterSpacing: ".07em" }}>DESIGNACIONES</strong>
+                <small style={{ display: "block", color: "#444", marginTop: ".2rem" }}>{assignedRefereeMatches.length} partido(s) asignado(s) · Abrir planillas</small>
+              </span>
+              <span aria-hidden="true" style={{ color: "#b5122a", fontSize: "1.3rem", fontWeight: 900 }}>→</span>
+            </button>
+          )}
 
           {canAccessClubManagement && (
             <section aria-label="Gestión de clubes" style={{ margin: "1.25rem 0", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: ".85rem" }}>
@@ -4687,6 +4760,8 @@ export function TournamenSportApp() {
               isReferee={isArbitro}
               onUpdateMatchResult={handleUpdateMatchResult}
               onCloseMatch={handleCloseMatch}
+              openAssignedMatch={refereeMatchToOpen}
+              onAssignedMatchOpened={() => setRefereeMatchToOpen(null)}
             />
           )}
 
