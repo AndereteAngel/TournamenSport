@@ -48,6 +48,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [tournamentSearch, setTournamentSearch] = useState("");
   const [tournamentCategory, setTournamentCategory] = useState("todas");
   const [tournamentStatus, setTournamentStatus] = useState("todos");
+  const [activeTournamentIndex, setActiveTournamentIndex] = useState(0);
   const [rosterSearch, setRosterSearch] = useState("");
   const [rosterCategory, setRosterCategory] = useState("todas");
 
@@ -398,8 +399,31 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </div>
                 )}
 
-                <div style={mode === "torneos" ? { display: "flex", flexDirection: "row", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gap: "1rem", marginTop: "1rem", overflowX: "auto", overflowY: "hidden", padding: "0 0 .75rem", scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" } : { display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gap: "1rem", marginTop: "1rem" }}>
-              {filteredParticipations.map((item) => {
+                <div
+                  onScroll={mode === "torneos" ? (event) => {
+                    const container = event.currentTarget;
+                    const center = container.getBoundingClientRect().left + container.clientWidth / 2;
+                    let nearest = 0;
+                    let distance = Infinity;
+                    Array.from(container.children).forEach((card, index) => {
+                      const rect = card.getBoundingClientRect();
+                      const currentDistance = Math.abs(center - (rect.left + rect.width / 2));
+                      if (currentDistance < distance) { distance = currentDistance; nearest = index; }
+                    });
+                    setActiveTournamentIndex(nearest);
+                  } : undefined}
+                  style={mode === "torneos" ? {
+                    display: "flex", flexDirection: "row", alignItems: "center",
+                    width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box",
+                    alignSelf: "stretch", gap: 0, marginTop: "1rem",
+                    overflowX: "auto", overflowY: "hidden",
+                    padding: "2rem max(1rem, calc((100% - 300px) / 2)) 1.5rem",
+                    scrollSnapType: "x mandatory",
+                    scrollPaddingInline: "max(1rem, calc((100% - 300px) / 2))",
+                    WebkitOverflowScrolling: "touch", scrollbarWidth: "thin", perspective: "900px"
+                  } : { display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gap: "1rem", marginTop: "1rem" }}
+                >
+              {filteredParticipations.map((item, tournamentIndex) => {
                 const allPlayers = rowsByParticipation[item.club_tournament_id] || [];
                 const players = selectedSection === "listas" ? filteredPlayersFor(item) : allPlayers;
                 const logoUrl = item.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(item.logo_path).data.publicUrl : "";
@@ -419,7 +443,16 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                         onOpenTournament?.(item);
                       }
                     } : undefined}
-                    style={mode === "torneos" ? { flex: "0 0 clamp(260px, 34%, 380px)", width: "clamp(260px, 34%, 380px)", maxWidth: "380px", minWidth: "260px", boxSizing: "border-box", alignSelf: "stretch", scrollSnapAlign: "start", border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", cursor: "pointer" } : { width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", cursor: "default" }}
+                    style={mode === "torneos" ? {
+                      position: "relative", flex: "0 0 min(76%, 330px)", width: "min(76%, 330px)",
+                      maxWidth: "330px", minWidth: "245px", boxSizing: "border-box", alignSelf: "center",
+                      scrollSnapAlign: "center", zIndex: activeTournamentIndex === tournamentIndex ? 3 : 1,
+                      marginLeft: tournamentIndex === 0 ? 0 : "-58px",
+                      transform: `translateY(${activeTournamentIndex === tournamentIndex ? "-3px" : "7px"}) scale(${activeTournamentIndex === tournamentIndex ? 1.08 : 0.78}) rotateY(${activeTournamentIndex > tournamentIndex ? "7deg" : activeTournamentIndex < tournamentIndex ? "-7deg" : "0deg"})`,
+                      opacity: Math.abs(activeTournamentIndex - tournamentIndex) > 2 ? 0.58 : activeTournamentIndex === tournamentIndex ? 1 : 0.82,
+                      transition: "transform 260ms cubic-bezier(.2,.8,.2,1), opacity 260ms ease",
+                      border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", cursor: "pointer"
+                    } : { width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", cursor: "default" }}
                   >
 {selectedSection !== "listas" && (
                     <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flexWrap: "wrap" }}>
