@@ -264,7 +264,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                       style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".55rem", minWidth: 0, minHeight: "132px", padding: ".8rem .45rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#111", color: "#fff", cursor: "pointer" }}
                     >
                       <span style={{ width: "76px", height: "76px", display: "grid", placeItems: "center", overflow: "hidden", borderRadius: "9px", background: "#fff" }}>
-                        {logoUrl ? <img src={logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <span style={{ color: "#171c27", fontSize: ".62rem", fontWeight: 900 }}>SIN ESCUDO</span>}
+                        {logoUrl ? <img src={logoUrl} alt="" style={{ width: "84%", height: "84%", objectFit: "contain", display: "block" }} /> : <span style={{ color: "#171c27", fontSize: ".62rem", fontWeight: 900 }}>SIN ESCUDO</span>}
                       </span>
                       <strong style={{ color: "#fff", fontSize: ".8rem", lineHeight: 1.25, textAlign: "center", overflowWrap: "anywhere" }}>{item.club_name}</strong>
                     </button>
