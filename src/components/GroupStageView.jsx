@@ -43,7 +43,7 @@ export function GroupStageView({
   }, [activeGroupIndex, selectedRound, targetMatchId]);
 
   useEffect(() => {
-    if (!openAssignedMatch || !Array.isArray(tournament.groups)) return;
+    if (isReferente || !openAssignedMatch || !Array.isArray(tournament.groups)) return;
     const groupIndex = Number(openAssignedMatch.groupIndex);
     const group = tournament.groups[groupIndex];
     const match = group?.matches?.find((item) => String(item?.id) === String(openAssignedMatch.matchId));
@@ -51,7 +51,7 @@ export function GroupStageView({
     setActiveGroupIndex(groupIndex);
     setSelectedSheetMatch(match);
     onAssignedMatchOpened?.();
-  }, [openAssignedMatch, tournament.id]);
+  }, [openAssignedMatch, tournament.id, isReferente]);
 
   const getClubLogo = (teamName) => {
     const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
@@ -799,7 +799,10 @@ export function GroupStageView({
               {isReferente && (
                 <button
                   type="button"
-                  onClick={() => setSelectedPrintMatch(match)}
+                  onClick={() => {
+                    setSelectedSheetMatch(null);
+                    setSelectedPrintMatch(match);
+                  }}
                   style={{
                     gridColumn: "1 / -1",
                     width: "100%",
@@ -819,7 +822,10 @@ export function GroupStageView({
               {(isAdmin || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && !isReferente && (
                 <button
                   type="button"
-                  onClick={() => setSelectedSheetMatch(match)}
+                  onClick={() => {
+                    setSelectedPrintMatch(null);
+                    setSelectedSheetMatch(match);
+                  }}
                   style={{
                     gridColumn: "1 / -1",
                     width: "100%",
