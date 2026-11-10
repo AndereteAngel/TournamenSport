@@ -168,8 +168,8 @@ export function ReferenteInscripcion({ tournaments = [], currentUser, onBack, on
   };
 
   return (
-    <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
-      <section className="cr-card" style={{ width: "100%", maxWidth: "980px", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)", background: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
+    <div className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", minWidth: 0, padding: "1rem", minHeight: "70vh", boxSizing: "border-box" }}>
+      <section className="cr-card" style={{ width: "100%", maxWidth: "100%", minWidth: 0, margin: 0, padding: "clamp(1rem, 2.5vw, 2rem)", boxSizing: "border-box", background: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
         <button type="button" className="tc-form-back" onClick={onBack}>← Volver al inicio</button>
         <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".72rem", margin: "1.25rem 0 .35rem" }}>ÁREA DEL REFERENTE</p>
         <h2 className="cr-title" style={{ color: "#fff", margin: "0 0 .5rem" }}>INSCRIPCIÓN DEL CLUB</h2>
