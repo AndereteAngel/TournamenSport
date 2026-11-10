@@ -276,7 +276,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
               </div>
             ) : mode === "equipos" && activeClubId && !selectedSection && !isManager ? (
               <div style={{ display: "grid", gap: "1rem", marginTop: "1.25rem" }}>
-                <article style={{ overflow: "hidden", border: "2px solid #b5122a", borderRadius: "18px", background: "linear-gradient(135deg,#292929 0%,#111 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", maxWidth: "680px", width: "100%", margin: "0 auto" }}>
+                <article style={{ overflow: "hidden", border: "2px solid #b5122a", borderRadius: "18px", background: "linear-gradient(135deg,#292929 0%,#111 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", maxWidth: "100%", width: "100%", margin: 0 }}>
                   <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".8rem", padding: ".9rem 1rem", background: "#b5122a" }}>
                     <div>
                       <p style={{ margin: 0, color: "#fff", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN</p>
