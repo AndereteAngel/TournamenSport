@@ -3775,7 +3775,7 @@ export function TournamenSportApp() {
         </div>
       ) : activeView === "access-requests" && canManageAccess ? (
         <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
-          <section className="cr-card" style={{ width: "100%", maxWidth: "900px", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)" }}>
+          <section className="cr-card" style={{ width: "100%", maxWidth: "100%", margin: "0", padding: "clamp(1rem, 3vw, 2rem)", boxSizing: "border-box" }}>
             <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>← Volver</button>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", margin: "1rem 0 1.5rem" }}>
               <div>
