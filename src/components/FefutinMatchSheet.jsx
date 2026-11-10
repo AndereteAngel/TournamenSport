@@ -359,8 +359,9 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         .fefutin-sheet-table tbody tr:nth-child(even) td{background:#f3f3f3!important}
         .fefutin-observations{display:grid;gap:5px;margin-top:14px;font-size:10px;font-weight:700;color:#222!important}
         .fefutin-observations textarea{width:100%;border:1px solid #777!important;min-height:48px;padding:6px;background:#fff!important;color:#111!important;font-size:11px!important}
-        .fefutin-sheet-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
-        .fefutin-sheet-actions button{padding:10px 16px;border-radius:5px;border:1px solid #333;cursor:pointer;font-weight:800}
+        .fefutin-sheet-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:16px;min-width:0}
+        .fefutin-sheet-actions button{display:flex;align-items:center;justify-content:center;flex:1 1 145px;min-width:0;max-width:100%;min-height:42px;padding:9px 10px;border-radius:5px;border:1px solid #333;cursor:pointer;font-weight:800;line-height:1.2;text-align:center;white-space:normal;overflow-wrap:anywhere;word-break:normal}
+        @media(max-width:700px){.fefutin-sheet-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.fefutin-sheet-actions button{width:100%;min-width:0;padding:9px 6px;font-size:12px}.fefutin-sheet-actions strong{grid-column:1/-1;text-align:center}}
         @page{size:A4 landscape;margin:4mm 6mm}
         @media(max-width:700px){.fefutin-print-sheet{padding:12px}.fefutin-sheet-meta{grid-template-columns:76px minmax(0,1fr);gap:8px}.fefutin-sheet-meta label{grid-column:auto!important}.fefutin-sheet-meta label:nth-child(3),.fefutin-sheet-meta label:nth-child(4){grid-column:1 / -1!important}.fefutin-sheet-title h2{font-size:17px}.fefutin-sheet-table{min-width:680px}}
         @media print{
