@@ -4065,7 +4065,7 @@ export function TournamenSportApp() {
                       >
                         <button
                           type="button"
-                          className="tc-home-division-tournament"
+                          className="tc-home-division-tournament tc-division-tournament-card"
                           onClick={() => openTournament(t)}
                           style={{
                             background: "#171717",
