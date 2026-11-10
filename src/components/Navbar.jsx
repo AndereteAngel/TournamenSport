@@ -304,9 +304,12 @@ export function Navbar({
           background: "#0d0d0f",
           border: "1px solid #55555b",
           borderRadius: "8px",
-          padding: "0.2rem 0.45rem",
+          padding: 0,
           color: "#fff",
           fontSize: "1rem",
+          lineHeight: 0,
+          alignItems: "center",
+          justifyContent: "center",
           cursor: "pointer",
         }}
       >
