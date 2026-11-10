@@ -3991,100 +3991,132 @@ export function TournamenSportApp() {
             <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>
               <span aria-hidden="true">←</span> Volver
             </button>
-            <div className="tc-home-panel-art">
-              <div><span>FEFUTIN</span><strong>FÚTBOL · {tournamentDivisionFilter.toLocaleUpperCase("es")}</strong></div>
-            </div>
-            <h2 className="cr-title">TORNEOS DE {tournamentDivisionFilter.toLocaleUpperCase("es")}</h2>
-            <div className="tc-division-search">
-              <span aria-hidden="true">⌕</span>
-              <input
-                type="search"
-                value={divisionCategorySearch}
-                onChange={(event) => setDivisionCategorySearch(event.target.value)}
-                placeholder="Buscar por categoría o torneo..."
-                aria-label={`Buscar torneos de ${tournamentDivisionFilter} por categoría o nombre`}
-              />
-              {divisionCategorySearch && (
-                <button type="button" onClick={() => setDivisionCategorySearch("")} aria-label="Limpiar búsqueda">×</button>
-              )}
+            <div className="tc-division-heading-search">
+              <div className="tc-home-panel-art">
+                <div><span>FEFUTIN</span><strong>FÚTBOL · {tournamentDivisionFilter.toLocaleUpperCase("es")}</strong></div>
+              </div>
+              <h2 className="cr-title">TORNEOS DE {tournamentDivisionFilter.toLocaleUpperCase("es")}</h2>
+              <div className="tc-division-search">
+                <span aria-hidden="true">⌕</span>
+                <input
+                  type="search"
+                  value={divisionCategorySearch}
+                  onChange={(event) => setDivisionCategorySearch(event.target.value)}
+                  placeholder="Buscar por categoría o torneo..."
+                  aria-label={`Buscar torneos de ${tournamentDivisionFilter} por categoría o nombre`}
+                />
+                {divisionCategorySearch && (
+                  <button type="button" onClick={() => setDivisionCategorySearch("")} aria-label="Limpiar búsqueda">×</button>
+                )}
+              </div>
             </div>
             {(() => {
               const branchTournaments = tournaments.filter((t) => getTournamentDivision(t) === tournamentDivisionFilter);
-              const categories = [...new Set(branchTournaments.map(getTournamentCategory).filter(Boolean))];
               const query = divisionCategorySearch.trim().toLocaleLowerCase("es");
-              const visibleCategories = categories.filter((category) => {
-                const categoryMatches = category.toLocaleLowerCase("es").includes(query);
-                const hasMatchingTournament = branchTournaments.some((t) =>
-                  getTournamentCategory(t) === category &&
-                  String(t.title || "").toLocaleLowerCase("es").includes(query)
-                );
-                return !query || categoryMatches || hasMatchingTournament;
+              const visibleTournaments = branchTournaments.filter((t) => {
+                const category = getTournamentCategory(t);
+                return !query ||
+                  String(t.title || "").toLocaleLowerCase("es").includes(query) ||
+                  String(category || "").toLocaleLowerCase("es").includes(query);
               });
-              return categories.length ? (
-                visibleCategories.length ? visibleCategories.map((category) => (
-                  <section key={category} className="tc-division-category" style={{ background: "#101010", backgroundColor: "#101010", border: "1px solid #b5122a", borderRadius: "12px", padding: "0.75rem", marginBottom: "0.75rem" }}>
-                    <h3>{category}</h3>
-                    <div className="tc-division-tournament-list">
-                      {branchTournaments.filter((t) =>
-                        getTournamentCategory(t) === category &&
-                        (!query || category.toLocaleLowerCase("es").includes(query) ||
-                          String(t.title || "").toLocaleLowerCase("es").includes(query))
-                      ).map((t) => (
-                        <div key={t.id} style={{ position: "relative", width: "100%" }}>
+
+              if (!branchTournaments.length) {
+                return <p style={{ color: "#fff" }}>Todavía no hay torneos creados en esta rama.</p>;
+              }
+              if (!visibleTournaments.length) {
+                return <p className="tc-division-search-empty">No encontramos torneos para “{divisionCategorySearch}”. Probá con otra categoría o nombre.</p>;
+              }
+
+              return (
+                <div
+                  className="tc-division-tournament-carousel"
+                  aria-label={`Carrusel de torneos de ${tournamentDivisionFilter}`}
+                  style={{
+                    display: "flex",
+                    flexDirection: "row",
+                    width: "100%",
+                    maxWidth: "100%",
+                    minWidth: 0,
+                    boxSizing: "border-box",
+                    gap: "1rem",
+                    marginTop: "1rem",
+                    overflowX: "auto",
+                    overflowY: "hidden",
+                    padding: "0 0 .85rem",
+                    scrollSnapType: "x mandatory",
+                    WebkitOverflowScrolling: "touch",
+                  }}
+                >
+                  {visibleTournaments.map((t) => {
+                    const category = getTournamentCategory(t);
+                    return (
+                      <div
+                        key={t.id}
+                        style={{
+                          position: "relative",
+                          flex: "0 0 clamp(260px, 34%, 380px)",
+                          width: "clamp(260px, 34%, 380px)",
+                          maxWidth: "380px",
+                          minWidth: "260px",
+                          boxSizing: "border-box",
+                          alignSelf: "stretch",
+                          scrollSnapAlign: "start",
+                        }}
+                      >
+                        <button
+                          type="button"
+                          className="tc-home-division-tournament"
+                          onClick={() => openTournament(t)}
+                          style={{
+                            background: "#171717",
+                            backgroundColor: "#171717",
+                            color: "#fff",
+                            border: "1px solid #b5122a",
+                            width: "100%",
+                            height: "100%",
+                            paddingRight: canDeleteTournaments ? "48px" : undefined,
+                          }}
+                        >
+                          <strong>{t.title || "Torneo sin nombre"}</strong>
+                          <span>Fútbol · {category}</span>
+                          <small>{t.status || "En preparación"}</small>
+                        </button>
+                        {canDeleteTournaments && (
                           <button
                             type="button"
-                            className="tc-home-division-tournament"
-                            onClick={() => openTournament(t)}
+                            title="Eliminar torneo"
+                            aria-label={`Eliminar torneo ${t.title || "sin nombre"}`}
+                            disabled={deletingTournamentId === t.id}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDeleteTournament(t);
+                            }}
                             style={{
-                              background: "#171717",
-                              backgroundColor: "#171717",
-                              color: "#fff",
-                              border: "1px solid #b5122a",
-                              width: "100%",
-                              paddingRight: canDeleteTournaments ? "48px" : undefined,
+                              position: "absolute",
+                              top: "8px",
+                              right: "8px",
+                              zIndex: 3,
+                              width: "32px",
+                              height: "32px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              padding: 0,
+                              color: "#f87171",
+                              background: deletingTournamentId === t.id ? "#374151" : "rgba(127,29,29,.45)",
+                              border: "1px solid rgba(239,68,68,.75)",
+                              borderRadius: "7px",
+                              cursor: deletingTournamentId === t.id ? "not-allowed" : "pointer",
                             }}
                           >
-                            <strong>{t.title || "Torneo sin nombre"}</strong>
-                            <span>Fútbol · {category}</span>
-                            <small>{t.status || "En preparación"}</small>
+                            {deletingTournamentId === t.id ? "…" : <TCIcon name="trash" size={17} />}
                           </button>
-                          {canDeleteTournaments && (
-                            <button
-                              type="button"
-                              title="Eliminar torneo"
-                              aria-label={`Eliminar torneo ${t.title || "sin nombre"}`}
-                              disabled={deletingTournamentId === t.id}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                handleDeleteTournament(t);
-                              }}
-                              style={{
-                                position: "absolute",
-                                top: "8px",
-                                right: "8px",
-                                zIndex: 3,
-                                width: "32px",
-                                height: "32px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                padding: 0,
-                                color: "#f87171",
-                                background: deletingTournamentId === t.id ? "#374151" : "rgba(127,29,29,.45)",
-                                border: "1px solid rgba(239,68,68,.75)",
-                                borderRadius: "7px",
-                                cursor: deletingTournamentId === t.id ? "not-allowed" : "pointer",
-                              }}
-                            >
-                              {deletingTournamentId === t.id ? "…" : <TCIcon name="trash" size={17} />}
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                )) : <p className="tc-division-search-empty">No encontramos torneos para “{divisionCategorySearch}”. Probá con otra categoría o nombre.</p>
-              ) : <p style={{ color: "#fff" }}>Todavía no hay torneos creados en esta rama.</p>;
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
             })()}
           </section>
         </div>
