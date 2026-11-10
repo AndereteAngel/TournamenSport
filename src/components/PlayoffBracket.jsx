@@ -318,7 +318,7 @@ export function PlayoffBracket({
                       onClick={() => setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx })}
                       style={{ width: "100%", marginTop: "0.55rem", padding: "0.5rem 0.65rem", borderRadius: "7px", border: "1px solid #b5122a", background: "#241015", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer" }}
                     >
-                      📋 ABRIR PLANILLA OFICIAL
+                      📄 PLANILLA PARTIDO OFICIAL
                     </button>
                   )}
                 </div>
