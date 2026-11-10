@@ -749,10 +749,10 @@ export function GroupStageView({
               }}
             >
               {/* EQUIPO LOCAL */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "0.45rem", minWidth: 0 }}>
-                {getClubLogo(match.team1) ? <img src={getClubLogo(match.team1)} alt={`Escudo de ${match.team1}`} style={{ width: "42px", height: "42px", objectFit: "contain", borderRadius: "6px", flexShrink: 0 }} /> : null}
-                <span style={{ minWidth: 0, fontSize: "0.76rem", fontWeight: "bold", textAlign: "left", overflowWrap: "anywhere" }}>
-                  <span style={{ display: "block", color: "#4ade80", fontSize: "0.58rem", fontWeight: 900, letterSpacing: "0.05em", marginBottom: "3px" }}>LOCAL</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", minWidth: 0 }}>
+                {getClubLogo(match.team1) ? <img src={getClubLogo(match.team1)} alt={`Escudo de ${match.team1}`} style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "6px", flexShrink: 0 }} /> : null}
+                <span style={{ minWidth: 0, fontSize: "0.72rem", fontWeight: "bold", textAlign: "center", overflowWrap: "anywhere" }}>
+                  <span style={{ display: "block", color: "#4ade80", fontSize: "0.56rem", fontWeight: 900, letterSpacing: "0.05em", marginBottom: "3px", textAlign: "center" }}>LOCAL</span>
                   {match.team1}
                 </span>
               </div>
@@ -798,12 +798,12 @@ export function GroupStageView({
               </div>
 
               {/* EQUIPO VISITANTE */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.45rem", minWidth: 0 }}>
-                <span style={{ minWidth: 0, fontSize: "0.76rem", fontWeight: "bold", textAlign: "right", overflowWrap: "anywhere" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.35rem", minWidth: 0 }}>
+                <span style={{ minWidth: 0, fontSize: "0.72rem", fontWeight: "bold", textAlign: "center", overflowWrap: "anywhere" }}>
                   <span style={{ display: "block", color: "#93c5fd", fontSize: "0.58rem", fontWeight: 900, letterSpacing: "0.05em", marginBottom: "3px" }}>VISITANTE</span>
                   {match.team2}
                 </span>
-                {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "42px", height: "42px", objectFit: "contain", borderRadius: "6px", flexShrink: 0 }} /> : null}
+                {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "6px", flexShrink: 0 }} /> : null}
               </div>
               {(isAdmin || isReferee) && (
                 <button
