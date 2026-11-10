@@ -377,6 +377,7 @@ export function PlayoffBracket({
           match={selectedSheetMatch}
           isReferee={isReferee}
           readOnly={isReferente}
+          printOnly={isReferente}
           onCloseMatch={async ({ score1, score2 }) => {
             const closed = await onCloseMatch?.({
               phase: "playoffs",
