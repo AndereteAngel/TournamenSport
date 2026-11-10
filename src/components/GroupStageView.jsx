@@ -796,10 +796,30 @@ export function GroupStageView({
                 </span>
                 {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "6px", flexShrink: 0 }} /> : null}
               </div>
-              {(isAdmin || isReferente || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && (
+              {isReferente && (
                 <button
                   type="button"
-                  onClick={() => isReferente ? setSelectedPrintMatch(match) : setSelectedSheetMatch(match)}
+                  onClick={() => setSelectedPrintMatch(match)}
+                  style={{
+                    gridColumn: "1 / -1",
+                    width: "100%",
+                    padding: "0.55rem 0.7rem",
+                    borderRadius: "7px",
+                    border: "1px solid #b5122a",
+                    background: "#b5122a",
+                    color: "#fff",
+                    fontSize: "0.72rem",
+                    fontWeight: 900,
+                    cursor: "pointer",
+                  }}
+                >
+                  🖨️ PLANILLA PDF PARA IMPRIMIR
+                </button>
+              )}
+              {(isAdmin || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && !isReferente && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedSheetMatch(match)}
                   style={{
                     gridColumn: "1 / -1",
                     width: "100%",
@@ -813,7 +833,7 @@ export function GroupStageView({
                     cursor: "pointer",
                   }}
                 >
-                  📄 PLANILLA PARTIDO
+                  📄 PLANILLA DIGITAL DEL ÁRBITRO
                 </button>
               )}
             </div>
@@ -844,13 +864,13 @@ export function GroupStageView({
           onClose={() => setSelectedPrintMatch(null)}
         />
       )}
-      {selectedSheetMatch && (
+      {selectedSheetMatch && !isReferente && (
         <FefutinMatchSheet
           tournament={tournament}
           match={selectedSheetMatch}
           isReferee={isReferee}
-          readOnly={isReferente}
-          printOnly={isReferente}
+          readOnly={false}
+          printOnly={false}
           onCloseMatch={async ({ score1, score2 }) => {
             const closed = await onCloseMatch?.({
               phase: "groups",
