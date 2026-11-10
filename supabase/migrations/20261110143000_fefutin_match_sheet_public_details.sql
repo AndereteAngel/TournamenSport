@@ -31,9 +31,6 @@ as $$
   order by c.name, ct.category_label;
 $$;
 
--- La versión inicial de un parámetro no debe quedar expuesta.
-revoke all on function public.get_fefutin_match_sheet_club_addresses(uuid) from public, anon, authenticated;
-
 revoke all on function public.get_fefutin_match_sheet_club_addresses(uuid, text, text) from public;
 grant execute on function public.get_fefutin_match_sheet_club_addresses(uuid, text, text) to anon, authenticated;
 
