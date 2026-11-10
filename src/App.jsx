@@ -4247,7 +4247,7 @@ export function TournamenSportApp() {
               {[
                 { id: "referente-inscripcion", icon: "📝", title: "INSCRIPCIÓN", detail: "Inscribí tu club en las competencias" },
                 { id: "referente-equipos", icon: "⚽", title: isReferente ? "MI CLUB" : "FICHA DE EQUIPOS", detail: isReferente ? "Datos institucionales y carnets de jugadores" : "Club, equipos y jugadores" },
-                { id: "referente-torneos", icon: "🏆", title: "MIS TORNEOS", detail: "Competencias y listas de buena fe" },
+                { id: "referente-torneos", icon: "🏆", title: "MIS TORNEOS", detail: "Acceso directo a las competencias de tu club" },
               ].map((item) => (
                 <button key={item.id} type="button" onClick={() => setActiveView(item.id)} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
                   <span style={{ fontSize: "1.6rem" }}>{item.icon}</span>
