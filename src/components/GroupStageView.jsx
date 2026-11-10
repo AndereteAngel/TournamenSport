@@ -67,6 +67,7 @@ export function GroupStageView({
   // Administradores/directivos gestionan el torneo; los árbitros solo cargan marcadores.
   const isFinalized = String(tournament.status || "").trim().toLocaleLowerCase("es") === "finalizado";
   const canEditResults = (isAdmin || isReferee) && !isFinalized;
+  const canEditFixtureScores = isAdmin && !isFinalized;
   const canAdvanceToPlayoffs = isAdmin && !isFinalized;
 
   // El resumen se calcula según el participante elegido en el torneo,
@@ -112,22 +113,9 @@ export function GroupStageView({
 
   const handleScoreChange = (matchId, field, value) => {
     // Seguridad adicional en la interfaz
-    if (!canEditResults || isFinalized) return;
+    if (!canEditFixtureScores || isFinalized) return;
 
     const numValue = value === "" ? null : Number(value);
-
-    if (isReferee) {
-      const currentMatch = currentGroup.matches.find((match) => match.id === matchId);
-      if (!currentMatch || currentMatch.referee_closed) return;
-      onUpdateMatchResult?.({
-        phase: "groups",
-        groupIndex: activeGroupIndex,
-        matchId,
-        score1: field === "score1" ? numValue : currentMatch.score1,
-        score2: field === "score2" ? numValue : currentMatch.score2,
-      });
-      return;
-    }
 
     const updatedGroups = tournament.groups.map((group, gIdx) => {
       if (gIdx !== activeGroupIndex) return group;
@@ -457,7 +445,7 @@ export function GroupStageView({
       >
         {canEditResults ? (
           <>
-            <TCIcon name="shield" size={15} /> <strong>{isReferee ? "Árbitro:" : "Organizador:"}</strong> {isReferee ? "podés cargar y corregir los resultados de los partidos." : "sos el responsable de cargar y validar los resultados."}
+            <TCIcon name="shield" size={15} /> <strong>{isReferee ? "Árbitro:" : "Organizador:"}</strong> {isReferee ? "completá la planilla oficial; al cerrarla se actualizan automáticamente el marcador y la tabla." : "sos el responsable de cargar y validar los resultados."}
           </>
         ) : (
           <>
@@ -770,7 +758,7 @@ export function GroupStageView({
                   borderRadius: "8px",
                 }}
               >
-                {canEditResults ? (
+                {canEditFixtureScores ? (
                   <>
                     <input
                       type="number"
