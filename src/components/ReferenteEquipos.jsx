@@ -68,6 +68,10 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
       players: Array.isArray(item.players) ? item.players : [],
     }));
     setParticipations(items);
+    if (currentUser?.role === "referente" && items.length > 0) {
+      setSelectedClubId(items[0].club_id);
+      setSelectedSection(null);
+    }
     const nextRows = {};
     items.forEach((item) => {
       nextRows[item.club_tournament_id] = item.players.map((player) => ({
@@ -270,8 +274,10 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
             ) : mode === "equipos" && selectedClubId && !selectedSection ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "1rem", marginTop: "1.25rem" }}>
                 {[
-                  { id: "torneos", title: "TORNEOS", description: "Torneos y categorías participantes", symbol: "🏆" },
-                  { id: "listas", title: "LISTAS DE BUENA FE", description: "Jugadores organizados por categoría", symbol: "📋" },
+                  ...(isManager ? [
+                    { id: "torneos", title: "TORNEOS", description: "Torneos y categorías participantes", symbol: "🏆" },
+                    { id: "listas", title: "LISTAS DE BUENA FE", description: "Jugadores organizados por categoría", symbol: "📋" },
+                  ] : []),
                   { id: "datos", title: "DATOS DEL CLUB", description: "Información institucional y escudo", symbol: "🏟️" },
                   { id: "carnets", title: "CARNETS", description: "Credenciales digitales de los jugadores", symbol: "🪪" },
                 ].map((section) => (
