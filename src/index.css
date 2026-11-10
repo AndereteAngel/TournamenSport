@@ -5990,3 +5990,24 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   letter-spacing: 0.035em !important;
   line-height: 1.15 !important;
 }
+
+
+/* FEFUTIN — DESIGNACIONES del inicio: prevalece el diseño blanco institucional
+   sobre la regla global de botones rojos. */
+#root .tc-home-screen button.tc-home-designations-card {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  color: #171c27 !important;
+  border: 2px solid #b5122a !important;
+  border-bottom: 2px solid #b5122a !important;
+  box-shadow: 0 3px 12px rgba(181,18,42,.12) !important;
+  text-align: left !important;
+}
+#root .tc-home-screen button.tc-home-designations-card strong,
+#root .tc-home-screen button.tc-home-designations-card small {
+  color: #171c27 !important;
+}
+#root .tc-home-screen button.tc-home-designations-card > span:last-child {
+  color: #b5122a !important;
+}
