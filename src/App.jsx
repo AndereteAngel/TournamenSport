@@ -4841,6 +4841,7 @@ export function TournamenSportApp() {
               currentUser={currentUser}
               isAdmin={canManageTournaments}
               isReferee={isArbitro}
+              isReferente={isReferente}
               onCloseMatch={handleCloseMatch}
               openAssignedMatch={refereeMatchToOpen}
               onAssignedMatchOpened={() => setRefereeMatchToOpen(null)}
@@ -4915,6 +4916,7 @@ export function TournamenSportApp() {
             onFinishTournament={handleFinishTournament}
             isAdmin={canManageTournaments}
             isReferee={isArbitro}
+              isReferente={isReferente}
             currentUser={currentUser}
             onCloseMatch={handleCloseMatch}
             clubLogos={fefutinTournamentClubs.map((club) => ({
