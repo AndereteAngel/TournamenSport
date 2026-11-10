@@ -1,7 +1,7 @@
 import { calculateGroupStandings } from "../utils/tournamentLogic";
 import { TCIcon } from "./TCIcon";
 import { useEffect, useState } from "react";
-import { FefutinMatchSheet } from "./FefutinMatchSheet";
+import { FefutinMatchSheet, FefutinPrintableMatchSheet } from "./FefutinMatchSheet";
 
 export function GroupStageView({
   tournament,
@@ -862,11 +862,10 @@ export function GroupStageView({
         </button>
       )}
       {selectedPrintMatch && (
-        <FefutinMatchSheet
+        <FefutinPrintableMatchSheet
+          key={String(selectedPrintMatch.id)}
           tournament={tournament}
           match={selectedPrintMatch}
-          readOnly={true}
-          printOnly={true}
           onClose={() => setSelectedPrintMatch(null)}
         />
       )}
