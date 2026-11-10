@@ -312,26 +312,13 @@ export function PlayoffBracket({
                       {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "30px", height: "30px", objectFit: "contain", borderRadius: "5px", flexShrink: 0 }} /> : null}
                     </div>
                   </div>
-                  {isReferente && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
+                  {(isAdmin || isReferente || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx });
-                      }}
-                      style={{ width: "100%", marginTop: "0.55rem", padding: "0.5rem 0.65rem", borderRadius: "7px", border: "1px solid #b5122a", background: "#b5122a", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer" }}
-                    >
-                      🖨️ PLANILLA PDF PARA IMPRIMIR
-                    </button>
-                  )}
-                  {(isAdmin || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && !isReferente && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx });
-                      }}
+                      onClick={() => setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx })}
                       style={{ width: "100%", marginTop: "0.55rem", padding: "0.5rem 0.65rem", borderRadius: "7px", border: "1px solid #b5122a", background: "#241015", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer" }}
                     >
-                      📄 PLANILLA DIGITAL DEL ÁRBITRO
+                      📋 ABRIR PLANILLA OFICIAL
                     </button>
                   )}
                 </div>
@@ -388,7 +375,7 @@ export function PlayoffBracket({
         <FefutinMatchSheet
           tournament={tournament}
           match={selectedSheetMatch}
-          isReferee={isReferee && !isReferente}
+          isReferee={isReferee}
           readOnly={isReferente}
           onCloseMatch={async ({ score1, score2 }) => {
             const closed = await onCloseMatch?.({
