@@ -58,7 +58,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         }
 
         let assignedRefereeName = "";
-        if (match?.referee_id) {
+        if (match?.referee_id && !printOnly) {
           const [
             { data: refereeProfile, error: refereeProfileError },
             { data: refereeCarnets, error: refereeCarnetsError },
@@ -154,41 +154,45 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           throw new Error("Las listas oficiales de ambos equipos deben tener jugadores vinculados a sus carnets para generar la planilla.");
         }
 
-        const { data: existingSheet, error: sheetError } = await supabase
-          .from("fefutin_match_sheets")
-          .select("*")
-          .eq("tournament_id", tournament.id)
-          .eq("match_id", String(match.id))
-          .maybeSingle();
-        if (sheetError) throw sheetError;
-
-        if (existingSheet) {
-          setSheetId(existingSheet.id);
-          setMetadata({
-            jornada: existingSheet.jornada || String(match?.round || ""),
-            sede: existingSheet.sede || localClub.headquarters_address || "",
-            fecha_partido: existingSheet.fecha_partido || "",
-            arbitro_designado: assignedRefereeName || existingSheet.arbitro_designado || "",
-            observaciones: existingSheet.observaciones || "",
-          });
-          const { data: savedPlayers, error: savedPlayersError } = await supabase
-            .from("fefutin_match_sheet_players")
+        if (!printOnly) {
+          const { data: existingSheet, error: sheetError } = await supabase
+            .from("fefutin_match_sheets")
             .select("*")
-            .eq("match_sheet_id", existingSheet.id);
-          if (savedPlayersError) throw savedPlayersError;
-          const savedByPlayer = new Map((savedPlayers || []).map((item) => [item.player_id, item]));
-          const mergeSaved = (players) => players.map((player) => {
-            const saved = savedByPlayer.get(player.player_id);
-            return saved ? { ...player, ...saved, carnet_number: player.carnet_number, dni: player.dni } : player;
-          });
-          local = mergeSaved(local);
-          visitor = mergeSaved(visitor);
-        } else {
-          setMetadata((current) => ({
-            ...current,
-            sede: current.sede || localClub.headquarters_address || "",
-            arbitro_designado: assignedRefereeName || current.arbitro_designado || "",
-          }));
+            .eq("tournament_id", tournament.id)
+            .eq("match_id", String(match.id))
+            .maybeSingle();
+          if (sheetError) throw sheetError;
+  
+          if (existingSheet) {
+            setSheetId(existingSheet.id);
+            setMetadata({
+              jornada: existingSheet.jornada || String(match?.round || ""),
+              sede: existingSheet.sede || localClub.headquarters_address || "",
+              fecha_partido: existingSheet.fecha_partido || "",
+              arbitro_designado: assignedRefereeName || existingSheet.arbitro_designado || "",
+              observaciones: existingSheet.observaciones || "",
+            });
+            const { data: savedPlayers, error: savedPlayersError } = await supabase
+              .from("fefutin_match_sheet_players")
+              .select("*")
+              .eq("match_sheet_id", existingSheet.id);
+            if (savedPlayersError) throw savedPlayersError;
+            const savedByPlayer = new Map((savedPlayers || []).map((item) => [item.player_id, item]));
+            const mergeSaved = (players) => players.map((player) => {
+              const saved = savedByPlayer.get(player.player_id);
+              return saved ? { ...player, ...saved, carnet_number: player.carnet_number, dni: player.dni } : player;
+            });
+            local = mergeSaved(local);
+            visitor = mergeSaved(visitor);
+          } else {
+            setMetadata((current) => ({
+              ...current,
+              sede: current.sede || localClub.headquarters_address || "",
+              arbitro_designado: assignedRefereeName || current.arbitro_designado || "",
+            }));
+          }
+  
+  
         }
 
         if (!cancelled) {
@@ -205,7 +209,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     };
     loadSheet();
     return () => { cancelled = true; };
-  }, [tournament?.id, match?.id, category, localName, visitorName]);
+  }, [tournament?.id, match?.id, category, localName, visitorName, printOnly]);
 
   const updatePlayer = (side, playerId, field, value) => {
     const setter = side === "local" ? setLocalPlayers : setVisitorPlayers;
