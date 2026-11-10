@@ -86,15 +86,21 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           .rpc("get_fefutin_tournament_clubs", { p_tournament_id: tournament.id });
         if (publicRegistrationsError) throw publicRegistrationsError;
 
-        const { data: clubAddresses, error: clubAddressesError } = await supabase.rpc(
-          "get_fefutin_match_sheet_club_addresses",
-          {
-            p_tournament_id: tournament.id,
-            p_local_club_name: localName,
-            p_visitor_club_name: visitorName,
-          }
-        );
-        if (clubAddressesError) throw clubAddressesError;
+        // La consulta adicional de domicilios solo se usa en la vista imprimible
+        // del referente. El flujo digital del árbitro conserva sus consultas originales.
+        let clubAddresses = [];
+        if (readOnly) {
+          const { data, error: clubAddressesError } = await supabase.rpc(
+            "get_fefutin_match_sheet_club_addresses",
+            {
+              p_tournament_id: tournament.id,
+              p_local_club_name: localName,
+              p_visitor_club_name: visitorName,
+            }
+          );
+          if (clubAddressesError) throw clubAddressesError;
+          clubAddresses = data || [];
+        }
 
         const categoryBase = String(category || "").split("·")[0].trim();
         const allRegistrations = (publicRegistrations || []).map((item) => ({
