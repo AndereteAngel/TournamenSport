@@ -209,6 +209,7 @@ begin
       v_match,
       false
     );
+    v_matches := v_rounds -> p_round_index;
 
     -- Al completarse una ronda, generar la siguiente llave con la misma
     -- regla de clasificación que utiliza el organizador en la interfaz.
@@ -376,19 +377,26 @@ begin
     return new;
   end if;
 
-  if tg_op = 'DELETE' then
-    v_sheet_id := old.match_sheet_id;
-  else
-    v_sheet_id := new.match_sheet_id;
+  if tg_op in ('UPDATE', 'DELETE') then
+    select lower(trim(coalesce(s.estado, '')))
+    into v_sheet_status
+    from public.fefutin_match_sheets s
+    where s.id = old.match_sheet_id;
+
+    if v_sheet_status in ('cerrada', 'cerrado') then
+      raise exception 'La planilla esta cerrada y sus jugadores no pueden modificarse.';
+    end if;
   end if;
 
-  select lower(trim(coalesce(s.estado, '')))
-  into v_sheet_status
-  from public.fefutin_match_sheets s
-  where s.id = v_sheet_id;
+  if tg_op in ('INSERT', 'UPDATE') then
+    select lower(trim(coalesce(s.estado, '')))
+    into v_sheet_status
+    from public.fefutin_match_sheets s
+    where s.id = new.match_sheet_id;
 
-  if v_sheet_status in ('cerrada', 'cerrado') then
-    raise exception 'La planilla esta cerrada y sus jugadores no pueden modificarse.';
+    if v_sheet_status in ('cerrada', 'cerrado') then
+      raise exception 'La planilla esta cerrada y sus jugadores no pueden modificarse.';
+    end if;
   end if;
 
   if tg_op = 'DELETE' then
