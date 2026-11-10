@@ -4105,7 +4105,7 @@ export function TournamenSportApp() {
               aria-label={`Ver mis designaciones: ${assignedRefereeMatches.length} partidos`}
               style={{ width: "100%", display: "flex", alignItems: "center", gap: ".8rem", margin: "1rem 0", padding: "1rem", background: "#fff", border: "2px solid #b5122a", borderRadius: "12px", color: "#171c27", textAlign: "left", cursor: "pointer", boxShadow: "0 3px 12px rgba(181,18,42,.12)" }}
             >
-              <span aria-hidden="true" style={{ width: "12px", height: "12px", flex: "0 0 12px", borderRadius: "50%", background: hasPendingRefereeAssignments ? "#dc2626" : "#9ca3af", boxShadow: hasPendingRefereeAssignments ? "0 0 0 4px rgba(220,38,38,.12)" : "none" }} />
+              <span aria-hidden="true" style={{ width: "12px", height: "12px", flex: "0 0 12px", borderRadius: "50%", background: "#dc2626", boxShadow: "0 0 0 4px rgba(220,38,38,.12)" }} />
               <span style={{ flex: 1 }}>
                 <strong style={{ display: "block", color: "#171c27", fontSize: ".9rem", letterSpacing: ".07em" }}>DESIGNACIONES</strong>
                 <small style={{ display: "block", color: "#444", marginTop: ".2rem" }}>{assignedRefereeMatches.length} partido(s) asignado(s) · Abrir planillas</small>
