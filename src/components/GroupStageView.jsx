@@ -42,7 +42,7 @@ export function GroupStageView({
   }, [activeGroupIndex, selectedRound, targetMatchId]);
 
   useEffect(() => {
-    if (isReferente || !openAssignedMatch || !Array.isArray(tournament.groups)) return;
+    if (!openAssignedMatch || !Array.isArray(tournament.groups)) return;
     const groupIndex = Number(openAssignedMatch.groupIndex);
     const group = tournament.groups[groupIndex];
     const match = group?.matches?.find((item) => String(item?.id) === String(openAssignedMatch.matchId));
@@ -50,7 +50,7 @@ export function GroupStageView({
     setActiveGroupIndex(groupIndex);
     setSelectedSheetMatch(match);
     onAssignedMatchOpened?.();
-  }, [openAssignedMatch, tournament.id, isReferente]);
+  }, [openAssignedMatch, tournament.id]);
 
   const getClubLogo = (teamName) => {
     const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
@@ -795,34 +795,10 @@ export function GroupStageView({
                 </span>
                 {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "6px", flexShrink: 0 }} /> : null}
               </div>
-              {isReferente && (
+              {(isAdmin || isReferente || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setSelectedSheetMatch(match);
-                  }}
-                  style={{
-                    gridColumn: "1 / -1",
-                    width: "100%",
-                    padding: "0.55rem 0.7rem",
-                    borderRadius: "7px",
-                    border: "1px solid #b5122a",
-                    background: "#b5122a",
-                    color: "#fff",
-                    fontSize: "0.72rem",
-                    fontWeight: 900,
-                    cursor: "pointer",
-                  }}
-                >
-                  🖨️ PLANILLA PDF PARA IMPRIMIR
-                </button>
-              )}
-              {(isAdmin || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && !isReferente && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedSheetMatch(match);
-                  }}
+                  onClick={() => setSelectedSheetMatch(match)}
                   style={{
                     gridColumn: "1 / -1",
                     width: "100%",
@@ -836,7 +812,7 @@ export function GroupStageView({
                     cursor: "pointer",
                   }}
                 >
-                  📄 PLANILLA DIGITAL DEL ÁRBITRO
+                  📋 ABRIR PLANILLA
                 </button>
               )}
             </div>
@@ -862,7 +838,7 @@ export function GroupStageView({
         <FefutinMatchSheet
           tournament={tournament}
           match={selectedSheetMatch}
-          isReferee={isReferee && !isReferente}
+          isReferee={isReferee}
           readOnly={isReferente}
           onCloseMatch={async ({ score1, score2 }) => {
             const closed = await onCloseMatch?.({
