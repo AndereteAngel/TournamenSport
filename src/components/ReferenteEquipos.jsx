@@ -271,29 +271,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   );
                 })}
               </div>
-            ) : mode === "equipos" && selectedClubId && !selectedSection ? (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "1rem", marginTop: "1.25rem" }}>
-                {[
-                  ...(isManager ? [
-                    { id: "torneos", title: "TORNEOS", description: "Torneos y categorías participantes", symbol: "🏆" },
-                    { id: "listas", title: "LISTAS DE BUENA FE", description: "Jugadores organizados por categoría", symbol: "📋" },
-                  ] : []),
-                  { id: "datos", title: "DATOS DEL CLUB", description: "Información institucional y escudo", symbol: "🏟️" },
-                  { id: "carnets", title: "CARNETS", description: "Credenciales digitales de los jugadores", symbol: "🪪" },
-                ].map((section) => (
-                  <button key={section.id} type="button" onClick={() => setSelectedSection(section.id)} style={{ minHeight: "155px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".65rem", padding: "1.1rem", border: "1px solid #b5122a", borderRadius: "12px", background: "#111", color: "#fff", cursor: "pointer", textAlign: "center" }}>
-                    <span style={{ fontSize: "2rem" }}>{section.symbol}</span>
-                    <strong style={{ fontSize: ".95rem", letterSpacing: ".04em" }}>{section.title}</strong>
-                    <span style={{ color: "#ccc", fontSize: ".78rem", lineHeight: 1.4 }}>{section.description}</span>
-                  </button>
-                ))}
-              </div>
-            ) : mode === "equipos" && selectedSection === "carnets" ? (
-              <div style={{ marginTop: "1.25rem" }}>
-                <PlayerCarnets currentUser={currentUser} canManage={isManager} clubId={selectedClubId} embedded />
-              </div>
-            ) : mode === "equipos" && selectedSection === "datos" ? (
-              <div style={{ display: "grid", gap: "1.1rem", marginTop: "1.25rem" }}>
+            ) : mode === "equipos" && selectedClubId && !selectedSection && !isManager ? (
+              <div style={{ display: "grid", gap: "1rem", marginTop: "1.25rem" }}>
                 <article style={{ overflow: "hidden", border: "2px solid #b5122a", borderRadius: "18px", background: "linear-gradient(135deg,#292929 0%,#111 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", maxWidth: "680px", width: "100%", margin: "0 auto" }}>
                   <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".8rem", padding: ".9rem 1rem", background: "#b5122a" }}>
                     <div>
@@ -314,7 +293,40 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </div>
                   <footer style={{ padding: ".65rem 1rem", borderTop: "1px solid #b5122a", background: "#090909", color: "#ddd", fontSize: ".65rem", fontWeight: 800, letterSpacing: ".08em" }}>CLUB REGISTRADO EN FEFUTIN · CARNET DIGITAL</footer>
                 </article>
-
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: ".85rem" }}>
+                  {[
+                    { id: "listas", title: "LISTA DE BUENA FE", description: "Jugadores, fichas y estado de habilitación", symbol: "📋" },
+                    { id: "datos", title: "DATOS DEL CLUB", description: "Información institucional y datos de contacto", symbol: "🏟️" },
+                  ].map((section) => (
+                    <button key={section.id} type="button" onClick={() => setSelectedSection(section.id)} style={{ minHeight: "140px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".65rem", padding: "1.1rem", border: "1px solid #b5122a", borderRadius: "12px", background: "#111", color: "#fff", cursor: "pointer", textAlign: "center" }}>
+                      <span style={{ fontSize: "2rem" }}>{section.symbol}</span>
+                      <strong style={{ fontSize: ".95rem", letterSpacing: ".04em" }}>{section.title}</strong>
+                      <span style={{ color: "#ccc", fontSize: ".78rem", lineHeight: 1.4 }}>{section.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : mode === "equipos" && selectedClubId && !selectedSection ? (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "1rem", marginTop: "1.25rem" }}>
+                {[
+                  { id: "torneos", title: "TORNEOS", description: "Torneos y categorías participantes", symbol: "🏆" },
+                  { id: "listas", title: "LISTAS DE BUENA FE", description: "Jugadores organizados por categoría", symbol: "📋" },
+                  { id: "datos", title: "DATOS DEL CLUB", description: "Información institucional y escudo", symbol: "🏟️" },
+                  { id: "carnets", title: "CARNETS", description: "Credenciales digitales de los jugadores", symbol: "🪪" },
+                ].map((section) => (
+                  <button key={section.id} type="button" onClick={() => setSelectedSection(section.id)} style={{ minHeight: "155px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".65rem", padding: "1.1rem", border: "1px solid #b5122a", borderRadius: "12px", background: "#111", color: "#fff", cursor: "pointer", textAlign: "center" }}>
+                    <span style={{ fontSize: "2rem" }}>{section.symbol}</span>
+                    <strong style={{ fontSize: ".95rem", letterSpacing: ".04em" }}>{section.title}</strong>
+                    <span style={{ color: "#ccc", fontSize: ".78rem", lineHeight: 1.4 }}>{section.description}</span>
+                  </button>
+                ))}
+              </div>
+            ) : mode === "equipos" && selectedSection === "carnets" ? (
+              <div style={{ marginTop: "1.25rem" }}>
+                <PlayerCarnets currentUser={currentUser} canManage={isManager} clubId={selectedClubId} embedded />
+              </div>
+            ) : mode === "equipos" && selectedSection === "datos" ? (
+              <div style={{ display: "grid", gap: "1.1rem", marginTop: "1.25rem" }}>
                 <section style={{ border: "1px solid #b5122a", borderRadius: "12px", background: "#111", padding: "1rem" }}>
                   <p style={{ color: "#b5122a", fontSize: ".7rem", fontWeight: 900, letterSpacing: ".1em", margin: "0 0 .8rem" }}>DATOS INSTITUCIONALES Y DE CONTACTO</p>
                   <h3 style={{ color: "#fff", margin: "0 0 1rem", overflowWrap: "anywhere" }}>{club?.club_name}</h3>
