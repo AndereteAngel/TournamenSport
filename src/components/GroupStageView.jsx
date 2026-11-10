@@ -1,7 +1,7 @@
 import { calculateGroupStandings } from "../utils/tournamentLogic";
 import { TCIcon } from "./TCIcon";
 import { useEffect, useState } from "react";
-import { FefutinMatchSheet, FefutinPrintableMatchSheet } from "./FefutinMatchSheet";
+import { FefutinMatchSheet } from "./FefutinMatchSheet";
 
 export function GroupStageView({
   tournament,
@@ -22,7 +22,6 @@ export function GroupStageView({
   const [targetMatchId, setTargetMatchId] = useState(null);
   const [myMatchesView, setMyMatchesView] = useState("pending");
   const [selectedSheetMatch, setSelectedSheetMatch] = useState(null);
-  const [selectedPrintMatch, setSelectedPrintMatch] = useState(null);
 
   useEffect(() => {
     if (!targetMatchId) return;
@@ -800,8 +799,7 @@ export function GroupStageView({
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedSheetMatch(null);
-                    setSelectedPrintMatch(match);
+                    setSelectedSheetMatch(match);
                   }}
                   style={{
                     gridColumn: "1 / -1",
@@ -861,21 +859,12 @@ export function GroupStageView({
           <TCIcon name="trophy" size={16} /> Avanzar a Playoff · Eliminación Directa
         </button>
       )}
-      {selectedPrintMatch && (
-        <FefutinPrintableMatchSheet
-          key={String(selectedPrintMatch.id)}
-          tournament={tournament}
-          match={selectedPrintMatch}
-          onClose={() => setSelectedPrintMatch(null)}
-        />
-      )}
-      {selectedSheetMatch && !isReferente && (
+      {selectedSheetMatch && (
         <FefutinMatchSheet
           tournament={tournament}
           match={selectedSheetMatch}
-          isReferee={isReferee}
-          readOnly={false}
-          printOnly={false}
+          isReferee={isReferee && !isReferente}
+          readOnly={isReferente}
           onCloseMatch={async ({ score1, score2 }) => {
             const closed = await onCloseMatch?.({
               phase: "groups",
