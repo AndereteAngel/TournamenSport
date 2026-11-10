@@ -99,7 +99,7 @@ export function GroupStageView({
 
     if (isReferee) {
       const currentMatch = currentGroup.matches.find((match) => match.id === matchId);
-      if (!currentMatch) return;
+      if (!currentMatch || currentMatch.referee_closed) return;
       onUpdateMatchResult?.({
         phase: "groups",
         groupIndex: activeGroupIndex,
@@ -759,7 +759,7 @@ export function GroupStageView({
                       type="number"
                       min="0"
                       value={match.score1 !== null ? match.score1 : ""}
-                      disabled={!canEditResults}
+                      disabled={!canEditResults || (isReferee && Boolean(match.referee_closed))}
                       onChange={(e) => handleScoreChange(match.id, "score1", e.target.value)}
                       style={{ width: "34px", height: "30px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "5px", padding: "2px", fontWeight: "bold", boxSizing: "border-box" }}
                     />
@@ -768,7 +768,7 @@ export function GroupStageView({
                       type="number"
                       min="0"
                       value={match.score2 !== null ? match.score2 : ""}
-                      disabled={!canEditResults}
+                      disabled={!canEditResults || (isReferee && Boolean(match.referee_closed))}
                       onChange={(e) => handleScoreChange(match.id, "score2", e.target.value)}
                       style={{ width: "34px", height: "30px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "5px", padding: "2px", fontWeight: "bold", boxSizing: "border-box" }}
                     />
