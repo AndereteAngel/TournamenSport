@@ -801,7 +801,7 @@ export function GroupStageView({
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedSheetMatch(match);
+                    setSelectedPrintableMatch(match);
                   }}
                   style={{
                     gridColumn: "1 / -1",
