@@ -310,7 +310,7 @@ export function Navbar({
           cursor: "pointer",
         }}
       >
-        {menuOpen ? <span className="tc-close-symbol" aria-hidden="true">✕</span> : <TCIcon name="menu" size={20} />}
+        {menuOpen ? <span className="tc-close-symbol" aria-hidden="true">✕</span> : <TCIcon name="menu" size={23} />}
       </button>
 
       {/* MENU MOVIL */}
