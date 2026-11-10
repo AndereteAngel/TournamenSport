@@ -15,6 +15,7 @@ import { ChampionCelebration } from "./components/ChampionCelebration";
 import { ReferenteInscripcion } from "./components/ReferenteInscripcion";
 import { ReferenteEquipos } from "./components/ReferenteEquipos";
 import { FefutinPlayerApprovals } from "./components/FefutinPlayerApprovals";
+import { FefutinTopScorers } from "./components/FefutinTopScorers";
 import { supabase } from "./supabaseClient";
 
 // La categoría se guarda dentro de "game" al crear el torneo (ej.: "Fútbol · 2012").
@@ -1790,6 +1791,7 @@ export function TournamenSportApp() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [activeTournament, setActiveTournament] = useState(null);
   const [refereeMatchToOpen, setRefereeMatchToOpen] = useState(null);
+  const [topScorersReturnView, setTopScorersReturnView] = useState("groups");
   const [fefutinTournamentClubs, setFefutinTournamentClubs] = useState([]);
   const [referenteParticipations, setReferenteParticipations] = useState([]);
   const [referenteMatchClubs, setReferenteMatchClubs] = useState([]);
@@ -4727,6 +4729,11 @@ export function TournamenSportApp() {
           </form>
         </div>
         </div>
+      ) : activeView === "top-scorers" && activeTournament ? (
+        <FefutinTopScorers
+          tournament={activeTournament}
+          onBack={() => setActiveView(topScorersReturnView)}
+        />
       ) : activeView === "groups" ? (
         <div
           className="tc-competition-screen tc-groups-screen"
@@ -4974,7 +4981,17 @@ export function TournamenSportApp() {
       )}
 
       {(activeView === "groups" || activeView === "playoffs") && (
-        <div style={{ width: "100%", maxWidth: "900px", display: "flex", justifyContent: "flex-end", margin: "0.75rem auto 1.25rem", padding: "0 0.25rem", boxSizing: "border-box" }}>
+        <div style={{ width: "100%", maxWidth: "900px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.6rem", margin: "0.75rem auto 1.25rem", padding: "0 0.25rem", boxSizing: "border-box" }}>
+          <button
+            type="button"
+            onClick={() => {
+              setTopScorersReturnView(activeView);
+              setActiveView("top-scorers");
+            }}
+            style={{ padding: "0.65rem 1rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "8px", color: "#fff", fontWeight: 800, cursor: "pointer" }}
+          >
+            ⚽ Tabla de goleadores
+          </button>
           <button
             type="button"
             className="tc-form-back"
