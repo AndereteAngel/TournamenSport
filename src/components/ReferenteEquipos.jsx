@@ -199,8 +199,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const filterLabelStyle = { display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 };
 
   return (
-    <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
-      <section className="cr-card" style={{ width: "100%", maxWidth: "1100px", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)", boxSizing: "border-box", background: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
+    <div className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: "1rem", minHeight: "70vh", boxSizing: "border-box" }}>
+      <section className="cr-card" style={{ width: "100%", maxWidth: "100%", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)", boxSizing: "border-box", background: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
         <button
           type="button"
           className="tc-form-back"
