@@ -169,10 +169,13 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
 
   const isManager = currentUser?.role === "admin" || currentUser?.role === "directivo";
   const clubs = [...new Map(participations.map((item) => [item.club_id, item])).values()];
-  const selectedClub = clubs.find((item) => item.club_id === selectedClubId) || null;
+  const activeClubId = currentUser?.role === "referente"
+    ? (activeClubId || clubs[0]?.club_id || null)
+    : activeClubId;
+  const selectedClub = clubs.find((item) => item.club_id === activeClubId) || null;
   const club = selectedClub || participations[0];
-  const visibleParticipations = mode === "equipos" && selectedClubId
-    ? participations.filter((item) => item.club_id === selectedClubId)
+  const visibleParticipations = mode === "equipos" && activeClubId
+    ? participations.filter((item) => item.club_id === activeClubId)
     : participations;
   const categoryOptions = [...new Set(visibleParticipations.map((item) => item.category_label).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
   const filteredParticipations = visibleParticipations.filter((item) => {
@@ -205,7 +208,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
             if (mode === "equipos" && selectedSection) {
               setSelectedSection(null);
               setEditingPlayer(null);
-            } else if (mode === "equipos" && selectedClubId) {
+            } else if (mode === "equipos" && activeClubId) {
               setSelectedClubId(null);
               setEditingPlayer(null);
             } else {
@@ -213,13 +216,13 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
             }
           }}
         >
-          {mode === "equipos" && selectedSection ? "← Volver a la ficha del club" : mode === "equipos" && selectedClubId ? "← Volver a clubes" : "← Volver al inicio"}
+          {mode === "equipos" && selectedSection ? "← Volver a la ficha del club" : mode === "equipos" && activeClubId && currentUser?.role !== "referente" ? "← Volver a clubes" : "← Volver al inicio"}
         </button>
         <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".72rem", margin: "1.25rem 0 .35rem" }}>
           {isManager ? "GESTIÓN DE CLUBES" : "ÁREA DEL REFERENTE"}
         </p>
         <h2 className="cr-title" style={{ color: "#fff", margin: "0 0 .5rem" }}>
-          {mode === "torneos" ? "MIS TORNEOS" : selectedClub ? selectedSection === "torneos" ? "TORNEOS PARTICIPANTES" : selectedSection === "listas" ? "LISTAS DE BUENA FE" : selectedSection === "datos" ? "DATOS DEL CLUB" : selectedSection === "carnets" ? "CARNETS DE JUGADORES" : selectedClub.club_name : "FICHA DE EQUIPOS"}
+          {mode === "torneos" ? "MIS TORNEOS" : selectedClub ? selectedSection === "torneos" ? "TORNEOS PARTICIPANTES" : selectedSection === "listas" ? "LISTAS DE BUENA FE" : selectedSection === "datos" ? "DATOS DEL CLUB" : selectedSection === "carnets" ? "CARNETS DE JUGADORES" : selectedClub.club_name : currentUser?.role === "referente" ? "MI CLUB" : "FICHA DE EQUIPOS"}
         </h2>
         <p style={{ color: "#d1d5db", lineHeight: 1.55, marginTop: 0 }}>
           {mode === "torneos"
@@ -236,7 +239,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                     ? "Elegí una sección para consultar la información del club."
                     : isManager
                       ? "Seleccioná un club para consultar su información."
-                      : "Seleccioná tu club para consultar su información."}
+                      : currentUser?.role === "referente" ? "Consultá la información institucional de tu club." : "Seleccioná tu club para consultar su información."}
         </p>
 
         {error && <p role="alert" style={{ color: "#fecaca", background: "#450a0a", border: "1px solid #b5122a", borderRadius: "8px", padding: ".75rem" }}>{error}</p>}
@@ -251,7 +254,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
           </div>
         ) : (
           <>
-            {mode === "equipos" && !selectedClubId ? (
+            {mode === "equipos" && !activeClubId ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))", gap: ".85rem", marginTop: "1.25rem" }}>
                 {clubs.map((item) => {
                   const logoUrl = item.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(item.logo_path).data.publicUrl : "";
@@ -271,7 +274,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   );
                 })}
               </div>
-            ) : mode === "equipos" && selectedClubId && !selectedSection && !isManager ? (
+            ) : mode === "equipos" && activeClubId && !selectedSection && !isManager ? (
               <div style={{ display: "grid", gap: "1rem", marginTop: "1.25rem" }}>
                 <article style={{ overflow: "hidden", border: "2px solid #b5122a", borderRadius: "18px", background: "linear-gradient(135deg,#292929 0%,#111 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", maxWidth: "680px", width: "100%", margin: "0 auto" }}>
                   <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".8rem", padding: ".9rem 1rem", background: "#b5122a" }}>
@@ -283,7 +286,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </header>
                   <div style={{ display: "grid", gridTemplateColumns: "clamp(105px,28%,160px) minmax(0,1fr)", gap: "clamp(.8rem,3vw,1.2rem)", alignItems: "center", padding: "clamp(.9rem,3vw,1.3rem)" }}>
                     <div style={{ aspectRatio: "1", display: "grid", placeItems: "center", overflow: "hidden", border: "2px solid #b5122a", borderRadius: "12px", background: "#fff" }}>
-                      {club?.logo_path ? <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt={"Escudo de " + club.club_name} style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : <span style={{ color: "#171c27", fontWeight: 900, fontSize: ".7rem" }}>SIN ESCUDO</span>}
+                      {club?.logo_path ? <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt={"Escudo de " + club.club_name} style={{ width: "82%", height: "82%", objectFit: "contain", display: "block" }} /> : <span style={{ color: "#171c27", fontWeight: 900, fontSize: ".7rem" }}>SIN ESCUDO</span>}
                     </div>
                     <div style={{ minWidth: 0, overflowWrap: "anywhere" }}>
                       <h3 style={{ margin: "0 0 .8rem", color: "#fff", fontSize: "clamp(1.05rem,4vw,1.4rem)", lineHeight: 1.2 }}>{club?.club_name}</h3>
@@ -306,7 +309,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   ))}
                 </div>
               </div>
-            ) : mode === "equipos" && selectedClubId && !selectedSection ? (
+            ) : mode === "equipos" && activeClubId && !selectedSection ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "1rem", marginTop: "1.25rem" }}>
                 {[
                   { id: "torneos", title: "TORNEOS", description: "Torneos y categorías participantes", symbol: "🏆" },
@@ -323,7 +326,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
               </div>
             ) : mode === "equipos" && selectedSection === "carnets" ? (
               <div style={{ marginTop: "1.25rem" }}>
-                <PlayerCarnets currentUser={currentUser} canManage={isManager} clubId={selectedClubId} embedded />
+                <PlayerCarnets currentUser={currentUser} canManage={isManager} clubId={activeClubId} embedded />
               </div>
             ) : mode === "equipos" && selectedSection === "datos" ? (
               <div style={{ display: "grid", gap: "1.1rem", marginTop: "1.25rem" }}>
