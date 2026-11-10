@@ -3554,7 +3554,8 @@ export function TournamenSportApp() {
     referenteParticipations.forEach((participation) => {
       const tournament = tournaments.find((item) =>
         normalize(item.title) === normalize(participation.tournament_title) &&
-        normalize(getTournamentCategory(item)) === normalize(participation.category_label)
+        (normalize(participation.category_label) === normalize(getTournamentCategory(item)) ||
+          normalize(participation.category_label).endsWith(normalize(getTournamentCategory(item))))
       );
       if (!tournament) return;
       (tournament.groups || []).forEach((group, groupIndex) => {
