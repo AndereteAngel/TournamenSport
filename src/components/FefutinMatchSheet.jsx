@@ -40,8 +40,6 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
   });
   const [localPlayers, setLocalPlayers] = useState([]);
   const [visitorPlayers, setVisitorPlayers] = useState([]);
-  const [finalScoreLocal, setFinalScoreLocal] = useState(match?.score1 == null ? "" : String(match.score1));
-  const [finalScoreVisitor, setFinalScoreVisitor] = useState(match?.score2 == null ? "" : String(match.score2));
 
   const category = useMemo(() => getCategory(tournament), [tournament]);
   const localName = String(match?.team1 || "").trim();
@@ -294,12 +292,8 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     if (!isReferee || match?.referee_closed || closingMatch || saving) return;
     const saved = await save();
     if (!saved) return;
-    if (finalScoreLocal === "" || finalScoreVisitor === "") {
-      setError("Completá el resultado final de ambos equipos antes de cerrar el partido.");
-      return;
-    }
-    const score1 = Number(finalScoreLocal);
-    const score2 = Number(finalScoreVisitor);
+    const score1 = localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
+    const score2 = visitorPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
     setClosingMatch(true);
     try {
       const closed = await onCloseMatch?.({ score1, score2 });
@@ -328,6 +322,8 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     </>;
   };
   const rowCount = Math.max(localPlayers.length, visitorPlayers.length);
+  const finalScoreLocal = localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
+  const finalScoreVisitor = visitorPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Planilla oficial de partido" className="fefutin-sheet-overlay">
@@ -482,6 +478,15 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           .fefutin-print-sheet .fefutin-observations textarea{height:20px!important;min-height:20px!important;padding:0!important}
           .fefutin-print-sheet .fefutin-sheet-table,.fefutin-print-sheet .fefutin-sheet-table-wrap,.fefutin-print-sheet .fefutin-observations{break-inside:avoid!important;page-break-inside:avoid!important}
         }
+        /* Ajuste compacto de tarjetas: A y R comparten la columna sin desbordarse */
+        .fefutin-sheet-table td.fefutin-cards{padding-left:1px!important;padding-right:1px!important;white-space:nowrap!important;overflow:hidden!important}
+        .fefutin-sheet-table td.fefutin-cards label{display:inline-flex!important;flex:0 1 auto!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:1px!important;margin:0!important;padding:0!important;font-size:7px!important;white-space:nowrap!important}
+        .fefutin-sheet-table td.fefutin-cards input{display:inline-block!important;flex:0 1 14px!important;width:14px!important;min-width:0!important;max-width:14px!important;height:17px!important;min-height:17px!important;margin:0!important;padding:0!important;font-size:8px!important}
+        @media print{
+          .fefutin-sheet-table td.fefutin-cards{padding-left:1px!important;padding-right:1px!important}
+          .fefutin-sheet-table td.fefutin-cards label{display:inline-flex!important;gap:1px!important;margin:0!important;font-size:6px!important}
+          .fefutin-sheet-table td.fefutin-cards input{display:inline-block!important;flex:0 1 13px!important;width:13px!important;min-width:0!important;max-width:13px!important;height:12px!important;min-height:12px!important;margin:0!important;padding:0!important;font-size:7px!important}
+        }
       `}</style>
       <div className="fefutin-print-sheet">
         <div className="fefutin-sheet-title">
@@ -527,9 +532,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           <div className="fefutin-sheet-result" aria-live="polite">
             <span>RESULTADO FINAL</span>
             <span>{localName}</span>
-            <input aria-label={"Goles de " + localName} type="number" min="0" step="1" value={finalScoreLocal} disabled={!isReferee || Boolean(match?.referee_closed)} onChange={(event) => setFinalScoreLocal(event.target.value)} />
-            <span className="score">–</span>
-            <input aria-label={"Goles de " + visitorName} type="number" min="0" step="1" value={finalScoreVisitor} disabled={!isReferee || Boolean(match?.referee_closed)} onChange={(event) => setFinalScoreVisitor(event.target.value)} />
+            <span className="score">{finalScoreLocal} – {finalScoreVisitor}</span>
             <span>{visitorName}</span>
           </div>
           <label className="fefutin-observations">OBSERVACIONES
