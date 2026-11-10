@@ -170,8 +170,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const isManager = currentUser?.role === "admin" || currentUser?.role === "directivo";
   const clubs = [...new Map(participations.map((item) => [item.club_id, item])).values()];
   const activeClubId = currentUser?.role === "referente"
-    ? (activeClubId || clubs[0]?.club_id || null)
-    : activeClubId;
+    ? (selectedClubId || clubs[0]?.club_id || null)
+    : selectedClubId;
   const selectedClub = clubs.find((item) => item.club_id === activeClubId) || null;
   const club = selectedClub || participations[0];
   const visibleParticipations = mode === "equipos" && activeClubId
@@ -208,7 +208,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
             if (mode === "equipos" && selectedSection) {
               setSelectedSection(null);
               setEditingPlayer(null);
-            } else if (mode === "equipos" && activeClubId) {
+            } else if (mode === "equipos" && activeClubId && currentUser?.role !== "referente") {
               setSelectedClubId(null);
               setEditingPlayer(null);
             } else {
@@ -216,7 +216,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
             }
           }}
         >
-          {mode === "equipos" && selectedSection ? "← Volver a la ficha del club" : mode === "equipos" && activeClubId && currentUser?.role !== "referente" ? "← Volver a clubes" : "← Volver al inicio"}
+          {mode === "equipos" && selectedSection ? currentUser?.role === "referente" ? "← Volver a MI CLUB" : "← Volver a la ficha del club" : mode === "equipos" && activeClubId && currentUser?.role !== "referente" ? "← Volver a clubes" : "← Volver al inicio"}
         </button>
         <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".72rem", margin: "1.25rem 0 .35rem" }}>
           {isManager ? "GESTIÓN DE CLUBES" : "ÁREA DEL REFERENTE"}
