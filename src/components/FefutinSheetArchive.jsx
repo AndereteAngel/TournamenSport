@@ -218,7 +218,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   );
 
   return (
-    <main className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", minWidth: 0, minHeight: "70vh", padding: "1rem", color: "#fff", boxSizing: "border-box" }}>
+    <main className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", minWidth: 0, minHeight: "70vh", padding: "0", color: "#fff", boxSizing: "border-box" }}>
       <section style={{ width: "100%", maxWidth: "100%", minWidth: 0, margin: 0, padding: "clamp(.85rem, 2vw, 1.25rem)", background: "#101010", border: "1px solid #b5122a", borderRadius: "14px", boxSizing: "border-box" }}>
         <button type="button" className="tc-form-back" onClick={onBack}>← Volver</button>
         <h2 style={{ color: "#fff", margin: "1rem 0 .35rem", letterSpacing: ".06em" }}>
