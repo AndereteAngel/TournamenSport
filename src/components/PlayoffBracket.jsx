@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { TCIcon } from "./TCIcon";
+import { FefutinMatchSheet } from "./FefutinMatchSheet";
 
 export function PlayoffBracket({
   tournament,
@@ -7,32 +9,22 @@ export function PlayoffBracket({
   isAdmin = false,
   isReferee = false,
   onUpdateMatchResult,
+  onCloseMatch,
   clubLogos = [],
 }) {
   const rounds = tournament.playoffs || [];
+  const [selectedSheetMatch, setSelectedSheetMatch] = useState(null);
   const getClubLogo = (teamName) => {
     const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
     return clubLogos.find((club) => normalize(club.name) === normalize(teamName))?.url || "";
   };
   const isFinalized = String(tournament.status || "").trim().toLocaleLowerCase("es") === "finalizado";
   const canEditResults = (isAdmin || isReferee) && !isFinalized;
+  const canEditFixtureScores = isAdmin && !isFinalized;
 
   const handleScoreChange = (roundIdx, matchId, field, value) => {
-    if (!canEditResults || isFinalized) return;
+    if (!canEditFixtureScores || isFinalized) return;
     const numValue = value === "" ? null : Number(value);
-
-    if (isReferee) {
-      const currentMatch = rounds[roundIdx]?.find((match) => match.id === matchId);
-      if (!currentMatch) return;
-      onUpdateMatchResult?.({
-        phase: "playoffs",
-        roundIndex: roundIdx,
-        matchId,
-        score1: field === "score1" ? numValue : currentMatch.score1,
-        score2: field === "score2" ? numValue : currentMatch.score2,
-      });
-      return;
-    }
 
     // Copiamos las rondas actuales y eliminamos rondas posteriores si se modifica un resultado anterior
     const updatedRounds = rounds.slice(0, roundIdx + 1).map((round, rIdx) => {
@@ -300,7 +292,7 @@ export function PlayoffBracket({
                         minWidth: "72px",
                       }}
                     >
-                      {canEditResults ? (
+                      {canEditFixtureScores ? (
                         <>
                           <input type="number" min="0" value={match.score1 !== null ? match.score1 : ""} onChange={(e) => handleScoreChange(rIdx, match.id, "score1", e.target.value)} style={{ width: "34px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "4px", padding: "4px" }} />
                           <span>-</span>
@@ -320,6 +312,15 @@ export function PlayoffBracket({
                       {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "30px", height: "30px", objectFit: "contain", borderRadius: "5px", flexShrink: 0 }} /> : null}
                     </div>
                   </div>
+                  {(isAdmin || isReferee) && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx })}
+                      style={{ width: "100%", marginTop: "0.55rem", padding: "0.5rem 0.65rem", borderRadius: "7px", border: "1px solid #b5122a", background: "#241015", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer" }}
+                    >
+                      📋 ABRIR PLANILLA OFICIAL
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -369,6 +370,25 @@ export function PlayoffBracket({
         <button onClick={onFinishTournament} className="cr-btn-gold">
           <TCIcon name="sword" size={16} /> Guardar y Salir al Lobby
         </button>
+      )}
+      {selectedSheetMatch && (
+        <FefutinMatchSheet
+          tournament={tournament}
+          match={selectedSheetMatch}
+          isReferee={isReferee}
+          onCloseMatch={async ({ score1, score2 }) => {
+            const closed = await onCloseMatch?.({
+              phase: "playoffs",
+              roundIndex: selectedSheetMatch.roundIndex,
+              matchId: selectedSheetMatch.id,
+              score1,
+              score2,
+            });
+            if (closed) setSelectedSheetMatch((current) => current ? { ...current, score1, score2, referee_closed: true } : current);
+            return closed;
+          }}
+          onClose={() => setSelectedSheetMatch(null)}
+        />
       )}
     </div>
   );
