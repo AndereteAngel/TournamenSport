@@ -113,6 +113,8 @@ export function GroupStageView({
   const handleScoreChange = (matchId, field, value) => {
     // Seguridad adicional en la interfaz
     if (!canEditFixtureScores || isFinalized) return;
+    const targetMatch = currentGroup.matches.find((match) => String(match.id) === String(matchId));
+    if (!targetMatch || targetMatch.referee_closed) return;
 
     const numValue = value === "" ? null : Number(value);
 
@@ -763,7 +765,7 @@ export function GroupStageView({
                       type="number"
                       min="0"
                       value={match.score1 !== null ? match.score1 : ""}
-                      disabled={!canEditResults || (isReferee && Boolean(match.referee_closed))}
+                      disabled={!canEditFixtureScores || Boolean(match.referee_closed)}
                       onChange={(e) => handleScoreChange(match.id, "score1", e.target.value)}
                       style={{ width: "34px", height: "30px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "5px", padding: "2px", fontWeight: "bold", boxSizing: "border-box" }}
                     />
@@ -772,7 +774,7 @@ export function GroupStageView({
                       type="number"
                       min="0"
                       value={match.score2 !== null ? match.score2 : ""}
-                      disabled={!canEditResults || (isReferee && Boolean(match.referee_closed))}
+                      disabled={!canEditFixtureScores || Boolean(match.referee_closed)}
                       onChange={(e) => handleScoreChange(match.id, "score2", e.target.value)}
                       style={{ width: "34px", height: "30px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "5px", padding: "2px", fontWeight: "bold", boxSizing: "border-box" }}
                     />
