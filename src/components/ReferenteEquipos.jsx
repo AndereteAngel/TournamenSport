@@ -419,7 +419,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                         onOpenTournament?.(item);
                       }
                     } : undefined}
-                    style={{ border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", minWidth: 0, cursor: mode === "torneos" ? "pointer" : "default" }}
+                    style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", border: "1px solid #b5122a", borderRadius: "11px", background: "#111", padding: "1rem", cursor: mode === "torneos" ? "pointer" : "default" }}
                   >
 {selectedSection !== "listas" && (
                     <div style={{ display: "flex", alignItems: "center", gap: ".75rem", flexWrap: "wrap" }}>
