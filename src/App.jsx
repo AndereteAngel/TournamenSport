@@ -16,6 +16,7 @@ import { ReferenteInscripcion } from "./components/ReferenteInscripcion";
 import { ReferenteEquipos } from "./components/ReferenteEquipos";
 import { FefutinPlayerApprovals } from "./components/FefutinPlayerApprovals";
 import { FefutinTopScorers } from "./components/FefutinTopScorers";
+import { FefutinSheetArchive } from "./components/FefutinSheetArchive";
 import { supabase } from "./supabaseClient";
 
 // La categoría se guarda dentro de "game" al crear el torneo (ej.: "Fútbol · 2012").
@@ -1871,7 +1872,9 @@ export function TournamenSportApp() {
         (!canViewRefereeStats && activeView === "referee-stats") ||
         (!canAccessClubManagement && ["referente-inscripcion", "referente-equipos", "referente-torneos"].includes(activeView)) ||
         (!isArbitro && activeView === "referee-carnets") ||
-        (!canManageAccess && activeView === "referee-carnet-directory")) {
+        (!canManageAccess && activeView === "referee-carnet-directory") ||
+        (!canManageAccess && activeView === "sheet-archive") ||
+        (!isArbitro && activeView === "referee-sheet-photo")) {
       setActiveView("home");
       setActiveTournament(null);
     }
@@ -3945,12 +3948,17 @@ export function TournamenSportApp() {
         <div className="tc-form-screen tc-stats-screen">
           <RefereeStats onBack={() => setActiveView("home")} canManageAccess={canManageAccess} onDeactivateReferee={handleDeactivateReferee} />
         </div>
+      ) : activeView === "sheet-archive" && canManageAccess ? (
+        <FefutinSheetArchive mode="archive" currentUser={currentUser} onBack={() => setActiveView("home")} />
+      ) : activeView === "referee-sheet-photo" && isArbitro ? (
+        <FefutinSheetArchive mode="upload" currentUser={currentUser} assignedMatches={assignedRefereeMatches} onBack={() => setActiveView("referee-designations")} />
       ) : activeView === "referee-designations" && isArbitro ? (
         <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
           <section style={{ width: "100%", maxWidth: "900px", margin: "auto", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff" }}>
             <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>← Volver</button>
             <h2 style={{ color: "#fff", margin: "1rem 0 .35rem", letterSpacing: ".06em" }}>MIS DESIGNACIONES</h2>
             <p style={{ color: "#ccc", fontSize: ".82rem", marginTop: 0 }}>Partidos asignados a tu cuenta arbitral.</p>
+            <button type="button" onClick={() => setActiveView("referee-sheet-photo")} style={{ width: "100%", margin: ".6rem 0 1rem", padding: ".75rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#b5122a", color: "#fff", fontWeight: 900, cursor: "pointer" }}>📷 SUBIR FOTO DE PLANILLA GENERAL FIRMADA</button>
             {assignedRefereeMatches.length === 0 ? (
               <p style={{ color: "#ddd", padding: "1rem 0" }}>No tenés partidos designados actualmente.</p>
             ) : (
@@ -4196,6 +4204,17 @@ export function TournamenSportApp() {
                 <small style={{ display: "block", color: "#444", marginTop: ".2rem" }}>{assignedRefereeMatches.length} partido(s) asignado(s) · Abrir planillas</small>
               </span>
               <span aria-hidden="true" style={{ color: "#b5122a", fontSize: "1.3rem", fontWeight: 900 }}>→</span>
+            </button>
+          )}
+
+          {canManageAccess && (
+            <button type="button" onClick={() => setActiveView("sheet-archive")} className="tc-home-about-card tc-home-referee-card" style={{ margin: "1rem 0" }}>
+              <span className="tc-home-about-icon" aria-hidden="true">🗂️</span>
+              <span className="tc-home-about-copy">
+                <strong>ARCHIVO DE PLANILLAS</strong>
+                <small>Consultá planillas digitales cerradas y fotos de jornadas firmadas</small>
+              </span>
+              <span className="tc-home-about-arrow">→</span>
             </button>
           )}
 
