@@ -313,13 +313,22 @@ export function PlayoffBracket({
                       {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "30px", height: "30px", objectFit: "contain", borderRadius: "5px", flexShrink: 0 }} /> : null}
                     </div>
                   </div>
-                  {(isAdmin || isReferente || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
+                  {isReferente && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
                     <button
                       type="button"
-                      onClick={() => isReferente ? setSelectedPrintMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx }) : setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx })}
+                      onClick={() => setSelectedPrintMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx })}
+                      style={{ width: "100%", marginTop: "0.55rem", padding: "0.5rem 0.65rem", borderRadius: "7px", border: "1px solid #b5122a", background: "#b5122a", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer" }}
+                    >
+                      🖨️ PLANILLA PDF PARA IMPRIMIR
+                    </button>
+                  )}
+                  {(isAdmin || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && !isReferente && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx })}
                       style={{ width: "100%", marginTop: "0.55rem", padding: "0.5rem 0.65rem", borderRadius: "7px", border: "1px solid #b5122a", background: "#241015", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer" }}
                     >
-                      📄 PLANILLA PARTIDO
+                      📄 PLANILLA DIGITAL DEL ÁRBITRO
                     </button>
                   )}
                 </div>
@@ -381,13 +390,13 @@ export function PlayoffBracket({
           onClose={() => setSelectedPrintMatch(null)}
         />
       )}
-      {selectedSheetMatch && (
+      {selectedSheetMatch && !isReferente && (
         <FefutinMatchSheet
           tournament={tournament}
           match={selectedSheetMatch}
           isReferee={isReferee}
-          readOnly={isReferente}
-          printOnly={isReferente}
+          readOnly={false}
+          printOnly={false}
           onCloseMatch={async ({ score1, score2 }) => {
             const closed = await onCloseMatch?.({
               phase: "playoffs",
