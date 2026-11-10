@@ -2279,8 +2279,7 @@ export function TournamenSportApp() {
     let cancelled = false;
     const loadFefutinTournamentClubs = async () => {
       const tournamentId = activeTournament?.id;
-      const status = String(activeTournament?.status || "").trim().toLocaleLowerCase("es");
-      if (!tournamentId || status !== "inscripciones") {
+      if (!tournamentId) {
         setFefutinTournamentClubs([]);
         setLoadingFefutinTournamentClubs(false);
         return;
@@ -4877,6 +4876,10 @@ export function TournamenSportApp() {
               onCloseMatch={handleCloseMatch}
               openAssignedMatch={refereeMatchToOpen}
               onAssignedMatchOpened={() => setRefereeMatchToOpen(null)}
+              clubLogos={fefutinTournamentClubs.map((club) => ({
+                name: club.club_name,
+                url: club.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl : "",
+              }))}
             />
           )}
 
@@ -4945,6 +4948,10 @@ export function TournamenSportApp() {
             isAdmin={canManageTournaments}
             isReferee={isArbitro}
             onUpdateMatchResult={handleUpdateMatchResult}
+            clubLogos={fefutinTournamentClubs.map((club) => ({
+              name: club.club_name,
+              url: club.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl : "",
+            }))}
           />
 
           {(isTournamentAdmin || isAdmin) && activeTournament.status !== "Finalizado" && (
