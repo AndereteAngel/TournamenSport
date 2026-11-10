@@ -50,7 +50,7 @@ export function GroupStageView({
     const match = group?.matches?.find((item) => String(item?.id) === String(openAssignedMatch.matchId));
     if (!match) return;
     setActiveGroupIndex(groupIndex);
-    setSelectedPrintableMatch(match);
+    setSelectedSheetMatch(match);
     onAssignedMatchOpened?.();
   }, [openAssignedMatch, tournament.id, isReferente]);
 
