@@ -4233,7 +4233,7 @@ export function TournamenSportApp() {
             <section aria-label="Gestión de clubes" style={{ margin: "1.25rem 0", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: ".85rem" }}>
               {[
                 { id: "referente-inscripcion", icon: "📝", title: "INSCRIPCIÓN", detail: "Inscribí tu club en las competencias" },
-                { id: "referente-equipos", icon: "⚽", title: "FICHA DE EQUIPOS", detail: "Club, equipos y jugadores" },
+                { id: "referente-equipos", icon: "⚽", title: isReferente ? "MI CLUB" : "FICHA DE EQUIPOS", detail: isReferente ? "Datos institucionales y carnets de jugadores" : "Club, equipos y jugadores" },
                 { id: "referente-torneos", icon: "🏆", title: "MIS TORNEOS", detail: "Competencias y listas de buena fe" },
               ].map((item) => (
                 <button key={item.id} type="button" onClick={() => setActiveView(item.id)} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
