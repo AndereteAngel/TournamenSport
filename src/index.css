@@ -6081,3 +6081,35 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   min-width: 0 !important;
   box-sizing: border-box !important;
 }
+
+
+/* FEFUTIN — ajuste estructural del ancho de pantallas respecto de navbar. */
+/* El contenedor principal es flex: alinear al centro permite que sus hijos
+   con ancho automático se encojan según su contenido. La navbar y cada
+   pantalla principal deben compartir exactamente el ancho disponible. */
+#root .cr-container,
+#root .cr-container.tc-theme-clash {
+  align-items: stretch !important;
+}
+
+#root .cr-container > .tc-navbar,
+#root .cr-container > .tc-form-screen,
+#root .cr-container > .tc-competition-screen,
+#root .cr-container > .tc-playoffs-screen,
+#root .cr-container > .tc-home-screen,
+#root .cr-container > .tc-division-tournaments-screen {
+  align-self: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+#root .cr-container > .tc-form-screen > .cr-card,
+#root .cr-container > .tc-form-screen > section,
+#root .cr-container > .tc-form-screen > main {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
