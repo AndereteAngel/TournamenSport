@@ -22,6 +22,7 @@ export function GroupStageView({
   const [targetMatchId, setTargetMatchId] = useState(null);
   const [myMatchesView, setMyMatchesView] = useState("pending");
   const [selectedSheetMatch, setSelectedSheetMatch] = useState(null);
+  const [selectedPrintMatch, setSelectedPrintMatch] = useState(null);
 
   useEffect(() => {
     if (!targetMatchId) return;
@@ -798,7 +799,7 @@ export function GroupStageView({
               {(isAdmin || isReferente || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && (
                 <button
                   type="button"
-                  onClick={() => setSelectedSheetMatch(match)}
+                  onClick={() => isReferente ? setSelectedPrintMatch(match) : setSelectedSheetMatch(match)}
                   style={{
                     gridColumn: "1 / -1",
                     width: "100%",
@@ -833,6 +834,15 @@ export function GroupStageView({
         >
           <TCIcon name="trophy" size={16} /> Avanzar a Playoff · Eliminación Directa
         </button>
+      )}
+      {selectedPrintMatch && (
+        <FefutinMatchSheet
+          tournament={tournament}
+          match={selectedPrintMatch}
+          readOnly={true}
+          printOnly={true}
+          onClose={() => setSelectedPrintMatch(null)}
+        />
       )}
       {selectedSheetMatch && (
         <FefutinMatchSheet
