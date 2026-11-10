@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TCIcon } from "./TCIcon";
-import { FefutinMatchSheet } from "./FefutinMatchSheet";
+import { FefutinMatchSheet, FefutinPrintableMatchSheet } from "./FefutinMatchSheet";
 
 export function PlayoffBracket({
   tournament,
@@ -388,11 +388,10 @@ export function PlayoffBracket({
         </button>
       )}
       {selectedPrintMatch && (
-        <FefutinMatchSheet
+        <FefutinPrintableMatchSheet
+          key={String(selectedPrintMatch.id)}
           tournament={tournament}
           match={selectedPrintMatch}
-          readOnly={true}
-          printOnly={true}
           onClose={() => setSelectedPrintMatch(null)}
         />
       )}
