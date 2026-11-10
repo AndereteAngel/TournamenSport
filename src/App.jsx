@@ -4226,7 +4226,7 @@ export function TournamenSportApp() {
                   <span style={{ fontSize: "1.6rem" }}>✓</span>
                   <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>INSCRIPCIÓN</strong>
                   <span style={{ color: "#86efac", fontSize: ".88rem", fontWeight: 800 }}>YA ESTÁS INSCRIPTO</span>
-                  <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>Recibimos la inscripción de tu club. Está pendiente de aprobación por administración o un directivo.</span>
+                  <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>{currentUser?.approvalStatus === "aprobado" ? "Tu club ya está inscripto y habilitado para participar." : "Recibimos la inscripción de tu club. Está pendiente de aprobación por administración o un directivo."}</span>
                 </div>
               ) : canAccessClubManagement ? (
                 <button type="button" onClick={() => setActiveView("referente-inscripcion")} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
