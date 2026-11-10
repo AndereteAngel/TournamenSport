@@ -7,6 +7,7 @@ export function GroupStageView({
   tournament,
   onUpdateTournament,
   onProceedToPlayoffs,
+  onOpenTopScorers,
   currentUser,
   isAdmin = false,
   isReferee = false,
@@ -468,27 +469,42 @@ export function GroupStageView({
             gap: "1rem",
           }}
         >
-          <h3
-            style={{
-              fontSize: "0.8rem",
-              fontWeight: "bold",
-              textTransform: "uppercase",
-              color: "#9ca3af",
-              margin: 0,
-              letterSpacing: "0.5px",
-            }}
-          >
-            Seleccionar grupo
-          </h3>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", minWidth: 0 }}>
+            <h3
+              style={{
+                fontSize: "0.8rem",
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                color: "#9ca3af",
+                margin: 0,
+                letterSpacing: "0.5px",
+              }}
+            >
+              Seleccionar grupo
+            </h3>
+            <span style={{ fontSize: "0.7rem", color: "#6b7280", whiteSpace: "nowrap" }}>
+              {tournament.groups.length} grupos
+            </span>
+          </div>
 
-          <span
+          <button
+            type="button"
+            onClick={onOpenTopScorers}
             style={{
-              fontSize: "0.7rem",
-              color: "#6b7280",
+              flex: "0 0 auto",
+              padding: "0.45rem 0.7rem",
+              background: "#171c27",
+              border: "1px solid #b5122a",
+              borderRadius: "8px",
+              color: "#fff",
+              fontWeight: 800,
+              fontSize: "0.75rem",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
             }}
           >
-            {tournament.groups.length} grupos
-          </span>
+            ⚽ Goleadores
+          </button>
         </div>
 
         <div
