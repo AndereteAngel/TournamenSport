@@ -1803,6 +1803,7 @@ export function TournamenSportApp() {
   const [tournamentCategoryFilter, setTournamentCategoryFilter] = useState("Todas");
   const [tournamentDivisionFilter, setTournamentDivisionFilter] = useState("Todas");
   const [divisionCategorySearch, setDivisionCategorySearch] = useState("");
+  const [activeDivisionTournamentIndex, setActiveDivisionTournamentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [editingTournament, setEditingTournament] = useState(false);
   const [deletingTournamentId, setDeletingTournamentId] = useState(null);
@@ -4031,20 +4032,37 @@ export function TournamenSportApp() {
                 <div
                   className="tc-division-tournament-carousel"
                   aria-label={`Carrusel de torneos de ${tournamentDivisionFilter}`}
+                  onScroll={(event) => {
+                    const container = event.currentTarget;
+                    const center = container.getBoundingClientRect().left + container.clientWidth / 2;
+                    let nearest = 0;
+                    let distance = Infinity;
+                    Array.from(container.children).forEach((card, index) => {
+                      const rect = card.getBoundingClientRect();
+                      const cardCenter = rect.left + rect.width / 2;
+                      const currentDistance = Math.abs(center - cardCenter);
+                      if (currentDistance < distance) { distance = currentDistance; nearest = index; }
+                    });
+                    setActiveDivisionTournamentIndex(nearest);
+                  }}
                   style={{
                     display: "flex",
                     flexDirection: "row",
+                    alignItems: "center",
                     width: "100%",
                     maxWidth: "100%",
                     minWidth: 0,
                     boxSizing: "border-box",
-                    gap: "1rem",
+                    gap: 0,
                     marginTop: "1rem",
                     overflowX: "auto",
                     overflowY: "hidden",
-                    padding: "0 0 .85rem",
+                    padding: "1.2rem max(1rem, calc((100% - 300px) / 2)) 1.5rem",
                     scrollSnapType: "x mandatory",
+                    scrollPaddingInline: "max(1rem, calc((100% - 300px) / 2))",
                     WebkitOverflowScrolling: "touch",
+                    scrollbarWidth: "thin",
+                    perspective: "900px",
                   }}
                 >
                   {visibleTournaments.map((t) => {
@@ -4054,13 +4072,18 @@ export function TournamenSportApp() {
                         key={t.id}
                         style={{
                           position: "relative",
-                          flex: "0 0 clamp(260px, 34%, 380px)",
-                          width: "clamp(260px, 34%, 380px)",
-                          maxWidth: "380px",
-                          minWidth: "260px",
+                          flex: "0 0 min(76%, 330px)",
+                          width: "min(76%, 330px)",
+                          maxWidth: "330px",
+                          minWidth: "245px",
                           boxSizing: "border-box",
-                          alignSelf: "stretch",
-                          scrollSnapAlign: "start",
+                          alignSelf: "center",
+                          scrollSnapAlign: "center",
+                          zIndex: activeDivisionTournamentIndex === visibleTournaments.indexOf(t) ? 3 : 1,
+                          marginLeft: visibleTournaments.indexOf(t) === 0 ? 0 : "-58px",
+                          transform: `translateY(${activeDivisionTournamentIndex === visibleTournaments.indexOf(t) ? "-2px" : "5px"}) scale(${activeDivisionTournamentIndex === visibleTournaments.indexOf(t) ? 1 : 0.88}) rotateY(${activeDivisionTournamentIndex > visibleTournaments.indexOf(t) ? "9deg" : activeDivisionTournamentIndex < visibleTournaments.indexOf(t) ? "-9deg" : "0deg"})`,
+                          opacity: Math.abs(activeDivisionTournamentIndex - visibleTournaments.indexOf(t)) > 2 ? 0.58 : activeDivisionTournamentIndex === visibleTournaments.indexOf(t) ? 1 : 0.82,
+                          transition: "transform 260ms cubic-bezier(.2,.8,.2,1), opacity 260ms ease, box-shadow 260ms ease",
                         }}
                       >
                         <button
