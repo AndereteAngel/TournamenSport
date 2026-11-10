@@ -3283,20 +3283,7 @@ export function TournamenSportApp() {
       showNotice("No tenés permisos para cerrar partidos.");
       return false;
     }
-    const { data: resultData, error: resultError } = await supabase.rpc("referee_update_match_result", {
-      p_tournament_id: activeTournament.id,
-      p_phase: phase,
-      p_match_id: matchId,
-      p_score1: score1,
-      p_score2: score2,
-      p_group_index: groupIndex ?? null,
-      p_round_index: roundIndex ?? null,
-    });
-    if (resultError) {
-      showNotice(resultError.message || "No se pudo guardar el resultado.");
-      return false;
-    }
-    const { data, error } = await supabase.rpc("referee_close_match", {
+    const { data, error } = await supabase.rpc("referee_close_match_from_sheet", {
       p_tournament_id: activeTournament.id,
       p_phase: phase,
       p_match_id: matchId,
@@ -4962,6 +4949,7 @@ export function TournamenSportApp() {
             isAdmin={canManageTournaments}
             isReferee={isArbitro}
             onUpdateMatchResult={handleUpdateMatchResult}
+            onCloseMatch={handleCloseMatch}
             clubLogos={fefutinTournamentClubs.map((club) => ({
               name: club.club_name,
               url: club.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl : "",
