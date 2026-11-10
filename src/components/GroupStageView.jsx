@@ -812,7 +812,7 @@ export function GroupStageView({
                     cursor: "pointer",
                   }}
                 >
-                  📋 ABRIR PLANILLA
+                  📄 PLANILLA PARTIDO
                 </button>
               )}
             </div>
