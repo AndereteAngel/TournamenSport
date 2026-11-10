@@ -204,7 +204,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
             setSheetId(existingSheet.id);
             setMetadata({
               jornada: existingSheet.jornada || String(match?.round || ""),
-              sede: existingSheet.sede || localClub.headquarters_address || visitorClub.headquarters_address || "",
+              sede: readOnly ? (localClub.headquarters_address || "") : (existingSheet.sede || localClub.headquarters_address || visitorClub.headquarters_address || ""),
               fecha_partido: existingSheet.fecha_partido || "",
               arbitro_designado: assignedRefereeName || existingSheet.arbitro_designado || "",
               observaciones: existingSheet.observaciones || "",
@@ -224,7 +224,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           } else {
             setMetadata((current) => ({
               ...current,
-              sede: current.sede || localClub.headquarters_address || visitorClub.headquarters_address || "",
+              sede: readOnly ? (localClub.headquarters_address || "") : (current.sede || localClub.headquarters_address || visitorClub.headquarters_address || ""),
               arbitro_designado: assignedRefereeName || current.arbitro_designado || "",
             }));
           }
@@ -235,7 +235,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         if (!cancelled) {
           setLocalPlayers(local);
           setVisitorPlayers(visitor);
-          setMetadata((current) => ({ ...current, sede: current.sede || localClub.headquarters_address || visitorClub.headquarters_address || "" }));
+          setMetadata((current) => ({ ...current, sede: readOnly ? (localClub.headquarters_address || "") : (current.sede || localClub.headquarters_address || visitorClub.headquarters_address || "") }));
         }
       } catch (err) {
         console.error("Error al generar la planilla:", err);
@@ -394,7 +394,13 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         .fefutin-cards label{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;margin:2px auto!important;font-size:8px!important;line-height:1!important;color:#111!important}
         .fefutin-shirt-number input,.fefutin-goals input,.fefutin-cards input{appearance:none!important;display:block!important;box-sizing:border-box!important;width:26px!important;max-width:calc(100% - 4px)!important;height:24px!important;min-height:24px!important;margin:2px auto!important;padding:2px!important;text-align:center!important;border:1px solid #999!important;border-radius:3px!important;background:#fff!important;color:#111!important;font-size:10px!important;box-shadow:none!important}
         .fefutin-sheet-table tbody tr{height:35px}
+        .fefutin-readonly-sheet .fefutin-sheet-table tbody tr{height:25px}
+        .fefutin-readonly-sheet .fefutin-sheet-table th,.fefutin-readonly-sheet .fefutin-sheet-table td{padding:2px 3px}
+        .fefutin-readonly-sheet .fefutin-player-name small{margin-top:1px}
         .fefutin-sheet-table tbody tr:nth-child(even) td{background:#f3f3f3!important}
+        .fefutin-final-result{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:8px;padding:8px 10px;border:1px solid #b5122a;border-radius:3px;text-align:center;font-size:12px;font-weight:900;text-transform:uppercase}
+        .fefutin-final-result strong{color:#b5122a!important;font-size:9px;letter-spacing:.08em}
+        .fefutin-final-result span{color:#111!important}
         .fefutin-observations{display:grid;gap:5px;margin-top:14px;font-size:10px;font-weight:700;color:#222!important}
         .fefutin-observations textarea{width:100%;border:1px solid #777!important;min-height:48px;padding:6px;background:#fff!important;color:#111!important;font-size:11px!important}
         .fefutin-sheet-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:16px;min-width:0}
@@ -483,6 +489,8 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           .fefutin-sheet-title h2{font-size:13px!important;margin:1px 0!important}
           .fefutin-sheet-title p{font-size:8px!important;margin:0!important}
           .fefutin-sheet-meta{margin:3px 0!important;gap:5px!important}
+          .fefutin-final-result{margin-top:4px!important;padding:4px 8px!important;font-size:10px!important;break-inside:avoid!important}
+          .fefutin-final-result strong{font-size:7px!important}
           .fefutin-sheet-signatures{display:grid!important;margin:4px 0 6px!important;gap:24px!important}
           .fefutin-sheet-signature{font-size:7px!important;gap:2px!important}
           .fefutin-sheet-signature .line{height:16px!important}
@@ -515,7 +523,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           .fefutin-print-sheet .fefutin-sheet-table,.fefutin-print-sheet .fefutin-sheet-table-wrap,.fefutin-print-sheet .fefutin-observations{break-inside:avoid!important;page-break-inside:avoid!important}
         }
       `}</style>
-      <div className="fefutin-print-sheet">
+      <div className={"fefutin-print-sheet" + (readOnly ? " fefutin-readonly-sheet" : "")}>
         <div className="fefutin-sheet-title">
           <div className="brand">FEFUTIN · PLANILLA OFICIAL</div>
           <h2>{localName} vs. {visitorName}</h2>
@@ -556,6 +564,12 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
               </tr>)}</tbody>
             </table>
           </div>
+          {readOnly && (
+            <div className="fefutin-final-result">
+              <strong>RESULTADO FINAL</strong>
+              <span>{localName.toLocaleUpperCase("es")} {match?.score1 ?? (match?.referee_closed ? localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0) : "—")} – {match?.score2 ?? (match?.referee_closed ? visitorPlayers.reduce((total, player) => total + Number(player.goles || 0), 0) : "—")} {visitorName.toLocaleUpperCase("es")}</span>
+            </div>
+          )}
           <div className="fefutin-observations">OBSERVACIONES
             {readOnly ? <div className="fefutin-print-observations">{metadata.observaciones || " "}</div> : <textarea value={metadata.observaciones} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>}
           </div>
