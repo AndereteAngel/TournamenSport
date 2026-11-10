@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { supabase } from "../supabaseClient";
 import { getPlayerMedals } from "../utils/tournamentAwards";
 import { TCIcon } from "./TCIcon";
 
@@ -22,6 +23,28 @@ export function Navbar({
   const [copied, setCopied] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [medalOpen, setMedalOpen] = useState(false);
+  const [referenteClub, setReferenteClub] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadReferenteClub = async () => {
+      if (currentUser?.role !== "referente" || !currentUser?.id) {
+        setReferenteClub(null);
+        return;
+      }
+      const { data, error } = await supabase.rpc("get_fefutin_my_teams");
+      if (cancelled) return;
+      if (error) {
+        console.error("No se pudo cargar el club del referente en la navegación:", error);
+        setReferenteClub(null);
+        return;
+      }
+      const club = (data || []).find((item) => item?.club_name);
+      setReferenteClub(club || null);
+    };
+    loadReferenteClub();
+    return () => { cancelled = true; };
+  }, [currentUser?.id, currentUser?.role]);
 
   const handleCopyCode = () => {
     if (!tournamentCode) return;
@@ -122,6 +145,11 @@ export function Navbar({
           >
             {currentTitle || "FEFUTIN"}
           </span>
+          {currentUser?.role === "referente" && referenteClub?.club_name && (
+            <span className="tc-navbar-referente-club" title={referenteClub.club_name}>
+              {referenteClub.club_name}
+            </span>
+          )}
           <span className="mobile-navbar-alias">
             <TCIcon name="user" size={11} /> {username}
           </span>
@@ -445,6 +473,7 @@ export function Navbar({
       <style>{`
         .mobile-nav-quick-actions { display: none; }
         .mobile-navbar-alias { display: none; }
+        .tc-navbar-referente-club { display: block; margin-top: 3px; color: #f2b7c0; font-size: .68rem; font-weight: 700; line-height: 1.15; max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         @media (min-width: 641px) {
           .tc-navbar .desktop-nav-actions > .tc-nav-code {
@@ -483,6 +512,7 @@ export function Navbar({
 
         @media (max-width: 640px) {
           .desktop-nav-actions { display: none !important; }
+          .tc-navbar-referente-club { max-width: min(46vw, 190px); font-size: .62rem; }
           .mobile-navbar-alias {
             display: flex !important;
             align-items: center !important;
