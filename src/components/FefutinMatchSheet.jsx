@@ -24,9 +24,10 @@ const getPlayerStatus = (player) => {
   return "PENDIENTE DE VERIFICACIÓN";
 };
 
-export function FefutinMatchSheet({ tournament, match, onClose }) {
+export function FefutinMatchSheet({ tournament, match, onClose, isReferee = false, onCloseMatch }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [closingMatch, setClosingMatch] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [sheetId, setSheetId] = useState(null);
@@ -277,11 +278,28 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
         if (deleteError) throw deleteError;
       }
       setNotice("Planilla guardada correctamente.");
+      return true;
     } catch (err) {
       console.error("Error al guardar la planilla:", err);
       setError(err.message || "No se pudo guardar la planilla.");
+      return false;
     } finally {
       setSaving(false);
+    }
+  };
+
+  const closeMatch = async () => {
+    if (!isReferee || match?.referee_closed || closingMatch || saving) return;
+    const saved = await save();
+    if (!saved) return;
+    const score1 = localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
+    const score2 = visitorPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
+    setClosingMatch(true);
+    try {
+      const closed = await onCloseMatch?.({ score1, score2 });
+      if (closed) setNotice("Partido cerrado. La planilla quedó bloqueada.");
+    } finally {
+      setClosingMatch(false);
     }
   };
 
@@ -293,13 +311,13 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
       <td className="fefutin-player-name">
         <strong>{player.apellido}, {player.nombre}</strong>
         <small>{player.carnet_number || "Sin carnet"} · Camiseta {player.numero_camiseta || "—"}</small>
-        <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>
+        <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>
       </td>
       <td className="fefutin-status" style={{ color:statusColor }}>{player.estado_habilitacion === "HABILITADO" ? "HABIL." : player.estado_habilitacion === "NO HABILITADO" ? "NO HABIL." : "PEND. VERIF."}</td>
-      <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" value={player.goles ?? 0} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
+      <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" value={player.goles ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
       <td className="fefutin-cards">
-        <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" value={player.tarjetas_amarillas ?? 0} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
-        <label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" value={player.tarjetas_rojas ?? 0} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label>
+        <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" value={player.tarjetas_amarillas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
+        <label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" value={player.tarjetas_rojas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label>
       </td>
     </>;
   };
@@ -471,7 +489,7 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
             {[
               ["jornada","Jornada"],["sede","Sede / cancha"],["fecha_partido","Fecha del partido"],["arbitro_designado","Árbitro designado"],
             ].map(([field,label]) => <label key={field}>{label}
-              <input type={field==="fecha_partido"?"date":"text"} value={metadata[field]} onChange={(event)=>setMetadata((current)=>({...current,[field]:event.target.value}))}/>
+              <input type={field==="fecha_partido"?"date":"text"} value={metadata[field]} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,[field]:event.target.value}))}/>
             </label>)}
           </div>
           <div className="fefutin-sheet-signatures">
@@ -500,13 +518,15 @@ export function FefutinMatchSheet({ tournament, match, onClose }) {
             </table>
           </div>
           <label className="fefutin-observations">OBSERVACIONES
-            <textarea value={metadata.observaciones} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>
+            <textarea value={metadata.observaciones} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>
           </label>
           {notice&&<p className="fefutin-no-print" style={{color:"#166534",fontWeight:700}}>{notice}</p>}
           {error&&<p className="fefutin-no-print" style={{color:"#b91c1c"}}>{error}</p>}
           <div className="fefutin-sheet-actions fefutin-no-print">
             <button type="button" onClick={onClose}>Cerrar</button>
-            <button type="button" onClick={save} disabled={saving} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>{saving?"Guardando...":"GUARDAR PLANILLA"}</button>
+            {!match?.referee_closed && <button type="button" onClick={save} disabled={saving || closingMatch} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>{saving?"Guardando...":"GUARDAR PLANILLA"}</button>}
+            {isReferee && !match?.referee_closed && <button type="button" onClick={closeMatch} disabled={saving || closingMatch} style={{background:"#166534",color:"#fff",borderColor:"#166534"}}>{closingMatch?"CERRANDO...":"CERRAR PARTIDO"}</button>}
+            {match?.referee_closed && <strong style={{color:"#166534",alignSelf:"center"}}>✓ PARTIDO CERRADO · SOLO LECTURA</strong>}
             <button type="button" onClick={()=>window.print()} style={{background:"#222",color:"#fff"}}>IMPRIMIR / GUARDAR PDF</button>
           </div>
         </>}
