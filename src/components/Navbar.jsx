@@ -145,11 +145,20 @@ export function Navbar({
           >
             {currentTitle || "FEFUTIN"}
           </span>
-          {currentUser?.role === "referente" && referenteClub?.club_name && (
-            <span className="tc-navbar-referente-club" title={referenteClub.club_name}>
-              {referenteClub.club_name}
-            </span>
-          )}
+          <span
+            className="tc-navbar-user-role"
+            title={currentUser?.role === "referente" ? (referenteClub?.club_name || "Referente") : undefined}
+          >
+            {currentUser?.role === "admin"
+              ? "Administrador"
+              : currentUser?.role === "directivo"
+                ? "Dirigente"
+                : currentUser?.role === "arbitro"
+                  ? "Árbitro"
+                  : currentUser?.role === "referente"
+                    ? (referenteClub?.club_name || "Referente")
+                    : "Visitante"}
+          </span>
           <span className="mobile-navbar-alias">
             <TCIcon name="user" size={11} /> {username}
           </span>
@@ -476,7 +485,8 @@ export function Navbar({
       <style>{`
         .mobile-nav-quick-actions { display: none; }
         .mobile-navbar-alias { display: none; }
-        .tc-navbar-referente-club { display: block; margin-top: 3px; color: #f2b7c0; font-size: .68rem; font-weight: 700; line-height: 1.15; max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tc-navbar-user-role { display: block; margin-top: 3px; color: #f2b7c0; font-size: .68rem; font-weight: 700; line-height: 1.15; max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 
         @media (min-width: 641px) {
           .tc-navbar .desktop-nav-actions > .tc-nav-code {
@@ -515,7 +525,7 @@ export function Navbar({
 
         @media (max-width: 640px) {
           .desktop-nav-actions { display: none !important; }
-          .tc-navbar-referente-club { max-width: min(46vw, 190px); font-size: .62rem; }
+          .tc-navbar-user-role { max-width: min(46vw, 190px); font-size: .62rem; }
           .mobile-navbar-alias {
             display: flex !important;
             align-items: center !important;
