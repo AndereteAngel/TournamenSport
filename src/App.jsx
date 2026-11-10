@@ -35,6 +35,15 @@ const getTournamentCategory = (tournament) => {
   return "Sin categoría";
 };
 
+const getFefutinMatchDate = (round) => {
+  const date = new Date(2026, 10, 21, 12, 0, 0);
+  date.setDate(date.getDate() + (Math.max(1, Number(round) || 1) - 1) * 7);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const adminTournamentButtonStyle = {
   width: "auto",
   maxWidth: "fit-content",
@@ -2931,6 +2940,7 @@ export function TournamenSportApp() {
           team2: away,
           homeTeam: home,
           awayTeam: away,
+          match_date: getFefutinMatchDate(match.round),
         };
       });
       groups = [{
