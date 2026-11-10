@@ -23,6 +23,8 @@ export function PlayoffBracket({
 
   const handleScoreChange = (roundIdx, matchId, field, value) => {
     if (!canEditFixtureScores || isFinalized) return;
+    const currentMatch = rounds[roundIdx]?.find((match) => String(match.id) === String(matchId));
+    if (!currentMatch || currentMatch.referee_closed) return;
     const numValue = value === "" ? null : Number(value);
 
     // Copiamos las rondas actuales y eliminamos rondas posteriores si se modifica un resultado anterior
@@ -293,9 +295,9 @@ export function PlayoffBracket({
                     >
                       {canEditFixtureScores ? (
                         <>
-                          <input type="number" min="0" value={match.score1 !== null ? match.score1 : ""} onChange={(e) => handleScoreChange(rIdx, match.id, "score1", e.target.value)} style={{ width: "34px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "4px", padding: "4px" }} />
+                          <input type="number" min="0" value={match.score1 !== null ? match.score1 : ""} disabled={Boolean(match.referee_closed)} onChange={(e) => handleScoreChange(rIdx, match.id, "score1", e.target.value)} style={{ width: "34px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "4px", padding: "4px" }} />
                           <span>-</span>
-                          <input type="number" min="0" value={match.score2 !== null ? match.score2 : ""} onChange={(e) => handleScoreChange(rIdx, match.id, "score2", e.target.value)} style={{ width: "34px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "4px", padding: "4px" }} />
+                          <input type="number" min="0" value={match.score2 !== null ? match.score2 : ""} disabled={Boolean(match.referee_closed)} onChange={(e) => handleScoreChange(rIdx, match.id, "score2", e.target.value)} style={{ width: "34px", textAlign: "center", backgroundColor: "#1e1b2e", border: "1px solid #1b5fa8", color: "#fff", borderRadius: "4px", padding: "4px" }} />
                         </>
                       ) : (
                         <strong style={{ color: "#fff", fontSize: "0.9rem", letterSpacing: "0.08em" }}>
