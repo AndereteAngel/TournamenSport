@@ -4617,12 +4617,12 @@ span.tc-admin-label {
 }
 h2.tc-admin-username {
   color: #ffffff !important;
-  background: #171c27 !important;
+  background: transparent !important;
   display: block !important;
   width: fit-content !important;
   max-width: 100% !important;
-  padding: 3px 7px !important;
-  border-radius: 5px !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
   font-size: 1.2rem !important;
   font-weight: 950 !important;
   text-shadow: none !important;
