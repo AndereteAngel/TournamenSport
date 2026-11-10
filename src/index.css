@@ -6049,3 +6049,35 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   height: 22px !important;
   margin: 0 !important;
 }
+
+/* FEFUTIN — ancho unificado de todas las pantallas principales.
+   Los contenedores de página deben ocupar como mínimo todo el ancho
+   disponible de la navbar. No modifica tarjetas internas ni lógica. */
+#root .cr-container > .tc-form-screen,
+#root .cr-container > .tc-competition-screen,
+#root .cr-container > .tc-playoffs-screen,
+#root .cr-container > .tc-home-screen,
+#root .cr-container .tc-form-screen,
+#root .cr-container .tc-competition-screen,
+#root .cr-container .tc-playoffs-screen,
+#root .cr-container .tc-home-screen {
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+#root .cr-container .tc-form-screen > section,
+#root .cr-container .tc-form-screen > main,
+#root .cr-container .tc-form-screen > .cr-card,
+#root .cr-container .tc-competition-screen > section,
+#root .cr-container .tc-competition-screen > .cr-card,
+#root .cr-container .tc-playoffs-screen > section,
+#root .cr-container .tc-playoffs-screen > .cr-card,
+#root .cr-container .tc-division-tournaments-screen > .cr-card,
+#root .cr-container .tc-home-screen > .tc-home-panel {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
