@@ -4142,6 +4142,20 @@ export function TournamenSportApp() {
           readOnly={isAdmin || isDirectivo}
           onBack={() => setActiveView("home")}
           onOpenTeams={() => setActiveView("referente-equipos")}
+          onOpenTournament={(participation) => {
+            const normalizeTournamentText = (value) => String(value || "").trim().toLocaleLowerCase("es");
+            const participationCategory = normalizeTournamentText(participation?.category_label);
+            const tournament = tournaments.find((item) => {
+              const tournamentCategory = normalizeTournamentText(getTournamentCategory(item));
+              return normalizeTournamentText(item.title) === normalizeTournamentText(participation?.tournament_title) &&
+                (participationCategory === tournamentCategory || participationCategory.endsWith(tournamentCategory));
+            });
+            if (!tournament) {
+              showNotice("No encontramos esta competencia en la lista actual. Actualizá los torneos e intentá nuevamente.");
+              return;
+            }
+            openTournament(tournament);
+          }}
         />
       ) : activeView === "home" ? (
         <div className="tc-home-screen">
