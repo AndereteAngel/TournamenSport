@@ -323,18 +323,15 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     if (!player) return <><td></td><td></td><td></td><td></td><td></td></>;
     const statusColor = player.estado_habilitacion === "HABILITADO" ? "#166534" : player.estado_habilitacion === "NO HABILITADO" ? "#b91c1c" : "#92400e";
     return <>
-      <td className="fefutin-shirt-number"><input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" disabled={Boolean(readOnly || match?.referee_closed)} /></td>
+      <td className="fefutin-shirt-number">{readOnly ? <span className="fefutin-print-value">{player.numero_camiseta || ""}</span> : <input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" disabled={Boolean(match?.referee_closed)} />}</td>
       <td className="fefutin-player-name">
         <strong>{player.apellido}, {player.nombre}</strong>
         <small>{player.carnet_number || "Sin carnet"} · Camiseta {player.numero_camiseta || "—"}</small>
-        <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>
+        {readOnly ? (player.es_capitan ? <small className="fefutin-print-captain">CAPITÁN</small> : null) : <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>}
       </td>
       <td className="fefutin-status" style={{ color:statusColor }}>{player.estado_habilitacion === "HABILITADO" ? "HABIL." : player.estado_habilitacion === "NO HABILITADO" ? "NO HABIL." : "PEND. VERIF."}</td>
-      <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" value={player.goles ?? 0} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
-      <td className="fefutin-cards">
-        <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" value={player.tarjetas_amarillas ?? 0} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
-        <label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" value={player.tarjetas_rojas ?? 0} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label>
-      </td>
+      <td className="fefutin-goals">{readOnly ? <span className="fefutin-print-value">{player.goles ?? ""}</span> : <input aria-label={"Goles " + player.nombre} type="number" min="0" value={player.goles ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} />}</td>
+      <td className="fefutin-cards">{readOnly ? <div className="fefutin-print-card-values"><span>A {player.tarjetas_amarillas || ""}</span><span>R {player.tarjetas_rojas || ""}</span></div> : <><label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" value={player.tarjetas_amarillas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label><label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" value={player.tarjetas_rojas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></>}</td>
     </>;
   };
   const rowCount = Math.max(localPlayers.length, visitorPlayers.length);
@@ -351,7 +348,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         .fefutin-sheet-title p{margin:3px 0;font-size:12px;color:#333!important}
         .fefutin-sheet-meta{display:grid;grid-template-columns:76px minmax(0,1.35fr) 135px minmax(0,1.35fr);gap:10px;margin:14px 0;align-items:end;width:100%;min-width:0}
         .fefutin-sheet-meta label{display:grid;grid-template-rows:auto 28px;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;color:#333!important;min-width:0;width:100%;overflow:hidden}
-        .fefutin-sheet-meta input{display:block;box-sizing:border-box;width:100%!important;max-width:100%!important;min-width:0!important;height:28px!important;min-height:28px!important;max-height:28px!important;line-height:20px!important;border:1px solid #999!important;border-radius:3px!important;padding:3px 6px!important;background:#fff!important;color:#111!important;font-size:11px!important;box-shadow:none!important;margin:0!important}
+        .fefutin-sheet-meta .fefutin-print-meta-value{display:flex;align-items:center;min-height:28px;padding:3px 6px;border:1px solid #999;border-radius:3px;font-size:11px;font-weight:500;text-transform:none;overflow-wrap:anywhere}.fefutin-print-value{display:inline-block;min-width:22px;min-height:18px;line-height:18px}.fefutin-print-captain{font-size:7px!important;font-weight:800}.fefutin-print-card-values{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:8px}.fefutin-print-observations{min-height:48px;padding:6px;border:1px solid #777;font-size:11px;font-weight:400;white-space:pre-wrap}.fefutin-sheet-meta input{display:block;box-sizing:border-box;width:100%!important;max-width:100%!important;min-width:0!important;height:28px!important;min-height:28px!important;max-height:28px!important;line-height:20px!important;border:1px solid #999!important;border-radius:3px!important;padding:3px 6px!important;background:#fff!important;color:#111!important;font-size:11px!important;box-shadow:none!important;margin:0!important}
 
         .fefutin-sheet-signatures{display:none;grid-template-columns:1fr 1fr;gap:24px;margin:8px 0 10px;align-items:end}
         .fefutin-sheet-signature{display:flex;flex-direction:column;gap:4px;text-align:center;font-size:9px;font-weight:800;text-transform:uppercase}
@@ -506,7 +503,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
             {[
               ["jornada","Jornada"],["sede","Sede / cancha"],["fecha_partido","Fecha del partido"],["arbitro_designado","Árbitro designado"],
             ].map(([field,label]) => <label key={field}>{label}
-              <input type={field==="fecha_partido"?"date":"text"} value={metadata[field]} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,[field]:event.target.value}))}/>
+              {readOnly ? <span className="fefutin-print-meta-value">{metadata[field] || "—"}</span> : <input type={field==="fecha_partido"?"date":"text"} value={metadata[field]} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,[field]:event.target.value}))}/>}
             </label>)}
           </div>
           <div className="fefutin-sheet-signatures">
@@ -534,9 +531,9 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
               </tr>)}</tbody>
             </table>
           </div>
-          <label className="fefutin-observations">OBSERVACIONES
-            <textarea value={metadata.observaciones} disabled={Boolean(readOnly || match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>
-          </label>
+          <div className="fefutin-observations">OBSERVACIONES
+            {readOnly ? <div className="fefutin-print-observations">{metadata.observaciones || " "}</div> : <textarea value={metadata.observaciones} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>}
+          </div>
           {notice&&<p className="fefutin-no-print" style={{color:"#166534",fontWeight:700}}>{notice}</p>}
           {error&&<p className="fefutin-no-print" style={{color:"#b91c1c"}}>{error}</p>}
           <div className="fefutin-sheet-actions fefutin-no-print">
