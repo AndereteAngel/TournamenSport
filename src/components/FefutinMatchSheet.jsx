@@ -128,31 +128,28 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
 
         const officialById = new Map((officialPlayers || []).map((player) => [player.id, player]));
         const buildPlayers = (teamId, clubName) => (teamPlayers || [])
-          .filter((item) => item.team_id === teamId && item.registry_player_id && officialById.has(item.registry_player_id))
+          .filter((item) => item.team_id === teamId)
           .map((item) => {
-            const official = officialById.get(item.registry_player_id);
+            const official = item.registry_player_id ? officialById.get(item.registry_player_id) : null;
             return {
-              player_id: official.id,
+              player_id: official?.id || item.id,
               club: clubName,
-              nombre: official.first_name || item.first_name || "",
-              apellido: official.last_name || item.last_name || "",
-              carnet_number: official.carnet_number || "",
-              dni: official.dni || "",
+              nombre: official?.first_name || item.first_name || "",
+              apellido: official?.last_name || item.last_name || "",
+              carnet_number: official?.carnet_number || "",
+              dni: official?.dni || "",
               numero_camiseta: item.jersey_number === "" || item.jersey_number == null ? "" : Number(item.jersey_number),
               goles: 0,
               es_capitan: false,
               tarjetas_amarillas: 0,
               tarjetas_rojas: 0,
-              estado_habilitacion: getPlayerStatus(official),
+              estado_habilitacion: official ? getPlayerStatus(official) : "PENDIENTE DE VERIFICACIÓN",
               observaciones: "",
             };
           });
 
         let local = buildPlayers(localTeam.id, localName);
         let visitor = buildPlayers(visitorTeam.id, visitorName);
-        if (!local.length || !visitor.length) {
-          throw new Error("Las listas oficiales de ambos equipos deben tener jugadores vinculados a sus carnets para generar la planilla.");
-        }
 
         if (!printOnly) {
           const { data: existingSheet, error: sheetError } = await supabase
@@ -325,7 +322,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
       </td>
     </>;
   };
-  const rowCount = Math.max(localPlayers.length, visitorPlayers.length);
+  const rowCount = printOnly ? Math.max(15, localPlayers.length, visitorPlayers.length) : Math.max(localPlayers.length, visitorPlayers.length);
 
   if (printOnly) {
     return (
