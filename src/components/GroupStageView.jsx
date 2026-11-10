@@ -14,6 +14,7 @@ export function GroupStageView({
   onCloseMatch,
   openAssignedMatch = null,
   onAssignedMatchOpened,
+  clubLogos = [],
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
@@ -50,6 +51,11 @@ export function GroupStageView({
     setSelectedSheetMatch(match);
     onAssignedMatchOpened?.();
   }, [openAssignedMatch, tournament.id]);
+
+  const getClubLogo = (teamName) => {
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
+    return clubLogos.find((club) => normalize(club.name) === normalize(teamName))?.url || "";
+  };
 
   const currentGroup = tournament.groups[activeGroupIndex];
 
@@ -742,18 +748,14 @@ export function GroupStageView({
                 gap: "0.6rem",
               }}
             >
-              {/* EQUIPO 1 */}
-              <span
-                style={{
-                  fontSize: "0.76rem",
-                  fontWeight: "bold",
-                  textAlign: "right",
-                  overflowWrap: "anywhere",
-                }}
-              >
-                <span style={{ display: "block", color: "#4ade80", fontSize: "0.58rem", fontWeight: 900, letterSpacing: "0.05em", marginBottom: "3px" }}>LOCAL</span>
-                {match.team1}
-              </span>
+              {/* EQUIPO LOCAL */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "0.45rem", minWidth: 0 }}>
+                {getClubLogo(match.team1) ? <img src={getClubLogo(match.team1)} alt={`Escudo de ${match.team1}`} style={{ width: "42px", height: "42px", objectFit: "contain", borderRadius: "6px", background: "#fff", padding: "2px", boxSizing: "border-box", flexShrink: 0 }} /> : null}
+                <span style={{ minWidth: 0, fontSize: "0.76rem", fontWeight: "bold", textAlign: "left", overflowWrap: "anywhere" }}>
+                  <span style={{ display: "block", color: "#4ade80", fontSize: "0.58rem", fontWeight: 900, letterSpacing: "0.05em", marginBottom: "3px" }}>LOCAL</span>
+                  {match.team1}
+                </span>
+              </div>
 
               {/* RESULTADO */}
               <div
@@ -795,18 +797,14 @@ export function GroupStageView({
                 )}
               </div>
 
-              {/* EQUIPO 2 */}
-              <span
-                style={{
-                  fontSize: "0.76rem",
-                  fontWeight: "bold",
-                  textAlign: "left",
-                  overflowWrap: "anywhere",
-                }}
-              >
-                <span style={{ display: "block", color: "#93c5fd", fontSize: "0.58rem", fontWeight: 900, letterSpacing: "0.05em", marginBottom: "3px" }}>VISITANTE</span>
-                {match.team2}
-              </span>
+              {/* EQUIPO VISITANTE */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.45rem", minWidth: 0 }}>
+                <span style={{ minWidth: 0, fontSize: "0.76rem", fontWeight: "bold", textAlign: "right", overflowWrap: "anywhere" }}>
+                  <span style={{ display: "block", color: "#93c5fd", fontSize: "0.58rem", fontWeight: 900, letterSpacing: "0.05em", marginBottom: "3px" }}>VISITANTE</span>
+                  {match.team2}
+                </span>
+                {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "42px", height: "42px", objectFit: "contain", borderRadius: "6px", background: "#fff", padding: "2px", boxSizing: "border-box", flexShrink: 0 }} /> : null}
+              </div>
               {(isAdmin || isReferee) && (
                 <button
                   type="button"
