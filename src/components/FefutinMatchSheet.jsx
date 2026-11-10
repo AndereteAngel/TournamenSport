@@ -215,7 +215,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
   };
 
   const save = async () => {
-    if (!supabase || saving) return;
+    if (!supabase || saving || match?.referee_closed) return false;
     setSaving(true);
     setError("");
     setNotice("");
