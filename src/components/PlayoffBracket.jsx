@@ -8,6 +8,7 @@ export function PlayoffBracket({
   onFinishTournament,
   isAdmin = false,
   isReferee = false,
+  isReferente = false,
   currentUser,
   onCloseMatch,
   clubLogos = [],
@@ -311,7 +312,7 @@ export function PlayoffBracket({
                       {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "30px", height: "30px", objectFit: "contain", borderRadius: "5px", flexShrink: 0 }} /> : null}
                     </div>
                   </div>
-                  {(isAdmin || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
+                  {(isAdmin || isReferente || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
                     <button
                       type="button"
                       onClick={() => setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx })}
@@ -375,6 +376,7 @@ export function PlayoffBracket({
           tournament={tournament}
           match={selectedSheetMatch}
           isReferee={isReferee}
+          readOnly={isReferente}
           onCloseMatch={async ({ score1, score2 }) => {
             const closed = await onCloseMatch?.({
               phase: "playoffs",
