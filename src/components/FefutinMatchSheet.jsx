@@ -24,7 +24,7 @@ const getPlayerStatus = (player) => {
   return "PENDIENTE DE VERIFICACIÓN";
 };
 
-export function FefutinMatchSheet({ tournament, match, onClose, isReferee = false, readOnly = false, onCloseMatch }) {
+export function FefutinMatchSheet({ tournament, match, onClose, isReferee = false, onCloseMatch }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [closingMatch, setClosingMatch] = useState(false);
@@ -59,85 +59,45 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
 
         let assignedRefereeName = "";
         if (match?.referee_id) {
-          if (readOnly) {
-            const { data: refereeName, error: refereeNameError } = await supabase.rpc(
-              "get_fefutin_match_sheet_referee_name",
-              {
-                p_tournament_id: tournament.id,
-                p_match_id: String(match.id),
-                p_referee_id: match.referee_id,
-              }
-            );
-            if (refereeNameError) throw refereeNameError;
-            assignedRefereeName = String(refereeName || "").trim();
-          } else {
-            const { data: refereeCarnets, error: refereeCarnetsError } = await supabase.rpc("get_fefutin_referee_carnets");
-            if (refereeCarnetsError) throw refereeCarnetsError;
-            const refereeCarnet = (refereeCarnets || []).find((item) => item.id === match.referee_id);
-            assignedRefereeName = [refereeCarnet?.first_name, refereeCarnet?.last_name].filter(Boolean).join(" ").trim()
-              || refereeCarnet?.username
-              || "";
-          }
+          const [
+            { data: refereeProfile, error: refereeProfileError },
+            { data: refereeCarnets, error: refereeCarnetsError },
+          ] = await Promise.all([
+            supabase.from("profiles").select("id, username").eq("id", match.referee_id).maybeSingle(),
+            supabase.rpc("get_fefutin_referee_carnets"),
+          ]);
+          if (refereeProfileError) throw refereeProfileError;
+          if (refereeCarnetsError) throw refereeCarnetsError;
+          const refereeCarnet = (refereeCarnets || []).find((item) => item.id === match.referee_id);
+          assignedRefereeName = [refereeCarnet?.first_name, refereeCarnet?.last_name].filter(Boolean).join(" ").trim()
+            || refereeProfile?.username
+            || "";
         }
 
-        // Los referentes no tienen SELECT directo sobre las inscripciones de otros clubes
-        // por RLS. Esta función pública devuelve los clubes habilitados del torneo.
-        const { data: publicRegistrations, error: publicRegistrationsError } = await supabase
-          .rpc("get_fefutin_tournament_clubs", { p_tournament_id: tournament.id });
-        if (publicRegistrationsError) throw publicRegistrationsError;
+        const { data: registrations, error: registrationsError } = await supabase
+          .from("fefutin_club_tournaments")
+          .select("id, category_label, club_id")
+          .eq("tournament_id", tournament.id);
+        if (registrationsError) throw registrationsError;
 
-        // La consulta adicional de domicilios solo se usa en la vista imprimible
-        // del referente. El flujo digital del árbitro conserva sus consultas originales.
-        let clubAddresses = [];
-        if (readOnly) {
-          const { data, error: clubAddressesError } = await supabase.rpc(
-            "get_fefutin_match_sheet_club_addresses",
-            {
-              p_tournament_id: tournament.id,
-              p_local_club_name: localName,
-              p_visitor_club_name: visitorName,
-            }
-          );
-          if (clubAddressesError) throw clubAddressesError;
-          clubAddresses = data || [];
+        const matchingRegistrations = (registrations || []).filter((item) =>
+          normalize(item.category_label) === normalize(category)
+        );
+        const clubIds = [...new Set(matchingRegistrations.map((item) => item.club_id).filter(Boolean))];
+        const { data: clubs, error: clubsError } = clubIds.length
+          ? await supabase.from("fefutin_clubs").select("id, name, headquarters_address, court_type").in("id", clubIds)
+          : { data: [], error: null };
+        if (clubsError) throw clubsError;
+
+        const localClub = (clubs || []).find((club) => normalize(club.name) === normalize(localName));
+        const visitorClub = (clubs || []).find((club) => normalize(club.name) === normalize(visitorName));
+        if (!localClub || !visitorClub) {
+          throw new Error("No encontramos la inscripción de ambos clubes en la categoría " + (category || "del torneo") + ". Revisá que los nombres del fixture coincidan con los nombres institucionales.");
         }
 
-        const categoryBase = String(category || "").split("·")[0].trim();
-        const allRegistrations = (publicRegistrations || []).map((item) => ({
-          id: item.club_tournament_id,
-          club_name: item.club_name,
-          category_label: item.category_label,
-        }));
-        const findClubAddress = (clubName) => {
-          const registration = allRegistrations.find((item) => normalize(item.club_name) === normalize(clubName));
-          const address = (clubAddresses || []).find((item) =>
-            normalize(item.club_name) === normalize(clubName) &&
-            (!registration || normalize(item.category_label) === normalize(registration.category_label))
-          );
-          return address?.headquarters_address || "";
-        };
-        const localRegistrations = allRegistrations.filter((item) => normalize(item.club_name) === normalize(localName));
-        const visitorRegistrations = allRegistrations.filter((item) => normalize(item.club_name) === normalize(visitorName));
-        if (!localRegistrations.length || !visitorRegistrations.length) {
-          throw new Error("No encontramos a ambos clubes entre las inscripciones habilitadas de este torneo. Verificá que estén aprobados y que sus nombres coincidan con el fixture.");
-        }
-
-        const categoryMatches = (item) =>
-          normalize(String(item.category_label || "").split("·")[0].trim()) === normalize(categoryBase);
-        const chooseRegistration = (clubRegistrations) => {
-          const categoryMatch = clubRegistrations.find(categoryMatches);
-          if (categoryMatch) return categoryMatch;
-          // Si hay una sola inscripción del club en este torneo, se usa esa inscripción de prueba.
-          return clubRegistrations.length === 1 ? clubRegistrations[0] : null;
-        };
-        const localRegistration = chooseRegistration(localRegistrations);
-        const visitorRegistration = chooseRegistration(visitorRegistrations);
-        const localClub = { name: localName, headquarters_address: findClubAddress(localName) };
-        const visitorClub = { name: visitorName, headquarters_address: findClubAddress(visitorName) };
-        if (!localRegistration || !visitorRegistration) {
-          throw new Error("No encontramos la inscripción de ambos clubes en la categoría " + (category || "del torneo") + ".");
-        }
-        const registrationIds = [localRegistration.id, visitorRegistration.id];
+        const localRegistration = matchingRegistrations.find((item) => item.club_id === localClub.id);
+        const visitorRegistration = matchingRegistrations.find((item) => item.club_id === visitorClub.id);
+        const registrationIds = [localRegistration?.id, visitorRegistration?.id].filter(Boolean);
         const { data: teams, error: teamsError } = await supabase
           .from("fefutin_teams")
           .select("id, club_tournament_id, status")
@@ -168,74 +128,73 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
 
         const officialById = new Map((officialPlayers || []).map((player) => [player.id, player]));
         const buildPlayers = (teamId, clubName) => (teamPlayers || [])
-          .filter((item) => item.team_id === teamId)
+          .filter((item) => item.team_id === teamId && item.registry_player_id && officialById.has(item.registry_player_id))
           .map((item) => {
-            const official = item.registry_player_id ? officialById.get(item.registry_player_id) : null;
+            const official = officialById.get(item.registry_player_id);
             return {
-              player_id: official?.id || item.id,
+              player_id: official.id,
               club: clubName,
-              nombre: official?.first_name || item.first_name || "",
-              apellido: official?.last_name || item.last_name || "",
-              carnet_number: official?.carnet_number || "",
-              dni: official?.dni || "",
+              nombre: official.first_name || item.first_name || "",
+              apellido: official.last_name || item.last_name || "",
+              carnet_number: official.carnet_number || "",
+              dni: official.dni || "",
               numero_camiseta: item.jersey_number === "" || item.jersey_number == null ? "" : Number(item.jersey_number),
               goles: 0,
               es_capitan: false,
               tarjetas_amarillas: 0,
               tarjetas_rojas: 0,
-              estado_habilitacion: official ? getPlayerStatus(official) : "PENDIENTE DE VERIFICACIÓN",
+              estado_habilitacion: getPlayerStatus(official),
               observaciones: "",
             };
           });
 
         let local = buildPlayers(localTeam.id, localName);
         let visitor = buildPlayers(visitorTeam.id, visitorName);
+        if (!local.length || !visitor.length) {
+          throw new Error("Las listas oficiales de ambos equipos deben tener jugadores vinculados a sus carnets para generar la planilla.");
+        }
 
-        {
-          const { data: existingSheet, error: sheetError } = await supabase
-            .from("fefutin_match_sheets")
+        const { data: existingSheet, error: sheetError } = await supabase
+          .from("fefutin_match_sheets")
+          .select("*")
+          .eq("tournament_id", tournament.id)
+          .eq("match_id", String(match.id))
+          .maybeSingle();
+        if (sheetError) throw sheetError;
+
+        if (existingSheet) {
+          setSheetId(existingSheet.id);
+          setMetadata({
+            jornada: existingSheet.jornada || String(match?.round || ""),
+            sede: existingSheet.sede || localClub.headquarters_address || "",
+            fecha_partido: existingSheet.fecha_partido || "",
+            arbitro_designado: assignedRefereeName || existingSheet.arbitro_designado || "",
+            observaciones: existingSheet.observaciones || "",
+          });
+          const { data: savedPlayers, error: savedPlayersError } = await supabase
+            .from("fefutin_match_sheet_players")
             .select("*")
-            .eq("tournament_id", tournament.id)
-            .eq("match_id", String(match.id))
-            .maybeSingle();
-          if (sheetError) throw sheetError;
-  
-          if (existingSheet) {
-            setSheetId(existingSheet.id);
-            setMetadata({
-              jornada: existingSheet.jornada || String(match?.round || ""),
-              sede: readOnly ? (localClub.headquarters_address || "") : (existingSheet.sede || localClub.headquarters_address || visitorClub.headquarters_address || ""),
-              fecha_partido: existingSheet.fecha_partido || "",
-              arbitro_designado: assignedRefereeName || existingSheet.arbitro_designado || "",
-              observaciones: existingSheet.observaciones || "",
-            });
-            const { data: savedPlayers, error: savedPlayersError } = await supabase
-              .from("fefutin_match_sheet_players")
-              .select("*")
-              .eq("match_sheet_id", existingSheet.id);
-            if (savedPlayersError) throw savedPlayersError;
-            const savedByPlayer = new Map((savedPlayers || []).map((item) => [item.player_id, item]));
-            const mergeSaved = (players) => players.map((player) => {
-              const saved = savedByPlayer.get(player.player_id);
-              return saved ? { ...player, ...saved, carnet_number: player.carnet_number, dni: player.dni } : player;
-            });
-            local = mergeSaved(local);
-            visitor = mergeSaved(visitor);
-          } else {
-            setMetadata((current) => ({
-              ...current,
-              sede: readOnly ? (localClub.headquarters_address || "") : (current.sede || localClub.headquarters_address || visitorClub.headquarters_address || ""),
-              arbitro_designado: assignedRefereeName || current.arbitro_designado || "",
-            }));
-          }
-  
-  
+            .eq("match_sheet_id", existingSheet.id);
+          if (savedPlayersError) throw savedPlayersError;
+          const savedByPlayer = new Map((savedPlayers || []).map((item) => [item.player_id, item]));
+          const mergeSaved = (players) => players.map((player) => {
+            const saved = savedByPlayer.get(player.player_id);
+            return saved ? { ...player, ...saved, carnet_number: player.carnet_number, dni: player.dni } : player;
+          });
+          local = mergeSaved(local);
+          visitor = mergeSaved(visitor);
+        } else {
+          setMetadata((current) => ({
+            ...current,
+            sede: current.sede || localClub.headquarters_address || "",
+            arbitro_designado: assignedRefereeName || current.arbitro_designado || "",
+          }));
         }
 
         if (!cancelled) {
           setLocalPlayers(local);
           setVisitorPlayers(visitor);
-          setMetadata((current) => ({ ...current, sede: readOnly ? (localClub.headquarters_address || "") : (current.sede || localClub.headquarters_address || visitorClub.headquarters_address || "") }));
+          setMetadata((current) => ({ ...current, sede: current.sede || localClub.headquarters_address || "" }));
         }
       } catch (err) {
         console.error("Error al generar la planilla:", err);
@@ -256,7 +215,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
   };
 
   const save = async () => {
-    if (!supabase || saving || readOnly || match?.referee_closed) return false;
+    if (!supabase || saving || match?.referee_closed) return false;
     setSaving(true);
     setError("");
     setNotice("");
@@ -348,15 +307,18 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     if (!player) return <><td></td><td></td><td></td><td></td><td></td></>;
     const statusColor = player.estado_habilitacion === "HABILITADO" ? "#166534" : player.estado_habilitacion === "NO HABILITADO" ? "#b91c1c" : "#92400e";
     return <>
-      <td className="fefutin-shirt-number">{readOnly ? <span className="fefutin-print-value"></span> : <input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" disabled={Boolean(match?.referee_closed)} />}</td>
+      <td className="fefutin-shirt-number"><input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" disabled={Boolean(match?.referee_closed)} /></td>
       <td className="fefutin-player-name">
         <strong>{player.apellido}, {player.nombre}</strong>
-        <small>{player.carnet_number || "Sin carnet"}{!readOnly && player.numero_camiseta ? " · Camiseta " + player.numero_camiseta : ""}</small>
-        {readOnly ? (player.es_capitan ? <small className="fefutin-print-captain">CAPITÁN</small> : null) : <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>}
+        <small>{player.carnet_number || "Sin carnet"} · Camiseta {player.numero_camiseta || "—"}</small>
+        <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>
       </td>
       <td className="fefutin-status" style={{ color:statusColor }}>{player.estado_habilitacion === "HABILITADO" ? "HABIL." : player.estado_habilitacion === "NO HABILITADO" ? "NO HABIL." : "PEND. VERIF."}</td>
-      <td className="fefutin-goals">{readOnly ? <span className="fefutin-print-value">{player.goles ?? ""}</span> : <input aria-label={"Goles " + player.nombre} type="number" min="0" value={player.goles ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} />}</td>
-      <td className="fefutin-cards">{readOnly ? <div className="fefutin-print-card-values"><span>A {player.tarjetas_amarillas || ""}</span><span>R {player.tarjetas_rojas || ""}</span></div> : <><label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" value={player.tarjetas_amarillas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label><label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" value={player.tarjetas_rojas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label></>}</td>
+      <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" value={player.goles ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
+      <td className="fefutin-cards">
+        <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" value={player.tarjetas_amarillas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
+        <label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" value={player.tarjetas_rojas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label>
+      </td>
     </>;
   };
   const rowCount = Math.max(localPlayers.length, visitorPlayers.length);
@@ -373,7 +335,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         .fefutin-sheet-title p{margin:3px 0;font-size:12px;color:#333!important}
         .fefutin-sheet-meta{display:grid;grid-template-columns:76px minmax(0,1.35fr) 135px minmax(0,1.35fr);gap:10px;margin:14px 0;align-items:end;width:100%;min-width:0}
         .fefutin-sheet-meta label{display:grid;grid-template-rows:auto 28px;gap:4px;font-size:10px;font-weight:700;text-transform:uppercase;color:#333!important;min-width:0;width:100%;overflow:hidden}
-        .fefutin-sheet-meta .fefutin-print-meta-value{display:flex;align-items:center;min-height:28px;padding:3px 6px;border:1px solid #999;border-radius:3px;font-size:11px;font-weight:500;text-transform:none;overflow-wrap:anywhere}.fefutin-print-value{display:inline-block;min-width:22px;min-height:18px;line-height:18px}.fefutin-print-captain{font-size:7px!important;font-weight:800}.fefutin-print-card-values{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:8px}.fefutin-print-observations{min-height:48px;padding:6px;border:1px solid #777;font-size:11px;font-weight:400;white-space:pre-wrap}.fefutin-sheet-meta input{display:block;box-sizing:border-box;width:100%!important;max-width:100%!important;min-width:0!important;height:28px!important;min-height:28px!important;max-height:28px!important;line-height:20px!important;border:1px solid #999!important;border-radius:3px!important;padding:3px 6px!important;background:#fff!important;color:#111!important;font-size:11px!important;box-shadow:none!important;margin:0!important}
+        .fefutin-sheet-meta input{display:block;box-sizing:border-box;width:100%!important;max-width:100%!important;min-width:0!important;height:28px!important;min-height:28px!important;max-height:28px!important;line-height:20px!important;border:1px solid #999!important;border-radius:3px!important;padding:3px 6px!important;background:#fff!important;color:#111!important;font-size:11px!important;box-shadow:none!important;margin:0!important}
 
         .fefutin-sheet-signatures{display:none;grid-template-columns:1fr 1fr;gap:24px;margin:8px 0 10px;align-items:end}
         .fefutin-sheet-signature{display:flex;flex-direction:column;gap:4px;text-align:center;font-size:9px;font-weight:800;text-transform:uppercase}
@@ -394,13 +356,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         .fefutin-cards label{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;margin:2px auto!important;font-size:8px!important;line-height:1!important;color:#111!important}
         .fefutin-shirt-number input,.fefutin-goals input,.fefutin-cards input{appearance:none!important;display:block!important;box-sizing:border-box!important;width:26px!important;max-width:calc(100% - 4px)!important;height:24px!important;min-height:24px!important;margin:2px auto!important;padding:2px!important;text-align:center!important;border:1px solid #999!important;border-radius:3px!important;background:#fff!important;color:#111!important;font-size:10px!important;box-shadow:none!important}
         .fefutin-sheet-table tbody tr{height:35px}
-        .fefutin-readonly-sheet .fefutin-sheet-table tbody tr{height:25px}
-        .fefutin-readonly-sheet .fefutin-sheet-table th,.fefutin-readonly-sheet .fefutin-sheet-table td{padding:2px 3px}
-        .fefutin-readonly-sheet .fefutin-player-name small{margin-top:1px}
         .fefutin-sheet-table tbody tr:nth-child(even) td{background:#f3f3f3!important}
-        .fefutin-final-result{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:8px;padding:8px 10px;border:1px solid #b5122a;border-radius:3px;text-align:center;font-size:12px;font-weight:900;text-transform:uppercase}
-        .fefutin-final-result strong{color:#b5122a!important;font-size:9px;letter-spacing:.08em}
-        .fefutin-final-result span{color:#111!important}
         .fefutin-observations{display:grid;gap:5px;margin-top:14px;font-size:10px;font-weight:700;color:#222!important}
         .fefutin-observations textarea{width:100%;border:1px solid #777!important;min-height:48px;padding:6px;background:#fff!important;color:#111!important;font-size:11px!important}
         .fefutin-sheet-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:16px;min-width:0}
@@ -489,8 +445,6 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           .fefutin-sheet-title h2{font-size:13px!important;margin:1px 0!important}
           .fefutin-sheet-title p{font-size:8px!important;margin:0!important}
           .fefutin-sheet-meta{margin:3px 0!important;gap:5px!important}
-          .fefutin-final-result{margin-top:4px!important;padding:4px 8px!important;font-size:10px!important;break-inside:avoid!important}
-          .fefutin-final-result strong{font-size:7px!important}
           .fefutin-sheet-signatures{display:grid!important;margin:4px 0 6px!important;gap:24px!important}
           .fefutin-sheet-signature{font-size:7px!important;gap:2px!important}
           .fefutin-sheet-signature .line{height:16px!important}
@@ -523,7 +477,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           .fefutin-print-sheet .fefutin-sheet-table,.fefutin-print-sheet .fefutin-sheet-table-wrap,.fefutin-print-sheet .fefutin-observations{break-inside:avoid!important;page-break-inside:avoid!important}
         }
       `}</style>
-      <div className={"fefutin-print-sheet" + (readOnly ? " fefutin-readonly-sheet" : "")}>
+      <div className="fefutin-print-sheet">
         <div className="fefutin-sheet-title">
           <div className="brand">FEFUTIN · PLANILLA OFICIAL</div>
           <h2>{localName} vs. {visitorName}</h2>
@@ -536,7 +490,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
             {[
               ["jornada","Jornada"],["sede","Sede / cancha"],["fecha_partido","Fecha del partido"],["arbitro_designado","Árbitro designado"],
             ].map(([field,label]) => <label key={field}>{label}
-              {readOnly ? <span className="fefutin-print-meta-value">{metadata[field] || "—"}</span> : <input type={field==="fecha_partido"?"date":"text"} value={metadata[field]} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,[field]:event.target.value}))}/>}
+              <input type={field==="fecha_partido"?"date":"text"} value={metadata[field]} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,[field]:event.target.value}))}/>
             </label>)}
           </div>
           <div className="fefutin-sheet-signatures">
@@ -564,20 +518,14 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
               </tr>)}</tbody>
             </table>
           </div>
-          {readOnly && (
-            <div className="fefutin-final-result">
-              <strong>RESULTADO FINAL</strong>
-              <span>{localName.toLocaleUpperCase("es")} {match?.score1 ?? (match?.referee_closed ? localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0) : "—")} – {match?.score2 ?? (match?.referee_closed ? visitorPlayers.reduce((total, player) => total + Number(player.goles || 0), 0) : "—")} {visitorName.toLocaleUpperCase("es")}</span>
-            </div>
-          )}
-          <div className="fefutin-observations">OBSERVACIONES
-            {readOnly ? <div className="fefutin-print-observations">{metadata.observaciones || " "}</div> : <textarea value={metadata.observaciones} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>}
-          </div>
+          <label className="fefutin-observations">OBSERVACIONES
+            <textarea value={metadata.observaciones} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>
+          </label>
           {notice&&<p className="fefutin-no-print" style={{color:"#166534",fontWeight:700}}>{notice}</p>}
           {error&&<p className="fefutin-no-print" style={{color:"#b91c1c"}}>{error}</p>}
           <div className="fefutin-sheet-actions fefutin-no-print">
             <button type="button" onClick={onClose}>Cerrar</button>
-            {!readOnly && !match?.referee_closed && <button type="button" onClick={save} disabled={saving || closingMatch} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>{saving?"Guardando...":"GUARDAR PLANILLA"}</button>}
+            {!match?.referee_closed && <button type="button" onClick={save} disabled={saving || closingMatch} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>{saving?"Guardando...":"GUARDAR PLANILLA"}</button>}
             {isReferee && !match?.referee_closed && <button type="button" onClick={closeMatch} disabled={saving || closingMatch} style={{background:"#166534",color:"#fff",borderColor:"#166534"}}>{closingMatch?"CERRANDO...":"CERRAR PARTIDO"}</button>}
             {match?.referee_closed && <strong style={{color:"#166534",alignSelf:"center"}}>✓ PARTIDO CERRADO · SOLO LECTURA</strong>}
             <button type="button" onClick={()=>window.print()} style={{background:"#222",color:"#fff"}}>IMPRIMIR / GUARDAR PDF</button>
@@ -587,4 +535,3 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     </div>
   );
 }
-
