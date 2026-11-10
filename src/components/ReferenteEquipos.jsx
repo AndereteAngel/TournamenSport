@@ -329,8 +329,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 <PlayerCarnets currentUser={currentUser} canManage={isManager} clubId={activeClubId} embedded />
               </div>
             ) : mode === "equipos" && selectedSection === "datos" ? (
-              <div style={{ display: "grid", gap: "1.1rem", marginTop: "1.25rem" }}>
-                <section style={{ border: "1px solid #b5122a", borderRadius: "12px", background: "#111", padding: "1rem" }}>
+              <div style={{ display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gap: "1.1rem", marginTop: "1.25rem" }}>
+                <section style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", border: "1px solid #b5122a", borderRadius: "12px", background: "#111", padding: "1rem" }}>
                   <p style={{ color: "#b5122a", fontSize: ".7rem", fontWeight: 900, letterSpacing: ".1em", margin: "0 0 .8rem" }}>DATOS INSTITUCIONALES Y DE CONTACTO</p>
                   <h3 style={{ color: "#fff", margin: "0 0 1rem", overflowWrap: "anywhere" }}>{club?.club_name}</h3>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: ".9rem" }}>
@@ -359,7 +359,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 )}
 
                 {(mode === "torneos" || selectedSection === "torneos" || selectedSection === "listas") && (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: ".7rem", padding: ".85rem", marginTop: "1rem", border: "1px solid #444", borderRadius: "10px", background: "#171717" }}>
+                  <div style={{ display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: ".7rem", padding: ".85rem", marginTop: "1rem", border: "1px solid #444", borderRadius: "10px", background: "#171717" }}>
                     {(mode === "torneos" || selectedSection === "torneos") ? (
                       <>
                         <label style={filterLabelStyle}>Buscar torneo
@@ -398,7 +398,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </div>
                 )}
 
-                <div style={{ display: "grid", gap: "1rem", marginTop: "1rem" }}>
+                <div style={{ display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gap: "1rem", marginTop: "1rem" }}>
               {filteredParticipations.map((item) => {
                 const allPlayers = rowsByParticipation[item.club_tournament_id] || [];
                 const players = selectedSection === "listas" ? filteredPlayersFor(item) : allPlayers;
