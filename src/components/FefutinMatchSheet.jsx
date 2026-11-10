@@ -252,7 +252,12 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         es_capitan: Boolean(player.es_capitan),
         tarjetas_amarillas: Number(player.tarjetas_amarillas || 0),
         tarjetas_rojas: Number(player.tarjetas_rojas || 0),
-        estado_habilitacion: player.estado_habilitacion,
+        estado_habilitacion: (() => {
+          const status = normalize(player.estado_habilitacion);
+          if (status === "habilitado") return "habilitado";
+          if (status === "no habilitado" || status === "no_habilitado") return "no_habilitado";
+          return "pendiente";
+        })(),
         observaciones: player.observaciones || null,
       }));
 
