@@ -322,11 +322,13 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     </>;
   };
   const rowCount = Math.max(localPlayers.length, visitorPlayers.length);
+  const finalScoreLocal = localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
+  const finalScoreVisitor = visitorPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Planilla oficial de partido" className="fefutin-sheet-overlay">
       <style>{`
-        .fefutin-sheet-overlay{position:fixed;inset:0;z-index:10000;overflow:auto;padding:18px;background:rgba(0,0,0,.86)}
+        .fefutin-sheet-overlay{position:fixed;inset:0;z-index:10000;overflow:auto;padding:0;background:rgba(0,0,0,.86)}
         .fefutin-print-sheet{width:100%;max-width:1500px;margin:0 auto;padding:24px;box-sizing:border-box;background:#fff!important;color:#111!important;border-radius:4px;box-shadow:0 8px 35px #0008;font-family:Arial,sans-serif}
         .fefutin-print-sheet *{box-sizing:border-box;color:#111}
         .fefutin-sheet-title{text-align:center;border-bottom:3px solid #b5122a;padding-bottom:12px;margin-bottom:14px}
@@ -353,13 +355,13 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         .fefutin-captain input{appearance:auto!important;width:11px!important;height:11px!important;min-height:11px!important;margin:0!important;padding:0!important;accent-color:#b5122a}
         .fefutin-sheet-table .fefutin-status{ text-align:center;font-size:7px!important;line-height:1.2;font-weight:900;color:#111!important;overflow-wrap:anywhere}
         .fefutin-goals,.fefutin-cards{text-align:center;vertical-align:middle}
-        .fefutin-cards label{display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:2px!important;margin:2px auto!important;font-size:8px!important;line-height:1!important;color:#111!important}
+        .fefutin-cards label{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:3px!important;margin:0 2px!important;font-size:8px!important;line-height:1!important;color:#111!important}.fefutin-cards{white-space:nowrap}.fefutin-cards input{width:22px!important;height:20px!important;min-height:20px!important;margin:0!important}
         .fefutin-shirt-number input,.fefutin-goals input,.fefutin-cards input{appearance:none!important;display:block!important;box-sizing:border-box!important;width:26px!important;max-width:calc(100% - 4px)!important;height:24px!important;min-height:24px!important;margin:2px auto!important;padding:2px!important;text-align:center!important;border:1px solid #999!important;border-radius:3px!important;background:#fff!important;color:#111!important;font-size:10px!important;box-shadow:none!important}
-        .fefutin-sheet-table tbody tr{height:35px}
+        .fefutin-sheet-table tbody tr{height:29px}
         .fefutin-sheet-table tbody tr:nth-child(even) td{background:#f3f3f3!important}
         .fefutin-observations{display:grid;gap:5px;margin-top:14px;font-size:10px;font-weight:700;color:#222!important}
         .fefutin-observations textarea{width:100%;border:1px solid #777!important;min-height:48px;padding:6px;background:#fff!important;color:#111!important;font-size:11px!important}
-        .fefutin-sheet-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:16px;min-width:0}
+        .fefutin-sheet-result{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin:10px 0 4px;padding:9px 12px;border:2px solid #b5122a;border-radius:4px;text-align:center;font-size:13px;font-weight:900;text-transform:uppercase}.fefutin-sheet-result .score{font-size:20px;white-space:nowrap}.fefutin-sheet-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:16px;min-width:0}
         .fefutin-sheet-actions button{display:flex;align-items:center;justify-content:center;flex:1 1 145px;min-width:0;max-width:100%;min-height:42px;padding:9px 10px;border-radius:5px;border:1px solid #333;cursor:pointer;font-weight:800;line-height:1.2;text-align:center;white-space:normal;overflow-wrap:anywhere;word-break:normal}
         @media(max-width:700px){.fefutin-sheet-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.fefutin-sheet-actions button{width:100%;min-width:0;padding:9px 6px;font-size:12px}.fefutin-sheet-actions strong{grid-column:1/-1;text-align:center}}
         @page{size:A4 landscape;margin:4mm 6mm}
@@ -471,7 +473,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           .fefutin-print-sheet .fefutin-sheet-table .fefutin-player-name strong{font-size:7px!important;line-height:1.05!important}
           .fefutin-print-sheet .fefutin-sheet-table .fefutin-player-name small{font-size:6px!important;margin-top:1px!important}
           .fefutin-print-sheet .fefutin-sheet-table .fefutin-status{font-size:6px!important;line-height:1!important}
-          .fefutin-print-sheet .fefutin-cards label{gap:0!important;margin:0!important;font-size:6px!important;line-height:1!important}
+          .fefutin-print-sheet .fefutin-cards label{flex-direction:row!important;gap:2px!important;margin:0 1px!important;font-size:6px!important;line-height:1!important}.fefutin-print-sheet .fefutin-cards input{width:20px!important;height:14px!important;min-height:14px!important;margin:0!important}
           .fefutin-print-sheet .fefutin-observations{margin-top:4px!important;gap:2px!important;font-size:8px!important}
           .fefutin-print-sheet .fefutin-observations textarea{height:20px!important;min-height:20px!important;padding:0!important}
           .fefutin-print-sheet .fefutin-sheet-table,.fefutin-print-sheet .fefutin-sheet-table-wrap,.fefutin-print-sheet .fefutin-observations{break-inside:avoid!important;page-break-inside:avoid!important}
@@ -517,6 +519,12 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
                 {renderPlayerCell(localPlayers[index],"local")}{renderPlayerCell(visitorPlayers[index],"visitante")}
               </tr>)}</tbody>
             </table>
+          </div>
+          <div className="fefutin-sheet-result" aria-live="polite">
+            <span>RESULTADO FINAL</span>
+            <span>{localName}</span>
+            <span className="score">{finalScoreLocal} – {finalScoreVisitor}</span>
+            <span>{visitorName}</span>
           </div>
           <label className="fefutin-observations">OBSERVACIONES
             <textarea value={metadata.observaciones} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>
