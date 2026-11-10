@@ -59,16 +59,21 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
 
         let assignedRefereeName = "";
         if (match?.referee_id) {
-          const [
-            { data: refereeProfile, error: refereeProfileError },
-            { data: refereeCarnets, error: refereeCarnetsError },
-          ] = await Promise.all([
-            supabase.from("profiles").select("id, username").eq("id", match.referee_id).maybeSingle(),
-            supabase.rpc("get_fefutin_referee_carnets"),
-          ]);
+          const { data: refereeProfile, error: refereeProfileError } = await supabase
+            .from("profiles")
+            .select("id, username")
+            .eq("id", match.referee_id)
+            .maybeSingle();
           if (refereeProfileError) throw refereeProfileError;
-          if (refereeCarnetsError) throw refereeCarnetsError;
-          const refereeCarnet = (refereeCarnets || []).find((item) => item.id === match.referee_id);
+
+          // El referente solo necesita identificar al árbitro en la planilla.
+          // No debe consultar el registro privado de carnets de árbitros.
+          let refereeCarnet = null;
+          if (!readOnly) {
+            const { data: refereeCarnets, error: refereeCarnetsError } = await supabase.rpc("get_fefutin_referee_carnets");
+            if (refereeCarnetsError) throw refereeCarnetsError;
+            refereeCarnet = (refereeCarnets || []).find((item) => item.id === match.referee_id);
+          }
           assignedRefereeName = [refereeCarnet?.first_name, refereeCarnet?.last_name].filter(Boolean).join(" ").trim()
             || refereeProfile?.username
             || "";
