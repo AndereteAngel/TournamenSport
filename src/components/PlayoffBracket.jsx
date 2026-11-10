@@ -284,7 +284,7 @@ export function PlayoffBracket({
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "0.4rem", width: "38%", minWidth: 0 }}>
-                      {getClubLogo(match.team1) ? <img src={getClubLogo(match.team1)} alt={`Escudo de ${match.team1}`} style={{ width: "38px", height: "38px", objectFit: "contain", borderRadius: "5px", background: "#fff", padding: "2px", boxSizing: "border-box", flexShrink: 0 }} /> : null}
+                      {getClubLogo(match.team1) ? <img src={getClubLogo(match.team1)} alt={`Escudo de ${match.team1}`} style={{ width: "38px", height: "38px", objectFit: "contain", borderRadius: "5px", flexShrink: 0 }} /> : null}
                       <span style={{ minWidth: 0, fontSize: "0.8rem", fontWeight: "bold", textAlign: "left", overflowWrap: "anywhere", color: match.winner === match.team1 ? "#4ade80" : "#fff" }}>
                         {match.winner === match.team1 && <><TCIcon name="crown" size={13} /> </>}{match.team1}
                       </span>
@@ -316,7 +316,7 @@ export function PlayoffBracket({
                       <span style={{ minWidth: 0, fontSize: "0.8rem", fontWeight: "bold", textAlign: "right", overflowWrap: "anywhere", color: match.winner === match.team2 ? "#4ade80" : "#fff" }}>
                         {match.team2}{match.winner === match.team2 && <> <TCIcon name="crown" size={14} /></>}
                       </span>
-                      {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "38px", height: "38px", objectFit: "contain", borderRadius: "5px", background: "#fff", padding: "2px", boxSizing: "border-box", flexShrink: 0 }} /> : null}
+                      {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "38px", height: "38px", objectFit: "contain", borderRadius: "5px", flexShrink: 0 }} /> : null}
                     </div>
                   </div>
                 </div>
