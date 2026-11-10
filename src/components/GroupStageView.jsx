@@ -821,7 +821,6 @@ export function GroupStageView({
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedPrintMatch(null);
                     setSelectedSheetMatch(match);
                   }}
                   style={{
