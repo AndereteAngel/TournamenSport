@@ -390,7 +390,7 @@ export function PlayoffBracket({
       {selectedPrintableMatch && (
         <FefutinPrintableMatchSheet tournament={tournament} match={selectedPrintableMatch} onClose={() => setSelectedPrintableMatch(null)} />
       )}
-      {selectedSheetMatch && (
+      {!isReferente && selectedSheetMatch && (
         <FefutinMatchSheet
           tournament={tournament}
           match={selectedSheetMatch}
