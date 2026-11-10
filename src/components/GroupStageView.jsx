@@ -10,6 +10,7 @@ export function GroupStageView({
   currentUser,
   isAdmin = false,
   isReferee = false,
+  isReferente = false,
   onCloseMatch,
   openAssignedMatch = null,
   onAssignedMatchOpened,
@@ -794,7 +795,7 @@ export function GroupStageView({
                 </span>
                 {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "32px", height: "32px", objectFit: "contain", borderRadius: "6px", flexShrink: 0 }} /> : null}
               </div>
-              {(isAdmin || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && (
+              {(isAdmin || isReferente || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && (
                 <button
                   type="button"
                   onClick={() => setSelectedSheetMatch(match)}
@@ -838,6 +839,7 @@ export function GroupStageView({
           tournament={tournament}
           match={selectedSheetMatch}
           isReferee={isReferee}
+          readOnly={isReferente}
           onCloseMatch={async ({ score1, score2 }) => {
             const closed = await onCloseMatch?.({
               phase: "groups",
