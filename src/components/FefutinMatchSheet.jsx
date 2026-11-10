@@ -79,43 +79,36 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
             || "";
         }
 
-        const { data: registrations, error: registrationsError } = await supabase
-          .from("fefutin_club_tournaments")
-          .select("id, category_label, club_id")
-          .eq("tournament_id", tournament.id);
-        if (registrationsError) throw registrationsError;
+        // Los referentes no tienen SELECT directo sobre las inscripciones de otros clubes
+        // por RLS. Esta función pública devuelve los clubes habilitados del torneo.
+        const { data: publicRegistrations, error: publicRegistrationsError } = await supabase
+          .rpc("get_fefutin_tournament_clubs", { p_tournament_id: tournament.id });
+        if (publicRegistrationsError) throw publicRegistrationsError;
 
-        // El año (por ejemplo, 2018) forma parte de la descripción del torneo,
-        // pero category_label puede guardar solamente la categoría base ("Infantil").
         const categoryBase = String(category || "").split("·")[0].trim();
-        const allRegistrations = registrations || [];
-        const clubIds = [...new Set(allRegistrations.map((item) => item.club_id).filter(Boolean))];
-        const { data: clubs, error: clubsError } = clubIds.length
-          ? await supabase.from("fefutin_clubs").select("id, name, headquarters_address, court_type").in("id", clubIds)
-          : { data: [], error: null };
-        if (clubsError) throw clubsError;
-
-        const localClub = (clubs || []).find((club) => normalize(club.name) === normalize(localName));
-        const visitorClub = (clubs || []).find((club) => normalize(club.name) === normalize(visitorName));
-        if (!localClub || !visitorClub) {
-          throw new Error("No encontramos la inscripción de ambos clubes en el torneo. Revisá que los nombres del fixture coincidan con los nombres institucionales.");
+        const allRegistrations = (publicRegistrations || []).map((item) => ({
+          id: item.club_tournament_id,
+          club_name: item.club_name,
+          category_label: item.category_label,
+        }));
+        const localRegistrations = allRegistrations.filter((item) => normalize(item.club_name) === normalize(localName));
+        const visitorRegistrations = allRegistrations.filter((item) => normalize(item.club_name) === normalize(visitorName));
+        if (!localRegistrations.length || !visitorRegistrations.length) {
+          throw new Error("No encontramos a ambos clubes entre las inscripciones habilitadas de este torneo. Verificá que estén aprobados y que sus nombres coincidan con el fixture.");
         }
 
-        const categoryRegistrations = allRegistrations.filter((item) => {
-          const savedCategory = normalize(String(item.category_label || "").split("·")[0].trim());
-          return savedCategory === normalize(categoryBase);
-        });
-        const registrationsForClub = (clubId) => allRegistrations.filter((item) => item.club_id === clubId);
-        const chooseRegistration = (clubId) => {
-          const categoryMatch = categoryRegistrations.find((item) => item.club_id === clubId);
+        const categoryMatches = (item) =>
+          normalize(String(item.category_label || "").split("·")[0].trim()) === normalize(categoryBase);
+        const chooseRegistration = (clubRegistrations) => {
+          const categoryMatch = clubRegistrations.find(categoryMatches);
           if (categoryMatch) return categoryMatch;
-          // En torneos de prueba con una sola inscripción por club, no descartarla
-          // por una diferencia de formato entre categoría y año.
-          const clubRegistrations = registrationsForClub(clubId);
+          // Si hay una sola inscripción del club en este torneo, se usa esa inscripción de prueba.
           return clubRegistrations.length === 1 ? clubRegistrations[0] : null;
         };
-        const localRegistration = chooseRegistration(localClub.id);
-        const visitorRegistration = chooseRegistration(visitorClub.id);
+        const localRegistration = chooseRegistration(localRegistrations);
+        const visitorRegistration = chooseRegistration(visitorRegistrations);
+        const localClub = { name: localName, headquarters_address: "" };
+        const visitorClub = { name: visitorName, headquarters_address: "" };
         if (!localRegistration || !visitorRegistration) {
           throw new Error("No encontramos la inscripción de ambos clubes en la categoría " + (category || "del torneo") + ".");
         }
