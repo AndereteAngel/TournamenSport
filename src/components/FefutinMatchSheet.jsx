@@ -307,7 +307,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     if (!player) return <><td></td><td></td><td></td><td></td><td></td></>;
     const statusColor = player.estado_habilitacion === "HABILITADO" ? "#166534" : player.estado_habilitacion === "NO HABILITADO" ? "#b91c1c" : "#92400e";
     return <>
-      <td className="fefutin-shirt-number"><input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" /></td>
+      <td className="fefutin-shirt-number"><input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" disabled={Boolean(match?.referee_closed)} /></td>
       <td className="fefutin-player-name">
         <strong>{player.apellido}, {player.nombre}</strong>
         <small>{player.carnet_number || "Sin carnet"} · Camiseta {player.numero_camiseta || "—"}</small>
