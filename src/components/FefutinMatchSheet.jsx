@@ -589,3 +589,17 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     </div>
   );
 }
+
+// Entrada exclusiva para referentes: fuerza siempre la vista imprimible.
+export function FefutinPrintableMatchSheet({ tournament, match, onClose }) {
+  return (
+    <FefutinMatchSheet
+      tournament={tournament}
+      match={match}
+      onClose={onClose}
+      readOnly={true}
+      printOnly={true}
+      isReferee={false}
+    />
+  );
+}
