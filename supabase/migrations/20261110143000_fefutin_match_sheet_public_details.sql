@@ -1,7 +1,11 @@
 -- FEFUTIN: datos institucionales y nombre del arbitro para la planilla imprimible.
 begin;
 
-create or replace function public.get_fefutin_match_sheet_club_addresses(p_tournament_id uuid)
+create or replace function public.get_fefutin_match_sheet_club_addresses(
+  p_tournament_id uuid,
+  p_local_club_name text,
+  p_visitor_club_name text
+)
 returns table (
   club_name text,
   headquarters_address text,
@@ -20,11 +24,15 @@ as $$
   join public.fefutin_clubs c on c.id = ct.club_id
   where ct.tournament_id = p_tournament_id
     and c.is_active = true
+    and (
+      lower(trim(c.name)) = lower(trim(p_local_club_name))
+      or lower(trim(c.name)) = lower(trim(p_visitor_club_name))
+    )
   order by c.name, ct.category_label;
 $$;
 
-revoke all on function public.get_fefutin_match_sheet_club_addresses(uuid) from public;
-grant execute on function public.get_fefutin_match_sheet_club_addresses(uuid) to anon, authenticated;
+revoke all on function public.get_fefutin_match_sheet_club_addresses(uuid, text, text) from public;
+grant execute on function public.get_fefutin_match_sheet_club_addresses(uuid, text, text) to anon, authenticated;
 
 create or replace function public.get_fefutin_match_sheet_referee_name(
   p_tournament_id uuid,
