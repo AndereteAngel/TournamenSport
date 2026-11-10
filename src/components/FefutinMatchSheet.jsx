@@ -24,7 +24,7 @@ const getPlayerStatus = (player) => {
   return "PENDIENTE DE VERIFICACIÓN";
 };
 
-export function FefutinMatchSheet({ tournament, match, onClose, isReferee = false, readOnly = false, printOnly = false, onCloseMatch }) {
+export function FefutinMatchSheet({ tournament, match, onClose, isReferee = false, readOnly = false, onCloseMatch }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [closingMatch, setClosingMatch] = useState(false);
@@ -58,7 +58,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         }
 
         let assignedRefereeName = "";
-        if (match?.referee_id && !printOnly) {
+        if (match?.referee_id) {
           const [
             { data: refereeProfile, error: refereeProfileError },
             { data: refereeCarnets, error: refereeCarnetsError },
@@ -151,7 +151,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         let local = buildPlayers(localTeam.id, localName);
         let visitor = buildPlayers(visitorTeam.id, visitorName);
 
-        if (!printOnly) {
+        {
           const { data: existingSheet, error: sheetError } = await supabase
             .from("fefutin_match_sheets")
             .select("*")
@@ -206,7 +206,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     };
     loadSheet();
     return () => { cancelled = true; };
-  }, [tournament?.id, match?.id, category, localName, visitorName, printOnly]);
+  }, [tournament?.id, match?.id, category, localName, visitorName]);
 
   const updatePlayer = (side, playerId, field, value) => {
     const setter = side === "local" ? setLocalPlayers : setVisitorPlayers;
@@ -322,60 +322,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
       </td>
     </>;
   };
-  const rowCount = printOnly ? Math.max(15, localPlayers.length, visitorPlayers.length) : Math.max(localPlayers.length, visitorPlayers.length);
-
-  if (printOnly) {
-    return (
-      <div role="dialog" aria-modal="true" aria-label="Planilla oficial para imprimir" className="fefutin-sheet-overlay">
-        <style>{".fefutin-sheet-overlay{position:fixed;inset:0;z-index:10000;overflow:auto;padding:16px;background:rgba(0,0,0,.88)}.fefutin-print-sheet{max-width:1500px;margin:0 auto;padding:20px;background:#fff;color:#111;font-family:Arial,sans-serif}.fefutin-print-sheet *{box-sizing:border-box;color:#111}.fefutin-sheet-title{text-align:center;border-bottom:3px solid #b5122a;padding-bottom:10px;margin-bottom:12px}.fefutin-sheet-title .brand{color:#b5122a;font-weight:900;letter-spacing:2px;font-size:12px}.fefutin-sheet-title h2{margin:5px 0;font-size:22px;text-transform:uppercase}.fefutin-sheet-title p{margin:3px;font-size:11px}.fefutin-sheet-meta{display:grid;grid-template-columns:70px 1.3fr 130px 1.3fr;gap:8px;margin:12px 0}.fefutin-sheet-meta label{font-size:9px;font-weight:800;text-transform:uppercase}.fefutin-sheet-meta input{display:block;width:100%;height:25px;border:0;border-bottom:1px solid #777;background:#fff;color:#111;font-size:10px}.fefutin-sheet-table-wrap{width:100%}.fefutin-sheet-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8px}.fefutin-sheet-table th,.fefutin-sheet-table td{border:1px solid #777;padding:4px 3px;color:#111}.fefutin-sheet-table thead th{background:#292929;color:#fff;text-align:center;font-weight:800}.fefutin-sheet-table thead .team-local{background:#b5122a;color:#fff}.fefutin-sheet-table thead .team-visitor{background:#343a40;color:#fff}.fefutin-sheet-table col:nth-child(1),.fefutin-sheet-table col:nth-child(6){width:4%}.fefutin-sheet-table col:nth-child(2),.fefutin-sheet-table col:nth-child(7){width:22%}.fefutin-sheet-table col:nth-child(3),.fefutin-sheet-table col:nth-child(4),.fefutin-sheet-table col:nth-child(5),.fefutin-sheet-table col:nth-child(8),.fefutin-sheet-table col:nth-child(9),.fefutin-sheet-table col:nth-child(10){width:8%}.fefutin-sheet-table tbody tr{height:29px}.fefutin-sheet-table .fefutin-shirt-number input,.fefutin-sheet-table .fefutin-goals input,.fefutin-sheet-table .fefutin-cards input{display:none}.fefutin-sheet-table .fefutin-player-name strong{font-size:8px}.fefutin-sheet-table .fefutin-player-name small{display:block;font-size:6px}.fefutin-sheet-table .fefutin-captain{display:none}.fefutin-sheet-table .fefutin-status{text-align:center;font-size:7px;font-weight:800}.fefutin-sheet-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}.fefutin-sheet-actions button{padding:10px 16px;border-radius:5px;border:1px solid #333;font-weight:800;cursor:pointer}.fefutin-print-actions{display:flex;justify-content:flex-end;gap:10px;margin:14px auto;max-width:1500px}.fefutin-print-actions button{padding:11px 18px;border:1px solid #b5122a;border-radius:6px;background:#b5122a;color:#fff;font-weight:900}.fefutin-print-actions button.secondary{background:#222;border-color:#222}@page{size:A4 landscape;margin:7mm}@media print{html,body{background:#fff!important;margin:0!important;padding:0!important}body *{visibility:hidden!important}.fefutin-print-sheet,.fefutin-print-sheet *{visibility:visible!important}.fefutin-sheet-overlay{position:absolute!important;inset:0!important;padding:0!important;overflow:visible!important;background:#fff!important}.fefutin-print-sheet{position:relative!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important}.fefutin-print-actions{display:none!important}.fefutin-sheet-title{padding-bottom:5px!important;margin-bottom:6px!important}.fefutin-sheet-title h2{font-size:15px!important}.fefutin-sheet-meta{margin:6px 0!important}.fefutin-sheet-table th,.fefutin-sheet-table td{padding:2px!important}.fefutin-sheet-table tbody tr{height:23px!important;break-inside:avoid}.fefutin-sheet-table .fefutin-status{font-size:6px!important}}@media(max-width:700px){.fefutin-print-sheet{padding:10px;overflow-x:auto}.fefutin-sheet-meta{grid-template-columns:70px 1fr}.fefutin-sheet-table{min-width:680px}.fefutin-print-actions{position:sticky;bottom:0;background:#111;padding:8px}} "}</style>
-        <div className="fefutin-print-sheet">
-          <div className="fefutin-sheet-title">
-            <div className="brand">FEFUTIN · PLANILLA OFICIAL</div>
-            <h2>{localName} vs. {visitorName}</h2>
-            <p>{category || "Categoría sin especificar"} · {metadata.jornada ? "Fecha " + metadata.jornada : "Jornada sin asignar"}</p>
-          </div>
-          {loading ? <p>Cargando listas oficiales de ambos clubes...</p> : error ? (
-            <div style={{ padding: 12, border: "1px solid #b5122a", color: "#b91c1c" }}>{error}</div>
-          ) : (
-            <>
-              <div className="fefutin-sheet-meta">
-                <label>Jornada<input value={metadata.jornada} readOnly /></label>
-                <label>Sede / cancha<input value={metadata.sede} readOnly /></label>
-                <label>Fecha del partido<input value={metadata.fecha_partido} readOnly /></label>
-                <label>Árbitro designado<input value={metadata.arbitro_designado} readOnly /></label>
-              </div>
-              <div className="fefutin-sheet-table-wrap">
-                <table className="fefutin-sheet-table">
-                  <colgroup>
-                    <col /><col /><col /><col /><col />
-                    <col /><col /><col /><col /><col />
-                  </colgroup>
-                  <thead>
-                    <tr><th className="team-local" colSpan={5}>EQUIPO LOCAL · {localName}</th><th className="team-visitor" colSpan={5}>EQUIPO VISITANTE · {visitorName}</th></tr>
-                    <tr><th>N°</th><th>JUGADOR</th><th>EST.</th><th>GOLES</th><th>TARJETAS</th><th>N°</th><th>JUGADOR</th><th>EST.</th><th>GOLES</th><th>TARJETAS</th></tr>
-                  </thead>
-                  <tbody>
-                    {Array.from({ length: rowCount }, (_, index) => (
-                      <tr key={index}>{renderPlayerCell(localPlayers[index], "local")}{renderPlayerCell(visitorPlayers[index], "visitante")}</tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div style={{ marginTop: 12, fontSize: 9, fontWeight: 800 }}>OBSERVACIONES</div>
-              <div style={{ minHeight: 35, border: "1px solid #777", marginTop: 4, padding: 5, fontSize: 9 }}>{metadata.observaciones}</div>
-            </>
-          )}
-        </div>
-        {!loading && !error && (
-          <div className="fefutin-print-actions">
-            <button type="button" onClick={() => window.print()}>IMPRIMIR / GUARDAR PDF</button>
-            <button type="button" className="secondary" onClick={onClose}>CERRAR</button>
-          </div>
-        )}
-        {(loading || error) && <div className="fefutin-print-actions"><button type="button" className="secondary" onClick={onClose}>CERRAR</button></div>}
-      </div>
-    );
-  }
+  const rowCount = Math.max(localPlayers.length, visitorPlayers.length);
 
   return (
     <div role="dialog" aria-modal="true" aria-label="Planilla oficial de partido" className="fefutin-sheet-overlay">
@@ -590,16 +537,3 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
   );
 }
 
-// Entrada exclusiva para referentes: fuerza siempre la vista imprimible.
-export function FefutinPrintableMatchSheet({ tournament, match, onClose }) {
-  return (
-    <FefutinMatchSheet
-      tournament={tournament}
-      match={match}
-      onClose={onClose}
-      readOnly={true}
-      printOnly={true}
-      isReferee={false}
-    />
-  );
-}
