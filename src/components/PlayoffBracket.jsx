@@ -8,7 +8,7 @@ export function PlayoffBracket({
   onFinishTournament,
   isAdmin = false,
   isReferee = false,
-  onUpdateMatchResult,
+  currentUser,
   onCloseMatch,
   clubLogos = [],
 }) {
@@ -19,7 +19,6 @@ export function PlayoffBracket({
     return clubLogos.find((club) => normalize(club.name) === normalize(teamName))?.url || "";
   };
   const isFinalized = String(tournament.status || "").trim().toLocaleLowerCase("es") === "finalizado";
-  const canEditResults = (isAdmin || isReferee) && !isFinalized;
   const canEditFixtureScores = isAdmin && !isFinalized;
 
   const handleScoreChange = (roundIdx, matchId, field, value) => {
@@ -312,7 +311,7 @@ export function PlayoffBracket({
                       {getClubLogo(match.team2) ? <img src={getClubLogo(match.team2)} alt={`Escudo de ${match.team2}`} style={{ width: "30px", height: "30px", objectFit: "contain", borderRadius: "5px", flexShrink: 0 }} /> : null}
                     </div>
                   </div>
-                  {(isAdmin || isReferee) && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
+                  {(isAdmin || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && match.team1 !== "Pasaje Directo" && match.team2 !== "Pasaje Directo" && (
                     <button
                       type="button"
                       onClick={() => setSelectedSheetMatch({ ...match, round: String(rIdx + 1), roundIndex: rIdx })}
