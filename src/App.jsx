@@ -1980,7 +1980,7 @@ export function TournamenSportApp() {
     const [{ data: profile, error: profileError }, { data: accessRows, error: accessError }] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, username, email")
+        .select("id, username, email, club_id")
         .eq("id", authUser.id)
         .maybeSingle(),
       supabase.rpc("get_my_fefutin_access"),
@@ -2000,6 +2000,7 @@ export function TournamenSportApp() {
       id: authUser.id,
       username: profile.username || authUser.user_metadata?.username || "Jugador",
       email: authUser.email || profile.email || "",
+      clubId: profile.club_id || null,
       role: access.role || "visitante",
       requestedRole: access.requested_role || null,
       approvalStatus: access.approval_status || "aprobado",
@@ -4218,19 +4219,36 @@ export function TournamenSportApp() {
             </button>
           )}
 
-          {canAccessClubManagement && (
+          {(canAccessClubManagement || currentUser?.clubId) && (
             <section aria-label="Gestión de clubes" style={{ margin: "1.25rem 0", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: ".85rem" }}>
-              {[
-                { id: "referente-inscripcion", icon: "📝", title: "INSCRIPCIÓN", detail: "Inscribí tu club en las competencias" },
-                { id: "referente-equipos", icon: "⚽", title: isReferente ? "MI CLUB" : "FICHA DE EQUIPOS", detail: isReferente ? "Datos institucionales y carnets de jugadores" : "Club, equipos y jugadores" },
-                { id: "referente-torneos", icon: "🏆", title: "MIS TORNEOS", detail: "Acceso directo a las competencias de tu club" },
-              ].map((item) => (
-                <button key={item.id} type="button" onClick={() => setActiveView(item.id)} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
-                  <span style={{ fontSize: "1.6rem" }}>{item.icon}</span>
-                  <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>{item.title}</strong>
-                  <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>{item.detail}</span>
+              {currentUser?.clubId ? (
+                <div role="status" style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #238b57", borderRadius: "12px", color: "#fff" }}>
+                  <span style={{ fontSize: "1.6rem" }}>✓</span>
+                  <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>INSCRIPCIÓN</strong>
+                  <span style={{ color: "#86efac", fontSize: ".88rem", fontWeight: 800 }}>YA ESTÁS INSCRIPTO</span>
+                  <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>Recibimos la inscripción de tu club. Está pendiente de aprobación por administración o un directivo.</span>
+                </div>
+              ) : canAccessClubManagement ? (
+                <button type="button" onClick={() => setActiveView("referente-inscripcion")} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
+                  <span style={{ fontSize: "1.6rem" }}>📝</span>
+                  <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>INSCRIPCIÓN</strong>
+                  <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>Inscribí tu club en las competencias</span>
                 </button>
-              ))}
+              ) : null}
+              {canAccessClubManagement && (
+                <>
+                  <button type="button" onClick={() => setActiveView("referente-equipos")} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
+                    <span style={{ fontSize: "1.6rem" }}>⚽</span>
+                    <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>{isReferente ? "MI CLUB" : "FICHA DE EQUIPOS"}</strong>
+                    <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>{isReferente ? "Datos institucionales y carnets de jugadores" : "Club, equipos y jugadores"}</span>
+                  </button>
+                  <button type="button" onClick={() => setActiveView("referente-torneos")} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
+                    <span style={{ fontSize: "1.6rem" }}>🏆</span>
+                    <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>MIS TORNEOS</strong>
+                    <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>Acceso directo a las competencias de tu club</span>
+                  </button>
+                </>
+              )}
             </section>
           )}
 
