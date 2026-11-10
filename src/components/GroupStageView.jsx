@@ -11,6 +11,7 @@ export function GroupStageView({
   isAdmin = false,
   isReferee = false,
   onUpdateMatchResult,
+  onCloseMatch,
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
@@ -834,6 +835,18 @@ export function GroupStageView({
         <FefutinMatchSheet
           tournament={tournament}
           match={selectedSheetMatch}
+          isReferee={isReferee}
+          onCloseMatch={async ({ score1, score2 }) => {
+            const closed = await onCloseMatch?.({
+              phase: "groups",
+              groupIndex: activeGroupIndex,
+              matchId: selectedSheetMatch.id,
+              score1,
+              score2,
+            });
+            if (closed) setSelectedSheetMatch((current) => current ? { ...current, score1, score2, referee_closed: true } : current);
+            return closed;
+          }}
           onClose={() => setSelectedSheetMatch(null)}
         />
       )}
