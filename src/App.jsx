@@ -4103,6 +4103,7 @@ export function TournamenSportApp() {
               type="button"
               onClick={() => setActiveView("referee-designations")}
               aria-label={`Ver mis designaciones: ${assignedRefereeMatches.length} partidos`}
+              className="tc-home-designations-card"
               style={{ width: "100%", display: "flex", alignItems: "center", gap: ".8rem", margin: "1rem 0", padding: "1rem", background: "#fff", border: "2px solid #b5122a", borderRadius: "12px", color: "#171c27", textAlign: "left", cursor: "pointer", boxShadow: "0 3px 12px rgba(181,18,42,.12)" }}
             >
               <span aria-hidden="true" style={{ width: "12px", height: "12px", flex: "0 0 12px", borderRadius: "50%", background: "#dc2626", boxShadow: "0 0 0 4px rgba(220,38,38,.12)" }} />
