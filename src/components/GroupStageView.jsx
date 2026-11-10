@@ -12,6 +12,8 @@ export function GroupStageView({
   isReferee = false,
   onUpdateMatchResult,
   onCloseMatch,
+  openAssignedMatch = null,
+  onAssignedMatchOpened,
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
@@ -37,6 +39,17 @@ export function GroupStageView({
     }, 80);
     return () => window.clearTimeout(timer);
   }, [activeGroupIndex, selectedRound, targetMatchId]);
+
+  useEffect(() => {
+    if (!openAssignedMatch || !Array.isArray(tournament.groups)) return;
+    const groupIndex = Number(openAssignedMatch.groupIndex);
+    const group = tournament.groups[groupIndex];
+    const match = group?.matches?.find((item) => String(item?.id) === String(openAssignedMatch.matchId));
+    if (!match) return;
+    setActiveGroupIndex(groupIndex);
+    setSelectedSheetMatch(match);
+    onAssignedMatchOpened?.();
+  }, [openAssignedMatch, tournament.id]);
 
   const currentGroup = tournament.groups[activeGroupIndex];
 
