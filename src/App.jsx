@@ -160,7 +160,7 @@ function RefereePreJornada({ onBack }) {
               <div style={{fontWeight:800,textAlign:"center",fontSize:"1.05rem"}}>{partido.team1} <span style={{color:"#fca5a5"}}>VS</span> {partido.team2}</div>
               <p style={{fontSize:".85rem",color:"#d1d5db",textAlign:"center"}}>Árbitro: {arbitro?.username || (partido.referee_id ? "Designado" : "Sin designar")}</p>
               {arbitros.length ? <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(135px,1fr))",gap:".55rem"}}>
-                {arbitros.map(a=><button key={a.id} type="button" disabled={!!guardando} onClick={()=>designar(partido.groupIndex,partido.matchIndex,a.id)} style={{background:partido.referee_id===a.id?"#b5122a":"#fff",color:partido.referee_id===a.id?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".75rem",fontWeight:700,cursor:"pointer",opacity:guardando && guardando!==key?.65:1}}>
+                {arbitros.map(a=><button key={a.id} type="button" disabled={!!guardando} onClick={()=>designar(partido.groupIndex,partido.matchIndex,a.id)} style={{background:partido.referee_id===a.id?"#b5122a":"#fff",color:partido.referee_id===a.id?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".75rem",fontWeight:700,cursor:"pointer",opacity:guardando && guardando !== key ? 0.65 : 1}}>
                   {guardando===key?"Guardando…":a.username}
                 </button>)}
               </div> : <p style={{textAlign:"center"}}>No hay árbitros aprobados y activos para designar.</p>}
