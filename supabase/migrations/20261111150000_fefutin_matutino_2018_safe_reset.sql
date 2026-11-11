@@ -148,6 +148,10 @@ begin
     and lower(trim(coalesce(s.estado, ''))) in ('cerrada', 'cerrado')
   for update;
 
+  if not found then
+    raise exception 'La planilla cerrada no coincide con el partido del fixture. No se realizó ningún cambio.';
+  end if;
+
   select coalesce(array_agg(p.id), '{}'::uuid[])
   into v_photo_ids
   from public.fefutin_jornada_photos p
