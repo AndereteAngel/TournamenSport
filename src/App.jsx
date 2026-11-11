@@ -170,7 +170,7 @@ function RefereePreJornada({ onBack }) {
             <h4 style={{margin:"0 0 .5rem",textAlign:"center"}}>ÁRBITRO DE TODA LA JORNADA</h4>
             <p style={{fontSize:".85rem",color:"#d1d5db",textAlign:"center"}}>{asignacionUniforme ? "Asignado a todos los partidos: " + (arbitroJornada?.username || "árbitro") : idsArbitrosAsignados.length ? "Hay asignaciones diferentes o incompletas en esta jornada. Elegí un árbitro para unificar toda la fecha." : "Elegí un árbitro. Se asignará a todos los partidos de esta fecha."}</p>
             {arbitros.length ? <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(135px,1fr))",gap:".6rem"}}>
-              {arbitros.map(arbitro=><button key={arbitro.id} type="button" disabled={guardando} onClick={()=>designarJornada(arbitro.id)} style={{background:asignacionUniforme && idsArbitrosAsignados[0]===arbitro.id?"#b5122a":"#fff",color:asignacionUniforme && idsArbitrosAsignados[0]===arbitro.id?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".85rem",fontWeight:800,cursor:"pointer",opacity:guardando?.65:1}}>
+              {arbitros.map(arbitro=><button key={arbitro.id} type="button" disabled={guardando} onClick={()=>designarJornada(arbitro.id)} style={{background:asignacionUniforme && idsArbitrosAsignados[0]===arbitro.id?"#b5122a":"#fff",color:asignacionUniforme && idsArbitrosAsignados[0]===arbitro.id?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".85rem",fontWeight:800,cursor:"pointer",opacity:guardando ? 0.65 : 1}}>
                 {guardando ? "Guardando…" : arbitro.username}
               </button>)}
             </div> : <p style={{textAlign:"center"}}>No hay árbitros aprobados y activos para designar.</p>}
