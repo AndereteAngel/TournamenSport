@@ -110,9 +110,9 @@ begin
   end if;
 
   select count(*)::integer into v_closed_matches
-  from jsonb_array_elements(coalesce(v_tournament.groups, '[]'::jsonb)) g
-  cross join lateral jsonb_array_elements(coalesce(g -> 'matches', '[]'::jsonb)) m
-  where coalesce((m ->> 'referee_closed')::boolean, false) = true;
+  from jsonb_array_elements(coalesce(v_tournament.groups, '[]'::jsonb)) as group_row(value)
+  cross join lateral jsonb_array_elements(coalesce(group_row.value -> 'matches', '[]'::jsonb)) as match_row(value)
+  where coalesce((match_row.value ->> 'referee_closed')::boolean, false) = true;
 
   if v_closed_matches <> 1 then
     raise exception 'Se esperaba exactamente un partido cerrado en el fixture. Se encontraron %. No se realizó ningún cambio.', v_closed_matches;
@@ -120,14 +120,14 @@ begin
 
   if not exists (
     select 1
-    from jsonb_array_elements(coalesce(v_tournament.groups, '[]'::jsonb)) g
-    cross join lateral jsonb_array_elements(coalesce(g -> 'matches', '[]'::jsonb)) m
-    where m ->> 'id' = 'San Telmo Celeste-River Plate'
-      and m ->> 'team1' = 'San Telmo Celeste'
-      and m ->> 'team2' = 'River Plate'
-      and coalesce((m ->> 'score1')::integer, -1) = 7
-      and coalesce((m ->> 'score2')::integer, -1) = 4
-      and coalesce((m ->> 'referee_closed')::boolean, false) = true
+    from jsonb_array_elements(coalesce(v_tournament.groups, '[]'::jsonb)) as group_row(value)
+    cross join lateral jsonb_array_elements(coalesce(group_row.value -> 'matches', '[]'::jsonb)) as match_row(value)
+    where match_row.value ->> 'id' = 'San Telmo Celeste-River Plate'
+      and match_row.value ->> 'team1' = 'San Telmo Celeste'
+      and match_row.value ->> 'team2' = 'River Plate'
+      and coalesce((match_row.value ->> 'score1')::integer, -1) = 7
+      and coalesce((match_row.value ->> 'score2')::integer, -1) = 4
+      and coalesce((match_row.value ->> 'referee_closed')::boolean, false) = true
   ) then
     raise exception 'El resultado esperado San Telmo Celeste 7-4 River Plate no coincide. No se realizó ningún cambio.';
   end if;
