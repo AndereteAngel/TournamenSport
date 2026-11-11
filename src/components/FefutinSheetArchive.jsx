@@ -14,6 +14,8 @@ const formatDate = (value) => {
 export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMatches = [], onBack }) {
   const [section, setSection] = useState("digital");
   const [sheets, setSheets] = useState([]);
+  const [voidedSheetIds, setVoidedSheetIds] = useState(() => new Set());
+  const [voidedPhotoIds, setVoidedPhotoIds] = useState(() => new Set());
   const [playersBySheet, setPlayersBySheet] = useState({});
   const [photos, setPhotos] = useState([]);
   const [tournaments, setTournaments] = useState([]);
@@ -49,14 +51,16 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
       { data: sheetRows, error: sheetsError },
       { data: photoRows, error: photosError },
       { data: tournamentRows, error: tournamentsError },
+      { data: voidedRows, error: voidedError },
     ] = await Promise.all([
       supabase.from("fefutin_match_sheets").select("*").order("updated_at", { ascending: false }),
       supabase.from("fefutin_jornada_photos").select("*").order("jornada_date", { ascending: false }),
       supabase.from("tournaments").select("id, title, game"),
+      supabase.from("fefutin_voided_match_sheets").select("sheet_id, photo_ids"),
     ]);
 
-    if (sheetsError || photosError || tournamentsError) {
-      console.error("Error al cargar el archivo FEFUTIN:", { sheetsError, photosError, tournamentsError });
+    if (sheetsError || photosError || tournamentsError || voidedError) {
+      console.error("Error al cargar el archivo FEFUTIN:", { sheetsError, photosError, tournamentsError, voidedError });
       setError("No se pudo cargar el archivo. Revisá que hayas aplicado la migración de Archivo de Planillas en Supabase.");
       setLoading(false);
       return;
@@ -93,6 +97,8 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     }));
 
     setSheets(closedSheets);
+    setVoidedSheetIds(new Set((voidedRows || []).map((item) => String(item.sheet_id))));
+    setVoidedPhotoIds(new Set((voidedRows || []).flatMap((item) => item.photo_ids || []).map(String)));
     setPlayersBySheet(playersMap);
     setPhotos(photoItems);
     setTournaments(tournamentRows || []);
@@ -214,6 +220,11 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   const isPhotoForSheet = (photo, sheet) => {
     if (String(photo.tournament_id) !== String(sheet.tournament_id)) return false;
 
+    const sheetIsVoided = voidedSheetIds.has(String(sheet.id));
+    const photoIsVoided = voidedPhotoIds.has(String(photo.id));
+    if (photoIsVoided && !sheetIsVoided) return false;
+    if (photoIsVoided && sheetIsVoided) return true;
+
     const photoJornada = String(photo.jornada_label || "").trim().toLocaleLowerCase("es");
     const sheetJornada = String(sheet.jornada || "").trim().toLocaleLowerCase("es");
     const sameJornada = photoJornada && (
@@ -316,6 +327,11 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
                   return (
                     <article key={sheet.id} style={{ border: "1px solid #b5122a", borderRadius: "10px", background: "#171c27", padding: ".85rem" }}>
                       <strong style={{ color: "#fff", display: "block", lineHeight: 1.45 }}>{sheet.club_local} {score.local} - {score.visitor} {sheet.club_visitante}</strong>
+                      {voidedSheetIds.has(String(sheet.id)) && (
+                        <strong style={{ display: "inline-block", marginTop: ".35rem", padding: ".25rem .45rem", border: "1px solid #b5122a", borderRadius: "5px", color: "#f3a0ad", fontSize: ".68rem", letterSpacing: ".05em" }}>
+                          RESULTADO ANULADO · SOLO HISTORIAL
+                        </strong>
+                      )}
                       <small style={{ display: "block", color: "#bbb", marginTop: ".25rem" }}>{getTournamentTitle(sheet.tournament_id)} · {sheet.categoria || "Sin categoría"} · {sheet.jornada ? `Jornada ${sheet.jornada}` : "Jornada sin indicar"} · {formatDate(sheet.fecha_partido)}</small>
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".55rem", marginTop: ".8rem" }}>
                         <button type="button" onClick={() => setDocumentViewBySheet((previous) => ({ ...previous, [sheet.id]: "digital" }))} style={{ padding: ".65rem .35rem", border: "1px solid #b5122a", borderRadius: "8px", background: selectedView === "digital" ? "#b5122a" : "#101010", color: "#fff", fontWeight: 900, fontSize: ".75rem" }}>PLANILLA DIGITAL</button>
