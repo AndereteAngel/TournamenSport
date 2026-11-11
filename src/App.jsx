@@ -67,7 +67,7 @@ function RefereePreJornada({ onBack }) {
   const [torneoId, setTorneoId] = useState("");
   const [fechaSeleccionada, setFechaSeleccionada] = useState("");
   const [mensaje, setMensaje] = useState("");
-  const [guardando, setGuardando] = useState("");
+  const [guardando, setGuardando] = useState(false);
   useEffect(() => {
     let activo = true;
     (async () => {
@@ -86,16 +86,17 @@ function RefereePreJornada({ onBack }) {
 
   const torneo = torneos.find(t => String(t.id) === torneoId);
   const grupos = Array.isArray(torneo?.groups) ? torneo.groups : [];
+  const obtenerFecha = match => String(match?.match_date || getFefutinMatchDate(match?.round || 1)).slice(0, 10);
   const fechas = (() => {
     const porFecha = new Map();
-    grupos.forEach((grupo, groupIndex) => {
-      (Array.isArray(grupo?.matches) ? grupo.matches : []).forEach((match, matchIndex) => {
+    grupos.forEach(grupo => {
+      (Array.isArray(grupo?.matches) ? grupo.matches : []).forEach(match => {
         if (!match?.team1 || !match?.team2 ||
             String(match.team1).trim().toLocaleLowerCase("es") === "pasaje directo" ||
             String(match.team2).trim().toLocaleLowerCase("es") === "pasaje directo") return;
-        const fecha = String(match.match_date || getFefutinMatchDate(match.round || 1)).slice(0, 10);
+        const fecha = obtenerFecha(match);
         if (!porFecha.has(fecha)) porFecha.set(fecha, []);
-        porFecha.get(fecha).push({ ...match, groupIndex, matchIndex, groupName: grupo?.name || "Partidos" });
+        porFecha.get(fecha).push(match);
       });
     });
     return [...porFecha.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([fecha, partidos], index) => ({
@@ -105,21 +106,34 @@ function RefereePreJornada({ onBack }) {
     }));
   })();
   const jornada = fechas.find(item => item.fecha === fechaSeleccionada);
+  const idsArbitrosAsignados = jornada
+    ? [...new Set(jornada.partidos.map(p => p.referee_id).filter(Boolean))]
+    : [];
+  const asignacionUniforme = idsArbitrosAsignados.length === 1 &&
+    jornada?.partidos.every(p => p.referee_id === idsArbitrosAsignados[0]);
+  const arbitroJornada = asignacionUniforme
+    ? arbitros.find(a => a.id === idsArbitrosAsignados[0])
+    : null;
 
-  const designar = async (groupIndex, matchIndex, refereeId) => {
-    if (!torneo || guardando) return;
-    const key = groupIndex + "-" + matchIndex;
-    setGuardando(key);
+  const designarJornada = async refereeId => {
+    if (!torneo || !jornada || guardando) return;
+    setGuardando(true);
     setMensaje("");
-    const nextGroups = grupos.map((grupo, i) => i === groupIndex
-      ? { ...grupo, matches: (grupo.matches || []).map((match, j) => j === matchIndex ? { ...match, referee_id: refereeId } : match) }
-      : grupo
-    );
+    const nextGroups = grupos.map(grupo => ({
+      ...grupo,
+      matches: (grupo.matches || []).map(match =>
+        obtenerFecha(match) === jornada.fecha && match?.team1 && match?.team2 &&
+        String(match.team1).trim().toLocaleLowerCase("es") !== "pasaje directo" &&
+        String(match.team2).trim().toLocaleLowerCase("es") !== "pasaje directo"
+          ? { ...match, referee_id: refereeId }
+          : match
+      )
+    }));
     const { error } = await supabase.from("tournaments").update({ groups: nextGroups }).eq("id", torneo.id);
-    setGuardando("");
+    setGuardando(false);
     if (error) { setMensaje(error.message); return; }
     setTorneos(prev => prev.map(item => item.id === torneo.id ? { ...item, groups: nextGroups } : item));
-    setMensaje("Árbitro designado correctamente.");
+    setMensaje("Árbitro asignado a todos los partidos de esta jornada.");
   };
 
   const estilo = { background:"#171c27", color:"#fff", border:"1px solid #b5122a", borderRadius:"12px", padding:"1rem", width:"100%" };
@@ -130,7 +144,7 @@ function RefereePreJornada({ onBack }) {
   return <main style={{maxWidth:"1000px", margin:"0 auto", paddingBottom:"2rem", color:"#fff"}}>
     <section style={{...estilo, marginBottom:"1rem"}}>
       <h2 style={{textAlign:"center", marginTop:0}}>PRE-JORNADA · DESIGNACIONES</h2>
-      <label style={{display:"block", marginTop:".8rem"}}>1. Competencia
+      <label style={{display:"block", marginTop:".8rem"}}>1. Torneo
         <select value={torneoId} onChange={e=>{setTorneoId(e.target.value);setFechaSeleccionada("");setMensaje("");}} style={selector}>
           <option value="">Elegí el torneo</option>
           {torneos.map(t=><option key={t.id} value={t.id}>{t.title} · {t.game || "Sin categoría"}</option>)}
@@ -139,33 +153,34 @@ function RefereePreJornada({ onBack }) {
     </section>
 
     {torneo && <>
-      <h3 style={{margin:".5rem 0 1rem",textAlign:"center"}}>{torneo.title} · {torneo.game || "Categoría"}</h3>
+      <h3 style={{margin:".5rem 0 1rem",textAlign:"center"}}>{torneo.title} · {torneo.game || "Categorías"}</h3>
       {!fechas.length ? <p style={{...estilo,textAlign:"center"}}>Este torneo todavía no tiene partidos con fechas para organizar.</p> :
         !jornada ? <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:".8rem"}}>
           {fechas.map((item,index)=><button key={item.fecha} type="button" onClick={()=>setFechaSeleccionada(item.fecha)} style={{...estilo,textAlign:"left",cursor:"pointer"}}>
             <strong style={{display:"block",fontSize:"1rem",textTransform:"capitalize"}}>JORNADA {item.jornada || index+1}</strong>
             <span style={{display:"block",marginTop:".4rem",color:"#fca5a5",fontWeight:700}}>{fechaTexto(item.fecha)}</span>
-            <span style={{display:"block",marginTop:".45rem",fontSize:".85rem"}}>{item.partidos.length} partidos</span>
-            <span style={{display:"block",marginTop:".65rem",fontWeight:800}}>Ver designaciones →</span>
+            <span style={{display:"block",marginTop:".45rem",fontSize:".85rem"}}>{item.partidos.length} partidos · todas las categorías del torneo</span>
+            <span style={{display:"block",marginTop:".65rem",fontWeight:800}}>Designar jornada →</span>
           </button>)}
         </section> :
         <section style={{display:"grid",gap:".85rem"}}>
           <button type="button" onClick={()=>setFechaSeleccionada("")} style={{justifySelf:"start",background:"transparent",color:"#fff",border:"1px solid #b5122a",borderRadius:"8px",padding:".55rem .8rem"}}>← Volver a las jornadas</button>
           <h3 style={{margin:".2rem 0",textTransform:"capitalize"}}>JORNADA {jornada.jornada} · {fechaTexto(jornada.fecha)}</h3>
-          {jornada.partidos.map(partido=>{
-            const key = partido.groupIndex + "-" + partido.matchIndex;
-            const arbitro = arbitros.find(a=>a.id===partido.referee_id);
-            return <article key={key} style={estilo}>
-              <div style={{fontSize:".75rem",color:"#fca5a5",textAlign:"center",marginBottom:".45rem"}}>{partido.groupName}</div>
-              <div style={{fontWeight:800,textAlign:"center",fontSize:"1.05rem"}}>{partido.team1} <span style={{color:"#fca5a5"}}>VS</span> {partido.team2}</div>
-              <p style={{fontSize:".85rem",color:"#d1d5db",textAlign:"center"}}>Árbitro: {arbitro?.username || (partido.referee_id ? "Designado" : "Sin designar")}</p>
-              {arbitros.length ? <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(135px,1fr))",gap:".55rem"}}>
-                {arbitros.map(a=><button key={a.id} type="button" disabled={!!guardando} onClick={()=>designar(partido.groupIndex,partido.matchIndex,a.id)} style={{background:partido.referee_id===a.id?"#b5122a":"#fff",color:partido.referee_id===a.id?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".75rem",fontWeight:700,cursor:"pointer",opacity:guardando && guardando !== key ? 0.65 : 1}}>
-                  {guardando===key?"Guardando…":a.username}
-                </button>)}
-              </div> : <p style={{textAlign:"center"}}>No hay árbitros aprobados y activos para designar.</p>}
-            </article>;
-          })}
+          <section style={{...estilo}}>
+            <h4 style={{margin:"0 0 .5rem",textAlign:"center"}}>ÁRBITRO DE TODA LA JORNADA</h4>
+            <p style={{fontSize:".85rem",color:"#d1d5db",textAlign:"center"}}>{asignacionUniforme ? "Asignado a todos los partidos: " + (arbitroJornada?.username || "árbitro") : idsArbitrosAsignados.length ? "Hay asignaciones diferentes o incompletas en esta jornada. Elegí un árbitro para unificar toda la fecha." : "Elegí un árbitro. Se asignará a todos los partidos de esta fecha."}</p>
+            {arbitros.length ? <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(135px,1fr))",gap:".6rem"}}>
+              {arbitros.map(arbitro=><button key={arbitro.id} type="button" disabled={guardando} onClick={()=>designarJornada(arbitro.id)} style={{background:asignacionUniforme && idsArbitrosAsignados[0]===arbitro.id?"#b5122a":"#fff",color:asignacionUniforme && idsArbitrosAsignados[0]===arbitro.id?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".85rem",fontWeight:800,cursor:"pointer",opacity:guardando?.65:1}}>
+                {guardando ? "Guardando…" : arbitro.username}
+              </button>)}
+            </div> : <p style={{textAlign:"center"}}>No hay árbitros aprobados y activos para designar.</p>}
+          </section>
+          <h4 style={{margin:".4rem 0 0"}}>PARTIDOS INCLUIDOS EN ESTA JORNADA ({jornada.partidos.length})</h4>
+          {jornada.partidos.map((partido,index)=><article key={partido.id || index} style={{...estilo,padding:".8rem 1rem"}}>
+            <div style={{fontSize:".75rem",color:"#fca5a5",textAlign:"center",marginBottom:".35rem"}}>{partido.category || partido.category_label || ""}</div>
+            <div style={{fontWeight:800,textAlign:"center"}}>{partido.team1} <span style={{color:"#fca5a5"}}>VS</span> {partido.team2}</div>
+            <p style={{fontSize:".8rem",color:"#d1d5db",textAlign:"center",marginBottom:0}}>Árbitro: {arbitros.find(a=>a.id===partido.referee_id)?.username || "Sin designar"}</p>
+          </article>)}
         </section>
       </>}
     </>}
