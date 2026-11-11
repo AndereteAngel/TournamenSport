@@ -4509,7 +4509,7 @@ export function TournamenSportApp() {
             const hasPendingGeneral = !loadingAccessRequests && totalPendingGeneral > 0;
             return (
               <>
-                <style>{\`
+                <style>{`
                   @keyframes fefutinGeneralPendingPulse {
                     0%, 100% { box-shadow: 0 0 0 1px rgba(181,18,42,.25), 0 0 8px rgba(181,18,42,.18); border-color: #b5122a; }
                     50% { box-shadow: 0 0 0 2px rgba(255,255,255,.5), 0 0 19px rgba(181,18,42,.85); border-color: #fff; }
@@ -4517,7 +4517,7 @@ export function TournamenSportApp() {
                   @media (prefers-reduced-motion: reduce) {
                     .tc-home-general-approvals-pending { animation: none !important; }
                   }
-                \`}</style>
+                `}</style>
                 <button
                   type="button"
                   className={"tc-home-about-card tc-home-referee-card" + (hasPendingGeneral ? " tc-home-general-approvals-pending" : "")}
