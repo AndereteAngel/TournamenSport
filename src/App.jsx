@@ -1762,6 +1762,132 @@ function AdminStats({ onBack }) {
   );
 }
 
+function FefutinVisitorPromoCarousel() {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  const slides = [
+    {
+      eyebrow: "FEFUTIN · TODO EN UN LUGAR",
+      title: "SEGUÍ CADA COMPETENCIA",
+      description: "Consultá torneos, fixtures, resultados y tablas desde una sola app.",
+      symbol: "⚽",
+      accent: "red",
+      footer: "TORNEOS · FIXTURES · RESULTADOS",
+    },
+    {
+      eyebrow: "EL GOL TIENE SU LUGAR",
+      title: "TABLA DE GOLEADORES",
+      description: "Descubrí cómo se vive la emoción del gol en nuestras competencias.",
+      symbol: "🥅",
+      accent: "gold",
+      footer: "ESTADÍSTICAS DE COMPETENCIA",
+    },
+    {
+      eyebrow: "UNA GRAN FAMILIA",
+      title: "MÁS DE 50 CLUBES",
+      description: "Clubes y comunidades unidos por la pasión y el crecimiento del fútbol.",
+      symbol: "🛡️",
+      accent: "white",
+      footer: "MÁS CLUBES · MÁS ENCUENTROS · MÁS PASIÓN",
+    },
+    {
+      eyebrow: "PASIÓN, FORMACIÓN Y COMPETENCIA",
+      title: "HISTORIA QUE NOS RESPALDA",
+      description: "Una trayectoria que nos impulsa a seguir construyendo competencia permanente.",
+      symbol: "🏆",
+      accent: "red",
+      footer: "TRADICIÓN QUE SIGUE EN JUEGO",
+    },
+  ];
+
+  useEffect(() => {
+    if (paused) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveSlide((current) => (current + 1) % slides.length);
+    }, 5200);
+    return () => window.clearInterval(timer);
+  }, [paused, slides.length]);
+
+  const moveSlide = (direction) => {
+    setActiveSlide((current) => (current + direction + slides.length) % slides.length);
+  };
+
+  return (
+    <section
+      className="fefutin-visitor-promo"
+      aria-label="Conocé FEFUTIN"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
+      }}
+    >
+      <style>{`
+        .fefutin-visitor-promo{position:relative;width:100%;margin:1.15rem 0 1.35rem;overflow:hidden;border:1px solid rgba(181,18,42,.8);border-radius:18px;background:linear-gradient(135deg,#10131a 0%,#171c27 65%,#260b12 100%);box-shadow:0 12px 28px rgba(0,0,0,.24);color:#fff}
+        .fefutin-visitor-promo-head{display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.8rem 1rem .25rem}
+        .fefutin-visitor-promo-label{font-size:.67rem;font-weight:900;letter-spacing:.16em;color:#f3a0ad}
+        .fefutin-visitor-promo-controls{display:flex;gap:.4rem}
+        .fefutin-visitor-promo-controls button{width:31px;height:31px;display:grid;place-items:center;padding:0;border:1px solid rgba(255,255,255,.3);border-radius:50%;background:#202632;color:#fff;font-size:1.1rem;cursor:pointer}
+        .fefutin-visitor-promo-controls button:hover,.fefutin-visitor-promo-controls button:focus-visible{background:#b5122a;border-color:#fff;outline:none}
+        .fefutin-visitor-promo-window{overflow:hidden}
+        .fefutin-visitor-promo-track{display:flex;transition:transform 650ms cubic-bezier(.22,.75,.25,1);will-change:transform}
+        .fefutin-visitor-promo-slide{position:relative;box-sizing:border-box;flex:0 0 100%;min-width:0;min-height:205px;display:grid;grid-template-columns:minmax(0,1fr) 112px;align-items:center;gap:1rem;padding:1.2rem 1.25rem 1.1rem}
+        .fefutin-visitor-promo-slide:before{content:"";position:absolute;inset:auto -35px -80px auto;width:210px;height:210px;border:1px solid rgba(255,255,255,.08);border-radius:50%;pointer-events:none}
+        .fefutin-visitor-promo-copy{position:relative;z-index:1;min-width:0}
+        .fefutin-visitor-promo-eyebrow{display:block;margin-bottom:.45rem;color:#f3a0ad;font-size:.66rem;font-weight:900;letter-spacing:.11em}
+        .fefutin-visitor-promo-title{display:block;margin:0;color:#fff;font-size:clamp(1.05rem,3.5vw,1.55rem);font-weight:1000;line-height:1.12;letter-spacing:.015em}
+        .fefutin-visitor-promo-description{max-width:490px;margin:.55rem 0 0;color:#e5e7eb;font-size:.83rem;line-height:1.5}
+        .fefutin-visitor-promo-footer{display:block;margin-top:.85rem;color:#f3a0ad;font-size:.61rem;font-weight:900;letter-spacing:.09em}
+        .fefutin-visitor-promo-art{position:relative;z-index:1;width:104px;height:104px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.35);border-radius:24px;background:linear-gradient(145deg,rgba(181,18,42,.9),rgba(23,28,39,.96));box-shadow:0 10px 22px rgba(0,0,0,.3);font-size:3.15rem;transform:rotate(4deg)}
+        .fefutin-visitor-promo-slide[data-accent="gold"] .fefutin-visitor-promo-art{background:linear-gradient(145deg,#6d4b12,#171c27);border-color:#e9c46a}
+        .fefutin-visitor-promo-slide[data-accent="white"] .fefutin-visitor-promo-art{background:linear-gradient(145deg,#f8fafc,#9ca3af);color:#171c27;border-color:#fff}
+        .fefutin-visitor-promo-bottom{display:flex;align-items:center;justify-content:center;gap:.42rem;padding:0 1rem .85rem}
+        .fefutin-visitor-promo-dot{width:7px;height:7px;padding:0;border:0;border-radius:99px;background:#6b7280;cursor:pointer;transition:width 250ms ease,background 250ms ease}
+        .fefutin-visitor-promo-dot[aria-current="true"]{width:23px;background:#b5122a}
+        .fefutin-visitor-promo-dot:focus-visible{outline:2px solid #fff;outline-offset:3px}
+        @media(max-width:480px){.fefutin-visitor-promo-slide{min-height:190px;grid-template-columns:minmax(0,1fr) 78px;gap:.6rem;padding:1rem .85rem}.fefutin-visitor-promo-art{width:72px;height:72px;border-radius:18px;font-size:2.35rem}.fefutin-visitor-promo-title{font-size:1.05rem}.fefutin-visitor-promo-description{font-size:.75rem}.fefutin-visitor-promo-footer{font-size:.55rem;line-height:1.35}.fefutin-visitor-promo-head{padding:.7rem .8rem .15rem}}
+        @media(prefers-reduced-motion:reduce){.fefutin-visitor-promo-track,.fefutin-visitor-promo-dot{transition:none}}
+      `}</style>
+      <div className="fefutin-visitor-promo-head">
+        <span className="fefutin-visitor-promo-label">DESCUBRÍ FEFUTIN</span>
+        <div className="fefutin-visitor-promo-controls" aria-label="Controles del carrusel">
+          <button type="button" onClick={() => moveSlide(-1)} aria-label="Card anterior">‹</button>
+          <button type="button" onClick={() => moveSlide(1)} aria-label="Card siguiente">›</button>
+        </div>
+      </div>
+      <div className="fefutin-visitor-promo-window" aria-live="off">
+        <div className="fefutin-visitor-promo-track" style={{ transform: `translateX(-${activeSlide * 100}%)` }}>
+          {slides.map((slide, index) => (
+            <article className="fefutin-visitor-promo-slide" data-accent={slide.accent} key={slide.title} aria-hidden={activeSlide !== index}>
+              <div className="fefutin-visitor-promo-copy">
+                <span className="fefutin-visitor-promo-eyebrow">{slide.eyebrow}</span>
+                <h3 className="fefutin-visitor-promo-title">{slide.title}</h3>
+                <p className="fefutin-visitor-promo-description">{slide.description}</p>
+                <span className="fefutin-visitor-promo-footer">{slide.footer}</span>
+              </div>
+              <div className="fefutin-visitor-promo-art" aria-hidden="true">{slide.symbol}</div>
+            </article>
+          ))}
+        </div>
+      </div>
+      <div className="fefutin-visitor-promo-bottom" aria-label="Seleccionar card">
+        {slides.map((slide, index) => (
+          <button
+            type="button"
+            className="fefutin-visitor-promo-dot"
+            key={slide.title}
+            aria-label={`Mostrar card ${index + 1}: ${slide.title}`}
+            aria-current={activeSlide === index ? "true" : "false"}
+            onClick={() => setActiveSlide(index)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function TournamenSportApp() {
   const {
     notice,
@@ -1815,6 +1941,7 @@ export function TournamenSportApp() {
   const isDirectivo = currentUser?.role === "directivo";
   const isArbitro = currentUser?.role === "arbitro";
   const isReferente = currentUser?.role === "referente";
+  const isPublicVisitor = !currentUser || currentUser?.role === "visitante";
   const canAccessClubManagement =
     isAdmin || isDirectivo ||
     (isReferente && currentUser?.approvalStatus === "aprobado");
@@ -4200,6 +4327,7 @@ export function TournamenSportApp() {
             {renderDivisionCard("Femenino", "/WhatsApp%20Image%202026-10-30%20at%2021.11.20.jpeg", "FEMENINO")}
             {renderDivisionCard("Mayores", "/WhatsApp%20Image%202026-10-30%20at%2020.59.32.jpeg", "MAYORES")}
           </div>
+          {isPublicVisitor && <FefutinVisitorPromoCarousel />}
           {isReferente && (
             <section aria-label="Próximo encuentro de mi club" style={{ margin: "1rem 0", padding: "1rem", border: "2px solid #b5122a", borderRadius: "14px", background: "linear-gradient(135deg, #171c27, #090a0e)", color: "#fff", overflow: "hidden" }}>
               <div style={{ color: "#f3a0ad", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".12em", textAlign: "center", marginBottom: ".8rem" }}>PRÓXIMO ENCUENTRO</div>
