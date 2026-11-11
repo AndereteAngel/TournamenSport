@@ -95,7 +95,7 @@ function RefereePreJornada({ onBack }) {
     const categoria = config.flatMap(c => Array.isArray(c?.categories) ? c.categories : []).find(Boolean);
     return String(categoria || obtenerPartesJuego(torneo)[2] || "General").trim();
   };
-  const ramas = ["Infantil", "Femenino", "Mayores"];
+  const ramas = [{ value:"Infantil", label:"Infantiles" }, { value:"Femenino", label:"Femenino" }, { value:"Mayores", label:"Mayores" }];
   const torneosRama = torneos.filter(t => obtenerRama(t).toLocaleLowerCase("es") === ramaSeleccionada.toLocaleLowerCase("es"));
   const claveCompetencia = t => String(t?.title || "").trim().toLocaleLowerCase("es") + "|" +
     String(t?.created_by_user_id || t?.created_by || "").trim().toLocaleLowerCase("es");
@@ -182,7 +182,7 @@ function RefereePreJornada({ onBack }) {
       <label style={{display:"block", marginTop:".8rem"}}>1. Rama
         <select value={ramaSeleccionada} onChange={e=>{setRamaSeleccionada(e.target.value);setCompetenciaKey("");setCategoriaSeleccionada("Todas");setPartidoKey("");setMensaje("");}} style={selector}>
           <option value="">Elegí la rama</option>
-          {ramas.map(r=><option key={r} value={r}>{r}</option>)}
+          {ramas.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
       </label>
       {ramaSeleccionada && <label style={{display:"block", marginTop:".8rem"}}>2. Competencia
