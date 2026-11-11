@@ -51,7 +51,7 @@ export function CreateTournament({
         categoryType: "Año de nacimiento",
         categoryDetail: String(FIRST_INFANTIL_YEAR),
         categoryConfig: [],
-        format: "groups_playoff",
+        format: "league",
         numGroups: 2,
         qualifiersPerGroup: 2,
         isPublic: true,
@@ -427,6 +427,20 @@ export function CreateTournament({
         </div>
 
         {/* Las ramas y categorías se administran exclusivamente en el bloque superior. */}
+
+        {/* FORMATO DE COMPETENCIA */}
+
+        <div>
+          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "4px" }}>
+            Formato de competencia
+          </label>
+          <select value={formData.format} onChange={(e) => setFormData({ ...formData, format: e.target.value })} className="cr-input" style={{ cursor: "pointer" }}>
+            <option value="league">Todos contra todos (Liga)</option>
+            <option value="groups_playoff">Grupos + Playoff</option>
+            <option value="single_elimination">Eliminación directa (Playoff)</option>
+          </select>
+          <span className="sports-help">Todos contra todos: cada equipo juega contra todos los demás y la tabla define al campeón.</span>
+        </div>
 
         {/* ===================================================
             GRUPOS
