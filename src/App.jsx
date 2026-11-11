@@ -14,6 +14,7 @@ import { PlayoffBracket } from "./components/PlayoffBracket";
 import { ChampionCelebration } from "./components/ChampionCelebration";
 import { ReferenteInscripcion } from "./components/ReferenteInscripcion";
 import { ReferenteEquipos } from "./components/ReferenteEquipos";
+import { FefutinClubTournamentRequests, ReferenteTorneoSolicitudes } from "./components/FefutinClubTournamentRequests";
 import { FefutinPlayerApprovals } from "./components/FefutinPlayerApprovals";
 import { FefutinTopScorers } from "./components/FefutinTopScorers";
 import { FefutinSheetArchive } from "./components/FefutinSheetArchive";
@@ -1999,7 +2000,7 @@ export function TournamenSportApp() {
     if ((!canManageTournaments && ["create", "edit", "join"].includes(activeView)) ||
         (!canViewStatistics && activeView === "stats") ||
         (!canViewRefereeStats && activeView === "referee-stats") ||
-        (!canAccessClubManagement && ["referente-inscripcion", "referente-equipos", "referente-torneos"].includes(activeView)) ||
+        (!canAccessClubManagement && ["referente-inscripcion", "referente-equipos", "referente-torneos", "referente-solicitar-torneo"].includes(activeView)) ||
         (!isArbitro && activeView === "referee-carnets") ||
         (!canManageAccess && activeView === "referee-carnet-directory") ||
         (!canManageAccess && activeView === "sheet-archive") ||
@@ -4056,6 +4057,8 @@ export function TournamenSportApp() {
               )}
             </div>}
 
+            {managementInboxTab === "torneos" && <FefutinClubTournamentRequests onChanged={loadActiveClubs} />}
+
             {managementInboxTab === "arbitros" && <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
                 <div>
@@ -4302,6 +4305,13 @@ export function TournamenSportApp() {
             })()}
           </section>
         </div>
+      ) : activeView === "referente-solicitar-torneo" && isReferente && currentUser?.approvalStatus === "aprobado" && currentUser?.clubId ? (
+        <ReferenteTorneoSolicitudes
+          tournaments={tournaments}
+          currentUser={currentUser}
+          onBack={() => setActiveView("home")}
+          onSubmitted={() => showNotice("La solicitud quedó pendiente de aprobación por Admin o Directivo.")}
+        />
       ) : activeView === "referente-inscripcion" && canAccessClubManagement ? (
         <ReferenteInscripcion
           tournaments={tournaments}
@@ -4476,12 +4486,18 @@ export function TournamenSportApp() {
 
           {(canAccessClubManagement || (isReferente && currentUser?.clubId)) && (
             <section aria-label="Gestión de clubes" style={{ margin: "1.25rem 0", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: ".85rem" }}>
-              {isReferente && currentUser?.clubId ? (
-                <div role="status" style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #238b57", borderRadius: "12px", color: "#fff" }}>
-                  <span style={{ fontSize: "1.6rem" }}>✓</span>
-                  <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>INSCRIPCIÓN</strong>
-                  <span style={{ color: "#86efac", fontSize: ".88rem", fontWeight: 800 }}>YA ESTÁS INSCRIPTO</span>
-                  <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>{currentUser?.approvalStatus === "aprobado" ? "Tu club ya está inscripto y habilitado para participar." : "Recibimos la inscripción de tu club. Está pendiente de aprobación por administración o un directivo."}</span>
+              {isReferente && currentUser?.clubId && currentUser?.approvalStatus === "aprobado" ? (
+                <button type="button" onClick={() => setActiveView("referente-solicitar-torneo")} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
+                  <span style={{ fontSize: "1.6rem" }}>🏆</span>
+                  <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>NUEVA PARTICIPACIÓN</strong>
+                  <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>Solicitá que tu club participe en otros torneos. La habilitación requiere aprobación.</span>
+                </button>
+              ) : isReferente && currentUser?.clubId ? (
+                <div role="status" style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff" }}>
+                  <span style={{ fontSize: "1.6rem" }}>⌛</span>
+                  <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>CLUB REGISTRADO</strong>
+                  <span style={{ color: "#facc15", fontSize: ".88rem", fontWeight: 800 }}>PENDIENTE DE APROBACIÓN</span>
+                  <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>La habilitación institucional todavía está pendiente.</span>
                 </div>
               ) : canAccessClubManagement ? (
                 <button type="button" onClick={() => setActiveView("referente-inscripcion")} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
