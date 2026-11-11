@@ -130,34 +130,44 @@ function RefereePreJornada({ onBack }) {
       equipo2.toLocaleLowerCase("es") !== "pasaje directo";
   };
 
-  const partidos = torneosFiltrados.flatMap(torneo =>
-    (Array.isArray(torneo?.groups) ? torneo.groups : []).flatMap((grupo, groupIndex) => {
-      if (grupo?.name === "__INSCRIPCIONES__") return [];
-      return (Array.isArray(grupo?.matches) ? grupo.matches : [])
-        .map((match, matchIndex) => ({
-          key: String(torneo.id) + "::" + groupIndex + "::" + matchIndex,
-          torneoId: torneo.id,
-          torneoTitle: torneo.title || "Competencia",
-          categoria: obtenerCategoria(torneo),
-          grupoIndex,
-          matchIndex,
-          match,
-        }))
-        .filter(item => esPartidoValido(item.match));
-    })
-  ).sort((a,b) =>
-    a.categoria.localeCompare(b.categoria, "es", { numeric:true }) ||
-    textoSeguro(a.match.team1).localeCompare(textoSeguro(b.match.team1), "es")
-  );
-
-  // Evita montar cientos o miles de tarjetas a la vez en celulares.
+  // Recorre los enfrentamientos sin crear ni ordenar un array gigante.
+  // Solo conserva en memoria los 30 elementos de la página solicitada.
   const partidosPorPagina = 30;
-  const totalPaginas = Math.max(1, Math.ceil(partidos.length / partidosPorPagina));
-  const partidosPagina = partidos.slice(
-    paginaPartidos * partidosPorPagina,
-    (paginaPartidos + 1) * partidosPorPagina
-  );
-  const partido = partidos.find(item => item.key === partidoKey);
+  const resumenPartidos = (() => {
+    const inicio = paginaPartidos * partidosPorPagina;
+    const pagina = [];
+    let total = 0;
+    for (const torneo of torneosFiltrados) {
+      const grupos = Array.isArray(torneo?.groups) ? torneo.groups : [];
+      const categoria = obtenerCategoria(torneo);
+      for (let groupIndex = 0; groupIndex < grupos.length; groupIndex++) {
+        const grupo = grupos[groupIndex];
+        if (grupo?.name === "__INSCRIPCIONES__") continue;
+        const matches = Array.isArray(grupo?.matches) ? grupo.matches : [];
+        for (let matchIndex = 0; matchIndex < matches.length; matchIndex++) {
+          const match = matches[matchIndex];
+          if (!esPartidoValido(match)) continue;
+          if (total >= inicio && pagina.length < partidosPorPagina) {
+            pagina.push({
+              key: String(torneo.id) + "::" + groupIndex + "::" + matchIndex,
+              torneoId: torneo.id,
+              torneoTitle: torneo.title || "Competencia",
+              categoria,
+              grupoIndex,
+              matchIndex,
+              match,
+            });
+          }
+          total++;
+        }
+      }
+    }
+    return { total, pagina };
+  })();
+  const partidosTotal = resumenPartidos.total;
+  const partidosPagina = resumenPartidos.pagina;
+  const totalPaginas = Math.max(1, Math.ceil(partidosTotal / partidosPorPagina));
+  const partido = partidosPagina.find(item => item.key === partidoKey);
   const arbitroAsignado = partido
     ? arbitros.find(a => a.id === partido.match.referee_id)
     : null;
@@ -221,9 +231,9 @@ function RefereePreJornada({ onBack }) {
 
     {competencia && <>
       <h3 style={{margin:".5rem 0 1rem",textAlign:"center"}}>{competencia.title} · {ramaSeleccionada} · {categoriaSeleccionada === "Todas" ? "Todas las categorías" : categoriaSeleccionada}</h3>
-      {!partidos.length ? <p style={{...estilo,textAlign:"center"}}>Todavía no hay enfrentamientos para esta selección.</p> :
+      {!partidosTotal ? <p style={{...estilo,textAlign:"center"}}>Todavía no hay enfrentamientos para esta selección.</p> :
         !partido ? <>
-          <p style={{textAlign:"center",color:"#fff"}}>Enfrentamientos: {partidos.length} · Mostrando {paginaPartidos * partidosPorPagina + 1}–{Math.min((paginaPartidos + 1) * partidosPorPagina, partidos.length)} · Página {paginaPartidos + 1} de {totalPaginas}</p>
+          <p style={{textAlign:"center",color:"#fff"}}>Enfrentamientos: {partidosTotal} · Mostrando {paginaPartidos * partidosPorPagina + 1}–{Math.min((paginaPartidos + 1) * partidosPorPagina, partidosTotal)} · Página {paginaPartidos + 1} de {totalPaginas}</p>
           <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:".8rem"}}>
           {partidosPagina.map(item=><button key={item.key} type="button" onClick={()=>{setPartidoKey(item.key);setMensaje("");}} style={{...estilo,textAlign:"center",cursor:"pointer"}}>
             <span style={{display:"block",fontSize:".75rem",color:"#fca5a5",fontWeight:700,marginBottom:".45rem"}}>{item.categoria}</span>
