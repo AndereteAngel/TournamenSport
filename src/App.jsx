@@ -2201,10 +2201,10 @@ export function TournamenSportApp() {
 
     const [
       { data: accessRows, error: accessError },
-      { data: teamRows, error: teamsError },
+      { data: pendingPlayers, error: pendingPlayersError },
     ] = await Promise.all([
       supabase.rpc("get_fefutin_pending_requests"),
-      supabase.rpc("get_fefutin_my_teams"),
+      supabase.rpc("get_fefutin_pending_players"),
     ]);
 
     if (accessError) {
@@ -2214,21 +2214,15 @@ export function TournamenSportApp() {
       setPendingAccessRequests(accessRows || []);
     }
 
-    if (teamsError) {
-      console.error("Error al consultar altas pendientes de jugadores:", teamsError);
-      setAccessActionError((current) => current || teamsError.message || "No se pudieron consultar las altas de jugadores.");
+    if (pendingPlayersError) {
+      console.error("Error al consultar altas pendientes de jugadores:", pendingPlayersError);
+      setAccessActionError((current) => current || pendingPlayersError.message || "No se pudieron consultar las altas de jugadores.");
+      setPendingPlayerApprovalsCount(0);
     } else {
-      const pendingPlayers = (teamRows || []).flatMap((team) => {
-        let players = team.players || [];
-        if (typeof players === "string") {
-          try { players = JSON.parse(players); } catch { players = []; }
-        }
-        return (Array.isArray(players) ? players : []).filter((player) => player?.approval_status === "pendiente");
-      });
-      setPendingPlayerApprovalsCount(pendingPlayers.length);
+      setPendingPlayerApprovalsCount(Array.isArray(pendingPlayers) ? pendingPlayers.length : 0);
     }
 
-    if (!accessError && !teamsError) setAccessActionError("");
+    if (!accessError && !pendingPlayersError) setAccessActionError("");
     setLoadingAccessRequests(false);
   };
 
