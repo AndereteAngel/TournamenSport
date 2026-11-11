@@ -134,13 +134,14 @@ function RefereePreJornada({ onBack }) {
       equipo2.toLocaleLowerCase("es") !== "pasaje directo";
   };
 
-  // Recorre los enfrentamientos sin crear ni ordenar un array gigante.
-  // Solo conserva en memoria los 30 elementos de la página solicitada.
+  // Carga por tandas: no recorre miles de enfrentamientos al abrir Matutino.
+  // Lee solo los partidos necesarios para la página actual y uno extra para saber si hay más.
   const partidosPorPagina = 30;
   const resumenPartidos = (() => {
     const inicio = paginaPartidos * partidosPorPagina;
+    const limite = inicio + partidosPorPagina + 1;
     const pagina = [];
-    let total = 0;
+    let encontrados = 0;
     for (const torneo of torneosFiltrados) {
       const grupos = Array.isArray(torneo?.groups) ? torneo.groups : [];
       const categoria = obtenerCategoria(torneo);
@@ -151,7 +152,7 @@ function RefereePreJornada({ onBack }) {
         for (let matchIndex = 0; matchIndex < matches.length; matchIndex++) {
           const match = matches[matchIndex];
           if (!esPartidoValido(match)) continue;
-          if (total >= inicio && pagina.length < partidosPorPagina) {
+          if (encontrados >= inicio && pagina.length < partidosPorPagina + 1) {
             pagina.push({
               key: String(torneo.id) + "::" + groupIndex + "::" + matchIndex,
               torneoId: torneo.id,
@@ -162,15 +163,15 @@ function RefereePreJornada({ onBack }) {
               match,
             });
           }
-          total++;
+          encontrados++;
+          if (encontrados >= limite) return { pagina, hayMas: pagina.length > partidosPorPagina };
         }
       }
     }
-    return { total, pagina };
+    return { pagina, hayMas: false };
   })();
-  const partidosTotal = resumenPartidos.total;
-  const partidosPagina = resumenPartidos.pagina;
-  const totalPaginas = Math.max(1, Math.ceil(partidosTotal / partidosPorPagina));
+  const partidosPagina = resumenPartidos.pagina.slice(0, partidosPorPagina);
+  const hayMasPartidos = resumenPartidos.hayMas;
   const partido = partidosPagina.find(item => item.key === partidoKey);
   const arbitroAsignado = partido
     ? arbitros.find(a => a.id === partido.match.referee_id)
@@ -235,9 +236,9 @@ function RefereePreJornada({ onBack }) {
 
     {competencia && <>
       <h3 style={{margin:".5rem 0 1rem",textAlign:"center"}}>{competencia.title} · {ramaSeleccionada} · {categoriaSeleccionada === "Todas" ? "Todas las categorías" : categoriaSeleccionada}</h3>
-      {!partidosTotal ? <p style={{...estilo,textAlign:"center"}}>Todavía no hay enfrentamientos para esta selección.</p> :
+      {!partidosPagina.length && paginaPartidos === 0 ? <p style={{...estilo,textAlign:"center"}}>Todavía no hay enfrentamientos para esta selección.</p> :
         !partido ? <>
-          <p style={{textAlign:"center",color:"#fff"}}>Enfrentamientos: {partidosTotal} · Mostrando {paginaPartidos * partidosPorPagina + 1}–{Math.min((paginaPartidos + 1) * partidosPorPagina, partidosTotal)} · Página {paginaPartidos + 1} de {totalPaginas}</p>
+          <p style={{textAlign:"center",color:"#fff"}}>Enfrentamientos desde el {paginaPartidos * partidosPorPagina + 1} · Página {paginaPartidos + 1} · Mostrando {partidosPagina.length} partidos</p>
           <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:".8rem"}}>
           {partidosPagina.map(item=><button key={item.key} type="button" onClick={()=>{setPartidoKey(item.key);setMensaje("");}} style={{...estilo,textAlign:"center",cursor:"pointer"}}>
             <span style={{display:"block",fontSize:".75rem",color:"#fca5a5",fontWeight:700,marginBottom:".45rem"}}>{item.categoria}</span>
@@ -246,10 +247,10 @@ function RefereePreJornada({ onBack }) {
             <span style={{display:"block",fontWeight:800,marginTop:".65rem"}}>Designar árbitro →</span>
           </button>)}
           </section>
-          {totalPaginas > 1 && <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:".8rem",flexWrap:"wrap",marginTop:"1rem"}}>
+          {(paginaPartidos > 0 || hayMasPartidos) && <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:".8rem",flexWrap:"wrap",marginTop:"1rem"}}>
             <button type="button" disabled={paginaPartidos===0} onClick={()=>setPaginaPartidos(p=>Math.max(0,p-1))} style={{background:"#fff",color:"#171c27",border:"1px solid #b5122a",borderRadius:"8px",padding:".7rem 1rem",fontWeight:700,opacity:paginaPartidos===0?.5:1}}>← Anterior</button>
-            <span style={{color:"#fff"}}>{paginaPartidos+1} / {totalPaginas}</span>
-            <button type="button" disabled={paginaPartidos>=totalPaginas-1} onClick={()=>setPaginaPartidos(p=>Math.min(totalPaginas-1,p+1))} style={{background:"#fff",color:"#171c27",border:"1px solid #b5122a",borderRadius:"8px",padding:".7rem 1rem",fontWeight:700,opacity:paginaPartidos>=totalPaginas-1?.5:1}}>Siguiente →</button>
+            <span style={{color:"#fff"}}>Página {paginaPartidos+1}</span>
+            <button type="button" disabled={!hayMasPartidos} onClick={()=>setPaginaPartidos(p=>p+1)} style={{background:"#fff",color:"#171c27",border:"1px solid #b5122a",borderRadius:"8px",padding:".7rem 1rem",fontWeight:700,opacity:!hayMasPartidos?.5:1}}>Siguiente →</button>
           </div>}
         </> :
         <section style={{display:"grid",gap:".85rem"}}>
