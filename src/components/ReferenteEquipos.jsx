@@ -518,7 +518,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                               {currentEditingPlayer.photo_path ? (
                                 <img src={supabase.storage.from("fefutin-player-photos").getPublicUrl(currentEditingPlayer.photo_path).data.publicUrl} alt="Foto del jugador" style={{ width: "112px", height: "132px", objectFit: "cover", borderRadius: "8px", border: "1px solid #b5122a" }} />
                               ) : <span style={{ color: "#facc15", fontSize: ".82rem" }}>Todavía no se cargó una fotografía.</span>}
-                              {!readOnly && item.team_status !== "presentada" && (
+                              {!readOnly && item.team_status !== "presentada" && currentEditingPlayer.approval_status !== "aprobado" && currentEditingPlayer.approval_status !== "rechazado" && (
                                 <label style={{ ...buttonStyle, display: "inline-block", width: "fit-content", cursor: "pointer" }}>
                                   {uploadingPlayerId === currentEditingPlayer.id ? "Subiendo fotografía..." : currentEditingPlayer.photo_path ? "Cambiar fotografía" : "＋ Cargar fotografía"}
                                   <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPlayerId === currentEditingPlayer.id} onChange={(event) => uploadPlayerPhoto(item.club_tournament_id, currentEditingPlayer.id, event.target.files?.[0])} style={{ display: "none" }} />
