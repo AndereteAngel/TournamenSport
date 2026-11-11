@@ -194,17 +194,22 @@ function RefereePreJornada({ onBack }) {
     })
   );
 
+  const partidosPorEnfrentamiento = new Map();
+  partidosDeCompetencia.forEach(item => {
+    const key = claveEnfrentamiento(item.match);
+    if (!partidosPorEnfrentamiento.has(key)) partidosPorEnfrentamiento.set(key, []);
+    partidosPorEnfrentamiento.get(key).push(item);
+  });
+
   const jornadasMap = new Map();
   torneosFiltrados.forEach(torneo => {
-    (Array.isArray(torneo?.groups) ? torneo.groups : []).forEach((grupo, groupIndex) => {
+    (Array.isArray(torneo?.groups) ? torneo.groups : []).forEach(grupo => {
       if (grupo?.name === "__INSCRIPCIONES__") return;
       (Array.isArray(grupo?.matches) ? grupo.matches : []).forEach(match => {
         if (!esPartidoValido(match)) return;
         const key = claveEnfrentamiento(match);
         if (!key || jornadasMap.has(key)) return;
-        const partidosJornada = partidosDeCompetencia.filter(item =>
-          claveEnfrentamiento(item.match) === key
-        );
+        const partidosJornada = partidosPorEnfrentamiento.get(key) || [];
         jornadasMap.set(key, {
           key,
           match,
