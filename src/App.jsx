@@ -68,6 +68,7 @@ function RefereePreJornada({ onBack }) {
   const [competenciaKey, setCompetenciaKey] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todas");
   const [partidoKey, setPartidoKey] = useState("");
+  const [paginaPartidos, setPaginaPartidos] = useState(0);
   const [mensaje, setMensaje] = useState("");
   const [guardando, setGuardando] = useState(false);
 
@@ -149,6 +150,13 @@ function RefereePreJornada({ onBack }) {
     textoSeguro(a.match.team1).localeCompare(textoSeguro(b.match.team1), "es")
   );
 
+  // Evita montar cientos o miles de tarjetas a la vez en celulares.
+  const partidosPorPagina = 30;
+  const totalPaginas = Math.max(1, Math.ceil(partidos.length / partidosPorPagina));
+  const partidosPagina = partidos.slice(
+    paginaPartidos * partidosPorPagina,
+    (paginaPartidos + 1) * partidosPorPagina
+  );
   const partido = partidos.find(item => item.key === partidoKey);
   const arbitroAsignado = partido
     ? arbitros.find(a => a.id === partido.match.referee_id)
@@ -192,19 +200,19 @@ function RefereePreJornada({ onBack }) {
     <section style={{...estilo, marginBottom:"1rem"}}>
       <h2 style={{textAlign:"center", marginTop:0}}>PRE-JORNADA · DESIGNACIONES</h2>
       <label style={{display:"block", marginTop:".8rem"}}>1. Rama
-        <select value={ramaSeleccionada} onChange={e=>{setRamaSeleccionada(e.target.value);setCompetenciaKey("");setCategoriaSeleccionada("Todas");setPartidoKey("");setMensaje("");}} style={selector}>
+        <select value={ramaSeleccionada} onChange={e=>{setRamaSeleccionada(e.target.value);setCompetenciaKey("");setCategoriaSeleccionada("Todas");setPartidoKey("");setPaginaPartidos(0);setMensaje("");}} style={selector}>
           <option value="">Elegí la rama</option>
           {ramas.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
         </select>
       </label>
       {ramaSeleccionada && <label style={{display:"block", marginTop:".8rem"}}>2. Competencia
-        <select value={competenciaKey} onChange={e=>{setCompetenciaKey(e.target.value);setCategoriaSeleccionada("Todas");setPartidoKey("");setMensaje("");}} style={selector}>
+        <select value={competenciaKey} onChange={e=>{setCompetenciaKey(e.target.value);setCategoriaSeleccionada("Todas");setPartidoKey("");setPaginaPartidos(0);setMensaje("");}} style={selector}>
           <option value="">Elegí la competencia</option>
           {competencias.map(c=><option key={c.key} value={c.key}>{c.title}</option>)}
         </select>
       </label>}
       {competencia && <label style={{display:"block", marginTop:".8rem"}}>3. Categorías
-        <select value={categoriaSeleccionada} onChange={e=>{setCategoriaSeleccionada(e.target.value);setPartidoKey("");setMensaje("");}} style={selector}>
+        <select value={categoriaSeleccionada} onChange={e=>{setCategoriaSeleccionada(e.target.value);setPartidoKey("");setPaginaPartidos(0);setMensaje("");}} style={selector}>
           <option value="Todas">Todas las categorías</option>
           {categorias.map(c=><option key={c} value={c}>{c}</option>)}
         </select>
@@ -214,14 +222,22 @@ function RefereePreJornada({ onBack }) {
     {competencia && <>
       <h3 style={{margin:".5rem 0 1rem",textAlign:"center"}}>{competencia.title} · {ramaSeleccionada} · {categoriaSeleccionada === "Todas" ? "Todas las categorías" : categoriaSeleccionada}</h3>
       {!partidos.length ? <p style={{...estilo,textAlign:"center"}}>Todavía no hay enfrentamientos para esta selección.</p> :
-        !partido ? <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:".8rem"}}>
-          {partidos.map(item=><button key={item.key} type="button" onClick={()=>{setPartidoKey(item.key);setMensaje("");}} style={{...estilo,textAlign:"center",cursor:"pointer"}}>
+        !partido ? <>
+          <p style={{textAlign:"center",color:"#fff"}}>Enfrentamientos: {partidos.length} · Mostrando {paginaPartidos * partidosPorPagina + 1}–{Math.min((paginaPartidos + 1) * partidosPorPagina, partidos.length)} · Página {paginaPartidos + 1} de {totalPaginas}</p>
+          <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:".8rem"}}>
+          {partidosPagina.map(item=><button key={item.key} type="button" onClick={()=>{setPartidoKey(item.key);setMensaje("");}} style={{...estilo,textAlign:"center",cursor:"pointer"}}>
             <span style={{display:"block",fontSize:".75rem",color:"#fca5a5",fontWeight:700,marginBottom:".45rem"}}>{item.categoria}</span>
             <strong style={{fontSize:"1rem"}}>{textoSeguro(item.match.team1)} <span style={{color:"#fca5a5"}}>VS</span> {textoSeguro(item.match.team2)}</strong>
             <span style={{display:"block",fontSize:".82rem",marginTop:".55rem",color:"#d1d5db"}}>Árbitro: {arbitros.find(a=>a.id===item.match.referee_id)?.username || "Sin designar"}</span>
             <span style={{display:"block",fontWeight:800,marginTop:".65rem"}}>Designar árbitro →</span>
           </button>)}
-        </section> :
+          </section>
+          {totalPaginas > 1 && <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:".8rem",flexWrap:"wrap",marginTop:"1rem"}}>
+            <button type="button" disabled={paginaPartidos===0} onClick={()=>setPaginaPartidos(p=>Math.max(0,p-1))} style={{background:"#fff",color:"#171c27",border:"1px solid #b5122a",borderRadius:"8px",padding:".7rem 1rem",fontWeight:700,opacity:paginaPartidos===0?.5:1}}>← Anterior</button>
+            <span style={{color:"#fff"}}>{paginaPartidos+1} / {totalPaginas}</span>
+            <button type="button" disabled={paginaPartidos>=totalPaginas-1} onClick={()=>setPaginaPartidos(p=>Math.min(totalPaginas-1,p+1))} style={{background:"#fff",color:"#171c27",border:"1px solid #b5122a",borderRadius:"8px",padding:".7rem 1rem",fontWeight:700,opacity:paginaPartidos>=totalPaginas-1?.5:1}}>Siguiente →</button>
+          </div>}
+        </> :
         <section style={{display:"grid",gap:".85rem"}}>
           <button type="button" onClick={()=>{setPartidoKey("");setMensaje("");}} style={{justifySelf:"start",background:"transparent",color:"#fff",border:"1px solid #b5122a",borderRadius:"8px",padding:".55rem .8rem"}}>← Volver a los enfrentamientos</button>
           <section style={{...estilo,textAlign:"center"}}>
