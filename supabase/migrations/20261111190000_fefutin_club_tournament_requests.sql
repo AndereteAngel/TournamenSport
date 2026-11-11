@@ -192,7 +192,6 @@ begin
     and p.role = 'referente'
     and p.approval_status = 'aprobado'
     and p.deactivated_at is null
-    and (v_actor_role = 'admin' or true)
   order by r.created_at asc;
 end;
 $$;
