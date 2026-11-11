@@ -92,7 +92,9 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
     setRowsByParticipation((previous) => ({
       ...previous,
       [participationId]: (previous[participationId] || []).map((player) =>
-        player.id === playerId ? { ...player, [field]: value } : player
+        player.id === playerId && player.approval_status !== "aprobado" && player.approval_status !== "rechazado"
+          ? { ...player, [field]: value }
+          : player
       ),
     }));
   };
@@ -129,7 +131,9 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const removePlayer = (participationId, playerId) => {
     setRowsByParticipation((previous) => ({
       ...previous,
-      [participationId]: (previous[participationId] || []).filter((player) => player.id !== playerId),
+      [participationId]: (previous[participationId] || []).filter((player) =>
+        player.id !== playerId || player.approval_status === "aprobado" || player.approval_status === "rechazado"
+      ),
     }));
   };
 
@@ -141,6 +145,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
     setError("");
     setNotice("");
     const payload = players.map((player) => ({
+      id: player.id,
       first_name: player.first_name || "",
       last_name: player.last_name || "",
       dni: player.dni || "",
@@ -490,19 +495,19 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                             <h3 style={{ color: "#fff", margin: "0 0 1rem" }}>{currentEditingPlayer.first_name || currentEditingPlayer.last_name ? `${currentEditingPlayer.last_name} ${currentEditingPlayer.first_name}` : "Nuevo jugador"}</h3>
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 230px), 1fr))", gap: ".85rem" }}>
                               <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Apellido
-                                <input value={currentEditingPlayer.last_name || ""} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "last_name", event.target.value)} placeholder="Apellido" style={inputStyle} />
+                                <input value={currentEditingPlayer.last_name || ""} disabled={readOnly || item.team_status === "presentada" || currentEditingPlayer.approval_status === "aprobado" || currentEditingPlayer.approval_status === "rechazado"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "last_name", event.target.value)} placeholder="Apellido" style={inputStyle} />
                               </label>
                               <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Nombre
-                                <input value={currentEditingPlayer.first_name || ""} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "first_name", event.target.value)} placeholder="Nombre" style={inputStyle} />
+                                <input value={currentEditingPlayer.first_name || ""} disabled={readOnly || item.team_status === "presentada" || currentEditingPlayer.approval_status === "aprobado" || currentEditingPlayer.approval_status === "rechazado"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "first_name", event.target.value)} placeholder="Nombre" style={inputStyle} />
                               </label>
                               <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>DNI
-                                <input inputMode="numeric" value={currentEditingPlayer.dni || ""} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "dni", event.target.value)} placeholder="Número de documento" style={inputStyle} />
+                                <input inputMode="numeric" value={currentEditingPlayer.dni || ""} disabled={readOnly || item.team_status === "presentada" || currentEditingPlayer.approval_status === "aprobado" || currentEditingPlayer.approval_status === "rechazado"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "dni", event.target.value)} placeholder="Número de documento" style={inputStyle} />
                               </label>
                               <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Fecha de nacimiento
-                                <input type="date" value={currentEditingPlayer.birth_date || ""} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "birth_date", event.target.value)} style={{ ...inputStyle, WebkitAppearance: "none", appearance: "none", display: "block", fontSize: "0.9rem", lineHeight: "normal", padding: "0.65rem 0.7rem", height: "54px", minHeight: "54px", maxWidth: "100%", borderRadius: "7px" }} />
+                                <input type="date" value={currentEditingPlayer.birth_date || ""} disabled={readOnly || item.team_status === "presentada" || currentEditingPlayer.approval_status === "aprobado" || currentEditingPlayer.approval_status === "rechazado"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "birth_date", event.target.value)} style={{ ...inputStyle, WebkitAppearance: "none", appearance: "none", display: "block", fontSize: "0.9rem", lineHeight: "normal", padding: "0.65rem 0.7rem", height: "54px", minHeight: "54px", maxWidth: "100%", borderRadius: "7px" }} />
                               </label>
                               <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Número de camiseta
-                                <select value={currentEditingPlayer.jersey_number || "Sin especificar"} disabled={readOnly || item.team_status === "presentada"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "jersey_number", event.target.value)} style={inputStyle}>
+                                <select value={currentEditingPlayer.jersey_number || "Sin especificar"} disabled={readOnly || item.team_status === "presentada" || currentEditingPlayer.approval_status === "aprobado" || currentEditingPlayer.approval_status === "rechazado"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "jersey_number", event.target.value)} style={inputStyle}>
                                   <option value="Sin especificar">Sin especificar</option>
                                   {Array.from({ length: 99 }, (_, number) => number + 1).map((number) => <option key={number} value={String(number)}>{number}</option>)}
                                 </select>
@@ -554,7 +559,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                         </div>
                                       )}
                                     </div>
-                                    {!readOnly && item.team_status !== "presentada" && (
+                                    {!readOnly && item.team_status !== "presentada" && player.approval_status !== "aprobado" && player.approval_status !== "rechazado" && (
                                       <button type="button" onClick={() => removePlayer(item.club_tournament_id, player.id)} title="Quitar jugador" aria-label="Quitar jugador" style={{ gridColumn: "3", gridRow: "1", padding: ".55rem .7rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#171c27", color: "#fecaca", cursor: "pointer" }}>✕</button>
                                     )}
                                   </div>
