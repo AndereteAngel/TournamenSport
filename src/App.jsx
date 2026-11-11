@@ -173,7 +173,7 @@ function RefereePreJornada({ onBack }) {
   // de la misma competencia. El filtro de categoría limita qué cruces se muestran,
   // pero la designación se aplica a todas las categorías de ese mismo cruce.
   const normalizarEquipo = valor => textoSeguro(valor).trim().toLocaleLowerCase("es")
-    .normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const claveEnfrentamiento = match => [
     normalizarEquipo(match?.team1),
     normalizarEquipo(match?.team2),
@@ -335,8 +335,8 @@ function RefereePreJornada({ onBack }) {
         <section style={{display:"grid",gap:".85rem"}}>
           <button type="button" onClick={()=>{setPartidoKey("");setMensaje("");}} style={{justifySelf:"start",background:"transparent",color:"#fff",border:"1px solid #b5122a",borderRadius:"8px",padding:".55rem .8rem"}}>← Volver a los enfrentamientos</button>
           <section style={{...estilo,textAlign:"center"}}>
-            <div style={{fontSize:".8rem",color:"#fca5a5",fontWeight:700,marginBottom:".5rem"}}>{competencia.title} · {partido.categoria}</div>
-            <h3 style={{margin:".2rem 0 1rem"}}>{textoSeguro(partido.match.team1)} <span style={{color:"#fca5a5"}}>VS</span> {textoSeguro(partido.match.team2)}</h3>
+            <div style={{fontSize:".8rem",color:"#fca5a5",fontWeight:700,marginBottom:".5rem"}}>{competencia.title} · {partido.categorias.join(" · ")}</div>
+            <h3 style={{margin:".2rem 0 1rem"}}>{partido.team1} <span style={{color:"#fca5a5"}}>VS</span> {partido.team2}</h3>
             <h4 style={{margin:"0 0 .5rem"}}>DESIGNAR ÁRBITRO PARA TODA LA JORNADA</h4>
             <p style={{fontSize:".85rem",color:"#d1d5db"}}>{arbitroAsignado ? "Árbitro actual para toda la jornada: " + arbitroAsignado.username : (designacionParcial ? "La jornada tiene designaciones diferentes o incompletas. Elegí un árbitro para unificar todos sus partidos." : "Elegí un árbitro. Se asignará a todos los partidos de este cruce en las categorías de la competencia.")}</p>
             {arbitros.length ? <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(135px,1fr))",gap:".6rem"}}>
