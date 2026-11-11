@@ -64,9 +64,10 @@ function RefereePreJornada({ onBack }) {
   const [torneos, setTorneos] = useState([]);
   const [arbitros, setArbitros] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [ramaSeleccionada, setRamaSeleccionada] = useState("");
   const [competenciaKey, setCompetenciaKey] = useState("");
-  const [divisionSeleccionada, setDivisionSeleccionada] = useState("Todas");
-  const [fechaSeleccionada, setFechaSeleccionada] = useState("");
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todas");
+  const [partidoKey, setPartidoKey] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [guardando, setGuardando] = useState(false);
 
@@ -86,140 +87,142 @@ function RefereePreJornada({ onBack }) {
     return () => { activo = false; };
   }, []);
 
+  const obtenerPartesJuego = torneo => String(torneo?.game || "").split("·").map(p => p.trim()).filter(Boolean);
+  const obtenerRama = torneo => obtenerPartesJuego(torneo)[1] || "";
+  const obtenerCategoria = torneo => {
+    const config = (Array.isArray(torneo?.groups) ? torneo.groups : [])
+      .flatMap(g => Array.isArray(g?.category_config) ? g.category_config : []);
+    const categoria = config.flatMap(c => Array.isArray(c?.categories) ? c.categories : []).find(Boolean);
+    return String(categoria || obtenerPartesJuego(torneo)[2] || "General").trim();
+  };
+  const ramas = ["Infantil", "Femenino", "Mayores"];
+  const torneosRama = torneos.filter(t => obtenerRama(t).toLocaleLowerCase("es") === ramaSeleccionada.toLocaleLowerCase("es"));
   const claveCompetencia = t => String(t?.title || "").trim().toLocaleLowerCase("es") + "|" +
     String(t?.created_by_user_id || t?.created_by || "").trim().toLocaleLowerCase("es");
-  const competencias = [...new Map(torneos.map(t => [claveCompetencia(t), {
+  const competencias = [...new Map(torneosRama.map(t => [claveCompetencia(t), {
     key: claveCompetencia(t),
     title: String(t.title || "Competencia sin nombre").trim(),
-    torneos: torneos.filter(item => claveCompetencia(item) === claveCompetencia(t)),
-  }])).values()];
+  }])).values()].sort((a,b) => a.title.localeCompare(b.title, "es"));
   const competencia = competencias.find(c => c.key === competenciaKey);
-  const torneosCompetencia = competencia?.torneos || [];
-
-  const obtenerDivision = torneo => {
-    const configuracion = (Array.isArray(torneo?.groups) ? torneo.groups : [])
-      .flatMap(g => Array.isArray(g?.category_config) ? g.category_config : []);
-    const desdeConfig = configuracion.flatMap(c => Array.isArray(c?.categories) ? c.categories : []).find(Boolean);
-    if (desdeConfig) return String(desdeConfig).trim();
-    const partes = String(torneo?.game || "").split("·").map(p => p.trim()).filter(Boolean);
-    return partes.length > 1 ? partes[partes.length - 1] : "General";
-  };
-  const divisiones = [...new Set(torneosCompetencia.map(obtenerDivision))].sort((a,b)=>a.localeCompare(b,"es",{numeric:true}));
-  const torneosFiltrados = divisionSeleccionada === "Todas"
+  const torneosCompetencia = competencia
+    ? torneosRama.filter(t => claveCompetencia(t) === competencia.key)
+    : [];
+  const categorias = [...new Set(torneosCompetencia.map(obtenerCategoria))]
+    .sort((a,b) => a.localeCompare(b, "es", { numeric:true }));
+  const torneosFiltrados = categoriaSeleccionada === "Todas"
     ? torneosCompetencia
-    : torneosCompetencia.filter(t => obtenerDivision(t) === divisionSeleccionada);
+    : torneosCompetencia.filter(t => obtenerCategoria(t) === categoriaSeleccionada);
 
-  const obtenerFecha = match => String(match?.match_date || getFefutinMatchDate(match?.round || 1)).slice(0, 10);
   const esPartidoValido = match => match?.team1 && match?.team2 &&
     String(match.team1).trim().toLocaleLowerCase("es") !== "pasaje directo" &&
     String(match.team2).trim().toLocaleLowerCase("es") !== "pasaje directo";
 
-  const fechas = (() => {
-    const porFecha = new Map();
-    torneosFiltrados.forEach(torneo => {
-      (Array.isArray(torneo?.groups) ? torneo.groups : []).forEach(grupo => {
-        (Array.isArray(grupo?.matches) ? grupo.matches : []).forEach(match => {
-          if (!esPartidoValido(match)) return;
-          const fecha = obtenerFecha(match);
-          if (!porFecha.has(fecha)) porFecha.set(fecha, []);
-          porFecha.get(fecha).push({ ...match, _torneoId: torneo.id, _division: obtenerDivision(torneo) });
-        });
-      });
-    });
-    return [...porFecha.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([fecha, partidos], index) => ({
-      fecha,
-      jornada: Math.min(...partidos.map(p => Number(p.round) || index + 1)),
-      partidos,
-    }));
-  })();
-  const jornada = fechas.find(item => item.fecha === fechaSeleccionada);
-  const idsArbitrosAsignados = jornada ? [...new Set(jornada.partidos.map(p => p.referee_id).filter(Boolean))] : [];
-  const asignacionUniforme = idsArbitrosAsignados.length === 1 &&
-    jornada?.partidos.every(p => p.referee_id === idsArbitrosAsignados[0]);
-  const arbitroJornada = asignacionUniforme ? arbitros.find(a => a.id === idsArbitrosAsignados[0]) : null;
+  const partidos = torneosFiltrados.flatMap(torneo =>
+    (Array.isArray(torneo?.groups) ? torneo.groups : []).flatMap((grupo, groupIndex) => {
+      if (grupo?.name === "__INSCRIPCIONES__") return [];
+      return (Array.isArray(grupo?.matches) ? grupo.matches : [])
+        .map((match, matchIndex) => ({
+          key: String(torneo.id) + "::" + groupIndex + "::" + matchIndex,
+          torneoId: torneo.id,
+          torneoTitle: torneo.title || "Competencia",
+          categoria: obtenerCategoria(torneo),
+          grupoIndex,
+          matchIndex,
+          match,
+        }))
+        .filter(item => esPartidoValido(item.match));
+    })
+  ).sort((a,b) =>
+    a.categoria.localeCompare(b.categoria, "es", { numeric:true }) ||
+    String(a.match.team1).localeCompare(String(b.match.team1), "es")
+  );
 
-  const designarJornada = async refereeId => {
-    if (!competencia || !jornada || guardando) return;
+  const partido = partidos.find(item => item.key === partidoKey);
+  const arbitroAsignado = partido
+    ? arbitros.find(a => a.id === partido.match.referee_id)
+    : null;
+
+  const designarPartido = async refereeId => {
+    if (!partido || guardando) return;
     setGuardando(true);
     setMensaje("");
-    const idsActualizados = new Set(jornada.partidos.map(p => p._torneoId));
-    const torneosAActualizar = torneosFiltrados.filter(t => idsActualizados.has(t.id));
-    const cambios = await Promise.all(torneosAActualizar.map(async torneo => {
-      const gruposActualizados = (torneo.groups || []).map(grupo => ({
-        ...grupo,
-        matches: (grupo.matches || []).map(match =>
-          obtenerFecha(match) === jornada.fecha && esPartidoValido(match)
-            ? { ...match, referee_id: refereeId }
-            : match
-        )
-      }));
-      const { error } = await supabase.from("tournaments").update({ groups: gruposActualizados }).eq("id", torneo.id);
-      return { torneo, gruposActualizados, error };
-    }));
-    const error = cambios.find(c => c.error)?.error;
-    setGuardando(false);
-    if (error) {
-      setMensaje("No se pudieron guardar todas las designaciones: " + error.message);
+    const torneo = torneos.find(t => t.id === partido.torneoId);
+    if (!torneo) {
+      setGuardando(false);
+      setMensaje("No se encontró el torneo de este enfrentamiento.");
       return;
     }
-    setTorneos(prev => prev.map(item => {
-      const cambio = cambios.find(c => c.torneo.id === item.id);
-      return cambio ? { ...item, groups: cambio.gruposActualizados } : item;
-    }));
-    setMensaje("Árbitro asignado a todos los partidos de esta jornada y división seleccionada.");
+    const gruposActualizados = (torneo.groups || []).map((grupo, groupIndex) => {
+      if (groupIndex !== partido.grupoIndex) return grupo;
+      return {
+        ...grupo,
+        matches: (grupo.matches || []).map((match, matchIndex) =>
+          matchIndex === partido.matchIndex ? { ...match, referee_id: refereeId } : match
+        ),
+      };
+    });
+    const { error } = await supabase.from("tournaments")
+      .update({ groups: gruposActualizados }).eq("id", torneo.id);
+    setGuardando(false);
+    if (error) {
+      setMensaje("No se pudo guardar la designación: " + error.message);
+      return;
+    }
+    setTorneos(prev => prev.map(t => t.id === torneo.id ? { ...t, groups: gruposActualizados } : t));
+    setMensaje("Árbitro asignado únicamente a este enfrentamiento.");
   };
 
   const estilo = { background:"#171c27", color:"#fff", border:"1px solid #b5122a", borderRadius:"12px", padding:"1rem", width:"100%" };
   const selector = { background:"#fff", color:"#171c27", border:"1px solid #b5122a", borderRadius:"9px", padding:".7rem", width:"100%", marginTop:".5rem" };
-  const fechaTexto = fecha => new Date(fecha + "T12:00:00").toLocaleDateString("es-AR", { weekday:"long", day:"2-digit", month:"long", year:"numeric" });
-  if (cargando) return <section style={{...estilo, textAlign:"center"}}><h2>PRE-JORNADA</h2><p>Cargando torneos y árbitros…</p></section>;
+  if (cargando) return <section style={{...estilo, textAlign:"center"}}><h2>PRE-JORNADA</h2><p>Cargando competencias y árbitros…</p></section>;
 
   return <main style={{maxWidth:"1000px", margin:"0 auto", paddingBottom:"2rem", color:"#fff"}}>
     <section style={{...estilo, marginBottom:"1rem"}}>
       <h2 style={{textAlign:"center", marginTop:0}}>PRE-JORNADA · DESIGNACIONES</h2>
-      <label style={{display:"block", marginTop:".8rem"}}>1. Competencia
-        <select value={competenciaKey} onChange={e=>{setCompetenciaKey(e.target.value);setDivisionSeleccionada("Todas");setFechaSeleccionada("");setMensaje("");}} style={selector}>
+      <label style={{display:"block", marginTop:".8rem"}}>1. Rama
+        <select value={ramaSeleccionada} onChange={e=>{setRamaSeleccionada(e.target.value);setCompetenciaKey("");setCategoriaSeleccionada("Todas");setPartidoKey("");setMensaje("");}} style={selector}>
+          <option value="">Elegí la rama</option>
+          {ramas.map(r=><option key={r} value={r}>{r}</option>)}
+        </select>
+      </label>
+      {ramaSeleccionada && <label style={{display:"block", marginTop:".8rem"}}>2. Competencia
+        <select value={competenciaKey} onChange={e=>{setCompetenciaKey(e.target.value);setCategoriaSeleccionada("Todas");setPartidoKey("");setMensaje("");}} style={selector}>
           <option value="">Elegí la competencia</option>
           {competencias.map(c=><option key={c.key} value={c.key}>{c.title}</option>)}
         </select>
-      </label>
-      {competencia && <label style={{display:"block", marginTop:".8rem"}}>2. División
-        <select value={divisionSeleccionada} onChange={e=>{setDivisionSeleccionada(e.target.value);setFechaSeleccionada("");setMensaje("");}} style={selector}>
-          <option value="Todas">Todas las divisiones</option>
-          {divisiones.map(d=><option key={d} value={d}>{d}</option>)}
+      </label>}
+      {competencia && <label style={{display:"block", marginTop:".8rem"}}>3. Categorías
+        <select value={categoriaSeleccionada} onChange={e=>{setCategoriaSeleccionada(e.target.value);setPartidoKey("");setMensaje("");}} style={selector}>
+          <option value="Todas">Todas las categorías</option>
+          {categorias.map(c=><option key={c} value={c}>{c}</option>)}
         </select>
       </label>}
     </section>
 
     {competencia && <>
-      <h3 style={{margin:".5rem 0 1rem",textAlign:"center"}}>{competencia.title}{divisionSeleccionada !== "Todas" ? " · " + divisionSeleccionada : " · Todas las divisiones"}</h3>
-      {!fechas.length ? <p style={{...estilo,textAlign:"center"}}>Esta competencia todavía no tiene partidos con fechas para organizar.</p> :
-        !jornada ? <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:".8rem"}}>
-          {fechas.map((item,index)=><button key={item.fecha} type="button" onClick={()=>setFechaSeleccionada(item.fecha)} style={{...estilo,textAlign:"left",cursor:"pointer"}}>
-            <strong style={{display:"block",fontSize:"1rem",textTransform:"capitalize"}}>JORNADA {item.jornada || index+1}</strong>
-            <span style={{display:"block",marginTop:".4rem",color:"#fca5a5",fontWeight:700}}>{fechaTexto(item.fecha)}</span>
-            <span style={{display:"block",marginTop:".45rem",fontSize:".85rem"}}>{item.partidos.length} partidos · {divisionSeleccionada === "Todas" ? "todas las divisiones" : divisionSeleccionada}</span>
-            <span style={{display:"block",marginTop:".65rem",fontWeight:800}}>Ver y designar jornada →</span>
+      <h3 style={{margin:".5rem 0 1rem",textAlign:"center"}}>{competencia.title} · {ramaSeleccionada} · {categoriaSeleccionada === "Todas" ? "Todas las categorías" : categoriaSeleccionada}</h3>
+      {!partidos.length ? <p style={{...estilo,textAlign:"center"}}>Todavía no hay enfrentamientos para esta selección.</p> :
+        !partido ? <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:".8rem"}}>
+          {partidos.map(item=><button key={item.key} type="button" onClick={()=>{setPartidoKey(item.key);setMensaje("");}} style={{...estilo,textAlign:"center",cursor:"pointer"}}>
+            <span style={{display:"block",fontSize:".75rem",color:"#fca5a5",fontWeight:700,marginBottom:".45rem"}}>{item.categoria}</span>
+            <strong style={{fontSize:"1rem"}}>{item.match.team1} <span style={{color:"#fca5a5"}}>VS</span> {item.match.team2}</strong>
+            <span style={{display:"block",fontSize:".82rem",marginTop:".55rem",color:"#d1d5db"}}>Árbitro: {arbitros.find(a=>a.id===item.match.referee_id)?.username || "Sin designar"}</span>
+            <span style={{display:"block",fontWeight:800,marginTop:".65rem"}}>Designar árbitro →</span>
           </button>)}
         </section> :
         <section style={{display:"grid",gap:".85rem"}}>
-          <button type="button" onClick={()=>setFechaSeleccionada("")} style={{justifySelf:"start",background:"transparent",color:"#fff",border:"1px solid #b5122a",borderRadius:"8px",padding:".55rem .8rem"}}>← Volver a las jornadas</button>
-          <h3 style={{margin:".2rem 0",textTransform:"capitalize"}}>3. JORNADA {jornada.jornada} · {fechaTexto(jornada.fecha)}</h3>
-          <section style={{...estilo}}>
-            <h4 style={{margin:"0 0 .5rem",textAlign:"center"}}>ÁRBITRO DE TODA LA JORNADA</h4>
-            <p style={{fontSize:".85rem",color:"#d1d5db",textAlign:"center"}}>{asignacionUniforme ? "Asignado a todos los partidos: " + (arbitroJornada?.username || "árbitro") : idsArbitrosAsignados.length ? "Hay asignaciones diferentes o incompletas en esta jornada. Elegí un árbitro para unificarla." : "Elegí un árbitro. Se asignará a todos los partidos incluidos en los filtros."}</p>
+          <button type="button" onClick={()=>{setPartidoKey("");setMensaje("");}} style={{justifySelf:"start",background:"transparent",color:"#fff",border:"1px solid #b5122a",borderRadius:"8px",padding:".55rem .8rem"}}>← Volver a los enfrentamientos</button>
+          <section style={{...estilo,textAlign:"center"}}>
+            <div style={{fontSize:".8rem",color:"#fca5a5",fontWeight:700,marginBottom:".5rem"}}>{competencia.title} · {partido.categoria}</div>
+            <h3 style={{margin:".2rem 0 1rem"}}>{partido.match.team1} <span style={{color:"#fca5a5"}}>VS</span> {partido.match.team2}</h3>
+            <h4 style={{margin:"0 0 .5rem"}}>DESIGNAR ÁRBITRO PARA ESTE PARTIDO</h4>
+            <p style={{fontSize:".85rem",color:"#d1d5db"}}>{arbitroAsignado ? "Árbitro actual: " + arbitroAsignado.username : "Elegí un árbitro para este enfrentamiento."}</p>
             {arbitros.length ? <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(135px,1fr))",gap:".6rem"}}>
-              {arbitros.map(arbitro=><button key={arbitro.id} type="button" disabled={guardando} onClick={()=>designarJornada(arbitro.id)} style={{background:asignacionUniforme && idsArbitrosAsignados[0]===arbitro.id?"#b5122a":"#fff",color:asignacionUniforme && idsArbitrosAsignados[0]===arbitro.id?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".85rem",fontWeight:800,cursor:"pointer",opacity:guardando ? 0.65 : 1}}>
+              {arbitros.map(arbitro=><button key={arbitro.id} type="button" disabled={guardando} onClick={()=>designarPartido(arbitro.id)} style={{background:partido.match.referee_id===arbitro.id?"#b5122a":"#fff",color:partido.match.referee_id===arbitro.id?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".85rem",fontWeight:800,cursor:"pointer",opacity:guardando?0.65:1}}>
                 {guardando ? "Guardando…" : arbitro.username}
               </button>)}
-            </div> : <p style={{textAlign:"center"}}>No hay árbitros aprobados y activos para designar.</p>}
+            </div> : <p>No hay árbitros aprobados y activos para designar.</p>}
           </section>
-          <h4 style={{margin:".4rem 0 0"}}>PARTIDOS INCLUIDOS EN ESTA JORNADA ({jornada.partidos.length})</h4>
-          {jornada.partidos.map((partido,index)=><article key={String(partido._torneoId)+"-"+String(partido.id || index)} style={{...estilo,padding:".8rem 1rem"}}>
-            <div style={{fontSize:".75rem",color:"#fca5a5",textAlign:"center",marginBottom:".35rem"}}>{partido._division}</div>
-            <div style={{fontWeight:800,textAlign:"center"}}>{partido.team1} <span style={{color:"#fca5a5"}}>VS</span> {partido.team2}</div>
-            <p style={{fontSize:".8rem",color:"#d1d5db",textAlign:"center",marginBottom:0}}>Árbitro: {arbitros.find(a=>a.id===partido.referee_id)?.username || "Sin designar"}</p>
-          </article>)}
         </section>
       }
     </>}
