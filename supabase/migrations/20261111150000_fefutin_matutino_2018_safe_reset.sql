@@ -135,11 +135,10 @@ begin
   select count(*)::integer into v_closed_sheets
   from public.fefutin_match_sheets s
   where s.tournament_id = v_tournament.id
-    and s.match_id = 'San Telmo Celeste-River Plate'
     and lower(trim(coalesce(s.estado, ''))) in ('cerrada', 'cerrado');
 
   if v_closed_sheets <> 1 then
-    raise exception 'No se encontró exactamente una planilla cerrada para el partido esperado. No se realizó ningún cambio.';
+    raise exception 'Se esperaba exactamente una planilla cerrada en este torneo. Se encontraron %. No se realizó ningún cambio.', v_closed_sheets;
   end if;
 
   select s.* into v_sheet
