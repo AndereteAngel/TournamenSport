@@ -1900,6 +1900,7 @@ export function TournamenSportApp() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [pendingAccessRequests, setPendingAccessRequests] = useState([]);
+  const [pendingPlayerApprovalsCount, setPendingPlayerApprovalsCount] = useState(0);
   const [loadingAccessRequests, setLoadingAccessRequests] = useState(false);
   const [accessActionError, setAccessActionError] = useState("");
   const [activeClubs, setActiveClubs] = useState([]);
@@ -2147,23 +2148,23 @@ export function TournamenSportApp() {
   }, [canManageAccess, currentUser?.id]);
 
   useEffect(() => {
+    if (!canManageAccess) {
+      setPendingAccessRequests([]);
+      setPendingPlayerApprovalsCount(0);
+      return;
+    }
+
     let cancelled = false;
-    const loadPendingRequests = async () => {
-      if (!canManageAccess) { setPendingAccessRequests([]); return; }
-      setLoadingAccessRequests(true);
-      const { data, error } = await supabase.rpc("get_fefutin_pending_requests");
-      if (cancelled) return;
-      if (error) {
-        console.error("Error al cargar solicitudes de acceso:", error);
-        setAccessActionError("No se pudieron cargar las solicitudes. Revisá la conexión con Supabase.");
-      } else {
-        setPendingAccessRequests(data || []);
-        setAccessActionError("");
-      }
-      setLoadingAccessRequests(false);
+    const loadPendingOverview = async () => {
+      if (!cancelled) await refreshPendingRequests();
     };
-    loadPendingRequests();
-    return () => { cancelled = true; };
+
+    loadPendingOverview();
+    const intervalId = window.setInterval(loadPendingOverview, 30000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
   }, [canManageAccess, currentUser?.id]);
 
   const loadActiveClubs = async () => {
@@ -2197,9 +2198,37 @@ export function TournamenSportApp() {
   const refreshPendingRequests = async () => {
     if (!canManageAccess) return;
     setLoadingAccessRequests(true);
-    const { data, error } = await supabase.rpc("get_fefutin_pending_requests");
-    if (error) setAccessActionError(error.message || "No se pudieron actualizar las solicitudes.");
-    else { setPendingAccessRequests(data || []); setAccessActionError(""); }
+
+    const [
+      { data: accessRows, error: accessError },
+      { data: teamRows, error: teamsError },
+    ] = await Promise.all([
+      supabase.rpc("get_fefutin_pending_requests"),
+      supabase.rpc("get_fefutin_my_teams"),
+    ]);
+
+    if (accessError) {
+      console.error("Error al actualizar solicitudes de acceso:", accessError);
+      setAccessActionError(accessError.message || "No se pudieron actualizar las solicitudes.");
+    } else {
+      setPendingAccessRequests(accessRows || []);
+    }
+
+    if (teamsError) {
+      console.error("Error al consultar altas pendientes de jugadores:", teamsError);
+      setAccessActionError((current) => current || teamsError.message || "No se pudieron consultar las altas de jugadores.");
+    } else {
+      const pendingPlayers = (teamRows || []).flatMap((team) => {
+        let players = team.players || [];
+        if (typeof players === "string") {
+          try { players = JSON.parse(players); } catch { players = []; }
+        }
+        return (Array.isArray(players) ? players : []).filter((player) => player?.approval_status === "pendiente");
+      });
+      setPendingPlayerApprovalsCount(pendingPlayers.length);
+    }
+
+    if (!accessError && !teamsError) setAccessActionError("");
     setLoadingAccessRequests(false);
   };
 
@@ -4475,21 +4504,43 @@ export function TournamenSportApp() {
             </section>
           )}
 
-          {canManageAccess && (
-            <button
-              type="button"
-              className="tc-home-about-card tc-home-referee-card"
-              onClick={() => { setAccessActionError(""); setActiveView("access-requests"); }}
-              aria-label="Abrir altas de jugadores"
-            >
-              <span className="tc-home-about-icon tc-home-referee-icon" aria-hidden="true">⚽</span>
-              <span className="tc-home-about-copy">
-                <strong>ALTAS DE JUGADORES</strong>
-                <small>Revisá solicitudes, aprobá jugadores y generá sus carnets</small>
-              </span>
-              <span className="tc-home-about-arrow">→</span>
-            </button>
-          )}
+          {canManageAccess && (() => {
+            const totalPendingGeneral = pendingAccessRequests.length + pendingPlayerApprovalsCount;
+            const hasPendingGeneral = !loadingAccessRequests && totalPendingGeneral > 0;
+            return (
+              <>
+                <style>{\`
+                  @keyframes fefutinGeneralPendingPulse {
+                    0%, 100% { box-shadow: 0 0 0 1px rgba(181,18,42,.25), 0 0 8px rgba(181,18,42,.18); border-color: #b5122a; }
+                    50% { box-shadow: 0 0 0 2px rgba(255,255,255,.5), 0 0 19px rgba(181,18,42,.85); border-color: #fff; }
+                  }
+                  @media (prefers-reduced-motion: reduce) {
+                    .tc-home-general-approvals-pending { animation: none !important; }
+                  }
+                \`}</style>
+                <button
+                  type="button"
+                  className={"tc-home-about-card tc-home-referee-card" + (hasPendingGeneral ? " tc-home-general-approvals-pending" : "")}
+                  onClick={() => { setAccessActionError(""); setActiveView("access-requests"); }}
+                  aria-label={"Abrir altas generales" + (hasPendingGeneral ? ", " + totalPendingGeneral + " solicitudes pendientes" : "")}
+                  aria-live="polite"
+                  style={{ position: "relative", animation: hasPendingGeneral ? "fefutinGeneralPendingPulse 1.7s ease-in-out infinite" : "none" }}
+                >
+                  <span className="tc-home-about-icon tc-home-referee-icon" aria-hidden="true">⚽</span>
+                  <span className="tc-home-about-copy">
+                    <strong>ALTAS GENERALES</strong>
+                    <small>{hasPendingGeneral ? totalPendingGeneral + " solicitud" + (totalPendingGeneral === 1 ? "" : "es") + " pendiente" + (totalPendingGeneral === 1 ? "" : "s") + " · Revisá y gestioná las altas" : "Gestioná solicitudes, jugadores, clubes y árbitros"}</small>
+                  </span>
+                  {hasPendingGeneral && (
+                    <span style={{ position: "absolute", top: "-9px", right: "-8px", minWidth: "25px", height: "25px", padding: "0 .35rem", display: "grid", placeItems: "center", boxSizing: "border-box", borderRadius: "999px", border: "2px solid #fff", background: "#b5122a", color: "#fff", fontSize: ".72rem", fontWeight: 900, boxShadow: "0 0 12px rgba(255,255,255,.45)" }}>
+                      {totalPendingGeneral}
+                    </span>
+                  )}
+                  <span className="tc-home-about-arrow">→</span>
+                </button>
+              </>
+            );
+          })()}
 
           {isArbitro && (
             <button
