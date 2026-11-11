@@ -73,12 +73,12 @@ function RefereePreJornada({ onBack }) {
     (async () => {
       const [{ data: ts, error: te }, { data: ps, error: pe }] = await Promise.all([
         supabase.from("tournaments").select("*").order("title"),
-        supabase.from("profiles").select("id, username, role, approval_status, deactivated_at").eq("role", "referee").order("username")
+        supabase.from("profiles").select("id, username, role, approval_status, deactivated_at").eq("role", "arbitro").order("username")
       ]);
       if (!activo) return;
       if (te || pe) setMensaje(te?.message || pe?.message || "No se pudieron cargar los datos.");
       setTorneos(ts || []);
-      setArbitros((ps || []).filter(p => p.approval_status === "approved" && !p.deactivated_at));
+      setArbitros((ps || []).filter(p => p.approval_status === "aprobado" && !p.deactivated_at));
       setCargando(false);
     })();
     return () => { activo = false; };
@@ -4180,7 +4180,11 @@ export function TournamenSportApp() {
         <div className="tc-form-screen tc-stats-screen">
           <AdminStats onBack={() => setActiveView("home")} />
         </div>
-      ) : activeView === "referee-pre-jornada" && canManageAccess ? (\n    <div className="tc-form-screen tc-stats-screen">\n      <RefereePreJornada onBack={() => setActiveView("home")} />\n    </div>\n  ) : activeView === "referee-stats" && canViewRefereeStats ? (
+      ) : activeView === "referee-pre-jornada" && canManageAccess ? (
+        <div className="tc-form-screen tc-stats-screen">
+          <RefereePreJornada onBack={() => setActiveView("home")} />
+        </div>
+      ) : activeView === "referee-stats" && canViewRefereeStats ? (
         <div className="tc-form-screen tc-stats-screen">
           <RefereeStats onBack={() => setActiveView("home")} canManageAccess={canManageAccess} onDeactivateReferee={handleDeactivateReferee} />
         </div>
