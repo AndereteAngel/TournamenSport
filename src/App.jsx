@@ -4471,9 +4471,9 @@ export function TournamenSportApp() {
             </section>
           )}
 
-          {(canAccessClubManagement || currentUser?.clubId) && (
+          {(canAccessClubManagement || (isReferente && currentUser?.clubId)) && (
             <section aria-label="Gestión de clubes" style={{ margin: "1.25rem 0", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 220px), 1fr))", gap: ".85rem" }}>
-              {currentUser?.clubId ? (
+              {isReferente && currentUser?.clubId ? (
                 <div role="status" style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #238b57", borderRadius: "12px", color: "#fff" }}>
                   <span style={{ fontSize: "1.6rem" }}>✓</span>
                   <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>INSCRIPCIÓN</strong>
