@@ -2933,6 +2933,7 @@ export function TournamenSportApp() {
     )];
     const registration = (activeTournament.groups || []).find((group) => group?.name === "__INSCRIPCIONES__");
     const fixtureGeneration = String(registration?.fixtureGeneration || "");
+    const matchIdPrefix = fixtureGeneration ? `${fixtureGeneration}-` : "";
     const configuredGroups = activeTournament.format === "groups_playoff"
       ? Number(registration?.numGroups || 2)
       : 1;
@@ -3147,7 +3148,7 @@ export function TournamenSportApp() {
         for (let i = 0; i < teams.length; i++) {
           for (let j = i + 1; j < teams.length; j++) {
             group.matches.push({
-              id: `${fixtureGeneration ? `${fixtureGeneration}-` : ""}${teams[i]}-${teams[j]}`,
+              id: `${matchIdPrefix}${teams[i]}-${teams[j]}`,
               team1: teams[i],
               team2: teams[j],
               score1: null,
