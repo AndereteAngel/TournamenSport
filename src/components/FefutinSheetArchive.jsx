@@ -52,7 +52,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     ] = await Promise.all([
       supabase.from("fefutin_match_sheets").select("*").order("updated_at", { ascending: false }),
       supabase.from("fefutin_jornada_photos").select("*").order("jornada_date", { ascending: false }),
-      supabase.from("tournaments").select("id, title, game, category_detail, category_type"),
+      supabase.from("tournaments").select("id, title, game"),
     ]);
 
     if (sheetsError || photosError || tournamentsError) {
