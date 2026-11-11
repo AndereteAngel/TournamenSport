@@ -177,16 +177,16 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   const [filterSearch, setFilterSearch] = useState("");
   const [documentViewBySheet, setDocumentViewBySheet] = useState({});
 
-  const categories = [...new Set([
-    ...tournaments.map((tournament) => {
-      const explicit = String(tournament?.category_detail || tournament?.category_type || "").trim();
-      if (explicit) return explicit;
-      const game = String(tournament?.game || "");
-      const separator = game.indexOf(" · ");
-      return separator >= 0 ? game.slice(separator + 3).trim() : "";
-    }),
-    ...sheets.map((sheet) => String(sheet.categoria || "").trim()),
-  ].filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const archivedTournamentIds = new Set([
+    ...sheets.map((sheet) => String(sheet.tournament_id)),
+    ...photos.map((photo) => String(photo.tournament_id)),
+  ]);
+  const archivedTournaments = tournaments.filter((tournament) =>
+    archivedTournamentIds.has(String(tournament.id))
+  );
+  const categories = [...new Set(
+    sheets.map((sheet) => String(sheet.categoria || "").trim()).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "es"));
   const jornadas = [...new Set(sheets.map((sheet) => String(sheet.jornada || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
 
   const filteredSheets = sheets.filter((sheet) => {
@@ -265,7 +265,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
                 TORNEO
                 <select value={filterTournament} onChange={(event) => setFilterTournament(event.target.value)} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
                   <option value="">Todos los torneos</option>
-                  {tournaments.map((item) => <option key={item.id} value={item.id}>{item.title || "Torneo sin nombre"}</option>)}
+                  {archivedTournaments.map((item) => <option key={item.id} value={item.id}>{item.title || "Torneo sin nombre"}</option>)}
                 </select>
               </label>
               <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
