@@ -20,8 +20,7 @@ alter table public.fefutin_player_status_history enable row level security;
 revoke all on public.fefutin_player_status_history from public, anon, authenticated;
 
 -- La consulta devuelve los estados que consume la interfaz de altas y carnets.
-drop function if exists public.get_fefutin_my_teams();
-create function public.get_fefutin_my_teams()
+create or replace function public.get_fefutin_my_teams()
 returns table (
   club_id uuid,
   club_name text,
