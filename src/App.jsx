@@ -96,14 +96,10 @@ function RefereePreJornada({ onBack }) {
     }
     return "";
   };
-  const obtenerPartesJuego = torneo => String(torneo?.game || "").split("·").map(p => p.trim()).filter(Boolean);
-  const obtenerRama = torneo => obtenerPartesJuego(torneo)[1] || "";
-  const obtenerCategoria = torneo => {
-    const config = (Array.isArray(torneo?.groups) ? torneo.groups : [])
-      .flatMap(g => Array.isArray(g?.category_config) ? g.category_config : []);
-    const categoria = config.flatMap(c => Array.isArray(c?.categories) ? c.categories : []).find(Boolean);
-    return (textoSeguro(categoria) || textoSeguro(obtenerPartesJuego(torneo)[2]) || "General").trim();
-  };
+  // Usar los mismos criterios de rama y categoría que el resto de FEFUTIN.
+  // No asumir posiciones fijas dentro de "game": hay torneos con formatos heredados.
+  const obtenerRama = torneo => getTournamentDivision(torneo);
+  const obtenerCategoria = torneo => textoSeguro(getTournamentCategory(torneo)) || "General";
   const ramas = [{ value:"Infantil", label:"Infantiles" }, { value:"Femenino", label:"Femenino" }, { value:"Mayores", label:"Mayores" }];
   const torneosRama = torneos.filter(t => obtenerRama(t).toLocaleLowerCase("es") === ramaSeleccionada.toLocaleLowerCase("es"));
   const claveCompetencia = t => String(t?.title || "").trim().toLocaleLowerCase("es") + "|" +
