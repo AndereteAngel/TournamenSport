@@ -4264,14 +4264,41 @@ export function TournamenSportApp() {
           )}
 
           {canManageAccess && (
-            <button type="button" onClick={() => setActiveView("sheet-archive")} className="tc-home-about-card tc-home-referee-card" style={{ margin: "1rem 0" }}>
-              <span className="tc-home-about-icon" aria-hidden="true">🗂️</span>
-              <span className="tc-home-about-copy">
-                <strong>ARCHIVO DE PLANILLAS</strong>
-                <small>Consultá planillas digitales cerradas y fotos de jornadas firmadas</small>
-              </span>
-              <span className="tc-home-about-arrow">→</span>
-            </button>
+            <section
+              aria-label="Organización de jornadas"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                gap: ".85rem",
+                width: "100%",
+                margin: "1rem 0"
+              }}
+            >
+              <div style={{ minWidth: 0, padding: ".9rem", display: "flex", flexDirection: "column", gap: ".75rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "14px", color: "#fff" }}>
+                <strong style={{ color: "#fff", fontSize: ".95rem", letterSpacing: ".08em", textAlign: "center" }}>PRE-JORNADA</strong>
+                <button
+                  type="button"
+                  onClick={() => setActiveView("referee-stats")}
+                  style={{ minWidth: 0, minHeight: "92px", padding: ".8rem .55rem", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".45rem", background: "#fff", border: "1px solid #b5122a", borderRadius: "10px", color: "#171c27", textAlign: "center", cursor: "pointer" }}
+                >
+                  <span aria-hidden="true" style={{ fontSize: "1.45rem" }}>🧑‍⚖️</span>
+                  <strong style={{ fontSize: ".78rem", lineHeight: 1.25 }}>DESIGNACIÓN DE ÁRBITROS</strong>
+                  <small style={{ color: "#4b5563", fontSize: ".7rem", lineHeight: 1.3 }}>Gestioná árbitros y asignaciones</small>
+                </button>
+              </div>
+              <div style={{ minWidth: 0, padding: ".9rem", display: "flex", flexDirection: "column", gap: ".75rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "14px", color: "#fff" }}>
+                <strong style={{ color: "#fff", fontSize: ".95rem", letterSpacing: ".08em", textAlign: "center" }}>POST-JORNADA</strong>
+                <button
+                  type="button"
+                  onClick={() => setActiveView("sheet-archive")}
+                  style={{ minWidth: 0, minHeight: "92px", padding: ".8rem .55rem", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".45rem", background: "#fff", border: "1px solid #b5122a", borderRadius: "10px", color: "#171c27", textAlign: "center", cursor: "pointer" }}
+                >
+                  <span aria-hidden="true" style={{ fontSize: "1.45rem" }}>🗂️</span>
+                  <strong style={{ fontSize: ".78rem", lineHeight: 1.25 }}>ARCHIVO DE PLANILLAS</strong>
+                  <small style={{ color: "#4b5563", fontSize: ".7rem", lineHeight: 1.3 }}>Planillas digitales y fotos firmadas</small>
+                </button>
+              </div>
+            </section>
           )}
 
           {(canAccessClubManagement || currentUser?.clubId) && (
@@ -4323,7 +4350,7 @@ export function TournamenSportApp() {
             </button>
           )}
 
-          {(isAdmin || isDirectivo || isArbitro) && (
+          {isArbitro && (
             <button
               type="button"
               className="tc-home-about-card tc-home-referee-card"
