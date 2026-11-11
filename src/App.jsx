@@ -1902,6 +1902,7 @@ export function TournamenSportApp() {
   const [authReady, setAuthReady] = useState(false);
   const [pendingAccessRequests, setPendingAccessRequests] = useState([]);
   const [pendingPlayerApprovalsCount, setPendingPlayerApprovalsCount] = useState(0);
+  const [pendingClubTournamentRequestsCount, setPendingClubTournamentRequestsCount] = useState(0);
   const [loadingAccessRequests, setLoadingAccessRequests] = useState(false);
   const [accessActionError, setAccessActionError] = useState("");
   const [activeClubs, setActiveClubs] = useState([]);
@@ -2152,6 +2153,7 @@ export function TournamenSportApp() {
     if (!canManageAccess) {
       setPendingAccessRequests([]);
       setPendingPlayerApprovalsCount(0);
+      setPendingClubTournamentRequestsCount(0);
       return;
     }
 
@@ -2207,9 +2209,11 @@ export function TournamenSportApp() {
     const [
       { data: accessRows, error: accessError },
       { data: pendingPlayers, error: pendingPlayersError },
+      { data: pendingClubTournamentRequests, error: pendingClubTournamentRequestsError },
     ] = await Promise.all([
       supabase.rpc("get_fefutin_pending_requests"),
       supabase.rpc("get_fefutin_pending_players"),
+      supabase.rpc("get_fefutin_pending_club_tournament_requests"),
     ]);
 
     if (accessError) {
@@ -2227,7 +2231,15 @@ export function TournamenSportApp() {
       setPendingPlayerApprovalsCount(Array.isArray(pendingPlayers) ? pendingPlayers.length : 0);
     }
 
-    if (!accessError && !pendingPlayersError) setAccessActionError("");
+    if (pendingClubTournamentRequestsError) {
+      console.error("Error al consultar solicitudes de participación en torneos:", pendingClubTournamentRequestsError);
+      setAccessActionError((current) => current || pendingClubTournamentRequestsError.message || "No se pudieron consultar las solicitudes de participación.");
+      setPendingClubTournamentRequestsCount(0);
+    } else {
+      setPendingClubTournamentRequestsCount(Array.isArray(pendingClubTournamentRequests) ? pendingClubTournamentRequests.length : 0);
+    }
+
+    if (!accessError && !pendingPlayersError && !pendingClubTournamentRequestsError) setAccessActionError("");
     setLoadingAccessRequests(false);
   };
 
@@ -3948,7 +3960,7 @@ export function TournamenSportApp() {
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 210px), 1fr))", gap: ".8rem", margin: "1rem 0 1.4rem" }}>
               {[
-                { id: "torneos", title: "TORNEOS", subtitle: "Clubes e inscripciones", count: activeClubs.length + pendingAccessRequests.filter((r) => r.requested_role === "referente" || r.requested_role === "directivo").length, icon: "🏆" },
+                { id: "torneos", title: "TORNEOS", subtitle: "Clubes e inscripciones", count: activeClubs.length + pendingAccessRequests.filter((r) => r.requested_role === "referente" || r.requested_role === "directivo").length + pendingClubTournamentRequestsCount, icon: "🏆" },
                 { id: "jugadores", title: "JUGADORES", subtitle: "Llamados, altas y carnets", count: "GESTIÓN", icon: "⚽" },
                 { id: "arbitros", title: "ÁRBITROS", subtitle: "Solicitudes, carnets y estadísticas", count: activeReferees.length + pendingAccessRequests.filter((r) => r.requested_role === "arbitro").length, icon: "🟨" },
               ].map((item) => {
@@ -4057,7 +4069,7 @@ export function TournamenSportApp() {
               )}
             </div>}
 
-            {managementInboxTab === "torneos" && <FefutinClubTournamentRequests onChanged={loadActiveClubs} />}
+            {managementInboxTab === "torneos" && <FefutinClubTournamentRequests onChanged={async () => { await loadActiveClubs(); await refreshPendingRequests(); }} />}
 
             {managementInboxTab === "arbitros" && <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
@@ -4524,7 +4536,7 @@ export function TournamenSportApp() {
           )}
 
           {canManageAccess && (() => {
-            const totalPendingGeneral = pendingAccessRequests.length + pendingPlayerApprovalsCount;
+            const totalPendingGeneral = pendingAccessRequests.length + pendingPlayerApprovalsCount + pendingClubTournamentRequestsCount;
             const hasPendingGeneral = !loadingAccessRequests && totalPendingGeneral > 0;
             return (
               <>
