@@ -87,13 +87,21 @@ function RefereePreJornada({ onBack }) {
     return () => { activo = false; };
   }, []);
 
+  const textoSeguro = valor => {
+    if (valor == null) return "";
+    if (typeof valor === "string" || typeof valor === "number") return String(valor);
+    if (typeof valor === "object") {
+      return String(valor.name || valor.nombre || valor.team_name || valor.teamName || valor.club_name || valor.club || valor.label || valor.title || "");
+    }
+    return "";
+  };
   const obtenerPartesJuego = torneo => String(torneo?.game || "").split("·").map(p => p.trim()).filter(Boolean);
   const obtenerRama = torneo => obtenerPartesJuego(torneo)[1] || "";
   const obtenerCategoria = torneo => {
     const config = (Array.isArray(torneo?.groups) ? torneo.groups : [])
       .flatMap(g => Array.isArray(g?.category_config) ? g.category_config : []);
     const categoria = config.flatMap(c => Array.isArray(c?.categories) ? c.categories : []).find(Boolean);
-    return String(categoria || obtenerPartesJuego(torneo)[2] || "General").trim();
+    return (textoSeguro(categoria) || textoSeguro(obtenerPartesJuego(torneo)[2]) || "General").trim();
   };
   const ramas = [{ value:"Infantil", label:"Infantiles" }, { value:"Femenino", label:"Femenino" }, { value:"Mayores", label:"Mayores" }];
   const torneosRama = torneos.filter(t => obtenerRama(t).toLocaleLowerCase("es") === ramaSeleccionada.toLocaleLowerCase("es"));
@@ -113,9 +121,13 @@ function RefereePreJornada({ onBack }) {
     ? torneosCompetencia
     : torneosCompetencia.filter(t => obtenerCategoria(t) === categoriaSeleccionada);
 
-  const esPartidoValido = match => match?.team1 && match?.team2 &&
-    String(match.team1).trim().toLocaleLowerCase("es") !== "pasaje directo" &&
-    String(match.team2).trim().toLocaleLowerCase("es") !== "pasaje directo";
+  const esPartidoValido = match => {
+    const equipo1 = textoSeguro(match?.team1).trim();
+    const equipo2 = textoSeguro(match?.team2).trim();
+    return Boolean(equipo1 && equipo2) &&
+      equipo1.toLocaleLowerCase("es") !== "pasaje directo" &&
+      equipo2.toLocaleLowerCase("es") !== "pasaje directo";
+  };
 
   const partidos = torneosFiltrados.flatMap(torneo =>
     (Array.isArray(torneo?.groups) ? torneo.groups : []).flatMap((grupo, groupIndex) => {
@@ -134,7 +146,7 @@ function RefereePreJornada({ onBack }) {
     })
   ).sort((a,b) =>
     a.categoria.localeCompare(b.categoria, "es", { numeric:true }) ||
-    String(a.match.team1).localeCompare(String(b.match.team1), "es")
+    textoSeguro(a.match.team1).localeCompare(textoSeguro(b.match.team1), "es")
   );
 
   const partido = partidos.find(item => item.key === partidoKey);
@@ -205,7 +217,7 @@ function RefereePreJornada({ onBack }) {
         !partido ? <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:".8rem"}}>
           {partidos.map(item=><button key={item.key} type="button" onClick={()=>{setPartidoKey(item.key);setMensaje("");}} style={{...estilo,textAlign:"center",cursor:"pointer"}}>
             <span style={{display:"block",fontSize:".75rem",color:"#fca5a5",fontWeight:700,marginBottom:".45rem"}}>{item.categoria}</span>
-            <strong style={{fontSize:"1rem"}}>{item.match.team1} <span style={{color:"#fca5a5"}}>VS</span> {item.match.team2}</strong>
+            <strong style={{fontSize:"1rem"}}>{textoSeguro(item.match.team1)} <span style={{color:"#fca5a5"}}>VS</span> {textoSeguro(item.match.team2)}</strong>
             <span style={{display:"block",fontSize:".82rem",marginTop:".55rem",color:"#d1d5db"}}>Árbitro: {arbitros.find(a=>a.id===item.match.referee_id)?.username || "Sin designar"}</span>
             <span style={{display:"block",fontWeight:800,marginTop:".65rem"}}>Designar árbitro →</span>
           </button>)}
@@ -214,7 +226,7 @@ function RefereePreJornada({ onBack }) {
           <button type="button" onClick={()=>{setPartidoKey("");setMensaje("");}} style={{justifySelf:"start",background:"transparent",color:"#fff",border:"1px solid #b5122a",borderRadius:"8px",padding:".55rem .8rem"}}>← Volver a los enfrentamientos</button>
           <section style={{...estilo,textAlign:"center"}}>
             <div style={{fontSize:".8rem",color:"#fca5a5",fontWeight:700,marginBottom:".5rem"}}>{competencia.title} · {partido.categoria}</div>
-            <h3 style={{margin:".2rem 0 1rem"}}>{partido.match.team1} <span style={{color:"#fca5a5"}}>VS</span> {partido.match.team2}</h3>
+            <h3 style={{margin:".2rem 0 1rem"}}>{textoSeguro(partido.match.team1)} <span style={{color:"#fca5a5"}}>VS</span> {textoSeguro(partido.match.team2)}</h3>
             <h4 style={{margin:"0 0 .5rem"}}>DESIGNAR ÁRBITRO PARA ESTE PARTIDO</h4>
             <p style={{fontSize:".85rem",color:"#d1d5db"}}>{arbitroAsignado ? "Árbitro actual: " + arbitroAsignado.username : "Elegí un árbitro para este enfrentamiento."}</p>
             {arbitros.length ? <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(135px,1fr))",gap:".6rem"}}>
