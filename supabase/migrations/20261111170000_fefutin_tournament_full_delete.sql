@@ -148,4 +148,15 @@ $function$;
 revoke all on function public.delete_fefutin_tournament(uuid) from public, anon;
 grant execute on function public.delete_fefutin_tournament(uuid) to authenticated;
 
+-- Admin/Directivo habilitado debe poder borrar los objetos de Storage de las fotos
+-- después de que la RPC retire las referencias de la base.
+drop policy if exists fefutin_jornada_photos_storage_admin_delete on storage.objects;
+create policy fefutin_jornada_photos_storage_admin_delete
+  on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id = 'fefutin-jornada-photos'
+    and public.has_fefutin_role(array['admin', 'directivo'])
+  );
+
 commit;
