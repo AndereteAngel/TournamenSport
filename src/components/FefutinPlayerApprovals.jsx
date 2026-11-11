@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../supabaseClient";
 
 const STATUS_OPTIONS = [
@@ -49,10 +49,15 @@ export function FefutinPlayerApprovals() {
   const [categoryFilter, setCategoryFilter] = useState("todas");
   const [search, setSearch] = useState("");
 
+  const loadingRef = useRef(false);
+
   const load = useCallback(async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
     setError("");
-    const { data, error: rpcError } = await supabase.rpc("get_fefutin_my_teams");
+    try {
+      const { data, error: rpcError } = await supabase.rpc("get_fefutin_my_teams");
     if (rpcError) {
       console.error("Error al cargar jugadores FEFUTIN:", rpcError);
       setError(rpcError.message || "No se pudo cargar la lista de jugadores.");
@@ -75,7 +80,14 @@ export function FefutinPlayerApprovals() {
       });
       setPlayers(rows);
     }
-    setLoading(false);
+    } catch (loadError) {
+      console.error("Error inesperado al cargar jugadores FEFUTIN:", loadError);
+      setError(loadError?.message || "No se pudo cargar la lista de jugadores.");
+      setPlayers([]);
+    } finally {
+      loadingRef.current = false;
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -154,13 +166,6 @@ export function FefutinPlayerApprovals() {
           : item
       ));
       setMessage(`${player.first_name} ${player.last_name} quedó activo. Su carnet está pendiente de verificación arbitral.`);
-      // Sincroniza los demás datos sin quitar el jugador del historial.
-      await load();
-      setPlayers((current) => current.map((item) =>
-        item.player_entry_id === player.player_entry_id
-          ? { ...item, approval_status: "aprobado", carnet_number: data, carnet_status: "pendiente" }
-          : item
-      ));
     }
     setWorkingId(null);
   };
