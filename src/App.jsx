@@ -4520,7 +4520,7 @@ export function TournamenSportApp() {
                 <strong style={{ color: "#fff", fontSize: ".95rem", letterSpacing: ".08em", textAlign: "center" }}>PRE-JORNADA</strong>
                 <button
                   type="button"
-                  onClick={() => setActiveView("referee-stats")}
+                  onClick={() => setActiveView("referee-pre-jornada")}
                   style={{ minWidth: 0, minHeight: "92px", padding: ".8rem .55rem", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".45rem", background: "#fff", border: "1px solid #b5122a", borderRadius: "10px", color: "#171c27", textAlign: "center", cursor: "pointer" }}
                 >
                   <span aria-hidden="true" style={{ width: "58px", height: "58px", minWidth: "58px", display: "flex", alignItems: "center", justifyContent: "center", background: "#b5122a", border: "2px solid #171c27", borderRadius: "15px", boxShadow: "0 4px 10px rgba(181,18,42,.28)" }}>
