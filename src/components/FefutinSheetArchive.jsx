@@ -211,11 +211,26 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
       (!search || haystack.includes(search));
   });
 
-  const photosForSheet = (sheet) => photos.filter((photo) =>
-    String(photo.tournament_id) === String(sheet.tournament_id) &&
-    (photo.jornada_date === sheet.fecha_partido ||
-      (photo.jornada_label && String(photo.jornada_label).toLocaleLowerCase("es") === `jornada ${String(sheet.jornada || "").toLocaleLowerCase("es")}`))
-  );
+  const isPhotoForSheet = (photo, sheet) => {
+    if (String(photo.tournament_id) !== String(sheet.tournament_id)) return false;
+
+    const photoJornada = String(photo.jornada_label || "").trim().toLocaleLowerCase("es");
+    const sheetJornada = String(sheet.jornada || "").trim().toLocaleLowerCase("es");
+    const sameJornada = photoJornada && (
+      photoJornada === sheetJornada ||
+      photoJornada === `jornada ${sheetJornada}`
+    );
+    const sameDate = photo.jornada_date && sheet.fecha_partido &&
+      photo.jornada_date === sheet.fecha_partido;
+
+    // Si la planilla no tiene fecha y la foto no tiene jornada identificada,
+    // la mostramos como respaldo para que el documento físico no quede oculto.
+    const missingAssociationData = !sheet.fecha_partido && !photoJornada;
+
+    return Boolean(sameJornada || sameDate || missingAssociationData);
+  };
+
+  const photosForSheet = (sheet) => photos.filter((photo) => isPhotoForSheet(photo, sheet));
 
   return (
     <main className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", minWidth: 0, minHeight: "70vh", padding: "0", color: "#fff", boxSizing: "border-box" }}>
@@ -340,8 +355,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
                   );
                 })}
                 {filteredPhotos.filter((photo) => !sheets.some((sheet) =>
-                  String(sheet.tournament_id) === String(photo.tournament_id) &&
-                  (sheet.fecha_partido === photo.jornada_date)
+                  isPhotoForSheet(photo, sheet)
                 )).map((photo) => (
                   <article key={`photo-${photo.id}`} style={{ border: "1px solid #555", borderRadius: "10px", background: "#171c27", padding: ".85rem" }}>
                     <strong style={{ color: "#fff" }}>{getTournamentTitle(photo.tournament_id)} · {photo.jornada_label || "Jornada"}</strong>
