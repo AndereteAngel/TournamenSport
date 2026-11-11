@@ -222,8 +222,8 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
 
     const sheetIsVoided = voidedSheetIds.has(String(sheet.id));
     const photoIsVoided = voidedPhotoIds.has(String(photo.id));
-    if (photoIsVoided && !sheetIsVoided) return false;
-    if (photoIsVoided && sheetIsVoided) return true;
+    if (sheetIsVoided) return photoIsVoided;
+    if (photoIsVoided) return false;
 
     const photoJornada = String(photo.jornada_label || "").trim().toLocaleLowerCase("es");
     const sheetJornada = String(sheet.jornada || "").trim().toLocaleLowerCase("es");
