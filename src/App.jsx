@@ -221,7 +221,7 @@ function RefereePreJornada({ onBack }) {
             <p style={{fontSize:".8rem",color:"#d1d5db",textAlign:"center",marginBottom:0}}>Árbitro: {arbitros.find(a=>a.id===partido.referee_id)?.username || "Sin designar"}</p>
           </article>)}
         </section>
-      </>}
+      }
     </>}
     {mensaje && <p role="status" style={{color:"#fff",background:"#b5122a",padding:".75rem",borderRadius:"8px",marginTop:"1rem"}}>{mensaje}</p>}
     <button type="button" className="tc-form-back" onClick={onBack} style={{marginTop:"1.2rem"}}>← Volver</button>
