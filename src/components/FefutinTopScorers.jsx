@@ -37,7 +37,7 @@ export function FefutinTopScorers({ tournament, onBack }) {
           <div style={{ color: "#b5122a", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN · ESTADÍSTICAS</div>
           <h2 style={{ margin: ".35rem 0", color: "#fff", fontSize: "1.25rem" }}>TABLA DE GOLEADORES</h2>
           <p style={{ margin: 0, color: "#d1d5db", fontSize: ".9rem" }}>{tournament?.title || "Torneo"}</p>
-          <p style={{ margin: ".35rem 0 0", color: "#9ca3af", fontSize: ".78rem" }}>Goles contabilizados únicamente en planillas cerradas.</p>
+          <p style={{ margin: ".35rem 0 0", color: "#9ca3af", fontSize: ".78rem" }}>Goles contabilizados únicamente en planillas cerradas y vigentes.</p>
         </div>
 
         {loading ? (
