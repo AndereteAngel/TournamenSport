@@ -60,6 +60,66 @@ const adminTournamentButtonStyle = {
 };
 
 
+function RefereePreJornada({ onBack }) {
+  const [torneos, setTorneos] = useState([]);
+  const [arbitros, setArbitros] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [torneoId, setTorneoId] = useState("");
+  const [grupoIndex, setGrupoIndex] = useState("");
+  const [mensaje, setMensaje] = useState("");
+  const [guardando, setGuardando] = useState("");
+  useEffect(() => {
+    let activo = true;
+    (async () => {
+      const [{ data: ts, error: te }, { data: ps, error: pe }] = await Promise.all([
+        supabase.from("tournaments").select("*").order("title"),
+        supabase.from("profiles").select("id, username, role, approval_status, deactivated_at").eq("role", "referee").order("username")
+      ]);
+      if (!activo) return;
+      if (te || pe) setMensaje(te?.message || pe?.message || "No se pudieron cargar los datos.");
+      setTorneos(ts || []);
+      setArbitros((ps || []).filter(p => p.approval_status === "approved" && !p.deactivated_at));
+      setCargando(false);
+    })();
+    return () => { activo = false; };
+  }, []);
+  const torneo = torneos.find(t => String(t.id) === torneoId);
+  const grupos = Array.isArray(torneo?.groups) ? torneo.groups : [];
+  const grupo = grupoIndex === "" ? null : grupos[Number(grupoIndex)];
+  const partidos = (grupo?.matches || []).map((m, i) => ({ ...m, index: i }))
+    .filter(m => m.team1 && m.team2 && String(m.team1).trim().toLowerCase() !== "pasaje directo" && String(m.team2).trim().toLowerCase() !== "pasaje directo");
+  const designar = async (matchIndex, refereeId) => {
+    if (!torneo || guardando) return;
+    setGuardando(String(matchIndex)); setMensaje("");
+    const nextGroups = grupos.map((g, i) => i === Number(grupoIndex) ? { ...g, matches: (g.matches || []).map((m, j) => j === matchIndex ? { ...m, referee_id: refereeId } : m) } : g);
+    const { error } = await supabase.from("tournaments").update({ groups: nextGroups }).eq("id", torneo.id);
+    setGuardando("");
+    if (error) { setMensaje(error.message); return; }
+    setTorneos(prev => prev.map(t => t.id === torneo.id ? { ...t, groups: nextGroups } : t));
+    setMensaje("Árbitro designado correctamente.");
+  };
+  const estilo = { background:"#171c27", color:"#fff", border:"1px solid #b5122a", borderRadius:"12px", padding:"1rem", width:"100%" };
+  const selector = { background:"#fff", color:"#171c27", border:"1px solid #b5122a", borderRadius:"9px", padding:".7rem", width:"100%", marginTop:".5rem" };
+  if (cargando) return <section style={{...estilo, textAlign:"center"}}><h2>PRE-JORNADA</h2><p>Cargando torneos y árbitros…</p></section>;
+  return <main style={{maxWidth:"1000px", margin:"0 auto", paddingBottom:"2rem", color:"#fff"}}>
+    <section style={{...estilo, marginBottom:"1rem"}}>
+      <h2 style={{textAlign:"center", marginTop:0}}>PRE-JORNADA · DESIGNACIONES</h2>
+      <label style={{display:"block", marginTop:".8rem"}}>1. Competencia<select value={torneoId} onChange={e=>{setTorneoId(e.target.value);setGrupoIndex("");setMensaje("");}} style={selector}><option value="">Elegí el torneo</option>{torneos.map(t=><option key={t.id} value={t.id}>{t.title} · {t.game || "Sin categoría"}</option>)}</select></label>
+      {torneo && <label style={{display:"block", marginTop:"1rem"}}>2. Jornada / instancia<select value={grupoIndex} onChange={e=>setGrupoIndex(e.target.value)} style={selector}><option value="">Elegí la jornada</option>{grupos.map((g,i)=><option key={i} value={i}>{g.name || "Grupo "+(i+1)}</option>)}</select></label>}
+    </section>
+    {grupo && <section style={{display:"grid",gap:".85rem"}}>
+      <h3 style={{margin:".3rem 0"}}>{torneo.title} · {torneo.game || "Categoría"} · {grupo.name || "Instancia seleccionada"}</h3>
+      {partidos.length ? partidos.map(m=><article key={m.index} style={{...estilo}}>
+        <div style={{fontWeight:800,textAlign:"center",fontSize:"1rem"}}>{m.team1} <span style={{color:"#fca5a5"}}>VS</span> {m.team2}</div>
+        <p style={{fontSize:".82rem",color:"#d1d5db",textAlign:"center"}}>Árbitro: {arbitros.find(a=>a.id===m.referee_id)?.username || (m.referee_id ? "Designado" : "Sin designar")}</p>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(125px,1fr))",gap:".55rem"}}>{arbitros.map(a=><button key={a.id} disabled={!!guardando} onClick={()=>designar(m.index,a.id)} style={{background:m.referee_id===a.id?"#b5122a":"#fff",color:m.referee_id===a.id?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".7rem",fontWeight:700,cursor:"pointer"}}>{guardando===String(m.index)?"Guardando…":a.username}</button>)}</div>
+      </article>) : <p>No hay partidos cargados en esta instancia.</p>}
+    </section>}
+    {mensaje && <p role="status" style={{color:"#fff",background:"#b5122a",padding:".75rem",borderRadius:"8px",marginTop:"1rem"}}>{mensaje}</p>}
+    <button type="button" className="tc-form-back" onClick={onBack} style={{marginTop:"1.2rem"}}>← Volver</button>
+  </main>;
+}
+
 function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) {
   const [perfiles, setPerfiles] = useState([]);
   const [carnets, setCarnets] = useState([]);
@@ -4120,7 +4180,7 @@ export function TournamenSportApp() {
         <div className="tc-form-screen tc-stats-screen">
           <AdminStats onBack={() => setActiveView("home")} />
         </div>
-      ) : activeView === "referee-stats" && canViewRefereeStats ? (
+      ) : activeView === "referee-pre-jornada" && canManageAccess ? (\n    <div className="tc-form-screen tc-stats-screen">\n      <RefereePreJornada onBack={() => setActiveView("home")} />\n    </div>\n  ) : activeView === "referee-stats" && canViewRefereeStats ? (
         <div className="tc-form-screen tc-stats-screen">
           <RefereeStats onBack={() => setActiveView("home")} canManageAccess={canManageAccess} onDeactivateReferee={handleDeactivateReferee} />
         </div>
