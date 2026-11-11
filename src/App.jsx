@@ -147,7 +147,7 @@ function RefereePreJornada({ onBack }) {
       <label style={{display:"block", marginTop:".8rem"}}>1. Torneo
         <select value={torneoId} onChange={e=>{setTorneoId(e.target.value);setFechaSeleccionada("");setMensaje("");}} style={selector}>
           <option value="">Elegí el torneo</option>
-          {torneos.map(t=><option key={t.id} value={t.id}>{t.title} · {t.game || "Sin categoría"}</option>)}
+          {torneos.map(t=><option key={t.id} value={t.id}>{t.title}</option>)}
         </select>
       </label>
     </section>
