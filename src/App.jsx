@@ -169,77 +169,121 @@ function RefereePreJornada({ onBack }) {
       equipo2.toLocaleLowerCase("es") !== "pasaje directo";
   };
 
-  // Carga por tandas: no recorre miles de enfrentamientos al abrir Matutino.
-  // Lee solo los partidos necesarios para la página actual y uno extra para saber si hay más.
+  // Una jornada agrupa el cruce entre dos clubes en todas las categorías
+  // de la misma competencia. El filtro de categoría limita qué cruces se muestran,
+  // pero la designación se aplica a todas las categorías de ese mismo cruce.
+  const normalizarEquipo = valor => textoSeguro(valor).trim().toLocaleLowerCase("es")
+    .normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+  const claveEnfrentamiento = match => [
+    normalizarEquipo(match?.team1),
+    normalizarEquipo(match?.team2),
+  ].sort().join("::");
+
+  const partidosDeCompetencia = torneosCompetencia.flatMap(torneo =>
+    (Array.isArray(torneo?.groups) ? torneo.groups : []).flatMap((grupo, groupIndex) => {
+      if (grupo?.name === "__INSCRIPCIONES__") return [];
+      return (Array.isArray(grupo?.matches) ? grupo.matches : [])
+        .map((match, matchIndex) => ({
+          torneoId: torneo.id,
+          grupoIndex,
+          matchIndex,
+          match,
+          categoria: obtenerCategoria(torneo),
+        }))
+        .filter(item => esPartidoValido(item.match));
+    })
+  );
+
+  const jornadasMap = new Map();
+  torneosFiltrados.forEach(torneo => {
+    (Array.isArray(torneo?.groups) ? torneo.groups : []).forEach((grupo, groupIndex) => {
+      if (grupo?.name === "__INSCRIPCIONES__") return;
+      (Array.isArray(grupo?.matches) ? grupo.matches : []).forEach(match => {
+        if (!esPartidoValido(match)) return;
+        const key = claveEnfrentamiento(match);
+        if (!key || jornadasMap.has(key)) return;
+        const partidosJornada = partidosDeCompetencia.filter(item =>
+          claveEnfrentamiento(item.match) === key
+        );
+        jornadasMap.set(key, {
+          key,
+          match,
+          team1: textoSeguro(match.team1),
+          team2: textoSeguro(match.team2),
+          partidos: partidosJornada,
+          categorias: [...new Set(partidosJornada.map(item => item.categoria))]
+            .sort((a, b) => a.localeCompare(b, "es", { numeric: true })),
+        });
+      });
+    });
+  });
+  const jornadas = [...jornadasMap.values()].sort((a, b) =>
+    (a.team1 + " " + a.team2).localeCompare(b.team1 + " " + b.team2, "es")
+  );
   const partidosPorPagina = 30;
-  const resumenPartidos = (() => {
-    const inicio = paginaPartidos * partidosPorPagina;
-    const limite = inicio + partidosPorPagina + 1;
-    const pagina = [];
-    let encontrados = 0;
-    for (const torneo of torneosFiltrados) {
-      const grupos = Array.isArray(torneo?.groups) ? torneo.groups : [];
-      const categoria = obtenerCategoria(torneo);
-      for (let groupIndex = 0; groupIndex < grupos.length; groupIndex++) {
-        const grupo = grupos[groupIndex];
-        if (grupo?.name === "__INSCRIPCIONES__") continue;
-        const matches = Array.isArray(grupo?.matches) ? grupo.matches : [];
-        for (let matchIndex = 0; matchIndex < matches.length; matchIndex++) {
-          const match = matches[matchIndex];
-          if (!esPartidoValido(match)) continue;
-          if (encontrados >= inicio && pagina.length < partidosPorPagina + 1) {
-            pagina.push({
-              key: String(torneo.id) + "::" + groupIndex + "::" + matchIndex,
-              torneoId: torneo.id,
-              torneoTitle: torneo.title || "Competencia",
-              categoria,
-              grupoIndex: groupIndex,
-              matchIndex,
-              match,
-            });
-          }
-          encontrados++;
-          if (encontrados >= limite) return { pagina, hayMas: pagina.length > partidosPorPagina };
-        }
-      }
-    }
-    return { pagina, hayMas: false };
-  })();
-  const partidosPagina = resumenPartidos.pagina.slice(0, partidosPorPagina);
-  const hayMasPartidos = resumenPartidos.hayMas;
+  const inicio = paginaPartidos * partidosPorPagina;
+  const partidosPagina = jornadas.slice(inicio, inicio + partidosPorPagina);
+  const hayMasPartidos = jornadas.length > inicio + partidosPorPagina;
   const partido = partidosPagina.find(item => item.key === partidoKey);
-  const arbitroAsignado = partido
-    ? arbitros.find(a => a.id === partido.match.referee_id)
+  const idsArbitrosJornada = partido
+    ? [...new Set(partido.partidos.map(item => item.match?.referee_id || ""))]
+    : [];
+  const refereeIdJornada = idsArbitrosJornada.length === 1 ? idsArbitrosJornada[0] : "";
+  const designacionParcial = Boolean(partido && idsArbitrosJornada.length > 1);
+  const arbitroAsignado = refereeIdJornada
+    ? arbitros.find(a => a.id === refereeIdJornada)
     : null;
 
   const designarPartido = async refereeId => {
     if (!partido || guardando) return;
     setGuardando(true);
     setMensaje("");
-    const torneo = torneos.find(t => t.id === partido.torneoId);
-    if (!torneo) {
-      setGuardando(false);
-      setMensaje("No se encontró el torneo de este enfrentamiento.");
-      return;
-    }
-    const gruposActualizados = (torneo.groups || []).map((grupo, groupIndex) => {
-      if (groupIndex !== partido.grupoIndex) return grupo;
-      return {
-        ...grupo,
-        matches: (grupo.matches || []).map((match, matchIndex) =>
-          matchIndex === partido.matchIndex ? { ...match, referee_id: refereeId } : match
-        ),
+
+    const actualizaciones = new Map();
+    partido.partidos.forEach(item => {
+      const torneo = torneos.find(t => t.id === item.torneoId);
+      if (!torneo) return;
+      if (!actualizaciones.has(torneo.id)) {
+        actualizaciones.set(torneo.id, {
+          torneo,
+          grupos: (torneo.groups || []).map(grupo => ({
+            ...grupo,
+            matches: Array.isArray(grupo?.matches) ? [...grupo.matches] : [],
+          })),
+        });
+      }
+      const actualizacion = actualizaciones.get(torneo.id);
+      const grupo = actualizacion.grupos[item.grupoIndex];
+      if (!grupo?.matches?.[item.matchIndex]) return;
+      grupo.matches[item.matchIndex] = {
+        ...grupo.matches[item.matchIndex],
+        referee_id: refereeId,
       };
     });
-    const { error } = await supabase.from("tournaments")
-      .update({ groups: gruposActualizados }).eq("id", torneo.id);
-    setGuardando(false);
-    if (error) {
-      setMensaje("No se pudo guardar la designación: " + error.message);
+
+    if (!actualizaciones.size) {
+      setGuardando(false);
+      setMensaje("No se encontraron partidos para esta jornada.");
       return;
     }
-    setTorneos(prev => prev.map(t => t.id === torneo.id ? { ...t, groups: gruposActualizados } : t));
-    setMensaje("Árbitro asignado únicamente a este enfrentamiento.");
+
+    const resultados = await Promise.all([...actualizaciones.values()].map(({ torneo, grupos }) =>
+      supabase.from("tournaments").update({ groups: grupos }).eq("id", torneo.id)
+    ));
+    const error = resultados.find(resultado => resultado.error)?.error;
+    setGuardando(false);
+    if (error) {
+      setMensaje("No se pudo completar la designación de toda la jornada: " + error.message);
+      return;
+    }
+
+    const gruposPorTorneo = new Map([...actualizaciones.entries()].map(([id, item]) => [id, item.grupos]));
+    setTorneos(prev => prev.map(t => gruposPorTorneo.has(t.id)
+      ? { ...t, groups: gruposPorTorneo.get(t.id) }
+      : t
+    ));
+    setMensaje("Árbitro asignado a toda la jornada: " + partido.partidos.length +
+      " partido(s) en " + partido.categorias.length + " categoría(s).");
   };
 
   const estilo = { background:"#171c27", color:"#fff", border:"1px solid #b5122a", borderRadius:"12px", padding:"1rem", width:"100%" };
@@ -271,15 +315,15 @@ function RefereePreJornada({ onBack }) {
 
     {competencia && <>
       <h3 style={{margin:".5rem 0 1rem",textAlign:"center"}}>{competencia.title} · {ramaSeleccionada} · {categoriaSeleccionada === "Todas" ? "Todas las categorías" : categoriaSeleccionada}</h3>
-      {!partidosPagina.length && paginaPartidos === 0 ? <p style={{...estilo,textAlign:"center"}}>Todavía no hay enfrentamientos para esta selección.</p> :
+      {!partidosPagina.length && paginaPartidos === 0 ? <p style={{...estilo,textAlign:"center"}}>Todavía no hay jornadas para esta selección.</p> :
         !partido ? <>
-          <p style={{textAlign:"center",color:"#fff"}}>Enfrentamientos desde el {paginaPartidos * partidosPorPagina + 1} · Página {paginaPartidos + 1} · Mostrando {partidosPagina.length} partidos</p>
+          <p style={{textAlign:"center",color:"#fff"}}>Jornadas desde la {paginaPartidos * partidosPorPagina + 1} · Página {paginaPartidos + 1} · Mostrando {partidosPagina.length} jornadas</p>
           <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:".8rem"}}>
           {partidosPagina.map(item=><button key={item.key} type="button" onClick={()=>{setPartidoKey(item.key);setMensaje("");}} style={{...estilo,textAlign:"center",cursor:"pointer"}}>
-            <span style={{display:"block",fontSize:".75rem",color:"#fca5a5",fontWeight:700,marginBottom:".45rem"}}>{item.categoria}</span>
-            <strong style={{fontSize:"1rem"}}>{textoSeguro(item.match.team1)} <span style={{color:"#fca5a5"}}>VS</span> {textoSeguro(item.match.team2)}</strong>
-            <span style={{display:"block",fontSize:".82rem",marginTop:".55rem",color:"#d1d5db"}}>Árbitro: {arbitros.find(a=>a.id===item.match.referee_id)?.username || "Sin designar"}</span>
-            <span style={{display:"block",fontWeight:800,marginTop:".65rem"}}>Designar árbitro →</span>
+            <span style={{display:"block",fontSize:".75rem",color:"#fca5a5",fontWeight:700,marginBottom:".45rem"}}>{item.categorias.join(" · ")}</span>
+            <strong style={{fontSize:"1rem"}}>{item.team1} <span style={{color:"#fca5a5"}}>VS</span> {item.team2}</strong>
+            <span style={{display:"block",fontSize:".82rem",marginTop:".55rem",color:"#d1d5db"}}>{item.partidos.length} partido(s) en esta jornada · Árbitro: {(() => { const ids = [...new Set(item.partidos.map(p => p.match?.referee_id || ""))]; return ids.length > 1 ? "Designación parcial" : (arbitros.find(a => a.id === ids[0])?.username || "Sin designar"); })()}</span>
+            <span style={{display:"block",fontWeight:800,marginTop:".65rem"}}>Designar jornada completa →</span>
           </button>)}
           </section>
           {(paginaPartidos > 0 || hayMasPartidos) && <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:".8rem",flexWrap:"wrap",marginTop:"1rem"}}>
@@ -293,10 +337,10 @@ function RefereePreJornada({ onBack }) {
           <section style={{...estilo,textAlign:"center"}}>
             <div style={{fontSize:".8rem",color:"#fca5a5",fontWeight:700,marginBottom:".5rem"}}>{competencia.title} · {partido.categoria}</div>
             <h3 style={{margin:".2rem 0 1rem"}}>{textoSeguro(partido.match.team1)} <span style={{color:"#fca5a5"}}>VS</span> {textoSeguro(partido.match.team2)}</h3>
-            <h4 style={{margin:"0 0 .5rem"}}>DESIGNAR ÁRBITRO PARA ESTE PARTIDO</h4>
-            <p style={{fontSize:".85rem",color:"#d1d5db"}}>{arbitroAsignado ? "Árbitro actual: " + arbitroAsignado.username : "Elegí un árbitro para este enfrentamiento."}</p>
+            <h4 style={{margin:"0 0 .5rem"}}>DESIGNAR ÁRBITRO PARA TODA LA JORNADA</h4>
+            <p style={{fontSize:".85rem",color:"#d1d5db"}}>{arbitroAsignado ? "Árbitro actual para toda la jornada: " + arbitroAsignado.username : (designacionParcial ? "La jornada tiene designaciones diferentes o incompletas. Elegí un árbitro para unificar todos sus partidos." : "Elegí un árbitro. Se asignará a todos los partidos de este cruce en las categorías de la competencia.")}</p>
             {arbitros.length ? <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(135px,1fr))",gap:".6rem"}}>
-              {arbitros.map(arbitro=><button key={arbitro.id} type="button" disabled={guardando} onClick={()=>designarPartido(arbitro.id)} style={{background:partido.match.referee_id===arbitro.id?"#b5122a":"#fff",color:partido.match.referee_id===arbitro.id?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".85rem",fontWeight:800,cursor:"pointer",opacity:guardando?0.65:1}}>
+              {arbitros.map(arbitro=><button key={arbitro.id} type="button" disabled={guardando} onClick={()=>designarPartido(arbitro.id)} style={{background:refereeIdJornada===arbitro.id && !designacionParcial?"#b5122a":"#fff",color:refereeIdJornada===arbitro.id && !designacionParcial?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".85rem",fontWeight:800,cursor:"pointer",opacity:guardando?0.65:1}}>
                 {guardando ? "Guardando…" : arbitro.username}
               </button>)}
             </div> : <p>No hay árbitros aprobados y activos para designar.</p>}
