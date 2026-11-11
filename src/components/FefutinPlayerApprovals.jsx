@@ -165,6 +165,38 @@ export function FefutinPlayerApprovals() {
     setWorkingId(null);
   };
 
+  const markNoHabilitado = async (player) => {
+    const reason = window.prompt(`Motivo para marcar NO HABILITADO a ${player.first_name} ${player.last_name}:`);
+    if (reason === null) return;
+    if (!reason.trim()) {
+      setError("Tenés que indicar el motivo de la sanción.");
+      return;
+    }
+    if (!window.confirm(`¿Confirmás que ${player.first_name} ${player.last_name} quedará NO HABILITADO? Se conservarán su inscripción y carnet.`)) return;
+
+    setWorkingId(player.player_entry_id);
+    setError("");
+    setMessage("");
+    const { error: rpcError } = await supabase.rpc("set_fefutin_player_no_habilitado", {
+      p_player_entry_id: player.player_entry_id,
+      p_reason: reason.trim(),
+    });
+
+    if (rpcError) {
+      console.error("Error al registrar sanción del jugador:", rpcError);
+      setError(rpcError.message || "No se pudo registrar la sanción.");
+    } else {
+      setPlayers((current) => current.map((item) =>
+        item.player_entry_id === player.player_entry_id
+          ? { ...item, carnet_status: "no_habilitado" }
+          : item
+      ));
+      setMessage(`${player.first_name} ${player.last_name} quedó NO HABILITADO. Su carnet y su historial se conservaron.`);
+      await load();
+    }
+    setWorkingId(null);
+  };
+
   const fieldStyle = {
     width: "100%", minWidth: 0, boxSizing: "border-box", padding: ".7rem .8rem",
     borderRadius: "8px", border: "1px solid #666", background: "#fff", color: "#171717",
@@ -256,6 +288,15 @@ export function FefutinPlayerApprovals() {
                           {canActivate ? (
                             <button type="button" className="cr-btn-gold" disabled={busy} onClick={() => decide(player)} style={{ whiteSpace: "nowrap", padding: ".55rem .75rem", fontSize: ".75rem" }}>
                               {busy ? "Procesando..." : "ACTIVAR"}
+                            </button>
+                          ) : status === "activo_pendiente" || status === "habilitado" ? (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => markNoHabilitado(player)}
+                              style={{ whiteSpace: "nowrap", padding: ".5rem .65rem", fontSize: ".7rem", border: "1px solid #b91c1c", borderRadius: "7px", background: "#351015", color: "#fecaca", fontWeight: 800, cursor: busy ? "wait" : "pointer" }}
+                            >
+                              {busy ? "Procesando..." : "NO HABILITAR"}
                             </button>
                           ) : (
                             <span style={{ color: "#888", fontSize: ".68rem", textAlign: "right" }}>En buzón</span>
