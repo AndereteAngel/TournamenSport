@@ -4281,7 +4281,14 @@ export function TournamenSportApp() {
                   onClick={() => setActiveView("referee-stats")}
                   style={{ minWidth: 0, minHeight: "92px", padding: ".8rem .55rem", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".45rem", background: "#fff", border: "1px solid #b5122a", borderRadius: "10px", color: "#171c27", textAlign: "center", cursor: "pointer" }}
                 >
-                  <span aria-hidden="true" style={{ fontSize: "1.45rem" }}>🧑‍⚖️</span>
+                  <span aria-hidden="true" style={{ width: "42px", height: "42px", display: "grid", placeItems: "center", color: "#b5122a", background: "#fff1f2", borderRadius: "12px" }}>
+                    <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="7" y="10" width="34" height="31" rx="4" stroke="currentColor" strokeWidth="2.4" />
+                      <path d="M15 6v8M33 6v8M7 19h34" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+                      <circle cx="19" cy="27" r="4" stroke="currentColor" strokeWidth="2.2" />
+                      <path d="M12.5 37c.8-4 3.1-6 6.5-6 2 0 3.5.7 4.6 2M29 27h7M29 33h7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                    </svg>
+                  </span>
                   <strong style={{ fontSize: ".78rem", lineHeight: 1.25 }}>DESIGNACIÓN DE ÁRBITROS</strong>
                   <small style={{ color: "#4b5563", fontSize: ".7rem", lineHeight: 1.3 }}>Gestioná árbitros y asignaciones</small>
                 </button>
@@ -4293,7 +4300,13 @@ export function TournamenSportApp() {
                   onClick={() => setActiveView("sheet-archive")}
                   style={{ minWidth: 0, minHeight: "92px", padding: ".8rem .55rem", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: ".45rem", background: "#fff", border: "1px solid #b5122a", borderRadius: "10px", color: "#171c27", textAlign: "center", cursor: "pointer" }}
                 >
-                  <span aria-hidden="true" style={{ fontSize: "1.45rem" }}>🗂️</span>
+                  <span aria-hidden="true" style={{ width: "42px", height: "42px", display: "grid", placeItems: "center", color: "#b5122a", background: "#fff1f2", borderRadius: "12px" }}>
+                    <svg viewBox="0 0 48 48" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M13 8h17l7 7v25H13a3 3 0 0 1-3-3V11a3 3 0 0 1 3-3Z" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" />
+                      <path d="M30 8v8h7M17 23h16M17 29h16M17 35h10" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                      <path d="M6 15v25a3 3 0 0 0 3 3h23" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                    </svg>
+                  </span>
                   <strong style={{ fontSize: ".78rem", lineHeight: 1.25 }}>ARCHIVO DE PLANILLAS</strong>
                   <small style={{ color: "#4b5563", fontSize: ".7rem", lineHeight: 1.3 }}>Planillas digitales y fotos firmadas</small>
                 </button>
