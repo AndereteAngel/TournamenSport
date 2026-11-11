@@ -96,9 +96,17 @@ function RefereePreJornada({ onBack }) {
     }
     return "";
   };
-  // Usar los mismos criterios de rama y categoría que el resto de FEFUTIN.
-  // No asumir posiciones fijas dentro de "game": hay torneos con formatos heredados.
-  const obtenerRama = torneo => getTournamentDivision(torneo);
+  // Resolver la rama dentro de este componente: getTournamentDivision pertenece
+  // al componente principal y no está disponible en este ámbito.
+  const obtenerRama = torneo => {
+    const partes = String(torneo?.game || "").split("·").map(p => p.trim());
+    const explicita = partes.find(p => ["Infantil", "Femenino", "Mayores"].includes(p));
+    if (explicita) return explicita;
+    const referencia = (textoSeguro(getTournamentCategory(torneo)) + " " + String(torneo?.game || "")).toLocaleLowerCase("es");
+    if (/femenin|mujer/.test(referencia)) return "Femenino";
+    if (/mayor|adult|senior|primera/.test(referencia)) return "Mayores";
+    return "Infantil";
+  };
   const obtenerCategoria = torneo => textoSeguro(getTournamentCategory(torneo)) || "General";
   const ramas = [{ value:"Infantil", label:"Infantiles" }, { value:"Femenino", label:"Femenino" }, { value:"Mayores", label:"Mayores" }];
   const torneosRama = torneos.filter(t => obtenerRama(t).toLocaleLowerCase("es") === ramaSeleccionada.toLocaleLowerCase("es"));
