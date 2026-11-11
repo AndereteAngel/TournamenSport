@@ -193,7 +193,7 @@ function RefereePreJornada({ onBack }) {
               torneoId: torneo.id,
               torneoTitle: torneo.title || "Competencia",
               categoria,
-              grupoIndex,
+              grupoIndex: groupIndex,
               matchIndex,
               match,
             });
