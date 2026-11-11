@@ -2,7 +2,7 @@ import {
   calculateGroupStandings,
   generatePlayoffBrackets,
 } from "./utils/tournamentLogic";
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState } from "react";
 
 import { CreateTournament } from "./components/CreateTournament";
 import { GroupStageView } from "./components/GroupStageView";
@@ -60,6 +60,35 @@ const adminTournamentButtonStyle = {
 };
 
 
+class RefereePreJornadaErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
+
+  componentDidCatch(error) {
+    console.error("Error en Pre-jornada:", error);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <main style={{ background:"#171c27", color:"#fff", border:"2px solid #b5122a", borderRadius:"12px", padding:"1rem", margin:"1rem auto", maxWidth:"900px" }}>
+          <h2 style={{ color:"#fff" }}>ERROR EN PRE-JORNADA</h2>
+          <p>La pantalla detectó un error y evitó quedar completamente negra.</p>
+          <pre style={{ whiteSpace:"pre-wrap", overflowWrap:"anywhere", background:"#fff", color:"#171c27", padding:"1rem", borderRadius:"8px" }}>{String(this.state.error?.message || this.state.error)}</pre>
+          <button type="button" onClick={this.props.onBack} style={{ background:"#fff", color:"#171c27", border:"1px solid #b5122a", borderRadius:"8px", padding:".7rem 1rem" }}>← Volver</button>
+        </main>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function RefereePreJornada({ onBack }) {
   const [torneos, setTorneos] = useState([]);
   const [arbitros, setArbitros] = useState([]);
@@ -75,15 +104,21 @@ function RefereePreJornada({ onBack }) {
   useEffect(() => {
     let activo = true;
     (async () => {
-      const [{ data: ts, error: te }, { data: ps, error: pe }] = await Promise.all([
-        supabase.from("tournaments").select("*").order("title"),
-        supabase.from("profiles").select("id, username, role, approval_status, deactivated_at").eq("role", "arbitro").order("username")
-      ]);
-      if (!activo) return;
-      if (te || pe) setMensaje(te?.message || pe?.message || "No se pudieron cargar los datos.");
-      setTorneos(ts || []);
-      setArbitros((ps || []).filter(p => p.approval_status === "aprobado" && !p.deactivated_at));
-      setCargando(false);
+      try {
+        const [{ data: ts, error: te }, { data: ps, error: pe }] = await Promise.all([
+          supabase.from("tournaments").select("*").order("title"),
+          supabase.from("profiles").select("id, username, role, approval_status, deactivated_at").eq("role", "arbitro").order("username")
+        ]);
+        if (!activo) return;
+        if (te || pe) setMensaje(te?.message || pe?.message || "No se pudieron cargar los datos.");
+        setTorneos(ts || []);
+        setArbitros((ps || []).filter(p => p.approval_status === "aprobado" && !p.deactivated_at));
+      } catch (error) {
+        if (!activo) return;
+        setMensaje("Error al cargar Pre-jornada: " + String(error?.message || error));
+      } finally {
+        if (activo) setCargando(false);
+      }
     })();
     return () => { activo = false; };
   }, []);
@@ -4336,7 +4371,9 @@ export function TournamenSportApp() {
         </div>
       ) : activeView === "referee-pre-jornada" && canManageAccess ? (
         <div className="tc-form-screen tc-stats-screen">
-          <RefereePreJornada onBack={() => setActiveView("home")} />
+          <RefereePreJornadaErrorBoundary onBack={() => setActiveView("home")}>
+            <RefereePreJornada onBack={() => setActiveView("home")} />
+          </RefereePreJornadaErrorBoundary>
         </div>
       ) : activeView === "referee-stats" && canViewRefereeStats ? (
         <div className="tc-form-screen tc-stats-screen">
