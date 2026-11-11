@@ -2154,6 +2154,10 @@ export function TournamenSportApp() {
       return;
     }
 
+    // El buzón de Admin tiene sus propias consultas. Pausamos el sondeo
+    // del resumen mientras está abierto para no duplicar la carga de jugadores.
+    if (activeView === "access-requests") return;
+
     let cancelled = false;
     const loadPendingOverview = async () => {
       if (!cancelled) await refreshPendingRequests();
@@ -2165,7 +2169,7 @@ export function TournamenSportApp() {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [canManageAccess, currentUser?.id]);
+  }, [canManageAccess, currentUser?.id, activeView]);
 
   const loadActiveClubs = async () => {
     if (!canManageAccess) return;
