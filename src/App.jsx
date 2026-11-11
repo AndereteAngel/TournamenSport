@@ -2509,8 +2509,9 @@ export function TournamenSportApp() {
     const confirmar = await confirmTournament(
       `⚠️ ELIMINAR TORNEO\n\n` +
         `"${tournament.title}"\n\n` +
-        `Esta acción eliminará el torneo de FEFUTIN.\n\n` +
-        `¿Estás seguro de que querés continuar?`
+        `Se eliminarán sus inscripciones, planteles, planillas, resultados e historial asociado.\n` +
+        `Los clubes y el registro general de jugadores se conservarán.\n\n` +
+        `Esta acción es permanente. ¿Querés continuar?`
     );
 
     if (!confirmar) return;
@@ -2518,35 +2519,34 @@ export function TournamenSportApp() {
     setDeletingTournamentId(tournament.id);
 
     try {
-      // Verificar que Supabase realmente haya eliminado una fila.
-      // Una operación DELETE sin filas devueltas puede indicar que RLS la bloqueó.
-      const { data: deletedRows, error } = await supabase
-        .from("tournaments")
-        .delete()
-        .eq("id", tournament.id)
-        .select("id");
+      const { data: deletionResult, error } = await supabase.rpc(
+        "delete_fefutin_tournament",
+        { p_tournament_id: tournament.id }
+      );
 
       if (error) {
         console.error("Error al eliminar torneo:", error);
-
         showNotice(
-          `❌ Supabase no pudo eliminar el torneo.\n\n${
-            error.message || "Revisá las políticas RLS de DELETE en tournaments."
-          }`
+          `❌ Supabase no pudo eliminar el torneo.\n\n${error.message || "Revisá los permisos y la migración de eliminación."}`
         );
-
         return;
       }
 
-      if (!deletedRows || deletedRows.length === 0) {
-        console.warn(
-          "No se eliminó ninguna fila. Revisar política RLS DELETE y permisos.",
-          { tournamentId: tournament.id, userId: currentUser.id }
-        );
-        showNotice(
-          "❌ El torneo sigue en la base de datos. Revisá en Supabase la política RLS de DELETE para la tabla tournaments."
-        );
-        return;
+      const photoPaths = Array.isArray(deletionResult?.photo_storage_paths)
+        ? deletionResult.photo_storage_paths.filter((path) => typeof path === "string" && path.trim())
+        : [];
+
+      let storageCleanupWarning = "";
+      if (photoPaths.length) {
+        const { error: storageError } = await supabase.storage
+          .from("fefutin-jornada-photos")
+          .remove(photoPaths);
+
+        if (storageError) {
+          console.error("El torneo se eliminó, pero quedaron archivos de fotos en Storage:", storageError, photoPaths);
+          storageCleanupWarning =
+            "\n\n⚠️ El torneo ya se eliminó de la base de datos, pero no se pudieron borrar todos los archivos de fotos. Revisá Storage en Supabase.";
+        }
       }
 
       setTournaments((prev) => prev.filter((t) => t.id !== tournament.id));
@@ -2557,11 +2557,14 @@ export function TournamenSportApp() {
         setEditingTournament(false);
       }
 
-      showNotice("✅ Torneo eliminado correctamente.");
+      showNotice(
+        storageCleanupWarning
+          ? `✅ Torneo eliminado correctamente.${storageCleanupWarning}`
+          : "✅ Torneo y sus datos asociados eliminados correctamente. Los clubes y jugadores del registro general se conservaron."
+      );
     } catch (error) {
       console.error("Error inesperado al eliminar torneo:", error);
-
-      showNotice("❌ Ocurrió un error al intentar eliminar el torneo.");
+      showNotice("❌ Ocurrió un error inesperado al intentar eliminar el torneo.");
     } finally {
       setDeletingTournamentId(null);
     }
