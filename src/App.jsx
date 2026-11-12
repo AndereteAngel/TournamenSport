@@ -988,35 +988,30 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
             >
               <button
                 type="button"
-                onClick={() => setArbitroSeleccionado(arbitro.id)}
-                aria-label={`Ver estadísticas de ${arbitro.nombre}`}
-                className="referee-stat-card-button"
-                style={{ width: "100%", minWidth: 0, textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem", background: "transparent", border: 0, padding: 0 }}
-              >
-                <div className="referee-mini-heading" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "2.8rem", marginTop: canManageAccess ? "1.6rem" : 0, padding: "0.55rem", minWidth: 0, width: "100%", boxSizing: "border-box", background: "#050505", border: "1px solid #343a46", borderRadius: "9px", textAlign: "center" }}>
-                  <strong style={{ display: "block", width: "100%", color: "#fff", fontSize: "clamp(0.76rem, 1.05vw, 0.96rem)", lineHeight: 1.25, textAlign: "center", overflowWrap: "anywhere" }}>{arbitro.nombre}</strong>
+                onClick={() =>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.6rem", paddingBottom: "0.65rem", borderBottom: "1px solid #343d4b" }}>
+                  <span style={{ color: "#ff9aa8", fontSize: "0.65rem", fontWeight: 900, letterSpacing: "0.12em" }}>FEFUTIN</span>
+                  <span style={{ color: "#aeb7c5", fontSize: "0.62rem", fontWeight: 800, letterSpacing: "0.08em" }}>CREDENCIAL DE ÁRBITRO</span>
                 </div>
-                <div className="referee-mini-total" style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "0.3rem", textAlign: "center", borderBottom: "1px solid #343d4b", padding: "0.25rem 0 0.65rem" }}><strong style={{ display: "block", width: "100%", color: "#fff", fontSize: "1.75rem", lineHeight: 1, textAlign: "center", fontVariantNumeric: "tabular-nums" }}>{arbitro.partidos}</strong><span style={{ display: "block", width: "100%", color: "#aeb7c5", fontSize: "0.64rem", fontWeight: 800, letterSpacing: "0.08em", textAlign: "center" }}>PARTIDOS DIRIGIDOS</span></div>
-                <div className="referee-mini-metrics" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.45rem", textAlign: "center" }}>
-                  <div style={{ background: "#0d1118", border: "1px solid #303947", borderRadius: "7px", padding: "0.45rem 0.1rem" }}>
-                    <strong style={{ display: "block", color: "#86efac", fontSize: "1.1rem" }}>{arbitro.victoriasLocales}</strong>
-                    <span style={{ color: "#b8c0cc", fontSize: "clamp(0.48rem, 0.7vw, 0.6rem)", display: "block" }}>LOCAL</span>
-                  </div>
-                  <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
-                    <strong style={{ display: "block", color: "#facc15", fontSize: "1.1rem" }}>{arbitro.empates}</strong>
-                    <span style={{ color: "#b8c0cc", fontSize: "clamp(0.48rem, 0.7vw, 0.6rem)", display: "block" }}>EMPATES</span>
-                  </div>
-                  <div style={{ background: "#171c27", borderRadius: "8px", padding: "0.5rem 0.2rem" }}>
-                    <strong style={{ display: "block", color: "#93c5fd", fontSize: "1.1rem" }}>{arbitro.victoriasVisitantes}</strong>
-                    <span style={{ color: "#b8c0cc", fontSize: "clamp(0.48rem, 0.7vw, 0.6rem)", display: "block" }}>VISIT.</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", padding: "0.45rem 0" }}>
+                  <div aria-hidden="true" style={{ width: "54px", height: "54px", flex: "0 0 54px", display: "grid", placeItems: "center", borderRadius: "50%", background: "#050505", border: "2px solid #b5122a", color: "#fff", fontSize: "1.45rem" }}>⚑</div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <span style={{ display: "block", color: "#aeb7c5", fontSize: "0.62rem", fontWeight: 800, letterSpacing: "0.1em", marginBottom: "0.25rem" }}>ÁRBITRO</span>
+                    <strong style={{ display: "block", color: "#fff", fontSize: "clamp(0.9rem, 1.3vw, 1.08rem)", lineHeight: 1.25, overflowWrap: "anywhere" }}>{arbitro.nombre}</strong>
                   </div>
                 </div>
-                <div className="referee-mini-goals" style={{ color: "#c7cbd1", fontSize: "0.7rem", lineHeight: 1.4, display: "flex", justifyContent: "space-between", gap: "0.4rem", flexWrap: "wrap" }}>
-                  <span>GOLES EN PARTIDOS: <strong style={{ color: "#fff" }}>{arbitro.golesLocal + arbitro.golesVisitante}</strong></span>
-                  <span>LOCAL <strong style={{ color: "#fff" }}>{arbitro.golesLocal}</strong> · VISIT. <strong style={{ color: "#fff" }}>{arbitro.golesVisitante}</strong></span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.7rem", background: "#080b10", border: "1px solid #343d4b", borderRadius: "10px", padding: "0.7rem 0.85rem" }}>
+                  <div>
+                    <strong style={{ display: "block", color: "#fff", fontSize: "1.8rem", lineHeight: 1, fontVariantNumeric: "tabular-nums" }}>{obtenerJornadasDeArbitro(arbitro.id).length}</strong>
+                    <span style={{ display: "block", color: "#ff9aa8", fontSize: "0.64rem", fontWeight: 900, letterSpacing: "0.08em", marginTop: "0.25rem" }}>JORNADAS DIRIGIDAS</span>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <strong style={{ display: "block", color: "#fff", fontSize: "1.2rem", lineHeight: 1 }}>{arbitro.partidos}</strong>
+                    <span style={{ display: "block", color: "#aeb7c5", fontSize: "0.6rem", fontWeight: 800, marginTop: "0.25rem" }}>PARTIDOS</span>
+                  </div>
                 </div>
-                <span className="referee-mini-detail" style={{ color: "#ff9aa8", fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.08em", borderTop: "1px solid #343d4b", paddingTop: "0.65rem", marginTop: "auto", display: "flex", justifyContent: "space-between" }}>CONSULTAR FICHA <span aria-hidden="true">→</span></span>
-              </button>
+                <span className="referee-mini-detail" style={{ color: "#ff9aa8", fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.08em", borderTop: "1px solid #343d4b", paddingTop: "0.65rem", marginTop: "auto", display: "flex", justifyContent: "space-between" }}>VER CREDENCIAL <span aria-hidden="true">→</span></span>
+
 
               {canManageAccess && (
                 <div style={{ display: "grid", gap: "0.5rem", marginTop: "auto" }}>
