@@ -1015,7 +1015,7 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                   </div>
                 </div>
                 <span className="referee-mini-detail" style={{ color: "#ff9aa8", fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.08em", borderTop: "1px solid #343d4b", paddingTop: "0.65rem", marginTop: "auto", display: "flex", justifyContent: "space-between" }}>VER CREDENCIAL <span aria-hidden="true">→</span></span>
-
+              </button>
 
               {canManageAccess && (
                 <div style={{ display: "grid", gap: "0.5rem", marginTop: "auto" }}>
