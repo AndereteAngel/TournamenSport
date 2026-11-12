@@ -1123,7 +1123,7 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                   </article>
                 ))}
               </div>
-            ) : <p style={{ color: "#aeb4bf", margin: 0 }}>Todavía no registra jornadas con resultados.</p>;
+            ) : <p style={{ color: "#aeb4bf", margin: 0 }}>Todavía no tiene jornadas designadas para este árbitro.</p>;
           })()}
           </>}
         </section>
