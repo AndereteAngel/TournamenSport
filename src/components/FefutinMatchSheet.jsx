@@ -24,7 +24,7 @@ const getPlayerStatus = (player) => {
   return "PENDIENTE DE VERIFICACIÓN";
 };
 
-export function FefutinMatchSheet({ tournament, match, onClose, isReferee = false, onCloseMatch }) {
+export function FefutinMatchSheet({ tournament, match, onClose, isReferee = false, isAdmin = false, onCloseMatch }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [closingMatch, setClosingMatch] = useState(false);
@@ -294,7 +294,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
   };
 
   const closeMatch = async () => {
-    if (!isReferee || match?.referee_closed || closingMatch || saving) return;
+    if ((!isReferee && !isAdmin) || match?.referee_closed || closingMatch || saving) return;
     const saved = await save();
     if (!saved) return;
     const score1 = localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
@@ -548,7 +548,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           <div className="fefutin-sheet-actions fefutin-no-print">
             <button type="button" onClick={onClose}>Cerrar</button>
             {!match?.referee_closed && <button type="button" onClick={save} disabled={saving || closingMatch} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>{saving?"Guardando...":"GUARDAR PLANILLA"}</button>}
-            {isReferee && !match?.referee_closed && <button type="button" onClick={closeMatch} disabled={saving || closingMatch} style={{background:"#166534",color:"#fff",borderColor:"#166534"}}>{closingMatch?"CERRANDO...":"CERRAR PARTIDO"}</button>}
+            {(isReferee || isAdmin) && !match?.referee_closed && <button type="button" onClick={closeMatch} disabled={saving || closingMatch} style={{background:"#166534",color:"#fff",borderColor:"#166534"}}>{closingMatch?"CERRANDO...":"CERRAR PARTIDO"}</button>}
             {match?.referee_closed && <strong style={{color:"#166534",alignSelf:"center"}}>✓ PARTIDO CERRADO · SOLO LECTURA</strong>}
             <button type="button" onClick={()=>window.print()} style={{background:"#222",color:"#fff"}}>IMPRIMIR / GUARDAR PDF</button>
           </div>
