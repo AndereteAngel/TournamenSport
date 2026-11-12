@@ -778,11 +778,11 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
           <p style={{ color: "#d1d5db", margin: 0, fontSize: "0.82rem" }}>Ficha individual · Estadísticas arbitrales</p>
         </section>
 
-        <section className="referee-stat-card" style={{ marginBottom: "1rem", padding: "1rem", background: "linear-gradient(135deg, #202633 0%, #11151d 100%)", border: "1px solid #414b5c", borderLeft: "4px solid #b5122a", borderRadius: "14px", boxShadow: "0 8px 22px rgba(0,0,0,.2)" }}>
+        <section className="referee-stat-card" style={{ marginBottom: "1rem", padding: "1rem", background: "linear-gradient(145deg, #202633 0%, #11151d 78%)", border: "1px solid #343d4b", borderTop: "3px solid #b5122a", borderRadius: "14px", boxShadow: "0 7px 18px rgba(0,0,0,.24)" }}>
           <button type="button" aria-expanded={detalleTarjetaArbitro === "ficha:individual"} onClick={() => setDetalleTarjetaArbitro(detalleTarjetaArbitro === "ficha:individual" ? null : "ficha:individual")} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.8rem", background: "transparent", border: 0, color: "#fff", padding: 0, cursor: "pointer", textAlign: "left", appearance: "none" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "0.8rem", minWidth: 0 }}>
-              <span aria-hidden="true" style={{ width: "42px", height: "42px", flex: "0 0 42px", display: "grid", placeItems: "center", borderRadius: "12px", background: "rgba(181,18,42,.18)", border: "1px solid rgba(255,154,168,.35)", color: "#ff9aa8", fontSize: "1.15rem" }}>▤</span>
-              <span style={{ display: "block", minWidth: 0 }}>
+              
+              <span style={{ display: "block", minWidth: 0, flex: 1, background: "#050505", border: "1px solid #343a46", borderRadius: "9px", padding: "0.7rem 0.8rem", textAlign: "center" }}>
                 <strong style={{ display: "block", fontSize: "0.88rem", letterSpacing: "0.045em" }}>DATOS INDIVIDUALES</strong>
                 <span style={{ display: "block", color: "#b8c0cc", fontSize: "0.72rem", marginTop: "0.28rem", lineHeight: 1.4 }}>{arbitroActual.partidos} partidos · {partidosDirigidos.length} resultados registrados</span>
               </span>
@@ -922,11 +922,11 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
           </>}
         </section>
 
-        <section className="referee-stat-card" style={{ marginTop: "1rem", padding: "1rem", background: "linear-gradient(135deg, #202633 0%, #11151d 100%)", border: "1px solid #414b5c", borderLeft: "4px solid #b5122a", borderRadius: "14px", boxShadow: "0 8px 22px rgba(0,0,0,.2)" }}>
+        <section className="referee-stat-card" style={{ marginTop: "1rem", padding: "1rem", background: "linear-gradient(145deg, #202633 0%, #11151d 78%)", border: "1px solid #343d4b", borderTop: "3px solid #b5122a", borderRadius: "14px", boxShadow: "0 7px 18px rgba(0,0,0,.24)" }}>
           <button type="button" aria-expanded={detalleTarjetaArbitro === "ficha:jornada"} onClick={() => setDetalleTarjetaArbitro(detalleTarjetaArbitro === "ficha:jornada" ? null : "ficha:jornada")} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.8rem", background: "transparent", border: 0, color: "#fff", padding: 0, cursor: "pointer", textAlign: "left", appearance: "none" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "0.8rem", minWidth: 0 }}>
-              <span aria-hidden="true" style={{ width: "42px", height: "42px", flex: "0 0 42px", display: "grid", placeItems: "center", borderRadius: "12px", background: "rgba(181,18,42,.18)", border: "1px solid rgba(255,154,168,.35)", color: "#ff9aa8", fontSize: "1.15rem" }}>▦</span>
-              <span style={{ display: "block", minWidth: 0 }}>
+              
+              <span style={{ display: "block", minWidth: 0, flex: 1, background: "#050505", border: "1px solid #343a46", borderRadius: "9px", padding: "0.7rem 0.8rem", textAlign: "center" }}>
                 <strong style={{ display: "block", fontSize: "0.88rem", letterSpacing: "0.045em" }}>DATOS POR JORNADA</strong>
                 <span style={{ display: "block", color: "#b8c0cc", fontSize: "0.72rem", marginTop: "0.28rem", lineHeight: 1.4 }}>{obtenerJornadasDeArbitro(arbitroSeleccionado).length} jornadas registradas · Cruces y categorías</span>
               </span>
