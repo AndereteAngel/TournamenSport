@@ -634,7 +634,7 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
       "</td><td class=\"write\"></td></tr>"
     ).join("");
     const nombreArbitro = arbitroActual?.nombre || "________________________________";
-    const carnetArbitro = carnets.find((item) => item.id === refereeIdActual);
+    const carnetArbitro = carnets.find((item) => item.id === arbitroSeleccionado);
     const matricula = carnetArbitro?.referee_number || "________________";
     const documento = "<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><title>Planilla en blanco de jornada FEFUTIN</title>" +
       "<style>@page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}" +
