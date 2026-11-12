@@ -243,6 +243,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     if (sheetIsVoided) return photoIsVoided;
     if (photoIsVoided) return false;
 
+    if (photo.document_type === "category") return String(photo.match_sheet_id) === String(sheet.id);
     const photoJornada = String(photo.jornada_label || "").trim().toLocaleLowerCase("es");
     const sheetJornada = String(sheet.jornada || "").trim().toLocaleLowerCase("es");
     const sameJornada = photoJornada && (
@@ -376,11 +377,11 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
                           {relatedPhotos.length ? relatedPhotos.map((photo) => (
                             <div key={photo.id} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(100px, 160px)", gap: ".7rem", alignItems: "center", marginTop: ".4rem" }}>
                               <div>
-                                <strong style={{ color: "#fff", fontSize: ".8rem" }}>{photo.jornada_label || "Planilla general de jornada"}</strong>
+                                <strong style={{ color: "#fff", fontSize: ".8rem" }}>{photo.document_type === "category" ? `Planilla firmada · ${photo.categoria || sheet.categoria || "Categoría"}` : (photo.jornada_label || "Planilla general de jornada")}</strong>
                                 <small style={{ display: "block", color: "#aaa", marginTop: ".2rem" }}>Firmada · {formatDate(photo.jornada_date)} · {photo.referee_name || "Árbitro sin identificar"}</small>
                                 {photo.signedUrl && <a href={photo.signedUrl} target="_blank" rel="noreferrer" style={{ color: "#f3a0ad", display: "inline-block", marginTop: ".35rem", fontSize: ".78rem" }}>Abrir foto</a>}
                               </div>
-                              {photo.signedUrl ? <a href={photo.signedUrl} target="_blank" rel="noreferrer"><img src={photo.signedUrl} alt="Planilla general de jornada firmada" style={{ width: "100%", maxHeight: "125px", objectFit: "cover", borderRadius: "6px" }} /></a> : <span style={{ color: "#fca5a5", fontSize: ".75rem" }}>Foto sin acceso disponible</span>}
+                              {photo.signedUrl ? <a href={photo.signedUrl} target="_blank" rel="noreferrer"><img src={photo.signedUrl} alt={photo.document_type === "category" ? "Planilla de categoría firmada" : "Planilla general de jornada firmada"} style={{ width: "100%", maxHeight: "125px", objectFit: "cover", borderRadius: "6px" }} /></a> : <span style={{ color: "#fca5a5", fontSize: ".75rem" }}>Foto sin acceso disponible</span>}
                             </div>
                           )) : <p style={{ color: "#f0c3ca", fontSize: ".8rem", margin: 0 }}>Pendiente de archivo: todavía no se cargó la foto física de esta jornada.</p>}
                         </div>
