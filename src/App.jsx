@@ -490,6 +490,34 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
   const estadisticas = Object.values(estadisticasPorId)
     .sort((a, b) => b.partidos - a.partidos || a.nombre.localeCompare(b.nombre, "es"));
   const arbitroActual = estadisticas.find((item) => item.id === arbitroSeleccionado);
+
+  const [detalleTarjetaArbitro, setDetalleTarjetaArbitro] = useState(null);
+  const obtenerJornadasDeArbitro = (refereeId) => {
+    const normalizarEquipo = (valor) => String(valor || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const jornadas = new Map();
+    torneos.forEach((tournament) => {
+      const partidos = [
+        ...(Array.isArray(tournament.groups) ? tournament.groups.flatMap((group) => Array.isArray(group?.matches) ? group.matches : []) : []),
+        ...(Array.isArray(tournament.playoffs) ? tournament.playoffs.flatMap((round) => Array.isArray(round) ? round : []) : []),
+      ];
+      partidos.forEach((match) => {
+        if (match?.referee_id !== refereeId || match?.score1 == null || match?.score2 == null ||
+            !Number.isFinite(Number(match.score1)) || !Number.isFinite(Number(match.score2)) ||
+            !String(match.team1 || "").trim() || !String(match.team2 || "").trim() ||
+            normalizarEquipo(match.team1) === "pasaje directo" || normalizarEquipo(match.team2) === "pasaje directo") return;
+        const rama = String(tournament?.game || "").split(" · ")[0] || "Infantil";
+        const competencia = [String(tournament?.title || "").trim().toLocaleLowerCase("es"), rama].join("|");
+        const cruce = [normalizarEquipo(match.team1), normalizarEquipo(match.team2)].sort().join("::");
+        const key = competencia + "::" + cruce;
+        if (!jornadas.has(key)) jornadas.set(key, { key, torneo: tournament.title || "Torneo sin nombre", team1: match.team1, team2: match.team2, partidos: 0, goles: 0, categorias: new Set() });
+        const jornada = jornadas.get(key);
+        jornada.partidos += 1;
+        jornada.goles += Number(match.score1) + Number(match.score2);
+        jornada.categorias.add(getTournamentCategory(tournament) || "Sin categoría");
+      });
+    });
+    return [...jornadas.values()].map((jornada) => ({ ...jornada, categorias: [...jornada.categorias].sort((a, b) => a.localeCompare(b, "es", { numeric: true })) }));
+  };
   const partidosDisponibles = torneos.flatMap((tournament) => {
     const partidosGrupo = (Array.isArray(tournament.groups) ? tournament.groups : []).flatMap((group, groupIndex) =>
       (Array.isArray(group?.matches) ? group.matches : []).map((match, matchIndex) => ({
@@ -885,6 +913,35 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                 </div>
                 <span className="referee-mini-detail" style={{ color: "#ff9aa8", fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.08em", borderTop: "1px solid #343d4b", paddingTop: "0.65rem", marginTop: "auto", display: "flex", justifyContent: "space-between" }}>CONSULTAR FICHA <span aria-hidden="true">→</span></span>
               </button>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))", gap: "0.55rem" }}>
+                <section style={{ minWidth: 0, background: "#080808", border: "1px solid #b5122a", borderRadius: "9px", padding: "0.65rem" }}>
+                  <button type="button" aria-expanded={detalleTarjetaArbitro === `${arbitro.id}:individual`} onClick={() => setDetalleTarjetaArbitro(detalleTarjetaArbitro === `${arbitro.id}:individual` ? null : `${arbitro.id}:individual`)} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.4rem", background: "transparent", border: 0, color: "#fff", padding: 0, cursor: "pointer", textAlign: "left" }}>
+                    <strong style={{ fontSize: "0.75rem" }}>DATOS INDIVIDUALES</strong><span style={{ color: "#ff9aa8" }}>{detalleTarjetaArbitro === `${arbitro.id}:individual` ? "−" : "+"}</span>
+                  </button>
+                  <div style={{ color: "#d1d5db", fontSize: "0.68rem", marginTop: "0.4rem" }}>{arbitro.partidos} partidos · {arbitro.golesTotales} goles</div>
+                  {detalleTarjetaArbitro === `${arbitro.id}:individual` && <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.4rem", marginTop: "0.6rem" }}>
+                    {[[ "Victorias local", arbitro.victoriasLocales ],[ "Empates", arbitro.empates ],[ "Victorias visitante", arbitro.victoriasVisitantes ],[ "Goles local", arbitro.golesLocal ],[ "Goles visitante", arbitro.golesVisitante ],[ "Goles totales", arbitro.golesTotales ]].map(([label, value]) => <div key={label} style={{ background: "#171c27", borderRadius: "6px", padding: "0.4rem", textAlign: "center" }}><strong style={{ display: "block", color: "#fff" }}>{value}</strong><span style={{ color: "#b8c0cc", fontSize: "0.58rem" }}>{label}</span></div>)}
+                    <div style={{ gridColumn: "1 / -1", color: "#d1d5db", fontSize: "0.65rem" }}>{Object.entries(arbitro.porRama).map(([rama, cantidad]) => `${rama}: ${cantidad}`).join(" · ") || "Sin partidos por rama"}</div>
+                  </div>}
+                </section>
+                <section style={{ minWidth: 0, background: "#080808", border: "1px solid #b5122a", borderRadius: "9px", padding: "0.65rem" }}>
+                  <button type="button" aria-expanded={detalleTarjetaArbitro === `${arbitro.id}:jornada`} onClick={() => setDetalleTarjetaArbitro(detalleTarjetaArbitro === `${arbitro.id}:jornada` ? null : `${arbitro.id}:jornada`)} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.4rem", background: "transparent", border: 0, color: "#fff", padding: 0, cursor: "pointer", textAlign: "left" }}>
+                    <strong style={{ fontSize: "0.75rem" }}>DATOS POR JORNADA</strong><span style={{ color: "#ff9aa8" }}>{detalleTarjetaArbitro === `${arbitro.id}:jornada` ? "−" : "+"}</span>
+                  </button>
+                  {(() => { const jornadas = obtenerJornadasDeArbitro(arbitro.id); return <>
+                    <div style={{ color: "#d1d5db", fontSize: "0.68rem", marginTop: "0.4rem" }}>{jornadas.length} {jornadas.length === 1 ? "jornada" : "jornadas"}</div>
+                    {detalleTarjetaArbitro === `${arbitro.id}:jornada` && <div style={{ display: "grid", gap: "0.4rem", marginTop: "0.6rem" }}>
+                      {jornadas.length ? jornadas.map((jornada) => <div key={jornada.key} style={{ background: "#171c27", borderRadius: "6px", padding: "0.5rem" }}>
+                        <strong style={{ display: "block", color: "#fff", fontSize: "0.67rem" }}>{jornada.torneo}</strong>
+                        <div style={{ color: "#ff9aa8", fontSize: "0.68rem", fontWeight: 800, marginTop: "0.2rem" }}>{jornada.team1} vs. {jornada.team2}</div>
+                        <div style={{ color: "#b8c0cc", fontSize: "0.62rem", marginTop: "0.2rem" }}>{jornada.partidos} partidos · {jornada.categorias.length} categorías · {jornada.goles} goles</div>
+                        <div style={{ color: "#aeb7c5", fontSize: "0.6rem" }}>{jornada.categorias.join(" · ")}</div>
+                      </div>) : <p style={{ color: "#aeb7c5", fontSize: "0.66rem", margin: 0 }}>Todavía no registra jornadas con resultados.</p>}
+                    </div>}
+                  </>; })()}
+                </section>
+              </div>
               {canManageAccess && (
                 <div style={{ display: "grid", gap: "0.5rem", marginTop: "auto" }}>
                   <button
