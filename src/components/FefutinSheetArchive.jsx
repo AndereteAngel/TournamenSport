@@ -55,7 +55,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     ] = await Promise.all([
       supabase.from("fefutin_match_sheets").select("*").order("updated_at", { ascending: false }),
       supabase.from("fefutin_jornada_photos").select("*").order("jornada_date", { ascending: false }),
-      supabase.from("tournaments").select("id, title, game"),
+      supabase.from("tournaments").select("id, title, game, category_detail, category_type"),
       supabase.from("fefutin_voided_match_sheets").select("sheet_id, photo_ids"),
     ]);
 
@@ -183,16 +183,27 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   const [filterSearch, setFilterSearch] = useState("");
   const [documentViewBySheet, setDocumentViewBySheet] = useState({});
 
-  const archivedTournamentIds = new Set([
-    ...sheets.map((sheet) => String(sheet.tournament_id)),
-    ...photos.map((photo) => String(photo.tournament_id)),
-  ]);
-  const archivedTournaments = tournaments.filter((tournament) =>
-    archivedTournamentIds.has(String(tournament.id))
+  // Los filtros se alimentan del catálogo completo de torneos configurados,
+  // no solamente de los que ya tienen planillas archivadas. Así se amplían
+  // automáticamente al crear torneos y categorías nuevos.
+  const archivedTournaments = [...tournaments].sort((a, b) =>
+    String(a.title || "Torneo sin nombre").localeCompare(String(b.title || "Torneo sin nombre"), "es")
   );
-  const categories = [...new Set(
-    sheets.map((sheet) => String(sheet.categoria || "").trim()).filter(Boolean)
-  )].sort((a, b) => a.localeCompare(b, "es"));
+  const categoryFromTournament = (tournament) => {
+    const explicit = String(tournament?.category_detail || "").trim();
+    if (explicit) return explicit;
+    const game = String(tournament?.game || "");
+    const separatorIndex = game.lastIndexOf(" · ");
+    if (separatorIndex >= 0) {
+      const category = game.slice(separatorIndex + 3).trim();
+      if (category) return category;
+    }
+    return String(tournament?.category_type || "").trim();
+  };
+  const categories = [...new Set([
+    ...tournaments.map(categoryFromTournament),
+    ...sheets.map((sheet) => String(sheet.categoria || "").trim()),
+  ].filter(Boolean))].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
   const jornadas = [...new Set(sheets.map((sheet) => String(sheet.jornada || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
 
   const filteredSheets = sheets.filter((sheet) => {
