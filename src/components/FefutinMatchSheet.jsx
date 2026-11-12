@@ -611,7 +611,6 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
               {categoryPhotoNotice && <p role="status" style={{ color: "#166534", fontWeight: 700, marginBottom: 0 }}>{categoryPhotoNotice}</p>}
             </section>
           )}
-          </div>
         </>}
       </div>
     </div>
