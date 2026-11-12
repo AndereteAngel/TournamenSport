@@ -779,8 +779,12 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
         </section>
 
         <section className="referee-stat-card" style={{ marginBottom: "1rem" }}>
-          <h3 style={{ color: "#fff", marginTop: 0 }}>DATOS INDIVIDUALES</h3>
-          <p style={{ color: "#d1d5db", fontSize: "0.78rem", margin: "0 0 0.8rem" }}>Estadísticas, calendario de actividad y partidos dirigidos de este árbitro.</p>
+          <button type="button" aria-expanded={detalleTarjetaArbitro === "ficha:individual"} onClick={() => setDetalleTarjetaArbitro(detalleTarjetaArbitro === "ficha:individual" ? null : "ficha:individual")} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", background: "transparent", border: 0, color: "#fff", padding: 0, cursor: "pointer", textAlign: "left" }}>
+            <span><strong style={{ display: "block", fontSize: "0.9rem" }}>DATOS INDIVIDUALES</strong><span style={{ display: "block", color: "#aeb4bf", fontSize: "0.72rem", marginTop: "0.25rem" }}>{arbitroActual.partidos} partidos · {partidosDirigidos.length} resultados registrados</span></span>
+            <span style={{ color: "#ff9aa8", fontSize: "1.2rem" }}>{detalleTarjetaArbitro === "ficha:individual" ? "−" : "+"}</span>
+          </button>
+          {detalleTarjetaArbitro === "ficha:individual" && <>
+          <p style={{ color: "#d1d5db", fontSize: "0.78rem", margin: "0.8rem 0" }}>Estadísticas, calendario de actividad y partidos dirigidos de este árbitro.</p>
           <section className="referee-stat-card" style={{ marginBottom: "1rem" }}>
           <h3 style={{ color: "#fff", marginTop: 0 }}>Resultados dirigidos</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: "0.75rem" }}>
@@ -909,11 +913,16 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
             </div>
           )}
         </section>
+          </>}
         </section>
 
         <section className="referee-stat-card" style={{ marginTop: "1rem" }}>
-          <h3 style={{ color: "#fff", marginTop: 0 }}>DATOS POR JORNADA</h3>
-          <p style={{ color: "#d1d5db", fontSize: "0.78rem", margin: "0 0 0.8rem" }}>Resumen exclusivo de los cruces y jornadas dirigidos por este árbitro.</p>
+          <button type="button" aria-expanded={detalleTarjetaArbitro === "ficha:jornada"} onClick={() => setDetalleTarjetaArbitro(detalleTarjetaArbitro === "ficha:jornada" ? null : "ficha:jornada")} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", background: "transparent", border: 0, color: "#fff", padding: 0, cursor: "pointer", textAlign: "left" }}>
+            <span><strong style={{ display: "block", fontSize: "0.9rem" }}>DATOS POR JORNADA</strong><span style={{ display: "block", color: "#aeb4bf", fontSize: "0.72rem", marginTop: "0.25rem" }}>{obtenerJornadasDeArbitro(arbitroSeleccionado).length} jornadas registradas</span></span>
+            <span style={{ color: "#ff9aa8", fontSize: "1.2rem" }}>{detalleTarjetaArbitro === "ficha:jornada" ? "−" : "+"}</span>
+          </button>
+          {detalleTarjetaArbitro === "ficha:jornada" && <>
+          <p style={{ color: "#d1d5db", fontSize: "0.78rem", margin: "0.8rem 0" }}>Resumen exclusivo de los cruces y jornadas dirigidos por este árbitro.</p>
           {(() => {
             const jornadas = obtenerJornadasDeArbitro(arbitroSeleccionado);
             return jornadas.length ? (
@@ -933,6 +942,7 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
               </div>
             ) : <p style={{ color: "#aeb4bf", margin: 0 }}>Todavía no registra jornadas con resultados.</p>;
           })()}
+          </>}
         </section>
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
