@@ -59,9 +59,16 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
       supabase.from("fefutin_voided_match_sheets").select("sheet_id, photo_ids"),
     ]);
 
-    if (sheetsError || photosError || tournamentsError || voidedError) {
+    // La tabla de anulaciones es complementaria: la migración de archivo vigente
+    // no la crea. Su ausencia no debe impedir consultar planillas cerradas y fotos.
+    const optionalVoidedTableMissing = ["42P01", "PGRST205"].includes(voidedError?.code);
+    if (voidedError && optionalVoidedTableMissing) {
+      console.warn("Archivo FEFUTIN: tabla opcional de anulaciones no instalada; se continúa sin marcas de anulación.", voidedError);
+    }
+
+    if (sheetsError || photosError || tournamentsError || (voidedError && !optionalVoidedTableMissing)) {
       console.error("Error al cargar el archivo FEFUTIN:", { sheetsError, photosError, tournamentsError, voidedError });
-      setError("No se pudo cargar el archivo. Revisá que hayas aplicado la migración de Archivo de Planillas en Supabase.");
+      setError("No se pudo cargar el archivo. Revisá las tablas y permisos de Archivo de Planillas en Supabase.");
       setLoading(false);
       return;
     }
