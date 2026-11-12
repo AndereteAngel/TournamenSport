@@ -3724,7 +3724,7 @@ export function TournamenSportApp() {
   };
 
   const handleCloseMatch = async ({ phase, groupIndex, roundIndex, matchId }) => {
-    if (!isArbitro || !activeTournament?.id) {
+    if ((!isArbitro && !isAdmin && !isDirectivo) || !activeTournament?.id) {
       showNotice("No tenés permisos para cerrar partidos.");
       return false;
     }
