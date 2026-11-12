@@ -2362,6 +2362,8 @@ export function TournamenSportApp() {
   const [pendingClubTournamentRequestsCount, setPendingClubTournamentRequestsCount] = useState(0);
   const [loadingAccessRequests, setLoadingAccessRequests] = useState(false);
   const [accessActionError, setAccessActionError] = useState("");
+  const [refereeApprovalForms, setRefereeApprovalForms] = useState({});
+  const [processingAccessId, setProcessingAccessId] = useState(null);
   const [activeClubs, setActiveClubs] = useState([]);
   const [loadingActiveClubs, setLoadingActiveClubs] = useState(false);
   const [removingClubTournamentId, setRemovingClubTournamentId] = useState(null);
@@ -2747,12 +2749,77 @@ export function TournamenSportApp() {
     }
   };
 
-  const handleAccessDecision = async (userId, decision) => {
-    const rpcName = decision === "approve" ? "approve_fefutin_access" : "reject_fefutin_access";
-    const { error } = await supabase.rpc(rpcName, { p_user_id: userId });
-    if (error) { setAccessActionError(error.message || "No se pudo procesar la solicitud."); return; }
+  const updateRefereeApprovalForm = (userId, field, value) => {
+    setRefereeApprovalForms((current) => ({
+      ...current,
+      [userId]: { ...(current[userId] || {}), [field]: value },
+    }));
+  };
+
+  const handleAccessDecision = async (userId, decision, request = null) => {
+    if (processingAccessId) return;
+    setProcessingAccessId(userId);
     setAccessActionError("");
-    await refreshPendingRequests();
+    try {
+      if (decision === "approve" && request?.requested_role === "arbitro") {
+        const data = refereeApprovalForms[userId] || {};
+        const firstName = String(data.first_name || "").trim();
+        const lastName = String(data.last_name || "").trim();
+        const refereeNumber = String(data.referee_number || "").trim();
+        const locality = String(data.locality || "").trim();
+        const birthDate = data.birth_date || null;
+        const photoFile = data.photo_file || null;
+
+        if (!firstName || !lastName || !refereeNumber || !locality) {
+          throw new Error("Completá nombre, apellido, matrícula y localidad antes de aprobar el alta.");
+        }
+        if (photoFile && photoFile.size > 5 * 1024 * 1024) {
+          throw new Error("La fotografía no puede superar los 5 MB.");
+        }
+        if (photoFile && !["image/jpeg", "image/png", "image/webp"].includes(photoFile.type)) {
+          throw new Error("La fotografía debe ser JPG, PNG o WEBP.");
+        }
+
+        let photoPath = null;
+        if (photoFile) {
+          photoPath = userId + "/photo";
+          const { error: uploadError } = await supabase.storage
+            .from("fefutin-carnets")
+            .upload(photoPath, photoFile, { upsert: true, contentType: photoFile.type });
+          if (uploadError) throw uploadError;
+        }
+
+        const { error } = await supabase.rpc("approve_fefutin_referee_with_carnet", {
+          p_user_id: userId,
+          p_first_name: firstName,
+          p_last_name: lastName,
+          p_referee_number: refereeNumber,
+          p_locality: locality,
+          p_birth_date: birthDate,
+          p_photo_path: photoPath,
+        });
+        if (error) throw error;
+      } else {
+        const rpcName = decision === "approve" ? "approve_fefutin_access" : "reject_fefutin_access";
+        const { error } = await supabase.rpc(rpcName, { p_user_id: userId });
+        if (error) throw error;
+      }
+      setRefereeApprovalForms((current) => {
+        const next = { ...current };
+        delete next[userId];
+        return next;
+      });
+      await refreshPendingRequests();
+      if (decision === "approve" && request?.requested_role === "arbitro") {
+        await loadActiveReferees();
+        showNotice("Árbitro aprobado y carnet creado correctamente.");
+      }
+    } catch (error) {
+      console.error("Error al procesar solicitud de acceso:", error);
+      setAccessActionError(error.message || "No se pudo procesar la solicitud.");
+    } finally {
+      setProcessingAccessId(null);
+    }
   };
 
   // =========================================================
@@ -4474,9 +4541,35 @@ export function TournamenSportApp() {
                       )}
                       <small style={{ display: "block", color: "#aaa", marginTop: "0.4rem" }}>Recibida: {request.created_at ? new Date(request.created_at).toLocaleString("es-AR") : "—"}</small>
                     </div>
-                    <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap" }}>
-                      <button type="button" className="cr-btn-gold" onClick={() => handleAccessDecision(request.id, "approve")}>Aprobar</button>
-                      <button type="button" className="tc-form-back" onClick={() => handleAccessDecision(request.id, "reject")}>Desestimar</button>
+                    {request.requested_role === "arbitro" && (
+                      <div style={{ width: "100%", marginTop: ".9rem", padding: ".9rem", border: "1px solid #6d2632", borderRadius: "10px", background: "#1a1013" }}>
+                        <strong style={{ display: "block", color: "#ffb3bf", fontSize: ".78rem", letterSpacing: ".06em", marginBottom: ".7rem" }}>DATOS PARA CREAR EL CARNET</strong>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: ".65rem" }}>
+                          <label style={{ display: "grid", gap: ".25rem", color: "#eee", fontSize: ".76rem", fontWeight: 700 }}>Nombre
+                            <input required value={refereeApprovalForms[request.id]?.first_name || ""} onChange={(e) => updateRefereeApprovalForm(request.id, "first_name", e.target.value)} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: ".65rem", borderRadius: "7px", border: "1px solid #555", background: "#090909", color: "#fff" }} />
+                          </label>
+                          <label style={{ display: "grid", gap: ".25rem", color: "#eee", fontSize: ".76rem", fontWeight: 700 }}>Apellido
+                            <input required value={refereeApprovalForms[request.id]?.last_name || ""} onChange={(e) => updateRefereeApprovalForm(request.id, "last_name", e.target.value)} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: ".65rem", borderRadius: "7px", border: "1px solid #555", background: "#090909", color: "#fff" }} />
+                          </label>
+                          <label style={{ display: "grid", gap: ".25rem", color: "#eee", fontSize: ".76rem", fontWeight: 700 }}>Matrícula
+                            <input required value={refereeApprovalForms[request.id]?.referee_number || ""} onChange={(e) => updateRefereeApprovalForm(request.id, "referee_number", e.target.value)} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: ".65rem", borderRadius: "7px", border: "1px solid #555", background: "#090909", color: "#fff" }} />
+                          </label>
+                          <label style={{ display: "grid", gap: ".25rem", color: "#eee", fontSize: ".76rem", fontWeight: 700 }}>Localidad
+                            <input required value={refereeApprovalForms[request.id]?.locality || ""} onChange={(e) => updateRefereeApprovalForm(request.id, "locality", e.target.value)} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: ".65rem", borderRadius: "7px", border: "1px solid #555", background: "#090909", color: "#fff" }} />
+                          </label>
+                          <label style={{ display: "grid", gap: ".25rem", color: "#eee", fontSize: ".76rem", fontWeight: 700 }}>Fecha de nacimiento
+                            <input type="date" value={refereeApprovalForms[request.id]?.birth_date || ""} onChange={(e) => updateRefereeApprovalForm(request.id, "birth_date", e.target.value)} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: ".65rem", borderRadius: "7px", border: "1px solid #555", background: "#090909", color: "#fff", colorScheme: "dark" }} />
+                          </label>
+                          <label style={{ display: "grid", gap: ".25rem", color: "#eee", fontSize: ".76rem", fontWeight: 700 }}>Fotografía (JPG, PNG o WEBP · máx. 5 MB)
+                            <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => updateRefereeApprovalForm(request.id, "photo_file", e.target.files?.[0] || null)} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: ".55rem", borderRadius: "7px", border: "1px solid #555", background: "#090909", color: "#fff" }} />
+                          </label>
+                        </div>
+                        <small style={{ display: "block", color: "#aaa", marginTop: ".55rem" }}>El carnet se crea al aprobar. Nombre, apellido, matrícula y localidad son obligatorios; fecha y foto pueden completarse después.</small>
+                      </div>
+                    )}
+                    <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap", marginTop: ".75rem" }}>
+                      <button type="button" className="cr-btn-gold" disabled={processingAccessId === request.id} onClick={() => handleAccessDecision(request.id, "approve", request)}>{processingAccessId === request.id ? "Procesando..." : request.requested_role === "arbitro" ? "Aprobar y crear carnet" : "Aprobar"}</button>
+                      <button type="button" className="tc-form-back" disabled={processingAccessId === request.id} onClick={() => handleAccessDecision(request.id, "reject", request)}>Desestimar</button>
                     </div>
                   </article>
                 ))}
