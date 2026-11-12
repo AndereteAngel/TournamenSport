@@ -602,7 +602,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
             {match?.referee_closed && <strong style={{color:"#166534",alignSelf:"center"}}>✓ PARTIDO CERRADO · SOLO LECTURA</strong>}
             <button type="button" onClick={()=>window.print()} style={{background:"#222",color:"#fff"}}>IMPRIMIR / GUARDAR PDF</button>
           </div>
-          {match?.referee_closed && (isReferee || isAdmin) && (
+          {match?.referee_closed && isReferee && (
             <section className="fefutin-no-print" style={{ marginTop: 16, padding: 14, border: "1px solid #b5122a", borderRadius: 8, background: "#fff7f8" }}>
               <strong style={{ display: "block", color: "#b5122a", marginBottom: 8 }}>FOTO DE PLANILLA FIRMADA · {category || "CATEGORÍA"}</strong>
               <p style={{ margin: "0 0 10px", fontSize: 12 }}>Después de cerrar el partido, subí la foto de esta planilla firmada por los referentes. Quedará archivada junto a este partido y su categoría.</p>
