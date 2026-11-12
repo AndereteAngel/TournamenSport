@@ -521,100 +521,65 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
       return "Infantil";
     };
     const jornadas = new Map();
-    const registrarPartido = (tournament, match, etapa) => {
-      const score1 = Number(match?.score1);
-      const score2 = Number(match?.score2);
+    const registrarPartido = (tournament, match, instancia) => {
       const team1 = String(match?.team1 || "").trim();
       const team2 = String(match?.team2 || "").trim();
-      if (match?.referee_id !== refereeId || match?.score1 == null || match?.score2 == null ||
-          !Number.isFinite(score1) || !Number.isFinite(score2) || !team1 || !team2 ||
+      if (match?.referee_id !== refereeId || !team1 || !team2 ||
           normalizarEquipo(team1) === "pasaje directo" || normalizarEquipo(team2) === "pasaje directo") return;
-
       const rama = obtenerRama(tournament);
       const propietario = String(tournament?.created_by_user_id || tournament?.created_by || "").trim().toLocaleLowerCase("es");
-      const competencia = [
-        String(tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
-        propietario,
-        rama.toLocaleLowerCase("es"),
-      ].join("|");
+      const competencia = [String(tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"), propietario, rama.toLocaleLowerCase("es")].join("|");
       const categoriaPartes = String(tournament?.game || "").split("·").map((parte) => parte.trim());
       const categoria = String(tournament?.category_detail || categoriaPartes[categoriaPartes.length - 1] || getTournamentCategory(tournament) || "Sin categoría").trim();
       const cruce = [normalizarEquipo(team1), normalizarEquipo(team2)].sort().join("::");
-      const numeroFecha = Number(match?.round);
-      const etapaKey = etapa.tipo === "playoff"
-        ? "playoff-ronda-" + etapa.ronda
-        : Number.isFinite(numeroFecha) && numeroFecha > 0
-          ? "fecha-" + numeroFecha
-          : match?.match_date
-            ? "fecha-" + String(match.match_date)
-            : "fase-grupos";
-      const key = competencia + "::" + etapaKey + "::" + cruce;
-
+      // La pre-jornada designa el mismo cruce para todas las categorías de la competencia.
+      const key = competencia + "::" + cruce;
       if (!jornadas.has(key)) {
         jornadas.set(key, {
-          key,
-          torneo: tournament.title || "Torneo sin nombre",
-          rama,
-          etapa: etapa.tipo === "playoff" ? "Eliminatorias · Ronda " + etapa.ronda : (numeroFecha > 0 ? "Fecha " + numeroFecha : (match?.match_date ? "Fecha " + String(match.match_date) : "Fase de grupos")),
-          team1,
-          team2,
-          team1Normalizado: normalizarEquipo(team1),
-          team2Normalizado: normalizarEquipo(team2),
-          partidos: 0,
-          goles: 0,
-          puntosTeam1: 0,
-          puntosTeam2: 0,
-          categoriasSet: new Set(),
-          detallesPartidos: [],
+          key, torneo: tournament.title || "Torneo sin nombre", rama, etapa: "Jornada de competencia",
+          team1, team2, team1Normalizado: normalizarEquipo(team1), team2Normalizado: normalizarEquipo(team2),
+          partidos: 0, partidosJugados: 0, goles: 0, puntosTeam1: 0, puntosTeam2: 0,
+          categoriasSet: new Set(), detallesPartidos: [],
         });
       }
-
       const jornada = jornadas.get(key);
-      const puntosPartidoTeam1 = score1 > score2 ? 3 : score1 < score2 ? 1 : 2;
-      const puntosPartidoTeam2 = score2 > score1 ? 3 : score2 < score1 ? 1 : 2;
+      const score1 = Number(match?.score1);
+      const score2 = Number(match?.score2);
+      const resultadoCargado = match?.score1 != null && match?.score2 != null && Number.isFinite(score1) && Number.isFinite(score2);
+      const puntosPartidoTeam1 = resultadoCargado ? (score1 > score2 ? 3 : score1 < score2 ? 1 : 2) : 0;
+      const puntosPartidoTeam2 = resultadoCargado ? (score2 > score1 ? 3 : score2 < score1 ? 1 : 2) : 0;
       const mismoOrden = normalizarEquipo(team1) === jornada.team1Normalizado;
       const puntosTeam1 = mismoOrden ? puntosPartidoTeam1 : puntosPartidoTeam2;
       const puntosTeam2 = mismoOrden ? puntosPartidoTeam2 : puntosPartidoTeam1;
-      const instancia = etapa.tipo === "playoff" ? "Eliminatorias · Ronda " + etapa.ronda : (etapa.grupo || "Fase de grupos");
-
       jornada.partidos += 1;
-      jornada.goles += score1 + score2;
-      jornada.puntosTeam1 += puntosTeam1;
-      jornada.puntosTeam2 += puntosTeam2;
+      if (resultadoCargado) {
+        jornada.partidosJugados += 1;
+        jornada.goles += score1 + score2;
+        jornada.puntosTeam1 += puntosTeam1;
+        jornada.puntosTeam2 += puntosTeam2;
+      }
       jornada.categoriasSet.add(categoria);
       jornada.detallesPartidos.push({
         clave: String(tournament.id || tournament.title) + "::" + String(match.id || jornada.detallesPartidos.length),
-        categoria,
-        team1,
-        team2,
-        score1,
-        score2,
-        puntosTeam1,
-        puntosTeam2,
-        instancia,
+        categoria, team1, team2, score1: resultadoCargado ? score1 : null, score2: resultadoCargado ? score2 : null,
+        resultadoCargado, puntosTeam1, puntosTeam2, instancia,
         fechaOrden: match?.result_loaded_at ? new Date(match.result_loaded_at).getTime() : 0,
       });
     };
-
     torneos.forEach((tournament) => {
       (Array.isArray(tournament.groups) ? tournament.groups : []).forEach((group) => {
         if (group?.name === "__INSCRIPCIONES__") return;
-        (Array.isArray(group?.matches) ? group.matches : []).forEach((match) => {
-          registrarPartido(tournament, match, { tipo: "grupos", grupo: group?.name || "Fase de grupos" });
-        });
+        (Array.isArray(group?.matches) ? group.matches : []).forEach((match) => registrarPartido(tournament, match, group?.name || "Fase de grupos"));
       });
       (Array.isArray(tournament.playoffs) ? tournament.playoffs : []).forEach((round, roundIndex) => {
-        (Array.isArray(round) ? round : []).forEach((match) => {
-          registrarPartido(tournament, match, { tipo: "playoff", ronda: roundIndex + 1 });
-        });
+        (Array.isArray(round) ? round : []).forEach((match) => registrarPartido(tournament, match, "Eliminatorias · Ronda " + (roundIndex + 1)));
       });
     });
-
     return [...jornadas.values()].map((jornada) => ({
       ...jornada,
       categorias: [...jornada.categoriasSet].sort((a, b) => a.localeCompare(b, "es", { numeric: true })),
-      detallesPartidos: jornada.detallesPartidos.sort((a, b) => a.categoria.localeCompare(b.categoria, "es", { numeric: true })),
-    })).sort((a, b) => a.etapa.localeCompare(b.etapa, "es", { numeric: true }) || a.team1.localeCompare(b.team1, "es"));
+      detallesPartidos: jornada.detallesPartidos.sort((a, b) => a.categoria.localeCompare(b.categoria, "es", { numeric: true }) || a.instancia.localeCompare(b.instancia, "es")),
+    })).sort((a, b) => a.team1.localeCompare(b.team1, "es") || a.team2.localeCompare(b.team2, "es"));
   };
 
   const imprimirPlanillaJornada = (jornada) => {
@@ -627,41 +592,74 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
       "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
     })[caracter]);
     const filas = jornada.detallesPartidos.map((partido) =>
-      "<tr>" +
-        "<td>" + escaparHtml(partido.categoria) + "</td>" +
-        "<td>" + escaparHtml(partido.team1 + " " + partido.score1 + " - " + partido.score2 + " " + partido.team2) + "</td>" +
-        "<td class=\"points\">" + partido.puntosTeam1 + "</td>" +
-        "<td class=\"points\">" + partido.puntosTeam2 + "</td>" +
-      "</tr>"
+      "<tr><td>" + escaparHtml(partido.categoria) + "</td><td>" +
+      escaparHtml(partido.team1 + " " + (partido.resultadoCargado ? partido.score1 + " - " + partido.score2 : "— - —") + " " + partido.team2) +
+      "</td><td class=\"points\">" + (partido.resultadoCargado ? partido.puntosTeam1 : "—") +
+      "</td><td class=\"points\">" + (partido.resultadoCargado ? partido.puntosTeam2 : "—") + "</td></tr>"
     ).join("");
     const documento = "<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><title>Planilla de jornada FEFUTIN</title>" +
-      "<style>" +
-      "@page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}" +
+      "<style>@page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}" +
       ".top{border-bottom:4px solid #b5122a;padding-bottom:12px;margin-bottom:18px}.brand{color:#b5122a;font-size:13px;font-weight:900;letter-spacing:3px}" +
       "h1{font-size:23px;margin:8px 0 4px}.meta{font-size:12px;color:#555}.match{font-size:17px;font-weight:800;margin:18px 0 6px}" +
       "table{width:100%;border-collapse:collapse;margin-top:18px;font-size:12px}th{background:#171c27;color:#fff;text-align:left;padding:10px 8px}" +
       "td{padding:10px 8px;border-bottom:1px solid #d7dbe1}td.points,th.points{text-align:center;font-weight:800;width:12%}" +
       ".totals{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}.total{border:1px solid #b5122a;border-radius:8px;padding:12px}" +
       ".total span{display:block;color:#555;font-size:11px;text-transform:uppercase}.total strong{display:block;font-size:22px;margin-top:4px}" +
-      ".foot{margin-top:24px;padding-top:10px;border-top:1px solid #ddd;color:#777;font-size:10px}" +
-      "@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}" +
-      "</style></head><body>" +
+      ".foot{margin-top:24px;padding-top:10px;border-top:1px solid #ddd;color:#777;font-size:10px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>" +
       "<header class=\"top\"><div class=\"brand\">FEFUTIN</div><h1>PLANILLA OFICIAL DE JORNADA</h1>" +
       "<div class=\"meta\">" + escaparHtml(jornada.torneo) + " · Rama " + escaparHtml(jornada.rama) + " · " + escaparHtml(jornada.etapa) + "</div>" +
       "<div class=\"match\">" + escaparHtml(jornada.team1) + " vs. " + escaparHtml(jornada.team2) + "</div></header>" +
-      "<table><thead><tr><th>Categoría</th><th>Resultado</th><th class=\"points\">" + escaparHtml(jornada.team1) + "</th><th class=\"points\">" + escaparHtml(jornada.team2) + "</th></tr></thead>" +
-      "<tbody>" + filas + "</tbody></table>" +
+      "<table><thead><tr><th>Categoría</th><th>Resultado</th><th class=\"points\">" + escaparHtml(jornada.team1) + "</th><th class=\"points\">" + escaparHtml(jornada.team2) + "</th></tr></thead><tbody>" + filas + "</tbody></table>" +
       "<div class=\"totals\"><div class=\"total\"><span>Total " + escaparHtml(jornada.team1) + "</span><strong>" + jornada.puntosTeam1 + " puntos</strong></div>" +
       "<div class=\"total\"><span>Total " + escaparHtml(jornada.team2) + "</span><strong>" + jornada.puntosTeam2 + " puntos</strong></div></div>" +
-      "<div class=\"foot\">Puntuación institucional por partido: ganado 3 puntos · empatado 2 puntos · perdido 1 punto. El árbitro no recibe puntos.</div>" +
-      "</body></html>";
+      "<div class=\"foot\">Puntuación institucional por partido: ganado 3 puntos · empatado 2 puntos · perdido 1 punto. El árbitro no recibe puntos.</div></body></html>";
     ventana.document.open();
     ventana.document.write(documento);
     ventana.document.close();
-    window.setTimeout(() => {
-      ventana.focus();
-      ventana.print();
-    }, 300);
+    window.setTimeout(() => { ventana.focus(); ventana.print(); }, 300);
+  };
+
+  const imprimirPlanillaGenericaJornada = (jornada) => {
+    const ventana = window.open("", "_blank", "width=900,height=700");
+    if (!ventana) {
+      setError("El navegador bloqueó la ventana de impresión. Permití las ventanas emergentes para imprimir la planilla.");
+      return;
+    }
+    const escaparHtml = (valor) => String(valor == null ? "" : valor).replace(/[&<>"']/g, (caracter) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
+    })[caracter]);
+    const filas = jornada.detallesPartidos.map((partido) =>
+      "<tr><td>" + escaparHtml(partido.categoria) + "</td><td>" + escaparHtml(partido.team1) +
+      " <span class=\"blank\"></span> - <span class=\"blank\"></span> " + escaparHtml(partido.team2) +
+      "</td><td class=\"write\"></td></tr>"
+    ).join("");
+    const nombreArbitro = arbitroActual?.nombre || "________________________________";
+    const carnetArbitro = carnets.find((item) => item.id === refereeIdActual);
+    const matricula = carnetArbitro?.referee_number || "________________";
+    const documento = "<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><title>Planilla en blanco de jornada FEFUTIN</title>" +
+      "<style>@page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}" +
+      ".top{border-bottom:4px solid #b5122a;padding-bottom:12px;margin-bottom:16px}.brand{color:#b5122a;font-size:13px;font-weight:900;letter-spacing:3px}" +
+      "h1{font-size:22px;margin:8px 0 5px}.meta{font-size:11px;color:#555;line-height:1.6}.match{font-size:17px;font-weight:900;margin-top:12px}" +
+      "table{width:100%;border-collapse:collapse;margin-top:16px;font-size:11px}th{background:#171c27;color:#fff;text-align:left;padding:9px 7px}" +
+      "td{height:42px;padding:8px 7px;border-bottom:1px solid #cfd3da}.write{width:18%;border-left:1px solid #d7dbe1}" +
+      ".blank{display:inline-block;width:24px;height:20px;border-bottom:1px solid #171c27;vertical-align:middle}.ref{margin-top:12px;font-size:11px}" +
+      ".signatures{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:42px;page-break-inside:avoid}.signature{padding-top:9px;border-top:1px solid #171c27;text-align:center;font-size:11px;line-height:1.8}" +
+      ".signature strong{display:block;font-size:12px}.note{margin-top:22px;font-size:9px;color:#666;border-top:1px solid #ddd;padding-top:8px}" +
+      "@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body>" +
+      "<header class=\"top\"><div class=\"brand\">FEFUTIN</div><h1>PLANILLA DE JORNADA · PARA COMPLETAR</h1>" +
+      "<div class=\"meta\">" + escaparHtml(jornada.torneo) + " · Rama " + escaparHtml(jornada.rama) + "<br>" + escaparHtml(jornada.etapa) + "</div>" +
+      "<div class=\"match\">" + escaparHtml(jornada.team1) + " vs. " + escaparHtml(jornada.team2) + "</div>" +
+      "<div class=\"ref\">Árbitro: " + escaparHtml(nombreArbitro) + " · Matrícula: " + escaparHtml(matricula) + "</div></header>" +
+      "<table><thead><tr><th>Categoría</th><th>Resultado (goles)</th><th>Observaciones</th></tr></thead><tbody>" + filas + "</tbody></table>" +
+      "<section class=\"signatures\"><div class=\"signature\"><strong>REFERENTE LOCAL</strong>" + escaparHtml(jornada.team1) +
+      "<br>Nombre y apellido: __________________________<br>Firma: __________________________</div>" +
+      "<div class=\"signature\"><strong>REFERENTE VISITANTE</strong>" + escaparHtml(jornada.team2) +
+      "<br>Nombre y apellido: __________________________<br>Firma: __________________________</div></section>" +
+      "<div class=\"note\">Planilla genérica para completar durante la jornada. Los resultados y las firmas deben verificarse al cierre de cada encuentro.</div></body></html>";
+    ventana.document.open();
+    ventana.document.write(documento);
+    ventana.document.close();
+    window.setTimeout(() => { ventana.focus(); ventana.print(); }, 300);
   };
   const obtenerPartidosDeArbitro = (refereeId) => torneos.flatMap((tournament) => {
     const grupos = (Array.isArray(tournament.groups) ? tournament.groups : []).flatMap((group, groupIndex) =>
@@ -1091,6 +1089,7 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                     <div style={{ color: "#aeb7c5", fontSize: "0.7rem", marginTop: "0.2rem" }}>{jornada.etapa}</div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))", gap: "0.45rem", marginTop: "0.65rem" }}>
                       {tarjetaMetrica("Partidos", jornada.partidos)}
+                      {tarjetaMetrica("Jugados", jornada.partidosJugados)}
                       {tarjetaMetrica("Categorías", jornada.categorias.length)}
                       {tarjetaMetrica("Goles", jornada.goles)}
                     </div>
@@ -1098,8 +1097,8 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                       {jornada.detallesPartidos.map((partido) => (
                         <div key={partido.clave} style={{ display: "grid", gridTemplateColumns: "minmax(0, 0.8fr) minmax(0, 1.5fr)", gap: "0.35rem 0.6rem", alignItems: "center", padding: "0.55rem 0.6rem", background: "#080b10", border: "1px solid #343a46", borderRadius: "8px" }}>
                           <strong style={{ color: "#ff9aa8", fontSize: "0.72rem" }}>{partido.categoria}</strong>
-                          <strong style={{ color: "#fff", fontSize: "0.75rem", textAlign: "right" }}>{partido.team1} {partido.score1} - {partido.score2} {partido.team2}</strong>
-                          <span style={{ gridColumn: "1 / -1", color: "#d1d5db", fontSize: "0.68rem" }}>{jornada.team1}: <strong style={{ color: "#fff" }}>{partido.puntosTeam1} pts</strong> · {jornada.team2}: <strong style={{ color: "#fff" }}>{partido.puntosTeam2} pts</strong></span>
+                          <strong style={{ color: "#fff", fontSize: "0.75rem", textAlign: "right" }}>{partido.team1} {partido.resultadoCargado ? partido.score1 + " - " + partido.score2 : "— - —"} {partido.team2}</strong>
+                          <span style={{ gridColumn: "1 / -1", color: "#d1d5db", fontSize: "0.68rem" }}>{jornada.team1}: <strong style={{ color: "#fff" }}>{partido.resultadoCargado ? partido.puntosTeam1 + " pts" : "Pendiente"}</strong> · {jornada.team2}: <strong style={{ color: "#fff" }}>{partido.resultadoCargado ? partido.puntosTeam2 + " pts" : "Pendiente"}</strong></span>
                         </div>
                       ))}
                     </div>
@@ -1113,9 +1112,14 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                         <strong style={{ color: "#fff", fontSize: "1.05rem" }}>{jornada.puntosTeam2} puntos</strong>
                       </div>
                     </div>
-                    <button type="button" onClick={() => imprimirPlanillaJornada(jornada)} style={{ width: "100%", marginTop: "0.75rem", padding: "0.65rem 0.8rem", borderRadius: "8px", border: "1px solid #b5122a", background: "#241015", color: "#fff", fontSize: "0.75rem", fontWeight: 900, cursor: "pointer" }}>
-                      🖨 IMPRIMIR PLANILLA DE JORNADA
-                    </button>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "0.55rem", marginTop: "0.75rem" }}>
+                      <button type="button" onClick={() => imprimirPlanillaGenericaJornada(jornada)} style={{ width: "100%", padding: "0.65rem 0.8rem", borderRadius: "8px", border: "1px solid #b5122a", background: "#b5122a", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer" }}>
+                        🖨 IMPRIMIR PLANILLA EN BLANCO
+                      </button>
+                      <button type="button" onClick={() => imprimirPlanillaJornada(jornada)} style={{ width: "100%", padding: "0.65rem 0.8rem", borderRadius: "8px", border: "1px solid #b5122a", background: "#241015", color: "#fff", fontSize: "0.72rem", fontWeight: 900, cursor: "pointer" }}>
+                        🖨 IMPRIMIR PLANILLA CON RESULTADOS
+                      </button>
+                    </div>
                   </article>
                 ))}
               </div>
