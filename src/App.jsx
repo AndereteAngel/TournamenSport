@@ -988,7 +988,11 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
             >
               <button
                 type="button"
-                onClick={() =>
+                onClick={() => setArbitroSeleccionado(arbitro.id)}
+                aria-label={"Ver credencial de " + arbitro.nombre}
+                className="referee-stat-card-button"
+                style={{ width: "100%", minWidth: 0, textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem", background: "transparent", border: 0, padding: 0 }}
+              >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.6rem", paddingBottom: "0.65rem", borderBottom: "1px solid #343d4b" }}>
                   <span style={{ color: "#ff9aa8", fontSize: "0.65rem", fontWeight: 900, letterSpacing: "0.12em" }}>FEFUTIN</span>
                   <span style={{ color: "#aeb7c5", fontSize: "0.62rem", fontWeight: 800, letterSpacing: "0.08em" }}>CREDENCIAL DE ÁRBITRO</span>
