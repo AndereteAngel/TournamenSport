@@ -25,9 +25,18 @@ const getPlayerStatus = (player) => {
 };
 
 export function FefutinMatchSheet({ tournament, match, onClose, isReferee = false, isAdmin = false, onCloseMatch }) {
+  const [currentUserId, setCurrentUserId] = useState("");
+  useEffect(() => {
+    let active = true;
+    supabase?.auth.getUser().then(({ data }) => { if (active) setCurrentUserId(data?.user?.id || ""); });
+    return () => { active = false; };
+  }, []);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [closingMatch, setClosingMatch] = useState(false);
+  const [categoryPhotoFile, setCategoryPhotoFile] = useState(null);
+  const [uploadingCategoryPhoto, setUploadingCategoryPhoto] = useState(false);
+  const [categoryPhotoNotice, setCategoryPhotoNotice] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [sheetId, setSheetId] = useState(null);
@@ -293,6 +302,47 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     }
   };
 
+  const uploadCategoryPhoto = async () => {
+    if (!supabase || !currentUserId || !sheetId || !categoryPhotoFile || uploadingCategoryPhoto || !match?.referee_closed) return;
+    setUploadingCategoryPhoto(true);
+    setError("");
+    setCategoryPhotoNotice("");
+    let storagePath = "";
+    try {
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (!allowedTypes.includes(categoryPhotoFile.type)) throw new Error("La foto debe estar en formato JPG, PNG o WEBP.");
+      if (categoryPhotoFile.size > 12 * 1024 * 1024) throw new Error("La imagen no puede superar los 12 MB.");
+      const extension = categoryPhotoFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      storagePath = `${currentUserId}/categoria-${sheetId}-${Date.now()}.${extension}`;
+      const { error: uploadError } = await supabase.storage.from("fefutin-jornada-photos")
+        .upload(storagePath, categoryPhotoFile, { contentType: categoryPhotoFile.type, upsert: false });
+      if (uploadError) throw uploadError;
+      const { data: authData, error: authError } = await supabase.auth.getUser();
+      if (authError) throw authError;
+      const { error: insertError } = await supabase.from("fefutin_jornada_photos").insert({
+        tournament_id: tournament.id,
+        jornada_date: metadata.fecha_partido || new Date().toISOString().slice(0, 10),
+        jornada_label: metadata.jornada || null,
+        referee_id: authData.user.id,
+        referee_name: metadata.arbitro_designado || null,
+        storage_path: storagePath,
+        original_filename: categoryPhotoFile.name,
+        document_type: "category",
+        match_sheet_id: sheetId,
+        categoria: category || null,
+      });
+      if (insertError) throw insertError;
+      setCategoryPhotoFile(null);
+      setCategoryPhotoNotice("Foto de la planilla de esta categoría guardada en el archivo.");
+    } catch (uploadError) {
+      if (storagePath) await supabase.storage.from("fefutin-jornada-photos").remove([storagePath]);
+      console.error("No se pudo guardar la foto de la planilla de categoría:", uploadError);
+      setError(uploadError.message || "No se pudo guardar la foto.");
+    } finally {
+      setUploadingCategoryPhoto(false);
+    }
+  };
+
   const closeMatch = async () => {
     if ((!isReferee && !isAdmin) || match?.referee_closed || closingMatch || saving) return;
     const saved = await save();
@@ -551,6 +601,16 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
             {(isReferee || isAdmin) && !match?.referee_closed && <button type="button" onClick={closeMatch} disabled={saving || closingMatch} style={{background:"#166534",color:"#fff",borderColor:"#166534"}}>{closingMatch?"CERRANDO...":"CERRAR PARTIDO"}</button>}
             {match?.referee_closed && <strong style={{color:"#166534",alignSelf:"center"}}>✓ PARTIDO CERRADO · SOLO LECTURA</strong>}
             <button type="button" onClick={()=>window.print()} style={{background:"#222",color:"#fff"}}>IMPRIMIR / GUARDAR PDF</button>
+          </div>
+          {match?.referee_closed && (isReferee || isAdmin) && (
+            <section className="fefutin-no-print" style={{ marginTop: 16, padding: 14, border: "1px solid #b5122a", borderRadius: 8, background: "#fff7f8" }}>
+              <strong style={{ display: "block", color: "#b5122a", marginBottom: 8 }}>FOTO DE PLANILLA FIRMADA · {category || "CATEGORÍA"}</strong>
+              <p style={{ margin: "0 0 10px", fontSize: 12 }}>Después de cerrar el partido, subí la foto de esta planilla firmada por los referentes. Quedará archivada junto a este partido y su categoría.</p>
+              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setCategoryPhotoFile(event.target.files?.[0] || null)} style={{ maxWidth: "100%", marginBottom: 8 }} />
+              <button type="button" onClick={uploadCategoryPhoto} disabled={!categoryPhotoFile || uploadingCategoryPhoto || !currentUserId} style={{ display: "block", padding: "9px 14px", border: 0, borderRadius: 6, background: "#b5122a", color: "#fff", fontWeight: 800, cursor: "pointer", opacity: uploadingCategoryPhoto ? .6 : 1 }}>{uploadingCategoryPhoto ? "GUARDANDO FOTO..." : "GUARDAR FOTO DE ESTA CATEGORÍA"}</button>
+              {categoryPhotoNotice && <p role="status" style={{ color: "#166534", fontWeight: 700, marginBottom: 0 }}>{categoryPhotoNotice}</p>}
+            </section>
+          )}
           </div>
         </>}
       </div>
