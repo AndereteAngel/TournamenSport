@@ -328,7 +328,7 @@ function RefereePreJornada({ onBack }) {
             <span style={{display:"block",fontSize:".75rem",color:"#fca5a5",fontWeight:700,marginBottom:".45rem"}}>{item.categorias.join(" · ")}</span>
             <strong style={{fontSize:"1rem"}}>{item.team1} <span style={{color:"#fca5a5"}}>VS</span> {item.team2}</strong>
             <span style={{display:"block",fontSize:".82rem",marginTop:".55rem",color:"#d1d5db"}}>{item.partidos.length} partido(s) en esta jornada · Árbitro: {(() => { const ids = [...new Set(item.partidos.map(p => p.match?.referee_id || ""))]; return ids.length > 1 ? "Designación parcial" : (arbitros.find(a => a.id === ids[0])?.username || "Sin designar"); })()}</span>
-            <span style={{display:"block",fontWeight:800,marginTop:".65rem"}}>Designar jornada completa →</span>
+            <span style={{display:"block",fontWeight:800,marginTop:".65rem",color:"#fff"}}>{(() => { const ids = [...new Set(item.partidos.map(p => String(p.match?.referee_id || "").trim()))]; const designada = ids.length === 1 && Boolean(ids[0]) && item.partidos.length > 0 && item.partidos.every(p => String(p.match?.referee_id || "").trim() === ids[0]); return designada ? "🔒 Jornada designada" : "Designar jornada completa →"; })()}</span>
           </button>)}
           </section>
           {(paginaPartidos > 0 || hayMasPartidos) && <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:".8rem",flexWrap:"wrap",marginTop:"1rem"}}>
@@ -343,10 +343,10 @@ function RefereePreJornada({ onBack }) {
             <div style={{fontSize:".8rem",color:"#fca5a5",fontWeight:700,marginBottom:".5rem"}}>{competencia.title} · {partido.categorias.join(" · ")}</div>
             <h3 style={{margin:".2rem 0 1rem"}}>{partido.team1} <span style={{color:"#fca5a5"}}>VS</span> {partido.team2}</h3>
             <h4 style={{margin:"0 0 .5rem"}}>DESIGNAR ÁRBITRO PARA TODA LA JORNADA</h4>
-            <p style={{fontSize:".85rem",color:"#d1d5db"}}>{arbitroAsignado ? "Árbitro actual para toda la jornada: " + arbitroAsignado.username : (designacionParcial ? "La jornada tiene designaciones diferentes o incompletas. Elegí un árbitro para unificar todos sus partidos." : "Elegí un árbitro. Se asignará a todos los partidos de este cruce en las categorías de la competencia.")}</p>
+            <p style={{fontSize:".85rem",color:"#d1d5db"}}>{arbitroAsignado ? "🔒 Jornada designada. La asignación queda bloqueada para directivos y administración: " + arbitroAsignado.username : (designacionParcial ? "La jornada tiene designaciones diferentes o incompletas. Elegí un árbitro para unificar todos sus partidos." : "Elegí un árbitro. Se asignará a todos los partidos de este cruce en las categorías de la competencia.")}</p>
             {arbitros.length ? <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(135px,1fr))",gap:".6rem"}}>
-              {arbitros.map(arbitro=><button key={arbitro.id} type="button" disabled={guardando} onClick={()=>designarPartido(arbitro.id)} style={{background:refereeIdJornada===arbitro.id && !designacionParcial?"#b5122a":"#fff",color:refereeIdJornada===arbitro.id && !designacionParcial?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".85rem",fontWeight:800,cursor:"pointer",opacity:guardando?0.65:1}}>
-                {guardando ? "Guardando…" : arbitro.username}
+              {arbitros.map(arbitro=><button key={arbitro.id} type="button" disabled={guardando || Boolean(refereeIdJornada && !designacionParcial)} onClick={()=>designarPartido(arbitro.id)} style={{background:refereeIdJornada===arbitro.id && !designacionParcial?"#b5122a":"#fff",color:refereeIdJornada===arbitro.id && !designacionParcial?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".85rem",fontWeight:800,cursor:guardando || Boolean(refereeIdJornada && !designacionParcial)?"not-allowed":"pointer",opacity:guardando || Boolean(refereeIdJornada && !designacionParcial)?0.65:1}}>
+                {guardando ? "Guardando…" : (refereeIdJornada && !designacionParcial ? (refereeIdJornada === arbitro.id ? "🔒 Jornada designada · " + arbitro.username : arbitro.username) : arbitro.username)}
               </button>)}
             </div> : <p>No hay árbitros aprobados y activos para designar.</p>}
           </section>
