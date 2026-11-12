@@ -185,7 +185,7 @@ function RefereePreJornada({ onBack }) {
       return (Array.isArray(grupo?.matches) ? grupo.matches : [])
         .map((match, matchIndex) => ({
           torneoId: torneo.id,
-          grupoIndex,
+          grupoIndex: groupIndex,
           matchIndex,
           match,
           categoria: obtenerCategoria(torneo),
