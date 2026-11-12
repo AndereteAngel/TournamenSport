@@ -36,8 +36,8 @@ create policy fefutin_jornada_photos_referee_insert
         and match_sheet_id is not null
         and exists (
           select 1 from public.fefutin_match_sheets s
-          where s.id = match_sheet_id
-            and s.tournament_id = tournament_id
+          where s.id = public.fefutin_jornada_photos.match_sheet_id
+            and s.tournament_id = public.fefutin_jornada_photos.tournament_id
             and lower(trim(coalesce(s.estado, ''))) in ('cerrada', 'cerrado')
         )
       )
