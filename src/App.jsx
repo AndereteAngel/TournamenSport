@@ -361,6 +361,7 @@ function RefereePreJornada({ onBack }) {
 function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) {
   const [perfiles, setPerfiles] = useState([]);
   const [carnets, setCarnets] = useState([]);
+  const [fotosCarnets, setFotosCarnets] = useState({});
   const [torneos, setTorneos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -412,6 +413,22 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
   useEffect(() => {
     cargarEstadisticas();
   }, []);
+
+  useEffect(() => {
+    let activo = true;
+    const cargarFotosCarnets = async () => {
+      const rutas = (carnets || []).filter((carnet) => carnet?.id && carnet?.photo_path);
+      const entradas = await Promise.all(rutas.map(async (carnet) => {
+        const { data, error } = await supabase.storage
+          .from("fefutin-carnets")
+          .createSignedUrl(carnet.photo_path, 300);
+        return [carnet.id, error ? "" : data?.signedUrl || ""];
+      }));
+      if (activo) setFotosCarnets(Object.fromEntries(entradas));
+    };
+    cargarFotosCarnets();
+    return () => { activo = false; };
+  }, [carnets]);
 
   const estadisticasPorId = {};
   const registrarPartido = (match, tournament) => {
@@ -997,11 +1014,21 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                   <span style={{ color: "#ff9aa8", fontSize: "0.65rem", fontWeight: 900, letterSpacing: "0.12em" }}>FEFUTIN</span>
                   <span style={{ color: "#aeb7c5", fontSize: "0.62rem", fontWeight: 800, letterSpacing: "0.08em" }}>CREDENCIAL DE ÁRBITRO</span>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.85rem", padding: "0.45rem 0" }}>
-                  <div aria-hidden="true" style={{ width: "54px", height: "54px", flex: "0 0 54px", display: "grid", placeItems: "center", borderRadius: "50%", background: "#050505", border: "2px solid #b5122a", color: "#fff", fontSize: "1.45rem" }}>⚑</div>
+                <div style={{ display: "grid", gridTemplateColumns: "76px minmax(0,1fr)", alignItems: "start", gap: "0.85rem", padding: "0.45rem 0" }}>
+                  <div style={{ width: "76px", height: "96px", flex: "0 0 76px", display: "grid", placeItems: "center", overflow: "hidden", borderRadius: "8px", background: "#080b10", border: "2px solid #b5122a", color: "#fff", fontSize: "1.8rem" }}>
+                    {fotosCarnets[arbitro.id]
+                      ? <img src={fotosCarnets[arbitro.id]} alt={"Foto de " + arbitro.nombre} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      : <span aria-hidden="true">⚽</span>}
+                  </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <span style={{ display: "block", color: "#aeb7c5", fontSize: "0.62rem", fontWeight: 800, letterSpacing: "0.1em", marginBottom: "0.25rem" }}>ÁRBITRO</span>
                     <strong style={{ display: "block", color: "#fff", fontSize: "clamp(0.9rem, 1.3vw, 1.08rem)", lineHeight: 1.25, overflowWrap: "anywhere" }}>{arbitro.nombre}</strong>
+                    <div style={{ display: "grid", gap: "0.28rem", marginTop: "0.5rem" }}>
+                      <span style={{ color: "#ff9aa8", fontSize: "0.62rem", fontWeight: 900, letterSpacing: "0.06em" }}>MATRÍCULA</span>
+                      <strong style={{ color: "#fff", fontSize: "0.78rem", overflowWrap: "anywhere" }}>{carnets.find((item) => item.id === arbitro.id)?.referee_number || "A completar"}</strong>
+                      <span style={{ color: "#aeb7c5", fontSize: "0.72rem", overflowWrap: "anywhere" }}>{carnets.find((item) => item.id === arbitro.id)?.locality || "Localidad a completar"}</span>
+                      <span style={{ color: "#aeb7c5", fontSize: "0.68rem" }}>Nacimiento: {carnets.find((item) => item.id === arbitro.id)?.birth_date ? new Date(carnets.find((item) => item.id === arbitro.id).birth_date + "T12:00:00").toLocaleDateString("es-AR") : "A completar"}</span>
+                    </div>
                   </div>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.7rem", background: "#080b10", border: "1px solid #343d4b", borderRadius: "10px", padding: "0.7rem 0.85rem" }}>
