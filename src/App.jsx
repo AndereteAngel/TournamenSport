@@ -779,6 +779,9 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
         </section>
 
         <section className="referee-stat-card" style={{ marginBottom: "1rem" }}>
+          <h3 style={{ color: "#fff", marginTop: 0 }}>DATOS INDIVIDUALES</h3>
+          <p style={{ color: "#d1d5db", fontSize: "0.78rem", margin: "0 0 0.8rem" }}>Estadísticas, calendario de actividad y partidos dirigidos de este árbitro.</p>
+          <section className="referee-stat-card" style={{ marginBottom: "1rem" }}>
           <h3 style={{ color: "#fff", marginTop: 0 }}>Resultados dirigidos</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(135px, 1fr))", gap: "0.75rem" }}>
             {tarjetaMetrica("Partidos", arbitroActual.partidos)}
@@ -906,6 +909,31 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
             </div>
           )}
         </section>
+        </section>
+
+        <section className="referee-stat-card" style={{ marginTop: "1rem" }}>
+          <h3 style={{ color: "#fff", marginTop: 0 }}>DATOS POR JORNADA</h3>
+          <p style={{ color: "#d1d5db", fontSize: "0.78rem", margin: "0 0 0.8rem" }}>Resumen exclusivo de los cruces y jornadas dirigidos por este árbitro.</p>
+          {(() => {
+            const jornadas = obtenerJornadasDeArbitro(arbitroSeleccionado);
+            return jornadas.length ? (
+              <div style={{ display: "grid", gap: "0.65rem" }}>
+                {jornadas.map((jornada) => (
+                  <article key={jornada.key} style={{ background: "#171c27", border: "1px solid #343a46", borderLeft: "3px solid #b5122a", borderRadius: "10px", padding: "0.8rem" }}>
+                    <strong style={{ display: "block", color: "#fff", fontSize: "0.82rem" }}>{jornada.torneo}</strong>
+                    <div style={{ color: "#ff9aa8", fontSize: "0.82rem", fontWeight: 800, marginTop: "0.3rem" }}>{jornada.team1} vs. {jornada.team2}</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))", gap: "0.45rem", marginTop: "0.65rem" }}>
+                      {tarjetaMetrica("Partidos", jornada.partidos)}
+                      {tarjetaMetrica("Categorías", jornada.categorias.length)}
+                      {tarjetaMetrica("Goles", jornada.goles)}
+                    </div>
+                    <div style={{ color: "#aeb7c5", fontSize: "0.7rem", marginTop: "0.5rem" }}>{jornada.categorias.join(" · ")}</div>
+                  </article>
+                ))}
+              </div>
+            ) : <p style={{ color: "#aeb4bf", margin: 0 }}>Todavía no registra jornadas con resultados.</p>;
+          })()}
+        </section>
 
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
           <button type="button" className="tc-form-back" onClick={() => setArbitroSeleccionado(null)}>← Volver a todos</button>
@@ -968,90 +996,6 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                 <span className="referee-mini-detail" style={{ color: "#ff9aa8", fontSize: "0.66rem", fontWeight: 800, letterSpacing: "0.08em", borderTop: "1px solid #343d4b", paddingTop: "0.65rem", marginTop: "auto", display: "flex", justifyContent: "space-between" }}>CONSULTAR FICHA <span aria-hidden="true">→</span></span>
               </button>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))", gap: "0.55rem" }}>
-                <section style={{ minWidth: 0, background: "#080808", border: "1px solid #b5122a", borderRadius: "9px", padding: "0.65rem" }}>
-                  <button type="button" aria-expanded={detalleTarjetaArbitro === `${arbitro.id}:individual`} onClick={() => setDetalleTarjetaArbitro(detalleTarjetaArbitro === `${arbitro.id}:individual` ? null : `${arbitro.id}:individual`)} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.4rem", background: "transparent", border: 0, color: "#fff", padding: 0, cursor: "pointer", textAlign: "left" }}>
-                    <strong style={{ fontSize: "0.75rem" }}>DATOS INDIVIDUALES</strong><span style={{ color: "#ff9aa8" }}>{detalleTarjetaArbitro === `${arbitro.id}:individual` ? "−" : "+"}</span>
-                  </button>
-                  <div style={{ color: "#d1d5db", fontSize: "0.68rem", marginTop: "0.4rem" }}>{arbitro.partidos} partidos · {arbitro.golesTotales} goles</div>
-                  {detalleTarjetaArbitro === `${arbitro.id}:individual` && (() => {
-                    const partidosArbitro = obtenerPartidosDeArbitro(arbitro.id);
-                    const actividad = {};
-                    partidosArbitro.forEach((partido) => {
-                      const dia = obtenerDiaCalendarioDePartido(partido.result_loaded_at);
-                      if (dia) actividad[dia] = (actividad[dia] || 0) + 1;
-                    });
-                    const anio = mesCalendario.getFullYear();
-                    const mes = mesCalendario.getMonth();
-                    const diasMes = new Date(anio, mes + 1, 0).getDate();
-                    const inicioSemana = (new Date(anio, mes, 1).getDay() + 6) % 7;
-                    const claveDia = (dia) => `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
-                    const diaActivo = diaCalendarioSeleccionado && diaCalendarioSeleccionado.startsWith(`${anio}-${String(mes + 1).padStart(2, "0")}-`) ? diaCalendarioSeleccionado : null;
-                    return <div style={{ display: "grid", gap: "0.75rem", marginTop: "0.65rem" }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.4rem" }}>
-                        {[[ "Victorias local", arbitro.victoriasLocales ],[ "Empates", arbitro.empates ],[ "Victorias visitante", arbitro.victoriasVisitantes ],[ "Goles local", arbitro.golesLocal ],[ "Goles visitante", arbitro.golesVisitante ],[ "Goles totales", arbitro.golesTotales ]].map(([label, value]) => <div key={label} style={{ background: "#171c27", borderRadius: "6px", padding: "0.4rem", textAlign: "center" }}><strong style={{ display: "block", color: "#fff" }}>{value}</strong><span style={{ color: "#b8c0cc", fontSize: "0.58rem" }}>{label}</span></div>)}
-                        <div style={{ gridColumn: "1 / -1", color: "#d1d5db", fontSize: "0.65rem" }}>{Object.entries(arbitro.porRama).map(([rama, cantidad]) => `${rama}: ${cantidad}`).join(" · ") || "Sin partidos por rama"}</div>
-                      </div>
-                      <div style={{ background: "#171c27", border: "1px solid #343a46", borderRadius: "7px", padding: "0.6rem" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.4rem" }}>
-                          <strong style={{ color: "#fff", fontSize: "0.7rem" }}>CALENDARIO DE ACTIVIDAD</strong>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                            <button type="button" aria-label="Mes anterior" onClick={() => { setMesCalendario(new Date(anio, mes - 1, 1)); setDiaCalendarioSeleccionado(null); }} style={{ background: "#080808", color: "#fff", border: "1px solid #b5122a", borderRadius: "5px", padding: "0.2rem 0.45rem" }}>‹</button>
-                            <span style={{ color: "#fff", fontSize: "0.65rem", minWidth: "105px", textAlign: "center", textTransform: "capitalize" }}>{mesCalendario.toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</span>
-                            <button type="button" aria-label="Mes siguiente" onClick={() => { setMesCalendario(new Date(anio, mes + 1, 1)); setDiaCalendarioSeleccionado(null); }} style={{ background: "#080808", color: "#fff", border: "1px solid #b5122a", borderRadius: "5px", padding: "0.2rem 0.45rem" }}>›</button>
-                          </div>
-                        </div>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: "0.2rem", marginTop: "0.5rem" }}>
-                          {["L","M","M","J","V","S","D"].map((dia, index) => <span key={index} style={{ color: "#aeb4bf", textAlign: "center", fontSize: "0.58rem" }}>{dia}</span>)}
-                          {Array.from({ length: inicioSemana }, (_, index) => <span key={`vacio-${index}`} />)}
-                          {Array.from({ length: diasMes }, (_, index) => {
-                            const dia = index + 1;
-                            const clave = claveDia(dia);
-                            const cantidad = actividad[clave] || 0;
-                            const seleccionado = diaActivo === clave;
-                            return <button key={clave} type="button" onClick={() => setDiaCalendarioSeleccionado(seleccionado ? null : clave)} style={{ minWidth: 0, aspectRatio: "1", padding: "0.1rem", borderRadius: "5px", border: seleccionado ? "2px solid #fff" : cantidad ? "1px solid #b5122a" : "1px solid #343a46", background: cantidad ? "#b5122a" : "#080808", color: "#fff", fontSize: "0.62rem", fontWeight: cantidad ? 900 : 500 }}>{dia}{cantidad > 0 && <span style={{ display: "block", fontSize: "0.48rem" }}>{cantidad}</span>}</button>;
-                          })}
-                        </div>
-                        {diaActivo && <p style={{ color: "#fff", fontSize: "0.65rem", margin: "0.5rem 0 0" }}>{new Date(`${diaActivo}T12:00:00`).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}: <strong>{actividad[diaActivo] || 0} partidos con resultado</strong></p>}
-                        {!Object.keys(actividad).length && <p style={{ color: "#aeb4bf", fontSize: "0.62rem", margin: "0.5rem 0 0" }}>Sin fechas de carga registradas todavía.</p>}
-                      </div>
-                      <div>
-                        <strong style={{ color: "#fff", fontSize: "0.7rem" }}>PARTIDOS DIRIGIDOS ({partidosArbitro.length})</strong>
-                        {partidosArbitro.length ? <div style={{ display: "grid", gap: "0.4rem", marginTop: "0.45rem" }}>
-                          {partidosArbitro.map((partido) => <div key={partido.clave} style={{ background: "#171c27", borderRadius: "6px", padding: "0.5rem" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", gap: "0.4rem", flexWrap: "wrap" }}>
-                              <strong style={{ color: "#fff", fontSize: "0.65rem" }}>{partido.torneo}</strong>
-                              <span style={{ color: "#aeb4bf", fontSize: "0.6rem" }}>{partido.result_loaded_at ? new Date(partido.result_loaded_at).toLocaleDateString("es-AR") : "Fecha no registrada"}</span>
-                            </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)", gap: "0.35rem", alignItems: "center", marginTop: "0.35rem" }}>
-                              <strong style={{ color: "#fff", fontSize: "0.65rem", overflowWrap: "anywhere" }}>{partido.team1}</strong>
-                              <span style={{ color: "#fff", background: "#080808", border: "1px solid #b5122a", borderRadius: "5px", padding: "0.25rem 0.4rem", fontWeight: 900, fontSize: "0.65rem" }}>{partido.score1} - {partido.score2}</span>
-                              <strong style={{ color: "#fff", fontSize: "0.65rem", textAlign: "right", overflowWrap: "anywhere" }}>{partido.team2}</strong>
-                            </div>
-                            <div style={{ color: "#aeb4bf", fontSize: "0.58rem", marginTop: "0.3rem" }}>{partido.rama} · {partido.categoria} · {partido.instancia}</div>
-                          </div>)}
-                        </div> : <p style={{ color: "#aeb4bf", fontSize: "0.65rem", margin: "0.4rem 0 0" }}>Todavía no registra partidos con resultados.</p>}
-                      </div>
-                    </div>;
-                  })()}
-                </section>
-                <section style={{ minWidth: 0, background: "#080808", border: "1px solid #b5122a", borderRadius: "9px", padding: "0.65rem" }}>
-                  <button type="button" aria-expanded={detalleTarjetaArbitro === `${arbitro.id}:jornada`} onClick={() => setDetalleTarjetaArbitro(detalleTarjetaArbitro === `${arbitro.id}:jornada` ? null : `${arbitro.id}:jornada`)} style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.4rem", background: "transparent", border: 0, color: "#fff", padding: 0, cursor: "pointer", textAlign: "left" }}>
-                    <strong style={{ fontSize: "0.75rem" }}>DATOS POR JORNADA</strong><span style={{ color: "#ff9aa8" }}>{detalleTarjetaArbitro === `${arbitro.id}:jornada` ? "−" : "+"}</span>
-                  </button>
-                  {(() => { const jornadas = obtenerJornadasDeArbitro(arbitro.id); return <>
-                    <div style={{ color: "#d1d5db", fontSize: "0.68rem", marginTop: "0.4rem" }}>{jornadas.length} {jornadas.length === 1 ? "jornada" : "jornadas"}</div>
-                    {detalleTarjetaArbitro === `${arbitro.id}:jornada` && <div style={{ display: "grid", gap: "0.4rem", marginTop: "0.6rem" }}>
-                      {jornadas.length ? jornadas.map((jornada) => <div key={jornada.key} style={{ background: "#171c27", borderRadius: "6px", padding: "0.5rem" }}>
-                        <strong style={{ display: "block", color: "#fff", fontSize: "0.67rem" }}>{jornada.torneo}</strong>
-                        <div style={{ color: "#ff9aa8", fontSize: "0.68rem", fontWeight: 800, marginTop: "0.2rem" }}>{jornada.team1} vs. {jornada.team2}</div>
-                        <div style={{ color: "#b8c0cc", fontSize: "0.62rem", marginTop: "0.2rem" }}>{jornada.partidos} partidos · {jornada.categorias.length} categorías · {jornada.goles} goles</div>
-                        <div style={{ color: "#aeb7c5", fontSize: "0.6rem" }}>{jornada.categorias.join(" · ")}</div>
-                      </div>) : <p style={{ color: "#aeb7c5", fontSize: "0.66rem", margin: 0 }}>Todavía no registra jornadas con resultados.</p>}
-                    </div>}
-                  </>; })()}
-                </section>
-              </div>
               {canManageAccess && (
                 <div style={{ display: "grid", gap: "0.5rem", marginTop: "auto" }}>
                   <button
