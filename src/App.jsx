@@ -699,6 +699,7 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
       "<header class=\"top\"><div class=\"brand\">FEFUTIN</div><h1>PLANILLA DE JORNADA · PARA COMPLETAR</h1>" +
       "<div class=\"meta\">" + escaparHtml(jornada.torneo) + " · Rama " + escaparHtml(jornada.rama) + "<br>" + escaparHtml(jornada.etapa) + "</div>" +
       "<div class=\"match\">" + escaparHtml(jornada.team1) + " vs. " + escaparHtml(jornada.team2) + "</div>" +
+      "<div class=\"meta\" style=\"margin-top:8px\"><strong>CATEGORÍAS INCLUIDAS:</strong> " + escaparHtml(jornada.categorias.join(" · ")) + "</div>" +
       "<div class=\"ref\">Árbitro: " + escaparHtml(nombreArbitro) + " · Matrícula: " + escaparHtml(matricula) + "</div></header>" +
       "<table><thead><tr><th>Categoría</th><th>Resultado (goles)</th><th>Observaciones</th></tr></thead><tbody>" + filas + "</tbody></table>" +
       "<section class=\"signatures\"><div class=\"signature\"><strong>REFERENTE LOCAL</strong>" + escaparHtml(jornada.team1) +
