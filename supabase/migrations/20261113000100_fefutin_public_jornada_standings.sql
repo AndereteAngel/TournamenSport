@@ -17,7 +17,7 @@ select
         jsonb_agg(detail - 'referee_id' - 'referee_closed'),
         '[]'::jsonb
       )
-      from jsonb_array_elements(detalles) as detail
+      from jsonb_array_elements(detalles) as item(detail)
     )
     else '[]'::jsonb
   end as detalles,
