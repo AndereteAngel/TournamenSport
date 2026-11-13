@@ -42,11 +42,11 @@ export function ChampionCelebration({ tournament, onClose, clubLogos = [] }) {
 
         <div style={{ color: "#f5d77e", fontSize: "0.68rem", fontWeight: 900, letterSpacing: "0.2em" }}>FEFUTIN · TORNEO FINALIZADO</div>
 
-        <div style={{ width: "148px", height: "148px", margin: "0.8rem auto 0.55rem", display: "grid", placeItems: "center" }}>
+        <div style={{ width: "104px", height: "104px", flex: "0 0 104px", margin: "0.75rem auto 1rem", display: "grid", placeItems: "center", position: "relative" }}>
           {championLogo ? (
-            <img src={championLogo} alt={`Escudo de ${podium.champion}`} style={{ width: "100%", height: "100%", objectFit: "contain", filter: "drop-shadow(0 7px 12px rgba(0,0,0,0.4))" }} />
+            <img src={championLogo} alt={`Escudo de ${podium.champion}`} style={{ display: "block", width: "100%", height: "100%", maxWidth: "104px", maxHeight: "104px", objectFit: "contain", filter: "drop-shadow(0 5px 9px rgba(0,0,0,0.35))" }} />
           ) : (
-            <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", borderRadius: "14px", border: "1px dashed rgba(245,197,66,0.5)", color: "#d9c18b", fontSize: "0.7rem", fontWeight: 900, lineHeight: 1.4, padding: "0.5rem", boxSizing: "border-box" }}>ESCUDO NO DISPONIBLE</div>
+            <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", borderRadius: "12px", border: "1px dashed rgba(245,197,66,0.5)", color: "#d9c18b", fontSize: "0.62rem", fontWeight: 900, lineHeight: 1.4, padding: "0.4rem", boxSizing: "border-box" }}>ESCUDO NO DISPONIBLE</div>
           )}
         </div>
 
