@@ -102,9 +102,12 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
 
   const availableTurnos = ["Matutino", "Vespertino"].filter((turno) => tournamentsByTurno[turno].length > 0);
   const activeTournaments = selectedTurno ? tournamentsByTurno[selectedTurno] || [] : [];
-  const activeTournamentIds = activeTournaments.map((item) => String(item.id));
-  const activeTournamentIdsKey = activeTournamentIds.join("|");
-  const tournamentIds = useMemo(() => new Set(activeTournamentIds), [activeTournamentIdsKey]);
+  const activeTournamentIdsKey = activeTournaments.map((item) => String(item.id)).join("|");
+  const activeTournamentIds = useMemo(
+    () => activeTournamentIdsKey ? activeTournamentIdsKey.split("|") : [],
+    [activeTournamentIdsKey]
+  );
+  const tournamentIds = useMemo(() => new Set(activeTournamentIds), [activeTournamentIds]);
   const categories = useMemo(() => [...new Set(activeTournaments.map(getCategory))]
     .filter((category) => category && category !== "Sin categoría")
     .sort((a, b) => a.localeCompare(b, "es", { numeric: true })), [activeTournaments]);
@@ -124,7 +127,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
         setLoading(false);
       });
     return () => { active = false; };
-  }, [selectedTurno, activeTournamentIdsKey]);
+  }, [selectedTurno, activeTournamentIds]);
 
   useEffect(() => {
     setSelectedCategory("");
