@@ -12,13 +12,14 @@ export function ChampionCelebration({ tournament, onClose }) {
   const podium = getTournamentPodium(tournament);
   if (!podium?.champion) return null;
 
+  const isLeague = String(tournament?.format || "").trim().toLocaleLowerCase("es") === "league";
   const championStats = getPlayerTournamentStats(tournament, podium.champion);
   const generalStats = getTournamentGeneralStats(tournament);
   const positions = [
     { label: "1.er puesto · Oro", name: podium.champion },
     { label: "2.º puesto · Plata", name: podium.runnerUp },
     { label: "3.er puesto · Bronce", name: podium.bronze?.[0] },
-    { label: "4.º puesto · Diploma", name: podium.fourth },
+    ...(!isLeague ? [{ label: "4.º puesto · Diploma", name: podium.fourth }] : []),
   ];
 
   const statCard = (icon, label, value) => (
@@ -43,7 +44,7 @@ export function ChampionCelebration({ tournament, onClose }) {
 
         <div style={{ marginTop: "0.5rem", textAlign: "left" }}>
           <div style={{ color: "#fff", fontSize: "0.72rem", fontWeight: 900, letterSpacing: "0.1em", marginBottom: "0.5rem", textAlign: "center" }}>PODIO Y POSICIONES FINALES</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.5rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${isLeague ? 3 : 2}, minmax(0, 1fr))`, gap: "0.5rem" }}>
             {positions.map((item, index) => (
               <div key={item.label} style={{ minWidth: 0, padding: "0.7rem 0.45rem", borderRadius: "10px", background: "rgba(255,255,255,0.055)", border: `1px solid ${positionColors[index]}66`, textAlign: "center" }}>
                 <TCIcon name={positionIcons[index]} size={25} />
@@ -70,10 +71,13 @@ export function ChampionCelebration({ tournament, onClose }) {
           <div style={{ color: "#fff", fontSize: "0.8rem", fontWeight: 900, textAlign: "center", marginBottom: "0.5rem", overflowWrap: "anywhere" }}>{podium.champion}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.45rem" }}>
             {statCard("clipboard", "Jugados", championStats.played)}
+            {isLeague && statCard("trophy", "Puntos", championStats.points)}
             {statCard("trophy", "Ganados", championStats.wins)}
             {statCard("users", "Empatados", championStats.draws)}
             {statCard("shield", "Perdidos", championStats.losses)}
             {statCard("target", "Goles a favor", championStats.goalsFor)}
+            {isLeague && statCard("shield", "Goles en contra", championStats.goalsAgainst)}
+            {isLeague && statCard("chart", "Diferencia de gol", championStats.goalDifference > 0 ? "+" + championStats.goalDifference : championStats.goalDifference)}
             {statCard("chart", "Efectividad", championStats.winRate + "%")}
           </div>
         </div>
