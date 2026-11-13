@@ -23,8 +23,7 @@ export function getTournamentPodium(tournament) {
     ).sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
       if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference;
-      if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor;
-      return String(a.name || "").localeCompare(String(b.name || ""), "es");
+      return b.goalsFor - a.goalsFor;
     });
 
     if (standings.length < 2) return null;
@@ -138,13 +137,24 @@ export function getPlayerTournamentStats(tournament, playerName) {
     return total + Number(playerIsTeam1 ? match.score2 : match.score1);
   }, 0);
 
+  const points = played.reduce((total, match) => {
+    const team1 = normalize(match.team1) === target;
+    const ownGoals = Number(team1 ? match.score1 : match.score2);
+    const rivalGoals = Number(team1 ? match.score2 : match.score1);
+    if (ownGoals > rivalGoals) return total + 3;
+    if (ownGoals === rivalGoals) return total + 2;
+    return total + 1;
+  }, 0);
+
   return {
     played: played.length,
     wins,
     draws,
     losses,
+    points,
     goalsFor,
     goalsAgainst,
+    goalDifference: goalsFor - goalsAgainst,
     winRate: played.length ? Math.round((wins / played.length) * 100) : 0,
   };
 }
