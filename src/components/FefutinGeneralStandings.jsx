@@ -250,9 +250,9 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
                   <tr key={normalize(team.name)} style={{ borderBottom: "1px solid #454545", background: index % 2 ? "#202633" : "#11151d" }}>
                     <td style={{ padding: ".55rem .35rem", textAlign: "center", fontWeight: 900 }}>{index + 1}</td>
                     <td style={{ padding: ".55rem .35rem", fontWeight: 800 }}>
-                      <button type="button" onClick={() => setSelectedTeam(team.name)}
+                      <button className="fefutin-general-team-link" type="button" onClick={() => setSelectedTeam(team.name)}
                         aria-label={`Ver partidos de ${team.name}`}
-                        style={{ padding: 0, border: 0, background: "transparent", color: "#fff", font: "inherit", fontWeight: 900, textAlign: "left", textDecoration: "underline", textDecorationColor: "#f3a0ad", textUnderlineOffset: "3px", cursor: "pointer" }}>
+                        style={{ padding: 0, border: 0, background: "transparent", backgroundColor: "transparent", backgroundImage: "none", boxShadow: "none", color: "#fff", font: "inherit", fontWeight: 900, textAlign: "left", textDecoration: "underline", textDecorationColor: "#f3a0ad", textUnderlineOffset: "3px", cursor: "pointer" }}>
                         {team.name}
                       </button>
                     </td>
