@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../supabaseClient";
 
 export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser }) {
@@ -6,6 +6,8 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser }) {
   const [savingKey, setSavingKey] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [archiveLoaded, setArchiveLoaded] = useState(false);
+  const archivingKeysRef = useRef(new Set());
 
   // Se consume exactamente el cálculo que alimenta DATOS POR JORNADA
   // en la tarjeta de estadísticas de cada árbitro.
@@ -55,6 +57,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser }) {
           return;
         }
         setSavedKeys(new Set((data || []).map((item) => item.jornada_key)));
+        setArchiveLoaded(true);
       });
     return () => { active = false; };
   }, [currentUser?.id]);
