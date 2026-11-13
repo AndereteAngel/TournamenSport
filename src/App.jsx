@@ -4775,7 +4775,7 @@ export function TournamenSportApp() {
             <h2 style={{ color: "#fff", margin: "1rem 0 .35rem", letterSpacing: ".06em" }}>MIS DESIGNACIONES</h2>
             <p style={{ color: "#ccc", fontSize: ".82rem", marginTop: 0 }}>Partidos asignados a tu cuenta arbitral.</p>
             <button type="button" onClick={() => setActiveView("referee-sheet-photo")} style={{ width: "100%", margin: ".6rem 0 1rem", padding: ".75rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#b5122a", color: "#fff", fontWeight: 900, cursor: "pointer" }}>📷 SUBIR FOTO DE PLANILLA GENERAL FIRMADA</button>
-            <FefutinRefereeJornadaSheets tournaments={tournaments} currentUser={currentUser} />
+            <FefutinRefereeJornadaSheets jornadas={obtenerJornadasDeArbitro(tournaments, currentUser?.id)} currentUser={currentUser} />
             {assignedRefereeMatches.length === 0 ? (
               <p style={{ color: "#ddd", padding: "1rem 0" }}>No tenés partidos designados actualmente.</p>
             ) : (
