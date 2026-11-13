@@ -102,7 +102,9 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
 
   const availableTurnos = ["Matutino", "Vespertino"].filter((turno) => tournamentsByTurno[turno].length > 0);
   const activeTournaments = selectedTurno ? tournamentsByTurno[selectedTurno] || [] : [];
-  const tournamentIds = useMemo(() => new Set(activeTournaments.map((item) => String(item.id))), [activeTournaments]);
+  const activeTournamentIds = activeTournaments.map((item) => String(item.id));
+  const activeTournamentIdsKey = activeTournamentIds.join("|");
+  const tournamentIds = useMemo(() => new Set(activeTournamentIds), [activeTournamentIdsKey]);
   const categories = useMemo(() => [...new Set(activeTournaments.map(getCategory))]
     .filter((category) => category && category !== "Sin categoría")
     .sort((a, b) => a.localeCompare(b, "es", { numeric: true })), [activeTournaments]);
@@ -113,7 +115,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
     setLoading(true);
     setLoaded(false);
     setError("");
-    supabase.from("fefutin_public_jornada_sheets").select("*").overlaps("tournament_ids", activeTournaments.map((item) => String(item.id))).order("jornada_date", { ascending: true })
+    supabase.from("fefutin_public_jornada_sheets").select("*").overlaps("tournament_ids", activeTournamentIds).order("jornada_date", { ascending: true })
       .then(({ data, error: queryError }) => {
         if (!active) return;
         if (queryError) setError("No se pudieron consultar las planillas generales cerradas: " + queryError.message);
@@ -122,7 +124,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
         setLoading(false);
       });
     return () => { active = false; };
-  }, [selectedTurno, activeTournaments]);
+  }, [selectedTurno, activeTournamentIdsKey]);
 
   useEffect(() => {
     setSelectedCategory("");
