@@ -196,17 +196,6 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   const archivedTournaments = [...tournaments].sort((a, b) =>
     String(a.title || "Torneo sin nombre").localeCompare(String(b.title || "Torneo sin nombre"), "es")
   );
-  const categoryFromTournament = (tournament) => {
-    const explicit = String(tournament?.category_detail || "").trim();
-    if (explicit) return explicit;
-    const game = String(tournament?.game || "");
-    const separatorIndex = game.lastIndexOf(" · ");
-    if (separatorIndex >= 0) {
-      const category = game.slice(separatorIndex + 3).trim();
-      if (category) return category;
-    }
-    return String(tournament?.category_type || "").trim();
-  };
   // Categorías y jornadas disponibles corresponden a las planillas cerradas
   // del torneo seleccionado, evitando mezclar datos de competencias distintas.
   const sheetsForSelectedTournament = sheets.filter((sheet) =>
