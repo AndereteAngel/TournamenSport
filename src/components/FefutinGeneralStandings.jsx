@@ -5,6 +5,11 @@ const getTurno = (tournament) => {
   const parts = String(tournament?.game || "").split("·").map((part) => part.trim().toLocaleLowerCase("es"));
   if (parts.includes("matutino")) return "Matutino";
   if (parts.includes("vespertino")) return "Vespertino";
+
+  // En los torneos anteriores, el turno se guardó en el título y no en "game".
+  const title = String(tournament?.title || "").trim().toLocaleLowerCase("es");
+  if (title === "matutino") return "Matutino";
+  if (title === "vespertino") return "Vespertino";
   return "";
 };
 
