@@ -47,8 +47,11 @@ const makeStandings = (sheets, tournamentIds, selectedCategory) => {
       const score1 = Number(detail.score1);
       const score2 = Number(detail.score2);
       if (!Number.isFinite(score1) || !Number.isFinite(score2)) return;
-      const points1 = Number(detail.puntosTeam1 || 0);
-      const points2 = Number(detail.puntosTeam2 || 0);
+      // En la planilla, puntosTeam1/2 están orientados según team_local/visitante
+      // de la jornada, mientras que detail.team1/2 conserva el orden del partido.
+      const detailTeam1IsLocal = normalize(detail.team1 || sheet.team_local) === normalize(sheet.team_local);
+      const points1 = Number(detailTeam1IsLocal ? detail.puntosTeam1 : detail.puntosTeam2) || 0;
+      const points2 = Number(detailTeam1IsLocal ? detail.puntosTeam2 : detail.puntosTeam1) || 0;
 
       team1.played += 1;
       team2.played += 1;
@@ -101,7 +104,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
     setLoading(true);
     setLoaded(false);
     setError("");
-    supabase.from("fefutin_jornada_sheets").select("*").order("jornada_date", { ascending: true })
+    supabase.from("fefutin_public_jornada_sheets").select("*").overlaps("tournament_ids", activeTournaments.map((item) => String(item.id))).order("jornada_date", { ascending: true })
       .then(({ data, error: queryError }) => {
         if (!active) return;
         if (queryError) setError("No se pudieron consultar las planillas generales cerradas: " + queryError.message);
@@ -110,7 +113,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
         setLoading(false);
       });
     return () => { active = false; };
-  }, [selectedTurno]);
+  }, [selectedTurno, activeTournaments]);
 
   useEffect(() => {
     setSelectedCategory("");
