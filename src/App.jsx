@@ -2480,11 +2480,11 @@ function FefutinVisitorPromoCarousel() {
     <section
       className="fefutin-visitor-promo"
       aria-label="Conocé FEFUTIN"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") setPaused(true);
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType === "mouse") setPaused(false);
       }}
     >
       <style>{`
