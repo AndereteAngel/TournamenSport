@@ -4024,6 +4024,52 @@ export function TournamenSportApp() {
     }
   };
 
+  const finalizeLeagueWhenComplete = async (tournament) => {
+    const format = String(tournament?.format || "").trim().toLocaleLowerCase("es");
+    const status = String(tournament?.status || "").trim().toLocaleLowerCase("es");
+    if (format !== "league" || status === "finalizado") return null;
+
+    const groups = Array.isArray(tournament.groups) ? tournament.groups : [];
+    const matches = groups.flatMap((group) =>
+      Array.isArray(group?.matches) ? group.matches : []
+    );
+    const allMatchesHaveResults = matches.length > 0 && matches.every((match) => {
+      const score1 = match?.score1;
+      const score2 = match?.score2;
+      return score1 !== null && score1 !== undefined && score1 !== "" &&
+        score2 !== null && score2 !== undefined && score2 !== "" &&
+        Number.isFinite(Number(score1)) && Number.isFinite(Number(score2));
+    });
+    if (!allMatchesHaveResults) return null;
+
+    const finishedTournament = {
+      ...tournament,
+      status: "Finalizado",
+      playoffs: null,
+    };
+    const { error } = await supabase
+      .from("tournaments")
+      .update({
+        status: "Finalizado",
+        groups: finishedTournament.groups,
+        playoffs: null,
+      })
+      .eq("id", finishedTournament.id);
+
+    if (error) {
+      console.error("No se pudo finalizar automáticamente la liga:", error);
+      showNotice("Se guardó el último resultado, pero no se pudo finalizar automáticamente el torneo. Revisá la conexión e intentá nuevamente.");
+      return null;
+    }
+
+    setActiveTournament(finishedTournament);
+    setTournaments((prev) => prev.map((item) =>
+      item.id === finishedTournament.id ? finishedTournament : item
+    ));
+    setShowChampionCard(true);
+    return finishedTournament;
+  };
+
   const handleUpdateTournamentInSupabase = async (updatedTournament) => {
     if (!canManageTournaments) {
       showNotice("❌ Solo un administrador o directivo puede modificar torneos y resultados.");
@@ -4037,8 +4083,10 @@ export function TournamenSportApp() {
       return;
     }
 
-    setActiveTournament(updatedTournament);
+    const automaticallyFinished = await finalizeLeagueWhenComplete(updatedTournament);
+    if (automaticallyFinished) return;
 
+    setActiveTournament(updatedTournament);
     const { error } = await supabase
       .from("tournaments")
       .update({
@@ -4078,9 +4126,12 @@ export function TournamenSportApp() {
       showNotice("Supabase no devolvió el torneo actualizado.");
       return false;
     }
-    setActiveTournament(updatedTournament);
-    setTournaments((prev) => prev.map((item) => item.id === updatedTournament.id ? updatedTournament : item));
-    showNotice("Partido cerrado correctamente. La planilla quedó bloqueada.");
+    const automaticallyFinished = await finalizeLeagueWhenComplete(updatedTournament);
+    if (!automaticallyFinished) {
+      setActiveTournament(updatedTournament);
+      setTournaments((prev) => prev.map((item) => item.id === updatedTournament.id ? updatedTournament : item));
+      showNotice("Partido cerrado correctamente. La planilla quedó bloqueada.");
+    }
     return true;
   };
 
