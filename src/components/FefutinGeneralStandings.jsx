@@ -123,6 +123,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
+  const [clubLogos, setClubLogos] = useState([]);
 
   // La competencia se identifica exclusivamente por RAMA + NOMBRE DEL TORNEO.
   // El turno es un dato informativo y no participa de esta agrupación.
@@ -145,6 +146,39 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
     [activeTournamentIdsKey]
   );
   const tournamentIds = useMemo(() => new Set(activeTournamentIds), [activeTournamentIds]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadCompetitionClubLogos = async () => {
+      if (!activeTournaments.length) {
+        setClubLogos([]);
+        return;
+      }
+      const results = await Promise.all(activeTournaments.map((tournament) =>
+        supabase.rpc("get_fefutin_tournament_clubs", { p_tournament_id: tournament.id })
+      ));
+      if (cancelled) return;
+      const clubs = results.flatMap(({ data, error: rpcError }) => {
+        if (rpcError) {
+          console.error("Error al cargar escudos de la tabla general:", rpcError);
+          return [];
+        }
+        return data || [];
+      });
+      const uniqueClubs = [...new Map(clubs.map((club) => [
+        normalize(club.club_name),
+        {
+          name: club.club_name,
+          url: club.logo_path
+            ? supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl
+            : "",
+        },
+      ]).filter(([key]) => key)).values()];
+      setClubLogos(uniqueClubs);
+    };
+    loadCompetitionClubLogos();
+    return () => { cancelled = true; };
+  }, [activeTournamentIdsKey]);
   const categories = useMemo(() => [...new Set(activeTournaments.map(getCategory))]
     .filter((category) => category && category !== "Sin categoría")
     .sort((a, b) => a.localeCompare(b, "es", { numeric: true })), [activeTournaments]);
@@ -285,12 +319,17 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
                 <tbody>{rows.map((team, index) => (
                   <tr key={normalize(team.name)} style={{ borderBottom: "1px solid #454545", background: index % 2 ? "#202633" : "#11151d" }}>
                     <td style={{ padding: ".55rem .35rem", textAlign: "center", fontWeight: 900 }}>{index + 1}</td>
-                    <td style={{ padding: ".55rem .35rem", fontWeight: 800 }}>
-                      <button className="fefutin-general-team-link" type="button" onClick={() => setSelectedTeam(team.name)}
-                        aria-label={`Ver partidos de ${team.name}`}
-                        style={{}}>
-                        {team.name}
-                      </button>
+                    <td style={{ padding: ".55rem .35rem", fontWeight: 800, textAlign: "left" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: ".5rem", minWidth: 0 }}>
+                        {clubLogos.find((club) => normalize(club.name) === normalize(team.name))?.url ? (
+                          <img src={clubLogos.find((club) => normalize(club.name) === normalize(team.name)).url} alt={`Escudo de ${team.name}`} style={{ width: "30px", height: "30px", objectFit: "contain", flexShrink: 0 }} />
+                        ) : null}
+                        <button className="fefutin-general-team-link" type="button" onClick={() => setSelectedTeam(team.name)}
+                          aria-label={`Ver partidos de ${team.name}`}
+                          style={{}}>
+                          {team.name}
+                        </button>
+                      </div>
                     </td>
                     {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, valueIndex) =>
                       <td key={valueIndex} style={{ padding: ".55rem .35rem", textAlign: "center", fontVariantNumeric: "tabular-nums" }}>{value}</td>
