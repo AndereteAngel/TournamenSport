@@ -86,6 +86,7 @@ export function CreateTournament({
     return {
       title: initialData.title || "",
       game: sports.includes(gameFromStoredValue) ? gameFromStoredValue : "Fútbol",
+      turno: gameParts.find((part) => ["Matutino", "Vespertino"].includes(part)) || "",
       division: divisionFromStoredGame,
       categoryType: initialData.category_type || inferredCategoryType,
       categoryDetail,
@@ -259,6 +260,11 @@ export function CreateTournament({
       }
     }
 
+    if (!["Matutino", "Vespertino"].includes(formData.turno)) {
+      showNotice("Seleccioná el turno del torneo: Matutino o Vespertino.");
+      return;
+    }
+
     const validCategoryConfig = (formData.categoryConfig || []).filter(
       (branch) => Array.isArray(branch.categories) && branch.categories.length > 0
     );
@@ -270,6 +276,7 @@ export function CreateTournament({
     onSave({
       ...formData,
       game: "Fútbol",
+      turno: formData.turno,
       category_config: validCategoryConfig,
       maxParticipants: Number(formData.maxParticipants),
       teams,
@@ -373,6 +380,23 @@ export function CreateTournament({
             required
             className="cr-input"
           />
+        </div>
+
+        <div>
+          <label className="sports-label" htmlFor="tournament-turno">Turno de la competencia</label>
+          <select
+            id="tournament-turno"
+            value={formData.turno}
+            onChange={(e) => setFormData((prev) => ({ ...prev, turno: e.target.value }))}
+            className="cr-input"
+            required
+            style={{ cursor: "pointer" }}
+          >
+            <option value="">Seleccionar turno...</option>
+            <option value="Matutino">Matutino</option>
+            <option value="Vespertino">Vespertino</option>
+          </select>
+          <p className="sports-help">Este dato determina a qué tabla general anual se sumarán los resultados del torneo.</p>
         </div>
 
         {/* RAMAS Y CATEGORÍAS HABILITADAS */}
