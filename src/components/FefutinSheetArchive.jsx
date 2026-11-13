@@ -14,6 +14,7 @@ const formatDate = (value) => {
 export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMatches = [], onBack }) {
   const [section, setSection] = useState("digital");
   const [sheets, setSheets] = useState([]);
+  const [jornadaSheets, setJornadaSheets] = useState([]);
   const [voidedSheetIds, setVoidedSheetIds] = useState(() => new Set());
   const [voidedPhotoIds, setVoidedPhotoIds] = useState(() => new Set());
   const [playersBySheet, setPlayersBySheet] = useState({});
@@ -50,11 +51,13 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     const [
       { data: sheetRows, error: sheetsError },
       { data: photoRows, error: photosError },
+      { data: jornadaSheetRows, error: jornadaSheetsError },
       { data: tournamentRows, error: tournamentsError },
       { data: voidedRows, error: voidedError },
     ] = await Promise.all([
       supabase.from("fefutin_match_sheets").select("*").order("updated_at", { ascending: false }),
       supabase.from("fefutin_jornada_photos").select("*").order("jornada_date", { ascending: false }),
+      supabase.from("fefutin_jornada_sheets").select("*").order("jornada_date", { ascending: false }),
       supabase.from("tournaments").select("id, title, game"),
       supabase.from("fefutin_voided_match_sheets").select("sheet_id, photo_ids"),
     ]);
@@ -66,12 +69,13 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
       console.warn("Archivo FEFUTIN: tabla opcional de anulaciones no instalada; se continúa sin marcas de anulación.", voidedError);
     }
 
-    if (sheetsError || photosError || tournamentsError || (voidedError && !optionalVoidedTableMissing)) {
+    if (sheetsError || photosError || jornadaSheetsError || tournamentsError || (voidedError && !optionalVoidedTableMissing)) {
       console.error("Error al cargar el archivo FEFUTIN:", { sheetsError, photosError, tournamentsError, voidedError });
       const failedQuery = sheetsError ? "fefutin_match_sheets" :
         photosError ? "fefutin_jornada_photos" :
+        jornadaSheetsError ? "fefutin_jornada_sheets (aplicá la migración digital de jornada)" :
         tournamentsError ? "tournaments" : "fefutin_voided_match_sheets";
-      const failure = sheetsError || photosError || tournamentsError || voidedError;
+      const failure = sheetsError || photosError || jornadaSheetsError || tournamentsError || voidedError;
       setError(`No se pudo cargar ${failedQuery}: ${failure?.message || failure?.details || "error de consulta o permisos"}`);
       setLoading(false);
       return;
@@ -108,6 +112,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     }));
 
     setSheets(closedSheets);
+    setJornadaSheets(jornadaSheetRows || []);
     setVoidedSheetIds(new Set((voidedRows || []).map((item) => String(item.sheet_id))));
     setVoidedPhotoIds(new Set((voidedRows || []).flatMap((item) => item.photo_ids || []).map(String)));
     setPlayersBySheet(playersMap);
@@ -220,6 +225,14 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     ...(selectedTournament ? [getTournamentCategory(selectedTournament)] : []),
   ].filter((category) => category && category !== "Sin categoría"))]
     .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+
+  const filteredJornadaSheets = jornadaSheets.filter((sheet) => {
+    const tournament = archivedTournaments.find((item) => String(item.id) === String(sheet.tournament_id));
+    const sheetCategories = Array.isArray(sheet.categorias) ? sheet.categorias : [];
+    return (!filterBranch || getTournamentBranch(tournament) === filterBranch) &&
+      (!filterTournament || String(sheet.tournament_id) === String(filterTournament)) &&
+      (!filterCategory || sheetCategories.includes(filterCategory));
+  });
 
   const filteredSheets = sheets.filter((sheet) => {
     if (filterDocumentType === "jornada") return false;
@@ -354,8 +367,8 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
               </label>
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", margin: "1rem 0 .7rem" }}>
-              <strong style={{ color: "#fff", fontSize: ".85rem" }}>PARTIDOS ENCONTRADOS</strong>
-              <span style={{ color: "#bbb", fontSize: ".75rem" }}>{filteredSheets.length} resultado(s)</span>
+              <strong style={{ color: "#fff", fontSize: ".85rem" }}>{filterDocumentType === "jornada" ? "JORNADAS ENCONTRADAS" : "DOCUMENTOS ENCONTRADOS"}</strong>
+              <span style={{ color: "#bbb", fontSize: ".75rem" }}>{(filterDocumentType === "jornada" ? filteredJornadaSheets.length : filteredSheets.length + filteredJornadaSheets.length) + filteredPhotos.length} resultado(s)</span>
             </div>
             {loading ? <p style={{ color: "#ccc", textAlign: "center", padding: "1.5rem" }}>Cargando archivo...</p> : error ? <p role="alert" style={{ color: "#fca5a5" }}>{error}</p> : (
               <div style={{ display: "grid", gap: ".75rem" }}>
@@ -410,16 +423,38 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
                     </article>
                   );
                 })}
-                {filteredPhotos.filter((photo) => !sheets.some((sheet) =>
-                  isPhotoForSheet(photo, sheet)
-                )).map((photo) => (
+                {filteredJornadaSheets.map((sheet) => (
+                  <article key={sheet.id} style={{ border: "1px solid #b5122a", borderRadius: "10px", background: "#171c27", padding: ".9rem" }}>
+                    <strong style={{ display: "block", color: "#fff", textAlign: "center", fontSize: ".95rem" }}>
+                      {sheet.team_local} · {sheet.puntos_local} pts <span style={{ color: "#f3a0ad" }}>VS.</span> {sheet.team_visitante} · {sheet.puntos_visitante} pts
+                    </strong>
+                    <small style={{ display: "block", color: "#bbb", marginTop: ".35rem", textAlign: "center" }}>
+                      {sheet.tournament_title} · {sheet.rama} · {formatDate(sheet.jornada_date)} · {sheet.referee_name || "Árbitro sin identificar"}
+                    </small>
+                    <div style={{ display: "grid", gap: ".4rem", marginTop: ".75rem" }}>
+                      {(Array.isArray(sheet.detalles) ? sheet.detalles : []).map((detail, index) => (
+                        <div key={`${sheet.id}-${index}`} style={{ display: "grid", gridTemplateColumns: "minmax(0, .7fr) minmax(0, 1.5fr) auto auto", gap: ".45rem", alignItems: "center", padding: ".5rem", borderBottom: "1px solid #3a3a3a", color: "#eee", fontSize: ".76rem" }}>
+                          <strong style={{ color: "#f3a0ad" }}>{detail.categoria || "Categoría"}</strong>
+                          <span>{detail.team1 || sheet.team_local} {detail.score1 == null ? "—" : detail.score1} - {detail.score2 == null ? "—" : detail.score2} {detail.team2 || sheet.team_visitante}</span>
+                          <strong>{detail.resultadoCargado ? `${detail.puntosTeam1 || 0}` : "—"}</strong>
+                          <strong>{detail.resultadoCargado ? `${detail.puntosTeam2 || 0}` : "—"}</strong>
+                        </div>
+                      ))}
+                    </div>
+                    <small style={{ display: "block", color: "#bbb", textAlign: "right", marginTop: ".5rem" }}>Cerrada el {formatDate(String(sheet.closed_at || sheet.jornada_date).slice(0, 10))}</small>
+                  </article>
+                ))}
+                {(filterDocumentType === "jornada"
+                  ? filteredPhotos.filter((photo) => photo.document_type !== "category")
+                  : filteredPhotos.filter((photo) => !sheets.some((sheet) => isPhotoForSheet(photo, sheet)))
+                ).map((photo) => (
                   <article key={`photo-${photo.id}`} style={{ border: "1px solid #555", borderRadius: "10px", background: "#171c27", padding: ".85rem" }}>
                     <strong style={{ color: "#fff" }}>{getTournamentTitle(photo.tournament_id)} · {photo.jornada_label || "Jornada"}</strong>
                     <small style={{ display: "block", color: "#bbb", margin: ".25rem 0 .6rem" }}>{formatDate(photo.jornada_date)} · {photo.referee_name || "Árbitro sin identificar"}</small>
                     {photo.signedUrl ? <a href={photo.signedUrl} target="_blank" rel="noreferrer" style={{ color: "#f3a0ad" }}>Abrir planilla física de la jornada</a> : <span style={{ color: "#fca5a5", fontSize: ".8rem" }}>Foto sin acceso disponible</span>}
                   </article>
                 ))}
-                {!filteredSheets.length && !filteredPhotos.length && <p style={{ color: "#bbb", textAlign: "center", padding: "1.2rem" }}>No hay documentos que coincidan con esos filtros.</p>}
+                {!filteredSheets.length && !filteredJornadaSheets.length && !filteredPhotos.length && <p style={{ color: "#bbb", textAlign: "center", padding: "1.2rem" }}>No hay documentos que coincidan con esos filtros.</p>}
               </div>
             )}
             <button type="button" className="tc-form-back" onClick={loadArchive} disabled={loading} style={{ marginTop: "1rem" }}>↻ Actualizar archivo</button>
