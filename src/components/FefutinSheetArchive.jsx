@@ -207,11 +207,17 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     }
     return String(tournament?.category_type || "").trim();
   };
-  const categories = [...new Set([
-    ...tournaments.map(categoryFromTournament),
-    ...sheets.map((sheet) => String(sheet.categoria || "").trim()),
-  ].filter(Boolean))].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
-  const jornadas = [...new Set(sheets.map((sheet) => String(sheet.jornada || "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+  // Categorías y jornadas disponibles corresponden a las planillas cerradas
+  // del torneo seleccionado, evitando mezclar datos de competencias distintas.
+  const sheetsForSelectedTournament = sheets.filter((sheet) =>
+    !filterTournament || String(sheet.tournament_id) === String(filterTournament)
+  );
+  const categories = [...new Set(
+    sheetsForSelectedTournament.map((sheet) => String(sheet.categoria || "").trim()).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+  const jornadas = [...new Set(
+    sheetsForSelectedTournament.map((sheet) => String(sheet.jornada || "").trim()).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
 
   const filteredSheets = sheets.filter((sheet) => {
     const search = filterSearch.trim().toLocaleLowerCase("es");
@@ -231,7 +237,22 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
       getTournamentTitle(photo.tournament_id), photo.jornada_label,
       photo.referee_name, formatDate(photo.jornada_date),
     ].join(" ").toLocaleLowerCase("es");
+    const relatedSheets = sheets.filter((sheet) => isPhotoForSheet(photo, sheet));
+    const matchesCategory = !filterCategory || (
+      photo.document_type === "category"
+        ? String(photo.categoria || "") === filterCategory
+        : relatedSheets.some((sheet) => String(sheet.categoria || "") === filterCategory)
+    );
+    const photoJornada = String(photo.jornada_label || "").trim().toLocaleLowerCase("es");
+    const selectedJornada = String(filterJornada || "").trim().toLocaleLowerCase("es");
+    const matchesJornada = !filterJornada || (
+      photoJornada === selectedJornada ||
+      photoJornada === `jornada ${selectedJornada}` ||
+      relatedSheets.some((sheet) => String(sheet.jornada || "").trim() === String(filterJornada))
+    );
     return (!filterTournament || String(photo.tournament_id) === String(filterTournament)) &&
+      matchesCategory &&
+      matchesJornada &&
       (!search || haystack.includes(search));
   });
 
@@ -308,7 +329,11 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: ".65rem", margin: "1rem 0" }}>
               <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
                 TORNEO
-                <select value={filterTournament} onChange={(event) => setFilterTournament(event.target.value)} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
+                <select value={filterTournament} onChange={(event) => {
+                  setFilterTournament(event.target.value);
+                  setFilterCategory("");
+                  setFilterJornada("");
+                }} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
                   <option value="">Todos los torneos</option>
                   {archivedTournaments.map((item) => <option key={item.id} value={item.id}>{item.title || "Torneo sin nombre"}</option>)}
                 </select>
