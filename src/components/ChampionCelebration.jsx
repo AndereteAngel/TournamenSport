@@ -42,15 +42,12 @@ export function ChampionCelebration({ tournament, onClose, clubLogos = [] }) {
 
         <div style={{ color: "#f5d77e", fontSize: "0.68rem", fontWeight: 900, letterSpacing: "0.2em" }}>FEFUTIN · TORNEO FINALIZADO</div>
 
-        <div style={{ width: "148px", height: "164px", margin: "0.8rem auto 0.55rem", display: "grid", placeItems: "center", position: "relative", filter: "drop-shadow(0 9px 15px rgba(0,0,0,0.4))" }}>
-          <div style={{ position: "absolute", inset: 0, clipPath: "polygon(50% 0%, 94% 13%, 89% 66%, 50% 100%, 11% 66%, 6% 13%)", background: "linear-gradient(135deg, #fff2b0 0%, #f5c542 27%, #a96c13 55%, #ffe69a 78%, #9a6415 100%)", border: "1px solid #ffe9a3" }} />
-          <div style={{ position: "absolute", inset: "7px", clipPath: "polygon(50% 0%, 94% 13%, 89% 66%, 50% 100%, 11% 66%, 6% 13%)", background: "#fff", display: "grid", placeItems: "center", overflow: "hidden", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.22)" }}>
-            {championLogo ? (
-              <img src={championLogo} alt={`Escudo de ${podium.champion}`} style={{ width: "100%", height: "100%", objectFit: "contain", padding: "13px", boxSizing: "border-box" }} />
-            ) : (
-              <div style={{ color: "#5b6470", fontSize: "0.58rem", fontWeight: 900, lineHeight: 1.3, padding: "0.5rem" }}>ESCUDO NO DISPONIBLE</div>
-            )}
-          </div>
+        <div style={{ width: "148px", height: "148px", margin: "0.8rem auto 0.55rem", display: "grid", placeItems: "center" }}>
+          {championLogo ? (
+            <img src={championLogo} alt={`Escudo de ${podium.champion}`} style={{ width: "100%", height: "100%", objectFit: "contain", filter: "drop-shadow(0 7px 12px rgba(0,0,0,0.4))" }} />
+          ) : (
+            <div style={{ width: "100%", height: "100%", display: "grid", placeItems: "center", borderRadius: "14px", border: "1px dashed rgba(245,197,66,0.5)", color: "#d9c18b", fontSize: "0.7rem", fontWeight: 900, lineHeight: 1.4, padding: "0.5rem", boxSizing: "border-box" }}>ESCUDO NO DISPONIBLE</div>
+          )}
         </div>
 
         <div style={{ color: "#f8d989", fontSize: "0.76rem", fontWeight: 900, letterSpacing: "0.13em", textTransform: "uppercase" }}>¡Felicitaciones al campeón!</div>
