@@ -11,13 +11,17 @@ const medals = [
   { key: "bronze", label: "3.er puesto", color: "#df9865", dark: "#87451f", icon: "medalBronze" },
 ];
 
-export function ChampionCelebration({ tournament, onClose }) {
+export function ChampionCelebration({ tournament, onClose, clubLogos = [] }) {
   const podium = getTournamentPodium(tournament);
   if (!podium?.champion) return null;
 
   const isLeague = String(tournament?.format || "").trim().toLocaleLowerCase("es") === "league";
   const championStats = getPlayerTournamentStats(tournament, podium.champion);
   const generalStats = getTournamentGeneralStats(tournament);
+  const normalizeClubName = (value) => String(value || "").trim().toLocaleLowerCase("es");
+  const championLogo = clubLogos.find((club) =>
+    normalizeClubName(club.name) === normalizeClubName(podium.champion)
+  )?.url || "";
   const podiumPlaces = [
     { ...medals[1], name: podium.runnerUp, order: 1, height: "76px" },
     { ...medals[0], name: podium.champion, order: 2, height: "108px" },
@@ -38,13 +42,14 @@ export function ChampionCelebration({ tournament, onClose }) {
 
         <div style={{ color: "#f5d77e", fontSize: "0.68rem", fontWeight: 900, letterSpacing: "0.2em" }}>FEFUTIN · TORNEO FINALIZADO</div>
 
-        <div aria-hidden="true" style={{ width: "132px", height: "150px", margin: "0.8rem auto 0.55rem", display: "grid", placeItems: "center", position: "relative", filter: "drop-shadow(0 9px 15px rgba(0,0,0,0.4))" }}>
+        <div style={{ width: "148px", height: "164px", margin: "0.8rem auto 0.55rem", display: "grid", placeItems: "center", position: "relative", filter: "drop-shadow(0 9px 15px rgba(0,0,0,0.4))" }}>
           <div style={{ position: "absolute", inset: 0, clipPath: "polygon(50% 0%, 94% 13%, 89% 66%, 50% 100%, 11% 66%, 6% 13%)", background: "linear-gradient(135deg, #fff2b0 0%, #f5c542 27%, #a96c13 55%, #ffe69a 78%, #9a6415 100%)", border: "1px solid #ffe9a3" }} />
-          <div style={{ position: "absolute", inset: "7px", clipPath: "polygon(50% 0%, 94% 13%, 89% 66%, 50% 100%, 11% 66%, 6% 13%)", background: "linear-gradient(155deg, #4a3a1b, #171c27 68%)", display: "grid", placeItems: "center", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.22)" }}>
-            <div style={{ color: "#f8d66f", display: "grid", placeItems: "center", gap: "0.15rem" }}>
-              <TCIcon name="trophy" size={54} />
-              <span style={{ fontSize: "0.58rem", fontWeight: 900, letterSpacing: "0.18em" }}>CAMPEÓN</span>
-            </div>
+          <div style={{ position: "absolute", inset: "7px", clipPath: "polygon(50% 0%, 94% 13%, 89% 66%, 50% 100%, 11% 66%, 6% 13%)", background: "#fff", display: "grid", placeItems: "center", overflow: "hidden", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.22)" }}>
+            {championLogo ? (
+              <img src={championLogo} alt={`Escudo de ${podium.champion}`} style={{ width: "100%", height: "100%", objectFit: "contain", padding: "13px", boxSizing: "border-box" }} />
+            ) : (
+              <div style={{ color: "#5b6470", fontSize: "0.58rem", fontWeight: 900, lineHeight: 1.3, padding: "0.5rem" }}>ESCUDO NO DISPONIBLE</div>
+            )}
           </div>
         </div>
 
