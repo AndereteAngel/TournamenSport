@@ -4107,7 +4107,7 @@ export function TournamenSportApp() {
 
     setActiveTournament(found);
 
-    if (found.playoffs && found.playoffs.length > 0) {
+    if (found.format !== "league" && found.playoffs && found.playoffs.length > 0) {
       setActiveView("playoffs");
     } else {
       setActiveView("groups");
@@ -4120,6 +4120,10 @@ export function TournamenSportApp() {
 
   const handleProceedToPlayoffs = () => {
     if (!canManageTournaments) return;
+    if (String(activeTournament?.format || "").trim().toLocaleLowerCase("es") === "league") {
+      showNotice("La liga termina en la tabla de posiciones. No tiene fase de eliminación directa.");
+      return;
+    }
     const qualifiedTeams = [];
 
     activeTournament.groups.forEach((group) => {
@@ -4169,13 +4173,17 @@ export function TournamenSportApp() {
 
     if (format === "league") {
       const groups = Array.isArray(activeTournament?.groups) ? activeTournament.groups : [];
-      const matches = groups.flatMap((group) => group.matches || []);
-      const playedMatches = matches.filter((match) =>
-        match.score1 !== null && match.score1 !== undefined &&
-        match.score2 !== null && match.score2 !== undefined
+      const matches = groups.flatMap((group) => Array.isArray(group?.matches) ? group.matches : []);
+      if (!matches.length) {
+        showNotice("⚠️ No se puede finalizar la liga porque no tiene partidos programados.");
+        return;
+      }
+      const pendingMatches = matches.filter((match) =>
+        match.score1 === null || match.score1 === undefined ||
+        match.score2 === null || match.score2 === undefined
       );
-      if (!playedMatches.length) {
-        showNotice("⚠️ Para finalizar una liga tiene que haberse jugado al menos un partido.");
+      if (pendingMatches.length) {
+        showNotice(`⚠️ Todavía quedan ${pendingMatches.length} partido(s) sin resultado. La liga se finaliza cuando se completen todas las fechas.`);
         return;
       }
     } else {
@@ -4212,7 +4220,11 @@ export function TournamenSportApp() {
       }
     }
 
-    const finishedObj = { ...activeTournament, status: "Finalizado" };
+    const finishedObj = {
+      ...activeTournament,
+      status: "Finalizado",
+      playoffs: format === "league" ? null : activeTournament.playoffs,
+    };
     const { error } = await supabase
       .from("tournaments")
       .update({ status: "Finalizado", groups: finishedObj.groups, playoffs: finishedObj.playoffs })
@@ -4362,7 +4374,7 @@ export function TournamenSportApp() {
   const openTournament = (tournament) => {
     setActiveTournament(tournament);
     setActiveView(
-      tournament.playoffs && tournament.playoffs.length > 0
+      tournament.format !== "league" && tournament.playoffs && tournament.playoffs.length > 0
         ? "playoffs"
         : "groups"
     );
