@@ -36,7 +36,7 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
       if (!jornadas.has(key)) {
         if (!incluirTodasLasCategorias && match?.referee_id === refereeId) {
           jornadas.set(key, {
-            key, torneo: tournament.title || "Torneo sin nombre", rama, propietario, etapa: "Jornada de competencia",
+            key, torneo: tournament.title || "Torneo sin nombre", rama, turno, propietario, etapa: "Jornada de competencia",
             team1, team2, team1Normalizado: normalizarEquipo(team1), team2Normalizado: normalizarEquipo(team2),
             partidos: 0, partidosJugados: 0, goles: 0, puntosTeam1: 0, puntosTeam2: 0,
             categoriasSet: new Set(), detallesPartidos: [],
