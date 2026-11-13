@@ -107,8 +107,8 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
   };
 
   return (
-    <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
-      <section className="cr-card" style={{ width: "100%", maxWidth: "850px", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)", boxSizing: "border-box", background: "#090909", color: "#fff", border: "1px solid #b5122a" }}>
+    <div className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: embedded ? 0 : "1rem", minHeight: "70vh", boxSizing: "border-box" }}>
+      <section className={embedded ? "" : "cr-card"} style={{ width: "100%", maxWidth: "100%", margin: "auto", padding: embedded ? 0 : "clamp(1rem, 3vw, 2rem)", boxSizing: "border-box", background: embedded ? "transparent" : "#090909", color: "#fff", border: embedded ? 0 : "1px solid #b5122a" }}>
         {!embedded && <button type="button" className="tc-form-back" onClick={onBack}>← Volver</button>}
         <header style={{ textAlign: "center", margin: "1.2rem 0" }}>
           <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".15em", margin: 0 }}>FEFUTIN · IDENTIFICACIÓN OFICIAL</p>
@@ -165,7 +165,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
           </p>
         ) : (
           <>
-            <article className="fefutin-carnet-motion" style={{ width: "100%", maxWidth: "620px", minWidth: 0, boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "18px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", animation: "fefutinCarnetSway 5.5s ease-in-out infinite", transformOrigin: "50% 85%" }}>
+            <article className="fefutin-carnet-motion" style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "18px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", animation: "fefutinCarnetSway 5.5s ease-in-out infinite", transformOrigin: "50% 85%" }}>
               <div style={{ boxSizing: "border-box", width: "100%", padding: ".8rem 1rem", background: "#b5122a", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem" }}>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, color: "#fff", fontSize: ".78rem", fontWeight: 900, letterSpacing: ".1em" }}>FEFUTIN</p>
@@ -174,14 +174,14 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                 <img src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166" alt="Logo oficial de FEFUTIN" style={{ flex: "0 0 auto", width: "54px", height: "54px", objectFit: "contain", padding: "3px", boxSizing: "border-box", background: "#fff", border: "1px solid rgba(255,255,255,.8)", borderRadius: "8px" }} />
               </div>
 
-              <div style={{ boxSizing: "border-box", width: "100%", padding: "clamp(.75rem,3vw,1.15rem)", display: "grid", gridTemplateColumns: "clamp(90px,28%,140px) minmax(0,1fr)", gap: "clamp(.65rem,3vw,1.1rem)", alignItems: "start" }}>
+              <div style={{ boxSizing: "border-box", width: "100%", padding: "clamp(.75rem,3vw,1.15rem)", display: "grid", gridTemplateColumns: "clamp(110px,22%,190px) minmax(0,1fr)", gap: "clamp(.75rem,2.5vw,1.25rem)", alignItems: "center" }}>
                 <div style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "grid", placeItems: "center" }}>
                   {photoUrl ? <img src={photoUrl} alt={"Fotografía de " + selectedPlayer.first_name + " " + selectedPlayer.last_name} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ color: "#888", fontSize: "2.4rem" }}>⚽</span>}
                 </div>
                 <div style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "break-word" }}>
                   <p style={{ color: "#e7a0aa", fontSize: ".65rem", fontWeight: 900, letterSpacing: ".1em", margin: "0 0 .35rem" }}>CREDENCIAL OFICIAL</p>
                   <h3 style={{ color: "#fff", fontSize: "clamp(1rem,4vw,1.35rem)", lineHeight: 1.15, margin: "0 0 .8rem" }}>{[selectedPlayer.first_name, selectedPlayer.last_name].filter(Boolean).join(" ")}</h3>
-                  <div style={{ display: "grid", gap: ".55rem" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: ".65rem .9rem" }}>
                     <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
                       <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>NÚMERO FEFUTIN</p>
                       <p style={{ color: "#fff", fontSize: ".95rem", fontWeight: 900, margin: ".15rem 0 0" }}>{selectedPlayer.carnet_number}</p>
