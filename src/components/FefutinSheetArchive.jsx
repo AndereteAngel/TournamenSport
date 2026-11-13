@@ -55,7 +55,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     ] = await Promise.all([
       supabase.from("fefutin_match_sheets").select("*").order("updated_at", { ascending: false }),
       supabase.from("fefutin_jornada_photos").select("*").order("jornada_date", { ascending: false }),
-      supabase.from("tournaments").select("id, title"),
+      supabase.from("tournaments").select("id, title, game"),
       supabase.from("fefutin_voided_match_sheets").select("sheet_id, photo_ids"),
     ]);
 
@@ -235,16 +235,15 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
         ? String(photo.categoria || "") === filterCategory
         : relatedSheets.some((sheet) => String(sheet.categoria || "") === filterCategory)
     );
-    const photoJornada = String(photo.jornada_label || "").trim().toLocaleLowerCase("es");
-    const selectedJornada = String(filterJornada || "").trim().toLocaleLowerCase("es");
-    const matchesJornada = !filterJornada || (
-      photoJornada === selectedJornada ||
-      photoJornada === `jornada ${selectedJornada}` ||
-      relatedSheets.some((sheet) => String(sheet.jornada || "").trim() === String(filterJornada))
+    const photoCategory = String(photo.categoria || getTournamentCategory(photoTournament) || "").trim();
+    const matchesPhotoCategory = !filterCategory || (
+      photo.document_type === "category"
+        ? photoCategory === filterCategory
+        : relatedSheets.some((sheet) => String(sheet.categoria || getTournamentCategory(photoTournament)) === filterCategory)
     );
     return (!filterBranch || getTournamentBranch(photoTournament) === filterBranch) &&
       (!filterTournament || String(photo.tournament_id) === String(filterTournament)) &&
-      matchesCategory;
+      matchesPhotoCategory;
   });
 
   const isPhotoForSheet = (photo, sheet) => {
