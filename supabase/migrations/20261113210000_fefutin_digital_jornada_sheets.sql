@@ -5,6 +5,7 @@ create table if not exists public.fefutin_jornada_sheets (
   id uuid primary key default gen_random_uuid(),
   jornada_key text not null unique,
   tournament_id uuid not null references public.tournaments(id) on delete restrict,
+  tournament_ids uuid[] not null default '{}'::uuid[],
   tournament_title text not null,
   rama text not null,
   team_local text not null,
@@ -25,6 +26,9 @@ create table if not exists public.fefutin_jornada_sheets (
 
 create index if not exists fefutin_jornada_sheets_archive_idx
   on public.fefutin_jornada_sheets (tournament_id, jornada_date desc);
+
+create index if not exists fefutin_jornada_sheets_tournament_ids_idx
+  on public.fefutin_jornada_sheets using gin (tournament_ids);
 
 alter table public.fefutin_jornada_sheets enable row level security;
 
