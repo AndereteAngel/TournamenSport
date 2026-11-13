@@ -222,7 +222,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   const selectedTournament = archivedTournaments.find((item) => String(item.id) === String(filterTournament));
   const categories = [...new Set([
     ...sheetsForSelectedTournament.map((sheet) => String(sheet.categoria || "").trim()),
-    ...jornadaSheets.filter((sheet) => !filterTournament || String(sheet.tournament_id) === String(filterTournament))
+    ...jornadaSheets.filter((sheet) => !filterTournament || String(sheet.tournament_id) === String(filterTournament) || (sheet.tournament_ids || []).includes(filterTournament))
       .flatMap((sheet) => Array.isArray(sheet.categorias) ? sheet.categorias : []),
     ...(selectedTournament ? [getTournamentCategory(selectedTournament)] : []),
   ].filter((category) => category && category !== "Sin categoría"))]
@@ -233,7 +233,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     const tournament = archivedTournaments.find((item) => String(item.id) === String(sheet.tournament_id));
     const sheetCategories = Array.isArray(sheet.categorias) ? sheet.categorias : [];
     return (!filterBranch || getTournamentBranch(tournament) === filterBranch) &&
-      (!filterTournament || String(sheet.tournament_id) === String(filterTournament)) &&
+      (!filterTournament || String(sheet.tournament_id) === String(filterTournament) || (sheet.tournament_ids || []).includes(filterTournament)) &&
       (!filterCategory || sheetCategories.includes(filterCategory));
   });
 
