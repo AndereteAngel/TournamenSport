@@ -129,6 +129,7 @@ export function FefutinRefereeJornadaSheets({ tournaments = [], currentUser }) {
           jornadaKey: key,
           tournament: competitionTournaments.find((item) => item.id === (matches[0]?.tournament_id || tournament.id)) || tournament,
           tournamentTitle: tournament.title || "Torneo FEFUTIN",
+          tournamentIds: [...new Set(competitionTournaments.map((item) => item.id).filter(Boolean))],
           branch: getBranch(tournament),
           teamLocal,
           teamVisitor,
@@ -215,6 +216,7 @@ export function FefutinRefereeJornadaSheets({ tournaments = [], currentUser }) {
     const payload = {
       jornada_key: jornada.jornadaKey,
       tournament_id: jornada.tournament.id,
+      tournament_ids: jornada.tournamentIds,
       tournament_title: jornada.tournamentTitle,
       rama: jornada.branch,
       team_local: jornada.teamLocal,
