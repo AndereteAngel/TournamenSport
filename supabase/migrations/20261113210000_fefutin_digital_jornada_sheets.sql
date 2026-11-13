@@ -34,6 +34,15 @@ create policy fefutin_jornada_sheets_admin_select
   for select to authenticated
   using (public.has_fefutin_role(array['admin', 'directivo']));
 
+drop policy if exists fefutin_jornada_sheets_referee_select on public.fefutin_jornada_sheets;
+create policy fefutin_jornada_sheets_referee_select
+  on public.fefutin_jornada_sheets
+  for select to authenticated
+  using (
+    referee_id = auth.uid()
+    and public.has_fefutin_role(array['arbitro'])
+  );
+
 drop policy if exists fefutin_jornada_sheets_referee_insert on public.fefutin_jornada_sheets;
 create policy fefutin_jornada_sheets_referee_insert
   on public.fefutin_jornada_sheets
