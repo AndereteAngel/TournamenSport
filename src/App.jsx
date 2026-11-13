@@ -4070,6 +4070,12 @@ export function TournamenSportApp() {
     return finishedTournament;
   };
 
+  // También regulariza ligas que ya tenían todos sus resultados antes de este cambio.
+  useEffect(() => {
+    if (activeView !== "groups" || !activeTournament?.id) return;
+    finalizeLeagueWhenComplete(activeTournament);
+  }, [activeTournament?.id, activeView]);
+
   const handleUpdateTournamentInSupabase = async (updatedTournament) => {
     if (!canManageTournaments) {
       showNotice("❌ Solo un administrador o directivo puede modificar torneos y resultados.");
