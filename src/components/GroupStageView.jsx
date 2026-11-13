@@ -614,14 +614,8 @@ export function GroupStageView({
                   borderBottom: "2px solid #2d2b3b",
                 }}
               >
-                <th
-                  style={{
-                    padding: "8px",
-                    textAlign: "left",
-                  }}
-                >
-                  Pos / Equipo
-                </th>
+                <th style={{ padding: "8px", textAlign: "center" }}>Pos</th>
+                <th style={{ padding: "8px", textAlign: "left" }}>Club</th>
                 <th style={{ padding: "8px" }}>Pts</th>
                 <th style={{ padding: "8px" }}>PJ</th>
                 <th style={{ padding: "8px" }}>G</th>
@@ -649,15 +643,16 @@ export function GroupStageView({
                         : "transparent",
                     }}
                   >
-                    <td
-                      style={{
-                        padding: "9px 8px",
-                        textAlign: "left",
-                        fontWeight: "bold",
-                        color: isLeagueChampion ? "#facc15" : isQualified ? "#4ade80" : "#fff",
-                      }}
-                    >
-                      {idx + 1}. {team.name} {isLeagueChampion ? "🏆 CAMPEÓN" : isQualified ? "⭐" : ""}
+                    <td style={{ padding: "9px 8px", textAlign: "center", fontWeight: 900, color: "#fff" }}>
+                      {idx + 1}
+                    </td>
+                    <td style={{ padding: "9px 8px", textAlign: "left", fontWeight: "bold", color: isLeagueChampion ? "#facc15" : isQualified ? "#4ade80" : "#fff" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", minWidth: 0 }}>
+                        {getClubLogo(team.name) ? <img src={getClubLogo(team.name)} alt={`Escudo de ${team.name}`} style={{ width: "30px", height: "30px", objectFit: "contain", flexShrink: 0 }} /> : null}
+                        <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>
+                          {team.name} {isLeagueChampion ? "🏆 CAMPEÓN" : isQualified ? "⭐" : ""}
+                        </span>
+                      </div>
                     </td>
 
                     <td
