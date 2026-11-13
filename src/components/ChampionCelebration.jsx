@@ -5,8 +5,11 @@ import {
 } from "../utils/tournamentAwards";
 import { TCIcon } from "./TCIcon";
 
-const positionColors = ["#f4c95d", "#d1d5db", "#d98b50", "#c4b5fd"];
-const positionIcons = ["medalGold", "medalSilver", "medalBronze", "medal"];
+const medals = [
+  { key: "gold", label: "1.er puesto", color: "#f5c542", dark: "#8a5b08", icon: "medalGold" },
+  { key: "silver", label: "2.º puesto", color: "#d9e0e8", dark: "#65717e", icon: "medalSilver" },
+  { key: "bronze", label: "3.er puesto", color: "#df9865", dark: "#87451f", icon: "medalBronze" },
+];
 
 export function ChampionCelebration({ tournament, onClose }) {
   const podium = getTournamentPodium(tournament);
@@ -15,60 +18,42 @@ export function ChampionCelebration({ tournament, onClose }) {
   const isLeague = String(tournament?.format || "").trim().toLocaleLowerCase("es") === "league";
   const championStats = getPlayerTournamentStats(tournament, podium.champion);
   const generalStats = getTournamentGeneralStats(tournament);
-  const positions = [
-    { label: "1.er puesto · Oro", name: podium.champion },
-    { label: "2.º puesto · Plata", name: podium.runnerUp },
-    { label: "3.er puesto · Bronce", name: podium.bronze?.[0] },
-    ...(!isLeague ? [{ label: "4.º puesto · Diploma", name: podium.fourth }] : []),
+  const podiumPlaces = [
+    { ...medals[1], name: podium.runnerUp, order: 1, height: "76px" },
+    { ...medals[0], name: podium.champion, order: 2, height: "108px" },
+    { ...medals[2], name: podium.bronze?.[0], order: 3, height: "58px" },
   ];
-
   const statCard = (icon, label, value) => (
-    <div key={label} style={{ minWidth: 0, padding: "0.7rem 0.3rem", borderRadius: "10px", background: "rgba(255,255,255,0.055)", border: "1px solid rgba(255,255,255,0.1)" }}>
-      <div style={{ color: "#f0a2ad" }}><TCIcon name={icon} size={20} /></div>
-      <div style={{ color: "#fff", fontSize: "1.2rem", fontWeight: 900, marginTop: "0.2rem" }}>{value}</div>
-      <div style={{ color: "#c7cbd1", fontSize: "0.62rem", fontWeight: 800, textTransform: "uppercase" }}>{label}</div>
+    <div key={label} style={{ minWidth: 0, padding: "0.65rem 0.25rem", borderRadius: "11px", background: "rgba(255,255,255,0.055)", border: "1px solid rgba(255,255,255,0.1)" }}>
+      <div style={{ color: "#f5c542" }}><TCIcon name={icon} size={19} /></div>
+      <div style={{ color: "#fff", fontSize: "1.12rem", fontWeight: 900, marginTop: "0.15rem" }}>{value}</div>
+      <div style={{ color: "#c7cbd1", fontSize: "0.6rem", fontWeight: 800, textTransform: "uppercase", lineHeight: 1.25 }}>{label}</div>
     </div>
   );
 
   return (
-    <div role="dialog" aria-modal="true" aria-label="Resultados finales del torneo" style={{ position: "fixed", inset: 0, zIndex: 2200, display: "flex", alignItems: "center", justifyContent: "center", padding: "0.75rem", background: "rgba(0,0,0,0.84)", backdropFilter: "blur(6px)", overflowY: "auto" }}>
-      <section style={{ width: "100%", maxWidth: "680px", maxHeight: "calc(100vh - 1.5rem)", overflowY: "auto", margin: "auto", padding: "1.2rem", position: "relative", borderRadius: "18px", border: "2px solid #b5122a", background: "radial-gradient(circle at 50% 0%, rgba(181,18,42,0.28), transparent 48%), linear-gradient(145deg, #202633, #10141d 82%)", boxShadow: "0 0 30px rgba(181,18,42,0.2), inset 0 1px 0 rgba(255,255,255,0.08)", color: "#fff", textAlign: "center" }}>
-        <button type="button" onClick={onClose} aria-label="Cerrar resultados finales" style={{ position: "absolute", top: "0.55rem", right: "0.55rem", width: "34px", height: "34px", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.25)", background: "rgba(0,0,0,0.45)", color: "#fff", fontSize: "1.2rem", cursor: "pointer" }}>×</button>
-        <div style={{ color: "#f0a2ad", fontSize: "0.68rem", fontWeight: 900, letterSpacing: "0.2em" }}>FEFUTIN · TORNEO FINALIZADO</div>
-        <div aria-hidden="true" style={{ width: "92px", height: "92px", margin: "0.75rem auto", display: "grid", placeItems: "center", borderRadius: "50%", border: "3px solid #f4c95d", background: "radial-gradient(circle, #fff1bd 0%, #d99a20 48%, #71420d 100%)", boxShadow: "0 0 0 7px rgba(244,201,93,0.1), 0 0 28px rgba(244,201,93,0.28)" }}>
-          <TCIcon name="trophy" size={42} />
-        </div>
-        <div style={{ color: "#f8d9a0", fontSize: "0.72rem", fontWeight: 800, textTransform: "uppercase" }}>¡Tenemos campeón!</div>
-        <h2 style={{ margin: "0.35rem 0", color: "#fff", fontSize: "clamp(1.35rem, 6vw, 2rem)", fontWeight: 900, overflowWrap: "anywhere" }}>{podium.champion}</h2>
-        <p style={{ margin: "0 auto 1rem", color: "#f0a2ad", fontSize: "0.85rem", overflowWrap: "anywhere" }}>{tournament.title || "Torneo FEFUTIN"}</p>
+    <div role="dialog" aria-modal="true" aria-label="Resultados finales del torneo" style={{ position: "fixed", inset: 0, zIndex: 2200, display: "flex", alignItems: "center", justifyContent: "center", padding: "0.75rem", background: "rgba(0,0,0,0.88)", backdropFilter: "blur(7px)", overflowY: "auto" }}>
+      <section style={{ width: "100%", maxWidth: "680px", maxHeight: "calc(100vh - 1.5rem)", overflowY: "auto", margin: "auto", padding: "1.15rem", position: "relative", borderRadius: "20px", border: "1px solid rgba(245,197,66,0.65)", background: "radial-gradient(ellipse at 50% 0%, rgba(245,197,66,0.19), transparent 38%), radial-gradient(circle at 0% 65%, rgba(181,18,42,0.13), transparent 35%), linear-gradient(150deg, #252b35, #10141d 78%)", boxShadow: "0 0 42px rgba(245,197,66,0.13), inset 0 1px 0 rgba(255,255,255,0.1)", color: "#fff", textAlign: "center" }}>
+        <button type="button" onClick={onClose} aria-label="Cerrar resultados finales" style={{ position: "absolute", top: "0.55rem", right: "0.55rem", zIndex: 2, width: "34px", height: "34px", borderRadius: "50%", border: "1px solid rgba(255,255,255,0.25)", background: "rgba(0,0,0,0.45)", color: "#fff", fontSize: "1.2rem", cursor: "pointer" }}>×</button>
 
-        <div style={{ marginTop: "0.5rem", textAlign: "left" }}>
-          <div style={{ color: "#fff", fontSize: "0.72rem", fontWeight: 900, letterSpacing: "0.1em", marginBottom: "0.5rem", textAlign: "center" }}>PODIO Y POSICIONES FINALES</div>
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${isLeague ? 3 : 2}, minmax(0, 1fr))`, gap: "0.5rem" }}>
-            {positions.map((item, index) => (
-              <div key={item.label} style={{ minWidth: 0, padding: "0.7rem 0.45rem", borderRadius: "10px", background: "rgba(255,255,255,0.055)", border: `1px solid ${positionColors[index]}66`, textAlign: "center" }}>
-                <TCIcon name={positionIcons[index]} size={25} />
-                <div style={{ color: positionColors[index], fontSize: "0.64rem", fontWeight: 900, marginTop: "0.25rem" }}>{item.label}</div>
-                <div style={{ color: "#fff", fontSize: "0.82rem", fontWeight: 900, overflowWrap: "anywhere", marginTop: "0.2rem" }}>{item.name || "Por definir"}</div>
-              </div>
-            ))}
+        <div style={{ color: "#f5d77e", fontSize: "0.68rem", fontWeight: 900, letterSpacing: "0.2em" }}>FEFUTIN · TORNEO FINALIZADO</div>
+
+        <div aria-hidden="true" style={{ width: "132px", height: "150px", margin: "0.8rem auto 0.55rem", display: "grid", placeItems: "center", position: "relative", filter: "drop-shadow(0 9px 15px rgba(0,0,0,0.4))" }}>
+          <div style={{ position: "absolute", inset: 0, clipPath: "polygon(50% 0%, 94% 13%, 89% 66%, 50% 100%, 11% 66%, 6% 13%)", background: "linear-gradient(135deg, #fff2b0 0%, #f5c542 27%, #a96c13 55%, #ffe69a 78%, #9a6415 100%)", border: "1px solid #ffe9a3" }} />
+          <div style={{ position: "absolute", inset: "7px", clipPath: "polygon(50% 0%, 94% 13%, 89% 66%, 50% 100%, 11% 66%, 6% 13%)", background: "linear-gradient(155deg, #4a3a1b, #171c27 68%)", display: "grid", placeItems: "center", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.22)" }}>
+            <div style={{ color: "#f8d66f", display: "grid", placeItems: "center", gap: "0.15rem" }}>
+              <TCIcon name="trophy" size={54} />
+              <span style={{ fontSize: "0.58rem", fontWeight: 900, letterSpacing: "0.18em" }}>CAMPEÓN</span>
+            </div>
           </div>
         </div>
 
-        <div style={{ marginTop: "1rem", textAlign: "left" }}>
-          <div style={{ color: "#f0a2ad", fontSize: "0.72rem", fontWeight: 900, letterSpacing: "0.1em", marginBottom: "0.5rem", textAlign: "center" }}>ESTADÍSTICAS GENERALES DEL TORNEO</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.45rem" }}>
-            {statCard("clipboard", "Partidos", generalStats.played)}
-            {statCard("target", "Goles", generalStats.goals)}
-            {statCard("home", "Victorias local", generalStats.homeWins)}
-            {statCard("users", "Empates", generalStats.draws)}
-            {statCard("arrow", "Victorias visitante", generalStats.awayWins)}
-          </div>
-        </div>
+        <div style={{ color: "#f8d989", fontSize: "0.76rem", fontWeight: 900, letterSpacing: "0.13em", textTransform: "uppercase" }}>¡Felicitaciones al campeón!</div>
+        <h2 style={{ margin: "0.3rem 0 0.2rem", color: "#fff", fontSize: "clamp(1.55rem, 6vw, 2.25rem)", fontWeight: 950, lineHeight: 1.12, overflowWrap: "anywhere", textShadow: "0 2px 14px rgba(245,197,66,0.18)" }}>{podium.champion}</h2>
+        <p style={{ margin: "0 auto 1rem", color: "#d9c18b", fontSize: "0.85rem", overflowWrap: "anywhere" }}>{tournament.title || "Torneo FEFUTIN"}</p>
 
-        <div style={{ marginTop: "1rem", textAlign: "left" }}>
-          <div style={{ color: "#f0a2ad", fontSize: "0.72rem", fontWeight: 900, letterSpacing: "0.1em", marginBottom: "0.5rem", textAlign: "center" }}>ESTADÍSTICAS DEL CAMPEÓN</div>
-          <div style={{ color: "#fff", fontSize: "0.8rem", fontWeight: 900, textAlign: "center", marginBottom: "0.5rem", overflowWrap: "anywhere" }}>{podium.champion}</div>
+        <div style={{ marginTop: "0.6rem" }}>
+          <div style={{ color: "#f5d77e", fontSize: "0.72rem", fontWeight: 900, letterSpacing: "0.12em", marginBottom: "0.55rem" }}>ESTADÍSTICAS DEL CAMPEÓN</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.45rem" }}>
             {statCard("clipboard", "Jugados", championStats.played)}
             {isLeague && statCard("trophy", "Puntos", championStats.points)}
@@ -81,7 +66,47 @@ export function ChampionCelebration({ tournament, onClose }) {
             {statCard("chart", "Efectividad", championStats.winRate + "%")}
           </div>
         </div>
-        <button type="button" onClick={onClose} style={{ width: "100%", maxWidth: "260px", marginTop: "1.1rem", padding: "0.7rem 1rem", borderRadius: "9px", border: "1px solid #e25b6b", background: "#b5122a", color: "#fff", fontWeight: 900, cursor: "pointer" }}>Ver torneo</button>
+
+        <div style={{ marginTop: "1rem", padding: "0.8rem 0.65rem 0.6rem", borderRadius: "15px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.2)" }}>
+          <div style={{ color: "#f5d77e", fontSize: "0.72rem", fontWeight: 900, letterSpacing: "0.12em", marginBottom: "0.6rem" }}>PODIO · POSICIONES FINALES</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "0.35rem", alignItems: "end" }}>
+            {podiumPlaces.map((place) => (
+              <div key={place.key} style={{ minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "end", order: place.order }}>
+                <div style={{ minHeight: "66px", display: "flex", flexDirection: "column", justifyContent: "end", alignItems: "center", gap: "0.2rem", width: "100%" }}>
+                  <TCIcon name={place.icon} size={place.key === "gold" ? 34 : 28} />
+                  <div style={{ color: place.color, fontSize: "0.63rem", fontWeight: 900 }}>{place.label}</div>
+                  <div style={{ color: "#fff", fontSize: "0.78rem", fontWeight: 900, lineHeight: 1.15, overflowWrap: "anywhere", minHeight: "2.1em", display: "grid", placeItems: "center" }}>{place.name || "Por definir"}</div>
+                </div>
+                <div style={{ width: "100%", height: place.height, marginTop: "0.35rem", display: "grid", placeItems: "center", borderRadius: "8px 8px 2px 2px", border: "1px solid " + place.color, borderBottom: "4px solid " + place.dark, background: "linear-gradient(145deg, " + place.color + "55, " + place.dark + "88)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.28)" }}>
+                  <span style={{ color: "#fff", fontSize: "1.7rem", fontWeight: 950, textShadow: "0 2px 5px rgba(0,0,0,0.55)" }}>{place.order}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ marginTop: "0.85rem", padding: "0.65rem", borderRadius: "12px", background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div style={{ color: "#cbd1d8", fontSize: "0.65rem", fontWeight: 900, letterSpacing: "0.1em", marginBottom: "0.45rem" }}>RESUMEN DEL TORNEO</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5, minmax(0, 1fr))", gap: "0.25rem" }}>
+            {[
+              ["PARTIDOS", generalStats.played],
+              ["GOLES", generalStats.goals],
+              ["LOCAL", generalStats.homeWins],
+              ["EMPATES", generalStats.draws],
+              ["VISITA", generalStats.awayWins],
+            ].map(([label, value]) => (
+              <div key={label} style={{ minWidth: 0 }}>
+                <div style={{ color: "#fff", fontSize: "1rem", fontWeight: 900 }}>{value}</div>
+                <div style={{ color: "#aeb6c1", fontSize: "0.52rem", fontWeight: 800 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {!isLeague && podium.fourth && (
+          <div style={{ marginTop: "0.65rem", color: "#c4b5fd", fontSize: "0.72rem", fontWeight: 800 }}>4.º puesto · Diploma: {podium.fourth}</div>
+        )}
+        <button type="button" onClick={onClose} style={{ width: "100%", maxWidth: "260px", marginTop: "1rem", padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid #e4bd52", background: "linear-gradient(135deg, #f2c34e, #a96c13)", color: "#241a08", fontWeight: 950, cursor: "pointer" }}>Ver torneo</button>
       </section>
     </div>
   );
