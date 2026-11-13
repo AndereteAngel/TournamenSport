@@ -6287,3 +6287,41 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     transition: none !important;
   }
 }
+
+
+/* FEFUTIN — encabezado principal: escudo cuadrado a la altura completa del bloque. */
+#root .tc-home-screen .tc-home-panel-art {
+  height: clamp(120px, 18vw, 170px) !important;
+  min-height: clamp(120px, 18vw, 170px) !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  padding-left: 0 !important;
+  align-items: stretch !important;
+  gap: clamp(14px, 2.5vw, 26px) !important;
+}
+#root .tc-home-screen .tc-home-panel-art > img {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  height: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  align-self: stretch !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+#root .tc-home-screen .tc-home-panel-art > div {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+}
+@media (max-width: 600px) {
+  #root .tc-home-screen .tc-home-panel-art {
+    height: clamp(112px, 30vw, 140px) !important;
+    min-height: clamp(112px, 30vw, 140px) !important;
+    padding-right: 12px !important;
+    gap: 12px !important;
+  }
+  #root .tc-home-screen .tc-home-panel-art > img {
+    height: 100% !important;
+    width: auto !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+}
