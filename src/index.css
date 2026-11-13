@@ -6325,3 +6325,18 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     aspect-ratio: 1 / 1 !important;
   }
 }
+
+
+/* FEFUTIN — centrar el título en el espacio disponible junto al escudo. */
+#root .tc-home-screen .tc-home-panel-art > div {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+#root .tc-home-screen .tc-home-panel-art span,
+#root .tc-home-screen .tc-home-panel-art strong {
+  width: 100% !important;
+  text-align: center !important;
+}
