@@ -1,153 +1,47 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 
-const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es")
-  .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-const getBranch = (tournament) => {
-  const parts = String(tournament?.game || "").split("·").map((part) => part.trim());
-  const explicit = parts.find((part) => ["Infantil", "Femenino", "Mayores"].includes(part));
-  if (explicit) return explicit;
-  const reference = String(tournament?.game || "").toLocaleLowerCase("es");
-  if (/femenin|mujer/.test(reference)) return "Femenino";
-  if (/mayor|adult|senior|primera/.test(reference)) return "Mayores";
-  return "Infantil";
-};
-
-const getCategory = (tournament) => {
-  const explicit = String(tournament?.category_detail || tournament?.category_type || "").trim();
-  if (explicit) return explicit;
-  const parts = String(tournament?.game || "").split("·").map((part) => part.trim());
-  return parts.length > 2 ? parts.slice(2).join(" · ") : "Sin categoría";
-};
-
-const validMatch = (match) => {
-  const team1 = String(match?.team1 || "").trim();
-  const team2 = String(match?.team2 || "").trim();
-  return team1 && team2 && normalize(team1) !== "pasaje directo" && normalize(team2) !== "pasaje directo";
-};
-
-export function FefutinRefereeJornadaSheets({ tournaments = [], currentUser }) {
+export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser }) {
   const [savedKeys, setSavedKeys] = useState(() => new Set());
   const [savingKey, setSavingKey] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const jornadas = useMemo(() => {
-    if (!currentUser?.id) return [];
-    const competitions = new Map();
-
-    (tournaments || []).forEach((tournament) => {
-      const branch = getBranch(tournament);
-      const owner = String(tournament?.created_by_user_id || tournament?.created_by || "").trim().toLocaleLowerCase("es");
-      const competitionKey = [
-        String(tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
-        owner,
-        branch.toLocaleLowerCase("es"),
-      ].join("|");
-      if (!competitions.has(competitionKey)) competitions.set(competitionKey, []);
-      competitions.get(competitionKey).push(tournament);
-    });
-
-    const grouped = new Map();
-    competitions.forEach((competitionTournaments, competitionKey) => {
-      const assigned = [];
-      competitionTournaments.forEach((tournament) => {
-        (Array.isArray(tournament?.groups) ? tournament.groups : []).forEach((group, groupIndex) => {
-          if (group?.name === "__INSCRIPCIONES__") return;
-          (Array.isArray(group?.matches) ? group.matches : []).forEach((match) => {
-            if (match?.referee_id !== currentUser.id || !validMatch(match)) return;
-            const pair = [normalize(match.team1), normalize(match.team2)].sort().join("::");
-            assigned.push({ tournament, match, groupIndex, pair });
-          });
-        });
-      });
-
-      assigned.forEach(({ tournament, match, pair }) => {
-        const key = competitionKey + "::" + pair;
-        if (grouped.has(key)) return;
-        const teamLocal = String(match.team1 || "").trim();
-        const teamVisitor = String(match.team2 || "").trim();
-        const localNormalized = normalize(teamLocal);
-        const details = [];
-        const categories = new Set();
-
-        competitionTournaments.forEach((categoryTournament) => {
-          const category = getCategory(categoryTournament);
-          if (category && category !== "Sin categoría") categories.add(category);
-          (Array.isArray(categoryTournament?.groups) ? categoryTournament.groups : []).forEach((group, groupIndex) => {
-            if (group?.name === "__INSCRIPCIONES__") return;
-            (Array.isArray(group?.matches) ? group.matches : []).forEach((categoryMatch, matchIndex) => {
-              if (!validMatch(categoryMatch)) return;
-              const categoryPair = [normalize(categoryMatch.team1), normalize(categoryMatch.team2)].sort().join("::");
-              if (categoryPair !== pair) return;
-              const score1 = Number(categoryMatch.score1);
-              const score2 = Number(categoryMatch.score2);
-              const hasResult = categoryMatch.score1 != null && categoryMatch.score2 != null &&
-                Number.isFinite(score1) && Number.isFinite(score2);
-              const points1 = hasResult ? (score1 > score2 ? 3 : score1 < score2 ? 1 : 2) : 0;
-              const points2 = hasResult ? (score2 > score1 ? 3 : score2 < score1 ? 1 : 2) : 0;
-              const sameOrder = normalize(categoryMatch.team1) === localNormalized;
-              details.push({
-                tournament_id: categoryTournament.id,
-                categoria: category,
-                team1: String(categoryMatch.team1 || "").trim(),
-                team2: String(categoryMatch.team2 || "").trim(),
-                score1: hasResult ? score1 : null,
-                score2: hasResult ? score2 : null,
-                resultadoCargado: hasResult,
-                puntosTeam1: sameOrder ? points1 : points2,
-                puntosTeam2: sameOrder ? points2 : points1,
-                referee_id: categoryMatch.referee_id || null,
-                referee_closed: Boolean(categoryMatch.referee_closed),
-                match_id: String(categoryMatch.id || `${groupIndex}-${matchIndex}`),
-              });
-            });
-          });
-        });
-
-        // Incluir las categorías del torneo aunque todavía no tengan fixture para este cruce.
-        categories.forEach((category) => {
-          if (!details.some((detail) => detail.categoria === category)) {
-            details.push({
-              tournament_id: null, categoria: category, team1: teamLocal, team2: teamVisitor,
-              score1: null, score2: null, resultadoCargado: false, puntosTeam1: 0,
-              puntosTeam2: 0, referee_id: null, referee_closed: false, match_id: null,
-              pendienteFixture: true,
-            });
-          }
-        });
-
-        details.sort((a, b) => String(a.categoria).localeCompare(String(b.categoria), "es", { numeric: true }));
-        const matches = details.filter((detail) => !detail.pendienteFixture);
-        const allAssignedToThisReferee = matches.length > 0 && matches.every((detail) => detail.referee_id === currentUser.id);
-        const allClosed = allAssignedToThisReferee && matches.every((detail) => detail.referee_closed);
-        const pointsLocal = details.reduce((sum, detail) => sum + Number(detail.puntosTeam1 || 0), 0);
-        const pointsVisitor = details.reduce((sum, detail) => sum + Number(detail.puntosTeam2 || 0), 0);
-        grouped.set(key, {
-          key,
-          jornadaKey: key,
-          tournament: competitionTournaments.find((item) => item.id === (matches[0]?.tournament_id || tournament.id)) || tournament,
-          tournamentTitle: tournament.title || "Torneo FEFUTIN",
-          tournamentIds: [...new Set(competitionTournaments.map((item) => item.id).filter(Boolean))],
-          branch: getBranch(tournament),
-          teamLocal,
-          teamVisitor,
-          categories: [...categories].sort((a, b) => a.localeCompare(b, "es", { numeric: true })),
-          details,
-          pointsLocal,
-          pointsVisitor,
-          allClosed,
-          allAssignedToThisReferee,
-          matchCount: matches.length,
-        });
-      });
-    });
-
-    return [...grouped.values()].sort((a, b) =>
-      (a.teamLocal + " " + a.teamVisitor).localeCompare(b.teamLocal + " " + b.teamVisitor, "es")
-    );
-  }, [tournaments, currentUser?.id]);
+  // Se consume exactamente el cálculo que alimenta DATOS POR JORNADA
+  // en la tarjeta de estadísticas de cada árbitro.
+  const planillas = useMemo(() => (jornadas || []).map((jornada) => {
+    const details = (jornada.detallesPartidos || []).map((detail) => ({
+      ...detail,
+      categoria: detail.categoria || "Sin categoría",
+      resultadoCargado: Boolean(detail.resultadoCargado),
+      referee_id: detail.referee_id || null,
+      referee_closed: Boolean(detail.referee_closed),
+    }));
+    const matches = details.filter((detail) => detail.instancia !== "Pendiente de fixture");
+    const allAssignedToThisReferee = matches.length > 0 &&
+      matches.every((detail) => detail.referee_id === currentUser?.id);
+    const allClosed = allAssignedToThisReferee &&
+      matches.every((detail) => detail.referee_closed);
+    const tournamentIds = [...new Set(details.map((detail) => detail.tournament_id).filter(Boolean))];
+    return {
+      key: jornada.key,
+      jornadaKey: jornada.key,
+      tournamentId: tournamentIds[0] || null,
+      tournamentIds,
+      tournamentTitle: jornada.torneo || "Torneo FEFUTIN",
+      branch: jornada.rama || "Infantil",
+      teamLocal: jornada.team1,
+      teamVisitor: jornada.team2,
+      categories: jornada.categorias || [],
+      details,
+      pointsLocal: Number(jornada.puntosTeam1 || 0),
+      pointsVisitor: Number(jornada.puntosTeam2 || 0),
+      allClosed,
+      allAssignedToThisReferee,
+      matchCount: matches.length,
+      partidosJugados: jornada.partidosJugados || 0,
+    };
+  }), [jornadas, currentUser?.id]);
 
   useEffect(() => {
     let active = true;
@@ -210,12 +104,16 @@ export function FefutinRefereeJornadaSheets({ tournaments = [], currentUser }) {
 
   const archiveJornada = async (jornada) => {
     if (!currentUser?.id || !jornada?.allClosed || savedKeys.has(jornada.jornadaKey) || savingKey) return;
+    if (!jornada.tournamentId) {
+      setError("No se pudo identificar el torneo de esta planilla. No se archivó para evitar guardar información incompleta.");
+      return;
+    }
     setSavingKey(jornada.jornadaKey);
     setError("");
     setMessage("");
     const payload = {
       jornada_key: jornada.jornadaKey,
-      tournament_id: jornada.tournament.id,
+      tournament_id: jornada.tournamentId,
       tournament_ids: jornada.tournamentIds,
       tournament_title: jornada.tournamentTitle,
       rama: jornada.branch,
@@ -245,7 +143,7 @@ export function FefutinRefereeJornadaSheets({ tournaments = [], currentUser }) {
     setMessage("Planilla general cerrada y guardada en el archivo institucional.");
   };
 
-  if (!jornadas.length) {
+  if (!planillas.length) {
     return <section style={{ margin: "1rem 0", padding: "1rem", border: "1px solid #555", borderRadius: "10px", color: "#ddd" }}>
       <strong>PLANILLAS GENERALES POR JORNADA</strong>
       <p style={{ marginBottom: 0, fontSize: ".82rem" }}>Todavía no tenés cruces de clubes designados para generar una planilla general.</p>
@@ -255,8 +153,8 @@ export function FefutinRefereeJornadaSheets({ tournaments = [], currentUser }) {
   return (
     <section style={{ display: "grid", gap: ".75rem", margin: "1rem 0" }}>
       <h3 style={{ margin: ".2rem 0", color: "#fff", fontSize: ".9rem", letterSpacing: ".05em" }}>PLANILLAS GENERALES POR JORNADA</h3>
-      <p style={{ color: "#bbb", fontSize: ".78rem", margin: 0 }}>Cada planilla reúne todas las categorías del cruce entre los mismos dos clubes. Se habilita el cierre cuando todos sus partidos individuales están cerrados.</p>
-      {jornadas.map((jornada) => {
+      <p style={{ color: "#bbb", fontSize: ".78rem", margin: 0 }}>Esta planilla utiliza los mismos partidos, categorías y puntos que DATOS POR JORNADA en la tarjeta del árbitro.</p>
+      {planillas.map((jornada) => {
         const archived = savedKeys.has(jornada.jornadaKey);
         return (
           <article key={jornada.key} style={{ padding: ".85rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171c27" }}>
