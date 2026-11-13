@@ -186,7 +186,7 @@ export function FefutinRefereeJornadaSheets({ tournaments = [], currentUser }) {
       ? `<p class="totals">${escapeHtml(jornada.teamLocal)}: <strong>${jornada.pointsLocal} puntos</strong> · ${escapeHtml(jornada.teamVisitor)}: <strong>${jornada.pointsVisitor} puntos</strong></p>`
       : "";
     const tableHeaders = withResults
-      ? "<th>Puntos local</th><th>Puntos visitante</th>"
+      ? `<th>Puntos ${escapeHtml(jornada.teamLocal)}</th><th>Puntos ${escapeHtml(jornada.teamVisitor)}</th>`
       : "<th>Observaciones</th>";
     const signature = withResults ? "" : `<div class="signatures"><div>Firma referente local<br><br>____________________________</div><div>Firma referente visitante<br><br>____________________________</div></div><p class="ref">Árbitro: ${escapeHtml(currentUser?.username || "________________")} · Matrícula: __________________</p>`;
     popup.document.open();
@@ -264,11 +264,10 @@ export function FefutinRefereeJornadaSheets({ tournaments = [], currentUser }) {
             <small style={{ display: "block", textAlign: "center", color: "#bbb", marginTop: ".3rem" }}>{jornada.tournamentTitle} · {jornada.branch} · {jornada.categories.length} categoría(s)</small>
             <div style={{ display: "grid", gap: ".4rem", marginTop: ".7rem" }}>
               {jornada.details.map((detail, index) => (
-                <div key={`${jornada.key}-${index}`} style={{ display: "grid", gridTemplateColumns: "minmax(0, .7fr) minmax(0, 1.5fr) auto auto", gap: ".4rem", alignItems: "center", padding: ".5rem", background: "#080b10", borderRadius: "7px", color: "#eee", fontSize: ".72rem" }}>
+                <div key={`${jornada.key}-${index}`} style={{ display: "grid", gridTemplateColumns: "minmax(0, .7fr) minmax(0, 1.5fr)", gap: ".35rem .5rem", alignItems: "center", padding: ".5rem", background: "#080b10", borderRadius: "7px", color: "#eee", fontSize: ".72rem" }}>
                   <strong style={{ color: "#f3a0ad" }}>{detail.categoria}</strong>
                   <span>{detail.team1} {detail.score1 == null ? "—" : detail.score1} - {detail.score2 == null ? "—" : detail.score2} {detail.team2}</span>
-                  <strong>{detail.resultadoCargado ? detail.puntosTeam1 : "—"}</strong>
-                  <strong>{detail.resultadoCargado ? detail.puntosTeam2 : "—"}</strong>
+                  <span style={{ gridColumn: "1 / -1", color: "#d1d5db" }}>{jornada.teamLocal}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam1 + " pts" : "Pendiente"}</strong> · {jornada.teamVisitor}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam2 + " pts" : "Pendiente"}</strong></span>
                 </div>
               ))}
             </div>
