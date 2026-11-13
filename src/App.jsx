@@ -3318,6 +3318,29 @@ export function TournamenSportApp() {
     setJoinCodeInput("");
   };
 
+  const handleOpenAuth = async () => {
+    if (currentUser) {
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error("No se pudo cerrar la sesión antes de abrir el acceso:", error);
+        showNotice("No se pudo cerrar la sesión. Intentá nuevamente.");
+        return;
+      }
+
+      sessionStorage.removeItem("tournamentclash_visita_id");
+      setCurrentUser(null);
+      setActiveTournament(null);
+      setEditingTournament(false);
+      setJoinCodeInput("");
+    }
+
+    setAuthMode("login");
+    setAuthInput({ email: "", password: "" });
+    setRegisterInput({ username: "", requestedRole: "arbitro" });
+    setActiveView("admin-login");
+  };
+
   const handleGoHome = () => {
     setActiveTournament(null);
     setActiveView("home");
@@ -4403,7 +4426,7 @@ export function TournamenSportApp() {
           isArbitro={isArbitro}
           onGoMyCarnet={() => setActiveView("referee-carnets")}
           onGoCarnetDirectory={() => setActiveView("referee-carnet-directory")}
-          onAdminClick={() => setActiveView("admin-login")}
+          onAdminClick={handleOpenAuth}
           onLogout={handleLogout}
         />
 
