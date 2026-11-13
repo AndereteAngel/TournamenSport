@@ -3367,7 +3367,7 @@ export function TournamenSportApp() {
       return {
         code: randomCode,
         title: config.title,
-        game: `Fútbol · ${entry.division} · ${entry.category}`,
+        game: `Fútbol · ${entry.division} · ${config.turno} · ${entry.category}`,
         format: config.format,
         qualifiers_per_group: config.qualifiersPerGroup,
         is_public: config.isPublic,
@@ -3872,7 +3872,7 @@ export function TournamenSportApp() {
         .from("tournaments")
         .update({
           title: updatedTournament.title,
-          game: updatedTournament.game,
+          game: `Fútbol · ${config.category_config?.[0]?.division || getTournamentDivision(activeTournament)} · ${config.turno} · ${config.category_config?.[0]?.categories?.[0] || getTournamentCategory(activeTournament)}` ,
           format: updatedTournament.format,
           qualifiers_per_group: updatedTournament.qualifiers_per_group,
           is_public: updatedTournament.is_public,
