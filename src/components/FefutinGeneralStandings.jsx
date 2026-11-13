@@ -18,7 +18,7 @@ const getCategory = (tournament) => {
 const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es")
   .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-const makeStandings = (sheets, tournamentIds, selectedCategory) => {
+const makeStandings = (sheets, tournamentIds, selectedCategory, tournaments) => {
   const standings = new Map();
   const processed = new Set();
   const ensureTeam = (name) => {
@@ -30,6 +30,15 @@ const makeStandings = (sheets, tournamentIds, selectedCategory) => {
     });
     return standings.get(key);
   };
+
+  // Los participantes salen de los torneos realmente creados: aparecen con cero
+  // puntos hasta que una planilla cerrada aporte resultados.
+  tournaments.forEach((tournament) => {
+    if (selectedCategory && getCategory(tournament) !== selectedCategory) return;
+    (Array.isArray(tournament.groups) ? tournament.groups : []).forEach((group) => {
+      (Array.isArray(group?.teams) ? group.teams : []).forEach(ensureTeam);
+    });
+  });
 
   sheets.forEach((sheet) => {
     (Array.isArray(sheet.detalles) ? sheet.detalles : []).forEach((detail, index) => {
@@ -119,7 +128,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
     setSelectedCategory("");
   }, [selectedTurno]);
 
-  const rows = useMemo(() => makeStandings(sheets, tournamentIds, selectedCategory), [sheets, tournamentIds, selectedCategory]);
+  const rows = useMemo(() => makeStandings(sheets, tournamentIds, selectedCategory, activeTournaments), [sheets, tournamentIds, selectedCategory, activeTournaments]);
 
   if (!availableTurnos.length) return null;
 
