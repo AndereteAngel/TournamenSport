@@ -633,14 +633,18 @@ export function GroupStageView({
 
             <tbody>
               {standings.map((team, idx) => {
-                const isQualified = idx < tournament.qualifiersPerGroup;
+                const isQualified = !isLeague && idx < Number(tournament.qualifiersPerGroup || tournament.qualifiers_per_group || 0);
+                const isLeagueChampion = isLeague && isFinalized && idx === 0;
+                const isHighlighted = isQualified || isLeagueChampion;
 
                 return (
                   <tr
                     key={team.name}
                     style={{
                       borderBottom: "1px solid rgba(255,255,255,0.06)",
-                      backgroundColor: isQualified
+                      backgroundColor: isLeagueChampion
+                        ? "rgba(250,204,21,0.09)"
+                        : isQualified
                         ? "rgba(34,197,94,0.05)"
                         : "transparent",
                     }}
@@ -650,10 +654,10 @@ export function GroupStageView({
                         padding: "9px 8px",
                         textAlign: "left",
                         fontWeight: "bold",
-                        color: isQualified ? "#4ade80" : "#fff",
+                        color: isLeagueChampion ? "#facc15" : isQualified ? "#4ade80" : "#fff",
                       }}
                     >
-                      {idx + 1}. {team.name} {isQualified && "⭐"}
+                      {idx + 1}. {team.name} {isLeagueChampion ? "🏆 CAMPEÓN" : isQualified ? "⭐" : ""}
                     </td>
 
                     <td
