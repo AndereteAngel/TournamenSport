@@ -6106,7 +6106,7 @@ export function TournamenSportApp() {
             className="tc-form-back"
             onClick={() => {
               setActiveTournament(null);
-              setActiveView("division-tournaments");
+              setActiveView("home");
             }}
           >
             ← Volver a torneos
