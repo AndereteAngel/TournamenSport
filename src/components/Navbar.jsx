@@ -95,7 +95,7 @@ export function Navbar({
 
       {/* IZQUIERDA */}
       <div
-        onClick={onGoHome}
+        onClick={onAdminClick}
         style={{
           display: "flex",
           alignItems: "center",
@@ -105,19 +105,19 @@ export function Navbar({
       >
         <img
           src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166"
-          alt={isAdmin ? "FEFUTIN - cerrar sesión de administrador" : "FEFUTIN - acceso de administrador"}
-          title={isAdmin ? "Cerrar sesión de administrador" : "Ingresar como administrador"}
+          alt="FEFUTIN - abrir ingreso y registro"
+          title="Ir a ingreso y registro"
           role="button"
           tabIndex={0}
           onClick={(event) => {
             event.stopPropagation();
-            isAdmin ? onLogout?.() : onAdminClick?.();
+            onAdminClick?.();
           }}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
               event.stopPropagation();
-              isAdmin ? onLogout?.() : onAdminClick?.();
+              onAdminClick?.();
             }
           }}
           className="tc-navbar-fefutin-logo"
