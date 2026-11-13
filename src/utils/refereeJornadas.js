@@ -24,7 +24,9 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
           normalizarEquipo(team1) === "pasaje directo" || normalizarEquipo(team2) === "pasaje directo") return;
       const rama = obtenerRama(tournament);
       const propietario = String(tournament?.created_by_user_id || tournament?.created_by || "").trim().toLocaleLowerCase("es");
-      const competencia = [String(tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"), propietario, rama.toLocaleLowerCase("es")].join("|");
+      const partesTurno = String(tournament?.game || "").split("·").map((parte) => parte.trim());
+      const turno = partesTurno.find((parte) => ["Matutino", "Vespertino"].includes(parte)) || "Sin turno";
+      const competencia = [String(tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"), propietario, rama.toLocaleLowerCase("es"), turno.toLocaleLowerCase("es")].join("|");
       const categoriaPartes = String(tournament?.game || "").split("·").map((parte) => parte.trim());
       const categoria = String(tournament?.category_detail || categoriaPartes[categoriaPartes.length - 1] || getTournamentCategory(tournament) || "Sin categoría").trim();
       const cruce = [normalizarEquipo(team1), normalizarEquipo(team2)].sort().join("::");
@@ -93,15 +95,19 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
       torneos.forEach((tournament) => {
         const ramaTorneo = obtenerRama(tournament);
         const propietarioTorneo = String(tournament?.created_by_user_id || tournament?.created_by || "").trim().toLocaleLowerCase("es");
+        const partesTurnoTorneo = String(tournament?.game || "").split("·").map((parte) => parte.trim());
+        const turnoTorneo = partesTurnoTorneo.find((parte) => ["Matutino", "Vespertino"].includes(parte)) || "Sin turno";
         const competenciaTorneo = [
           String(tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
           propietarioTorneo,
           ramaTorneo.toLocaleLowerCase("es"),
+          turnoTorneo.toLocaleLowerCase("es"),
         ].join("|");
         const competenciaJornada = [
           String(jornada.torneo || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
           jornada.propietario,
           jornada.rama.toLocaleLowerCase("es"),
+          jornada.turno?.toLocaleLowerCase("es") || "sin turno",
         ].join("|");
         if (competenciaTorneo !== competenciaJornada) return;
         const partesCategoria = String(tournament?.game || "").split("·").map((parte) => parte.trim());
