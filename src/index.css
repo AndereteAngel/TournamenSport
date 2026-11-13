@@ -6340,3 +6340,27 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   width: 100% !important;
   text-align: center !important;
 }
+
+
+/* FEFUTIN — nombres de equipos en Tabla General: enlace limpio, sin placa roja. */
+#root .cr-container .cr-card button.fefutin-general-team-link,
+#root .cr-container button.fefutin-general-team-link {
+  padding: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: 0 !important;
+  border-bottom: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  text-align: left !important;
+}
+#root .cr-container .cr-card button.fefutin-general-team-link:hover,
+#root .cr-container button.fefutin-general-team-link:hover {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
