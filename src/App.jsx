@@ -18,6 +18,7 @@ import { FefutinClubTournamentRequests, ReferenteTorneoSolicitudes } from "./com
 import { FefutinPlayerApprovals } from "./components/FefutinPlayerApprovals";
 import { FefutinTopScorers } from "./components/FefutinTopScorers";
 import { FefutinSheetArchive } from "./components/FefutinSheetArchive";
+import { FefutinGeneralStandings } from "./components/FefutinGeneralStandings";
 import { FefutinRefereeJornadaSheets } from "./components/FefutinRefereeJornadaSheets";
 import { supabase } from "./supabaseClient";
 import { obtenerJornadasDeArbitro } from "./utils/refereeJornadas";
@@ -4844,6 +4845,8 @@ export function TournamenSportApp() {
               }
 
               return (
+                <>
+                <FefutinGeneralStandings tournaments={branchTournaments} branch={tournamentDivisionFilter} />
                 <div
                   className="tc-division-tournament-carousel"
                   aria-label={`Carrusel de torneos de ${tournamentDivisionFilter}`}
@@ -4954,6 +4957,7 @@ export function TournamenSportApp() {
                     );
                   })}
                 </div>
+                </>
               );
             })()}
           </section>
