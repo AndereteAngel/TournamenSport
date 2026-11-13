@@ -164,6 +164,49 @@ export function FefutinRefereeJornadaSheets({ tournaments = [], currentUser }) {
     return () => { active = false; };
   }, [currentUser?.id]);
 
+  const printJornada = (jornada, withResults) => {
+    const popup = window.open("", "_blank", "width=900,height=700");
+    if (!popup) {
+      setError("El navegador bloqueó la impresión. Permití las ventanas emergentes para imprimir la planilla.");
+      return;
+    }
+    const escapeHtml = (value) => String(value == null ? "" : value).replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
+    })[character]);
+    const rows = jornada.details.map((detail) => {
+      const result = withResults && detail.resultadoCargado
+        ? `${detail.score1} - ${detail.score2}`
+        : withResults ? "— - —" : "_____ - _____";
+      const points = withResults && detail.resultadoCargado
+        ? `<td>${detail.puntosTeam1}</td><td>${detail.puntosTeam2}</td>`
+        : withResults ? "<td>—</td><td>—</td>" : "<td></td>";
+      return `<tr><td>${escapeHtml(detail.categoria)}</td><td>${escapeHtml(detail.team1 || jornada.teamLocal)} ${result} ${escapeHtml(detail.team2 || jornada.teamVisitor)}</td>${points}</tr>`;
+    }).join("");
+    const headerPoints = withResults
+      ? `<p class="totals">${escapeHtml(jornada.teamLocal)}: <strong>${jornada.pointsLocal} puntos</strong> · ${escapeHtml(jornada.teamVisitor)}: <strong>${jornada.pointsVisitor} puntos</strong></p>`
+      : "";
+    const tableHeaders = withResults
+      ? "<th>Puntos local</th><th>Puntos visitante</th>"
+      : "<th>Observaciones</th>";
+    const signature = withResults ? "" : `<div class="signatures"><div>Firma referente local<br><br>____________________________</div><div>Firma referente visitante<br><br>____________________________</div></div><p class="ref">Árbitro: ${escapeHtml(currentUser?.username || "________________")} · Matrícula: __________________</p>`;
+    popup.document.open();
+    popup.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Planilla general FEFUTIN</title><style>
+      @page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}
+      header{border-bottom:4px solid #b5122a;padding-bottom:12px;margin-bottom:16px}.brand{color:#b5122a;font-weight:900;letter-spacing:3px;font-size:13px}
+      h1{font-size:21px;margin:8px 0 5px}.meta{font-size:11px;color:#555}.clubs{font-size:17px;font-weight:900;margin-top:12px}
+      table{width:100%;border-collapse:collapse;margin-top:16px;font-size:10px}th{background:#171c27;color:#fff;text-align:left;padding:8px 6px}
+      td{height:38px;padding:7px 6px;border-bottom:1px solid #cfd3da}.totals{margin-top:14px;font-size:12px}
+      .signatures{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:48px;text-align:center;font-size:11px;page-break-inside:avoid}
+      .ref{margin-top:22px;font-size:11px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+      </style></head><body><header><div class="brand">FEFUTIN</div><h1>PLANILLA OFICIAL GENERAL DE JORNADA</h1>
+      <div class="meta">${escapeHtml(jornada.tournamentTitle)} · Rama ${escapeHtml(jornada.branch)} · ${escapeHtml(jornada.categories.join(" · "))}</div>
+      <div class="clubs">${escapeHtml(jornada.teamLocal)} VS. ${escapeHtml(jornada.teamVisitor)}</div></header>
+      <table><thead><tr><th>Categoría</th><th>Resultado</th>${tableHeaders}</tr></thead><tbody>${rows}</tbody></table>
+      ${headerPoints}${signature}</body></html>`);
+    popup.document.close();
+    window.setTimeout(() => { popup.focus(); popup.print(); }, 300);
+  };
+
   const archiveJornada = async (jornada) => {
     if (!currentUser?.id || !jornada?.allClosed || savedKeys.has(jornada.jornadaKey) || savingKey) return;
     setSavingKey(jornada.jornadaKey);
@@ -228,6 +271,10 @@ export function FefutinRefereeJornadaSheets({ tournaments = [], currentUser }) {
                   <strong>{detail.resultadoCargado ? detail.puntosTeam2 : "—"}</strong>
                 </div>
               ))}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".5rem", marginTop: ".7rem" }}>
+              <button type="button" onClick={() => printJornada(jornada, false)} style={{ padding: ".6rem .4rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#fff", color: "#171c27", fontWeight: 900, fontSize: ".7rem" }}>IMPRIMIR EN BLANCO</button>
+              <button type="button" onClick={() => printJornada(jornada, true)} style={{ padding: ".6rem .4rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#241015", color: "#fff", fontWeight: 900, fontSize: ".7rem" }}>IMPRIMIR CON RESULTADOS</button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".5rem", marginTop: ".65rem" }}>
               <div style={{ padding: ".55rem", border: "1px solid #b5122a", borderRadius: "7px" }}><small style={{ color: "#bbb" }}>TOTAL {jornada.teamLocal}</small><strong style={{ display: "block", color: "#fff" }}>{jornada.pointsLocal} puntos</strong></div>
