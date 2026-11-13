@@ -230,11 +230,6 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   const filteredPhotos = photos.filter((photo) => {
     const photoTournament = archivedTournaments.find((item) => String(item.id) === String(photo.tournament_id));
     const relatedSheets = sheets.filter((sheet) => isPhotoForSheet(photo, sheet));
-    const matchesCategory = !filterCategory || (
-      photo.document_type === "category"
-        ? String(photo.categoria || "") === filterCategory
-        : relatedSheets.some((sheet) => String(sheet.categoria || "") === filterCategory)
-    );
     const photoCategory = String(photo.categoria || getTournamentCategory(photoTournament) || "").trim();
     const matchesPhotoCategory = !filterCategory || (
       photo.document_type === "category"
