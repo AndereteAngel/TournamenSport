@@ -199,6 +199,42 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
 
   return (
     <section aria-label={`Tablas generales de ${branch}`} style={{ margin: "1rem 0 1.25rem", color: "#fff" }}>
+      <style>{`
+        .fefutin-general-team-link {
+          display: inline-block;
+          appearance: none;
+          padding: 0;
+          border: 0;
+          background: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+          color: #fff;
+          font: inherit;
+          font-size: .9rem;
+          font-weight: 900;
+          letter-spacing: .01em;
+          line-height: 1.25;
+          text-align: left;
+          text-decoration: none;
+          cursor: pointer;
+          animation: fefutinTeamGlow 2.8s ease-in-out infinite;
+          transition: color .2s ease, text-shadow .2s ease, transform .2s ease;
+        }
+        .fefutin-general-team-link:hover,
+        .fefutin-general-team-link:focus-visible {
+          color: #fff;
+          text-shadow: 0 0 5px rgba(255,255,255,.85), 0 0 12px rgba(243,160,173,.9), 0 0 20px rgba(181,18,42,.8);
+          outline: none;
+          transform: translateX(2px);
+        }
+        @keyframes fefutinTeamGlow {
+          0%, 100% { text-shadow: 0 0 0 rgba(243,160,173,0); }
+          50% { text-shadow: 0 0 5px rgba(243,160,173,.55), 0 0 10px rgba(181,18,42,.35); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .fefutin-general-team-link { animation: none; transition: none; }
+        }
+      `}</style>
       <h3 style={{ textAlign: "center", color: "#fff", fontSize: ".9rem", letterSpacing: ".1em", margin: "0 0 .7rem" }}>TABLAS GENERALES</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 210px), 1fr))", gap: ".65rem" }}>
         {competitions.map((competition) => (
@@ -252,7 +288,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
                     <td style={{ padding: ".55rem .35rem", fontWeight: 800 }}>
                       <button className="fefutin-general-team-link" type="button" onClick={() => setSelectedTeam(team.name)}
                         aria-label={`Ver partidos de ${team.name}`}
-                        style={{ padding: 0, border: 0, background: "transparent", backgroundColor: "transparent", backgroundImage: "none", boxShadow: "none", color: "#fff", font: "inherit", fontWeight: 900, textAlign: "left", textDecoration: "underline", textDecorationColor: "#f3a0ad", textUnderlineOffset: "3px", cursor: "pointer" }}>
+                        style={{}}>
                         {team.name}
                       </button>
                     </td>
