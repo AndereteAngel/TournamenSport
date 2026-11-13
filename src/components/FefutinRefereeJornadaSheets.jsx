@@ -143,6 +143,33 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser }) {
     setMessage("Planilla general cerrada y guardada en el archivo institucional.");
   };
 
+  // Guarda en el archivo institucional las jornadas completas sin exigir un paso manual.
+  useEffect(() => {
+    if (!archiveLoaded || !currentUser?.id) return;
+    const saveCompleted = async () => {
+      for (const jornada of planillas) {
+        if (!jornada.allClosed || savedKeys.has(jornada.jornadaKey) || archivingKeysRef.current.has(jornada.jornadaKey) || !jornada.tournamentId) continue;
+        archivingKeysRef.current.add(jornada.jornadaKey);
+        const payload = {
+          jornada_key: jornada.jornadaKey, tournament_id: jornada.tournamentId, tournament_ids: jornada.tournamentIds,
+          tournament_title: jornada.tournamentTitle, rama: jornada.branch, team_local: jornada.teamLocal,
+          team_visitante: jornada.teamVisitor, referee_id: currentUser.id, referee_name: currentUser.username || null,
+          jornada_date: new Date().toISOString().slice(0, 10), categorias: jornada.categories, detalles: jornada.details,
+          puntos_local: jornada.pointsLocal, puntos_visitante: jornada.pointsVisitor, closed_at: new Date().toISOString(),
+        };
+        const { error: insertError } = await supabase.from("fefutin_jornada_sheets").insert(payload);
+        if (insertError && insertError.code !== "23505") {
+          setError("No se pudo guardar automáticamente la planilla general: " + insertError.message);
+          archivingKeysRef.current.delete(jornada.jornadaKey);
+          continue;
+        }
+        setSavedKeys((previous) => new Set([...previous, jornada.jornadaKey]));
+        setMessage("Planilla general guardada automáticamente en el archivo institucional.");
+      }
+    };
+    saveCompleted();
+  }, [archiveLoaded, currentUser?.id, currentUser?.username, planillas, savedKeys]);
+
   if (!planillas.length) {
     return <section style={{ margin: "1rem 0", padding: "1rem", border: "1px solid #555", borderRadius: "10px", color: "#ddd" }}>
       <strong>PLANILLAS GENERALES POR JORNADA</strong>
