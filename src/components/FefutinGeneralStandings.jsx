@@ -192,7 +192,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
             <div style={{ overflowX: "auto", marginTop: ".8rem" }}>
               <table style={{ width: "100%", minWidth: "540px", borderCollapse: "collapse", color: "#fff", fontSize: ".76rem" }}>
                 <thead><tr style={{ background: "#b5122a" }}>
-                  {["POS", "CLUB", "PJ", "PG", "PE", "PP", "GF", "GC", "DIF", "PTS"].map((heading) =>
+                  {["POS", "CLUB", "PTS", "PJ", "PG", "PE", "PP", "GF", "GC", "DIF"].map((heading) =>
                     <th key={heading} style={{ padding: ".55rem .35rem", textAlign: heading === "CLUB" ? "left" : "center", whiteSpace: "nowrap" }}>{heading}</th>
                   )}
                 </tr></thead>
@@ -200,7 +200,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
                   <tr key={normalize(team.name)} style={{ borderBottom: "1px solid #454545", background: index % 2 ? "#202633" : "#11151d" }}>
                     <td style={{ padding: ".55rem .35rem", textAlign: "center", fontWeight: 900 }}>{index + 1}</td>
                     <td style={{ padding: ".55rem .35rem", fontWeight: 800 }}>{team.name}</td>
-                    {[team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference, team.points].map((value, valueIndex) =>
+                    {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, valueIndex) =>
                       <td key={valueIndex} style={{ padding: ".55rem .35rem", textAlign: "center", fontVariantNumeric: "tabular-nums" }}>{value}</td>
                     )}
                   </tr>
