@@ -191,6 +191,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   const [filterBranch, setFilterBranch] = useState("");
   const [filterTournament, setFilterTournament] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [filterDocumentType, setFilterDocumentType] = useState("");
   const [documentViewBySheet, setDocumentViewBySheet] = useState({});
 
   const getTournamentBranch = (tournament) => {
@@ -221,24 +222,11 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
 
   const filteredSheets = sheets.filter((sheet) => {
+    if (filterDocumentType === "jornada") return false;
     const tournament = archivedTournaments.find((item) => String(item.id) === String(sheet.tournament_id));
     return (!filterBranch || getTournamentBranch(tournament) === filterBranch) &&
       (!filterTournament || String(sheet.tournament_id) === String(filterTournament)) &&
       (!filterCategory || String(sheet.categoria || getTournamentCategory(tournament)) === filterCategory);
-  });
-
-  const filteredPhotos = photos.filter((photo) => {
-    const photoTournament = archivedTournaments.find((item) => String(item.id) === String(photo.tournament_id));
-    const relatedSheets = sheets.filter((sheet) => isPhotoForSheet(photo, sheet));
-    const photoCategory = String(photo.categoria || getTournamentCategory(photoTournament) || "").trim();
-    const matchesPhotoCategory = !filterCategory || (
-      photo.document_type === "category"
-        ? photoCategory === filterCategory
-        : relatedSheets.some((sheet) => String(sheet.categoria || getTournamentCategory(photoTournament)) === filterCategory)
-    );
-    return (!filterBranch || getTournamentBranch(photoTournament) === filterBranch) &&
-      (!filterTournament || String(photo.tournament_id) === String(filterTournament)) &&
-      matchesPhotoCategory;
   });
 
   const isPhotoForSheet = (photo, sheet) => {
@@ -266,7 +254,23 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     return Boolean(sameJornada || sameDate || missingAssociationData);
   };
 
-  const photosForSheet = (sheet) => photos.filter((photo) => isPhotoForSheet(photo, sheet));
+  const filteredPhotos = photos.filter((photo) => {
+    if (filterDocumentType === "partido" && photo.document_type !== "category") return false;
+    if (filterDocumentType === "jornada" && photo.document_type === "category") return false;
+    const photoTournament = archivedTournaments.find((item) => String(item.id) === String(photo.tournament_id));
+    const relatedSheets = sheets.filter((sheet) => isPhotoForSheet(photo, sheet));
+    const photoCategory = String(photo.categoria || getTournamentCategory(photoTournament) || "").trim();
+    const matchesPhotoCategory = !filterCategory || (
+      photo.document_type === "category"
+        ? photoCategory === filterCategory
+        : relatedSheets.some((sheet) => String(sheet.categoria || getTournamentCategory(photoTournament)) === filterCategory)
+    );
+    return (!filterBranch || getTournamentBranch(photoTournament) === filterBranch) &&
+      (!filterTournament || String(photo.tournament_id) === String(filterTournament)) &&
+      matchesPhotoCategory;
+  });
+
+  const photosForSheet = (sheet) => filteredPhotos.filter((photo) => isPhotoForSheet(photo, sheet));
 
   return (
     <main className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", minWidth: 0, minHeight: "70vh", padding: "0", color: "#fff", boxSizing: "border-box" }}>
@@ -338,6 +342,14 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
                 <select value={filterCategory} onChange={(event) => setFilterCategory(event.target.value)} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
                   <option value="">Todas</option>
                   {categories.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+              </label>
+              <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
+                TIPO DE PLANILLA
+                <select value={filterDocumentType} onChange={(event) => setFilterDocumentType(event.target.value)} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
+                  <option value="">Todas</option>
+                  <option value="partido">Por partido</option>
+                  <option value="jornada">Por jornada</option>
                 </select>
               </label>
             </div>
