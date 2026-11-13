@@ -4478,6 +4478,10 @@ export function TournamenSportApp() {
       {showChampionCard && activeTournament?.status === "Finalizado" && (
         <ChampionCelebration
           tournament={activeTournament}
+          clubLogos={fefutinTournamentClubs.map((club) => ({
+            name: club.club_name,
+            url: club.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl : "",
+          }))}
           onClose={() => setShowChampionCard(false)}
         />
       )}
