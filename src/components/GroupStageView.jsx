@@ -838,7 +838,7 @@ export function GroupStageView({
       </div>
 
       {/* AVANZAR */}
-      {allGroupsFinished && canAdvanceToPlayoffs && (
+      {!isLeague && allGroupsFinished && canAdvanceToPlayoffs && (
         <button
           onClick={onProceedToPlayoffs}
           className="cr-btn-gold"
