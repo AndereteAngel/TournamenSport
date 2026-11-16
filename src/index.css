@@ -6226,7 +6226,7 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   z-index: 5 !important;
 }
 #root .tc-division-tournaments-screen .tc-division-tournament-card:hover {
-  transform: scale(1.06) translateY(-4px) !important;
+  transform: none !important;
   border-color: #fff !important;
   box-shadow: 0 9px 0 #590a18, 0 18px 34px rgba(0,0,0,.52), 0 0 28px rgba(181,18,42,.42) !important;
   filter: brightness(1.1);
