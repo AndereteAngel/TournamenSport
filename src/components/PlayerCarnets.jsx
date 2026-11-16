@@ -24,6 +24,11 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
   const [categoryFilter, setCategoryFilter] = useState("todas");
   const [statusFilter, setStatusFilter] = useState("todos");
   const [carnetAlertOpen, setCarnetAlertOpen] = useState(false);
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
+  const [dniPreviewOpen, setDniPreviewOpen] = useState(false);
+  const [dniDocuments, setDniDocuments] = useState(null);
+  const [dniLoading, setDniLoading] = useState(false);
+  const [dniError, setDniError] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -101,6 +106,43 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
       setSelectedKey(selectedPlayer.carnet_number);
     }
   }, [selectedPlayer, selectedKey]);
+
+  const openDniDocuments = async (player) => {
+    setDniPreviewOpen(true);
+    setDniLoading(true);
+    setDniError("");
+    setDniDocuments(null);
+    const { data, error: rpcError } = await supabase.rpc("get_fefutin_player_dni_documents", {
+      p_player_entry_id: player.id,
+    });
+    if (rpcError) {
+      setDniError(rpcError.message || "No se pudieron consultar los documentos del DNI.");
+      setDniLoading(false);
+      return;
+    }
+    const documents = data?.[0];
+    if (!documents?.dni_front_path || !documents?.dni_back_path) {
+      setDniError("Este jugador todavía no tiene cargados el frente y el dorso del DNI.");
+      setDniLoading(false);
+      return;
+    }
+    const [front, back] = await Promise.all([
+      supabase.storage.from("fefutin-player-dni").createSignedUrl(documents.dni_front_path, 300),
+      supabase.storage.from("fefutin-player-dni").createSignedUrl(documents.dni_back_path, 300),
+    ]);
+    if (front.error || back.error) {
+      setDniError(front.error?.message || back.error?.message || "No se pudieron abrir las imágenes del DNI.");
+      setDniLoading(false);
+      return;
+    }
+    setDniDocuments({
+      frontUrl: front.data.signedUrl,
+      backUrl: back.data.signedUrl,
+      frontPdf: documents.dni_front_path.toLowerCase().endsWith(".pdf"),
+      backPdf: documents.dni_back_path.toLowerCase().endsWith(".pdf"),
+    });
+    setDniLoading(false);
+  };
 
   const fieldStyle = {
     width: "100%", boxSizing: "border-box", padding: ".75rem",
@@ -192,7 +234,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
               </div>
 
               <div style={{ boxSizing: "border-box", width: "100%", height: "calc(100% - 108px)", minHeight: 0, padding: "clamp(.45rem,1.5vw,.8rem)", display: "grid", gridTemplateColumns: "clamp(92px,19%,140px) minmax(0,1fr)", gap: "clamp(.5rem,1.5vw,.9rem)", alignItems: "center" }}>
-                <div style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "grid", placeItems: "center" }}>
+                <div style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "grid", placeItems: "center", cursor: photoUrl ? "zoom-in" : "default" }} role="button" tabIndex={photoUrl ? 0 : -1} aria-label="Ampliar fotografía del jugador" onClick={() => photoUrl && setPhotoPreviewOpen(true)} onKeyDown={(event) => { if (photoUrl && (event.key === "Enter" || event.key === " ")) setPhotoPreviewOpen(true); }}>
                   {photoUrl ? <img src={photoUrl} alt={"Fotografía de " + selectedPlayer.first_name + " " + selectedPlayer.last_name} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ color: "#888", fontSize: "2.4rem" }}>⚽</span>}
                 </div>
                 <div style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "break-word" }}>
@@ -205,7 +247,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                     </div>
                     <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
                       <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>DNI</p>
-                      <p style={{ color: "#fff", fontSize: ".9rem", fontWeight: 800, margin: ".15rem 0 0" }}>{selectedPlayer.dni || "NO REGISTRADO"}</p>
+                      <button type="button" onClick={() => openDniDocuments(selectedPlayer)} style={{ color: "#fff", fontSize: ".9rem", fontWeight: 800, margin: ".15rem 0 0", padding: 0, border: 0, borderBottom: "1px dashed #e7a0aa", background: "transparent", cursor: "pointer", textAlign: "left" }}>{selectedPlayer.dni || "NO REGISTRADO"}　↗</button>
                     </div>
                     <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
                       <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>CLUB</p>
@@ -399,6 +441,45 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
             `}</style>
             <p style={{ color: "#aaa", fontSize: ".78rem", textAlign: "center", marginTop: "1rem" }}>Credencial generada desde el registro oficial de jugadores.</p>
           </>
+        )}
+
+        {photoPreviewOpen && photoUrl && selectedPlayer && (
+          <div role="dialog" aria-modal="true" aria-label="Fotografía ampliada del jugador" onClick={(event) => { if (event.target === event.currentTarget) setPhotoPreviewOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 11000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", background: "rgba(0,0,0,.94)" }}>
+            <button type="button" onClick={() => setPhotoPreviewOpen(false)} style={{ position: "absolute", top: "1rem", right: "1rem", zIndex: 1, border: "1px solid #b5122a", borderRadius: "9px", padding: ".65rem .9rem", color: "#fff", background: "#171717", cursor: "pointer" }}>✕ Cerrar</button>
+            <img src={photoUrl} alt={"Fotografía ampliada de " + selectedPlayer.first_name + " " + selectedPlayer.last_name} style={{ display: "block", maxWidth: "min(94vw, 720px)", maxHeight: "84vh", objectFit: "contain", border: "2px solid #b5122a", borderRadius: "12px", boxShadow: "0 16px 60px rgba(0,0,0,.7)" }} />
+          </div>
+        )}
+
+        {dniPreviewOpen && (
+          <div role="dialog" aria-modal="true" aria-label="Documentos del DNI" onClick={(event) => { if (event.target === event.currentTarget) setDniPreviewOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 11001, display: "flex", alignItems: "center", justifyContent: "center", padding: ".75rem", background: "rgba(0,0,0,.94)" }}>
+            <div style={{ width: "min(100%, 960px)", maxHeight: "94vh", overflowY: "auto", padding: "1rem", border: "1px solid #b5122a", borderRadius: "14px", background: "#171717", color: "#fff" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".7rem", marginBottom: "1rem" }}>
+                <div>
+                  <strong style={{ display: "block" }}>DOCUMENTO DE IDENTIDAD</strong>
+                  <span style={{ color: "#aaa", fontSize: ".8rem" }}>{selectedPlayer ? [selectedPlayer.first_name, selectedPlayer.last_name].filter(Boolean).join(" ") : ""}</span>
+                </div>
+                <button type="button" onClick={() => setDniPreviewOpen(false)} style={{ border: "1px solid #b5122a", borderRadius: "8px", background: "#101010", color: "#fff", padding: ".55rem .8rem", cursor: "pointer" }}>✕ Cerrar</button>
+              </div>
+              {dniLoading && <p style={{ textAlign: "center", color: "#ddd" }}>Cargando documentos...</p>}
+              {dniError && <p role="alert" style={{ color: "#fca5a5" }}>{dniError}</p>}
+              {dniDocuments && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))", gap: "1rem" }}>
+                  {[
+                    { label: "FRENTE DEL DNI", url: dniDocuments.frontUrl, pdf: dniDocuments.frontPdf },
+                    { label: "DORSO DEL DNI", url: dniDocuments.backUrl, pdf: dniDocuments.backPdf },
+                  ].map((document) => (
+                    <div key={document.label} style={{ minWidth: 0, padding: ".65rem", border: "1px solid #444", borderRadius: "10px", background: "#090909" }}>
+                      <strong style={{ display: "block", color: "#e7a0aa", fontSize: ".8rem", marginBottom: ".6rem" }}>{document.label}</strong>
+                      {document.pdf
+                        ? <iframe title={document.label} src={document.url} style={{ width: "100%", height: "min(65vh,520px)", border: 0, background: "#fff", borderRadius: "6px" }} />
+                        : <img src={document.url} alt={document.label} style={{ display: "block", width: "100%", maxHeight: "65vh", objectFit: "contain", background: "#fff", borderRadius: "6px" }} />}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p style={{ color: "#888", fontSize: ".72rem", margin: "1rem 0 0" }}>Documentación privada. El acceso queda limitado al referente de este club y a los usuarios institucionales autorizados.</p>
+            </div>
+          </div>
         )}
       </section>
     </div>
