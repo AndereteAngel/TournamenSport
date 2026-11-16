@@ -4460,17 +4460,29 @@ export function TournamenSportApp() {
         <section className="fefutin-welcome" aria-label="Bienvenida a FEFUTIN">
           {showFootballRain && (
             <div className="fefutin-football-rain" aria-hidden="true">
-              {Array.from({ length: 44 }, (_, index) => (
-                <span
-                  key={index}
-                  style={{
-                    left: `${(index * 37) % 101}%`,
-                    animationDelay: `${(index % 8) * 0.035}s`,
-                    animationDuration: `${1.42 + (index % 4) * 0.055}s`,
-                    fontSize: `${1.5 + (index % 4) * 0.55}rem`,
-                  }}
-                >⚽</span>
-              ))}
+              {Array.from({ length: 44 }, (_, index) => {
+                const randomA = (Math.sin((index + 1) * 12.9898) * 43758.5453) % 1;
+                const randomB = (Math.sin((index + 1) * 78.233) * 19341.271) % 1;
+                const randomC = (Math.sin((index + 1) * 39.425) * 9271.113) % 1;
+                const a = (randomA + 1) % 1;
+                const b = (randomB + 1) % 1;
+                const c = (randomC + 1) % 1;
+                return (
+                  <span
+                    key={index}
+                    style={{
+                      left: `${a * 100}%`,
+                      animationDelay: `${b * 0.24}s`,
+                      animationDuration: `${1.35 + c * 0.3}s`,
+                      fontSize: `${1.5 + a * 2.1}rem`,
+                      "--fall-x": `${-65 + b * 130}px`,
+                      "--bounce-x": `${-55 + c * 110}px`,
+                      "--bounce-height": `${12 + a * 18}vh`,
+                      "--spin": `${300 + b * 520}deg`,
+                    }}
+                  >⚽</span>
+                );
+              })}
             </div>
           )}
           <div className="fefutin-welcome-panel">
