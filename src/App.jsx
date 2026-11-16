@@ -4940,6 +4940,7 @@ export function TournamenSportApp() {
               return (
                 <>
                 <FefutinGeneralStandings tournaments={branchTournaments} branch={tournamentDivisionFilter} />
+                <div className="tc-division-tournament-carousel-shell" style={{ position: "relative", width: "100%" }}>
                 <div
                   className="tc-division-tournament-carousel"
                   aria-label={`Carrusel de torneos de ${tournamentDivisionFilter}`}
@@ -4955,40 +4956,6 @@ export function TournamenSportApp() {
                       if (currentDistance < distance) { distance = currentDistance; nearest = index; }
                     });
                     setActiveDivisionTournamentIndex(nearest);
-                  }}
-                  onMouseEnter={(event) => {
-                    const container = event.currentTarget;
-                    if (container.__fefutinAutoAdvance) return;
-                    container.__fefutinAutoAdvance = window.setInterval(() => {
-                      const cards = Array.from(container.children);
-                      if (cards.length < 2) return;
-                      const center = container.getBoundingClientRect().left + container.clientWidth / 2;
-                      let nearest = 0;
-                      let distance = Infinity;
-                      cards.forEach((card, index) => {
-                        const rect = card.getBoundingClientRect();
-                        const currentDistance = Math.abs(center - (rect.left + rect.width / 2));
-                        if (currentDistance < distance) { distance = currentDistance; nearest = index; }
-                      });
-                      const nextIndex = (nearest + 1) % cards.length;
-                      if (nextIndex === 0) {
-                        container.scrollTo({ left: 0, behavior: "smooth" });
-                      } else {
-                        const nextRect = cards[nextIndex].getBoundingClientRect();
-                        const nextCenter = nextRect.left + nextRect.width / 2;
-                        container.scrollTo({
-                          left: container.scrollLeft + nextCenter - center,
-                          behavior: "smooth",
-                        });
-                      }
-                    }, 2000);
-                  }}
-                  onMouseLeave={(event) => {
-                    const container = event.currentTarget;
-                    if (container.__fefutinAutoAdvance) {
-                      window.clearInterval(container.__fefutinAutoAdvance);
-                      container.__fefutinAutoAdvance = null;
-                    }
                   }}
                   style={{
                     display: "flex",
@@ -5083,6 +5050,53 @@ export function TournamenSportApp() {
                       </div>
                     );
                   })}
+                </div>
+                <button
+                  type="button"
+                  className="tc-division-carousel-arrow tc-division-carousel-arrow-left"
+                  aria-label="Ver torneos anteriores"
+                  title="Anterior"
+                  disabled={activeDivisionTournamentIndex <= 0}
+                  onClick={(event) => {
+                    const container = event.currentTarget.parentElement.querySelector(".tc-division-tournament-carousel");
+                    if (!container) return;
+                    const cards = Array.from(container.children);
+                    const targetIndex = Math.max(0, activeDivisionTournamentIndex - 1);
+                    const target = cards[targetIndex];
+                    if (!target) return;
+                    const containerRect = container.getBoundingClientRect();
+                    const targetRect = target.getBoundingClientRect();
+                    container.scrollTo({
+                      left: container.scrollLeft + (targetRect.left + targetRect.width / 2) - (containerRect.left + containerRect.width / 2),
+                      behavior: "smooth",
+                    });
+                  }}
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className="tc-division-carousel-arrow tc-division-carousel-arrow-right"
+                  aria-label="Ver torneos siguientes"
+                  title="Siguiente"
+                  disabled={activeDivisionTournamentIndex >= visibleTournaments.length - 1}
+                  onClick={(event) => {
+                    const container = event.currentTarget.parentElement.querySelector(".tc-division-tournament-carousel");
+                    if (!container) return;
+                    const cards = Array.from(container.children);
+                    const targetIndex = Math.min(cards.length - 1, activeDivisionTournamentIndex + 1);
+                    const target = cards[targetIndex];
+                    if (!target) return;
+                    const containerRect = container.getBoundingClientRect();
+                    const targetRect = target.getBoundingClientRect();
+                    container.scrollTo({
+                      left: container.scrollLeft + (targetRect.left + targetRect.width / 2) - (containerRect.left + containerRect.width / 2),
+                      behavior: "smooth",
+                    });
+                  }}
+                >
+                  ›
+                </button>
                 </div>
                 </>
               );
