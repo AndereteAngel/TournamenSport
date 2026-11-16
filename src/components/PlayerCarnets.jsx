@@ -23,6 +23,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("todas");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [carnetAlertOpen, setCarnetAlertOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -158,15 +159,30 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
           <p style={{ color: "#ddd", textAlign: "center" }}>Cargando carnets...</p>
         ) : error ? (
           <p role="alert" style={{ color: "#fca5a5" }}>{error}</p>
-        ) : !selectedPlayer ? (
-          <p style={{ color: "#ddd", textAlign: "center", padding: "1.5rem" }}>
-            {players.length === 0
-              ? "Todavía no hay jugadores aprobados con carnet para mostrar. El carnet aparece cuando Admin o Directivo aprueba al jugador."
-              : "No hay carnets que coincidan con los filtros seleccionados."}
-          </p>
-        ) : (
+        ) : embedded ? (
           <>
-            <article className="fefutin-carnet-motion" style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "18px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", animation: "fefutinCarnetSway 5.5s ease-in-out infinite", transformOrigin: "50% 85%" }}>
+            <div style={{ display: "grid", gap: ".45rem", marginTop: ".5rem" }}>
+              {filteredPlayers.map((player, index) => (
+                <button key={player.carnet_number} type="button" onClick={() => { setSelectedKey(player.carnet_number); setCarnetAlertOpen(true); }} style={{ display: "grid", gridTemplateColumns: "42px 52px minmax(0,1fr) auto", alignItems: "center", gap: ".7rem", width: "100%", padding: ".65rem", textAlign: "left", border: "1px solid #444", borderRadius: "9px", background: "#101010", color: "#fff", cursor: "pointer" }}>
+                  <span style={{ color: "#fca5a5", fontWeight: 900 }}>{index + 1}</span>
+                  {player.photo_path ? <img src={supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl} alt="" style={{ width: "48px", height: "48px", borderRadius: "6px", objectFit: "cover" }} /> : <span style={{ width: "48px", height: "48px", display: "grid", placeItems: "center", borderRadius: "6px", background: "#242424" }}>⚽</span>}
+                  <span style={{ minWidth: 0 }}>
+                    <strong style={{ display: "block", overflowWrap: "anywhere" }}>{[player.last_name, player.first_name].filter(Boolean).join(", ")}</strong>
+                    <span style={{ display: "block", color: "#fca5a5", fontSize: ".75rem", marginTop: ".2rem" }}>{player.category_label || "Sin categoría"}</span>
+                  </span>
+                  <span style={{ color: "#ddd", fontSize: ".75rem", fontWeight: 800 }}>{player.carnet_number}　›</span>
+                </button>
+              ))}
+              {!filteredPlayers.length && <p style={{ color: "#aaa", textAlign: "center", padding: "1rem" }}>{players.length ? "No hay jugadores que coincidan con los filtros." : "Todavía no hay jugadores aprobados con carnet para mostrar."}</p>}
+            </div>
+            {carnetAlertOpen && selectedPlayer && (
+              <div role="dialog" aria-modal="true" aria-label="Carnet del jugador" onClick={(event) => { if (event.target === event.currentTarget) setCarnetAlertOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", background: "rgba(0,0,0,.82)", backdropFilter: "blur(4px)" }}>
+                <div style={{ width: "min(100%, 820px)", maxHeight: "92vh", overflowY: "auto", padding: "clamp(.6rem,2vw,1rem)", border: "1px solid #555", borderRadius: "14px", background: "#171717", boxShadow: "0 20px 70px rgba(0,0,0,.65)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", marginBottom: ".65rem" }}>
+                    <strong style={{ color: "#fff", fontSize: ".85rem" }}>CARNET DEL JUGADOR</strong>
+                    <button type="button" onClick={() => setCarnetAlertOpen(false)} style={{ border: "1px solid #b5122a", borderRadius: "8px", background: "#111", color: "#fff", padding: ".5rem .8rem", cursor: "pointer" }}>✕ Cerrar</button>
+                  </div>
+                  <article className="fefutin-carnet-motion" style={{ width: "100%", maxWidth: "760px", aspectRatio: "1.586 / 1", minHeight: "250px", boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "14px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", animation: "fefutinCarnetSway 5.5s ease-in-out infinite", transformOrigin: "50% 85%" }}>
               <div style={{ boxSizing: "border-box", width: "100%", padding: ".8rem 1rem", background: "#b5122a", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem" }}>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, color: "#fff", fontSize: ".78rem", fontWeight: 900, letterSpacing: ".1em" }}>FEFUTIN</p>
@@ -175,7 +191,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                 <img src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166" alt="Logo oficial de FEFUTIN" style={{ flex: "0 0 auto", width: "54px", height: "54px", objectFit: "contain", padding: "3px", boxSizing: "border-box", background: "#fff", border: "1px solid rgba(255,255,255,.8)", borderRadius: "8px" }} />
               </div>
 
-              <div style={{ boxSizing: "border-box", width: "100%", padding: "clamp(.75rem,3vw,1.15rem)", display: "grid", gridTemplateColumns: "clamp(110px,22%,190px) minmax(0,1fr)", gap: "clamp(.75rem,2.5vw,1.25rem)", alignItems: "center" }}>
+              <div style={{ boxSizing: "border-box", width: "100%", height: "calc(100% - 108px)", minHeight: 0, padding: "clamp(.45rem,1.5vw,.8rem)", display: "grid", gridTemplateColumns: "clamp(92px,19%,140px) minmax(0,1fr)", gap: "clamp(.5rem,1.5vw,.9rem)", alignItems: "center" }}>
                 <div style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "grid", placeItems: "center" }}>
                   {photoUrl ? <img src={photoUrl} alt={"Fotografía de " + selectedPlayer.first_name + " " + selectedPlayer.last_name} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ color: "#888", fontSize: "2.4rem" }}>⚽</span>}
                 </div>
@@ -214,6 +230,10 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                 <span style={{ color: "#ddd", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em" }}>JUGADOR FEFUTIN</span>
                 <span style={{ color: "#e7a0aa", fontSize: ".6rem", fontWeight: 800 }}>CARNET DIGITAL · FEFUTIN</span>
               </div>
+                  </article>
+                </div>
+              </div>
+            )}
             </article>
             <style>{`
               @keyframes fefutinCarnetSway {
