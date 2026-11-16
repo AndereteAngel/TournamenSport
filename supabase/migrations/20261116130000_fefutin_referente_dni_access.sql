@@ -9,8 +9,7 @@ create policy "fefutin_player_dni_read_authorized"
   using (
     bucket_id = 'fefutin-player-dni'
     and (
-      (storage.foldername(name))[1] = auth.uid()::text
-      or exists (
+      exists (
         select 1
         from public.profiles p
         where p.id = auth.uid()
