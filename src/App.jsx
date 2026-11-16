@@ -3198,7 +3198,7 @@ export function TournamenSportApp() {
     e.preventDefault();
     const username = registerInput.username.trim();
     const email = authInput.email.trim().toLowerCase();
-    const password = authInput.password.trim();
+    const password = authInput.password;
     const requestedRole = registerInput.requestedRole;
 
     if (username.length < 3) {
@@ -3264,7 +3264,16 @@ export function TournamenSportApp() {
     if (error) {
       console.error("Error al iniciar sesión:", error);
 
-      showNotice("❌ Email o contraseña incorrectos.");
+      const errorCode = String(error.code || "").toLowerCase();
+      const errorMessage = String(error.message || "").toLowerCase();
+
+      if (errorCode === "email_not_confirmed" || errorMessage.includes("email not confirmed")) {
+        showNotice("Tu cuenta fue creada, pero todavía tenés que confirmar tu email. Revisá la bandeja de entrada y la carpeta de correo no deseado.");
+      } else if (errorCode === "invalid_credentials" || errorMessage.includes("invalid login credentials")) {
+        showNotice("El email o la contraseña no coinciden con una cuenta registrada. Revisá los datos o usá la opción de recuperar contraseña.");
+      } else {
+        showNotice("No se pudo iniciar sesión: " + (error.message || "error desconocido de autenticación."));
+      }
 
       return;
     }
