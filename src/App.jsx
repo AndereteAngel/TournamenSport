@@ -4473,7 +4473,7 @@ export function TournamenSportApp() {
                     style={{
                       left: `${a * 100}%`,
                       animationDelay: `${b * 0.24}s`,
-                      animationDuration: `${1.35 + c * 0.3}s`,
+                      animationDuration: `${2.35 + c * 0.65}s`,
                       fontSize: `${1.5 + a * 2.1}rem`,
                       "--fall-x": `${-65 + b * 130}px`,
                       "--bounce-x": `${-55 + c * 110}px`,
@@ -4499,7 +4499,7 @@ export function TournamenSportApp() {
                 window.setTimeout(() => {
                   setShowWelcome(false);
                   setShowFootballRain(false);
-                }, 1900);
+                }, 3150);
               }}
             >BIENVENIDOS</button>
           </div>
