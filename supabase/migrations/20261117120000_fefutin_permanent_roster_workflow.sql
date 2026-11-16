@@ -139,7 +139,11 @@ begin
           'approval_status', e.approval_status,
           'registry_player_id', rp.registry_player_id,
           'carnet_number', fp.carnet_number,
-          'carnet_status', fp.verification_status,
+          'carnet_status', case
+            when fp.verification_status = 'no_habilitado' or fp.carnet_status = 'no_habilitado' then 'no_habilitado'
+            when fp.verification_status = 'habilitado' or fp.carnet_status = 'habilitado' then 'habilitado'
+            else coalesce(fp.verification_status, fp.carnet_status, 'pendiente')
+          end,
           'sort_order', e.sort_order
         ) order by e.sort_order, rp.last_name, rp.first_name, e.created_at
       )
@@ -365,8 +369,16 @@ begin
       end
     )
     on conflict (roster_player_id, club_tournament_id) do update
-      set jersey_number = excluded.jersey_number,
-          sort_order = excluded.sort_order,
+      set jersey_number = case
+            when current_entry.approval_status in ('aprobado', 'rechazado')
+              then current_entry.jersey_number
+            else excluded.jersey_number
+          end,
+          sort_order = case
+            when current_entry.approval_status in ('aprobado', 'rechazado')
+              then current_entry.sort_order
+            else excluded.sort_order
+          end,
           approval_status = case
             when current_entry.approval_status in ('aprobado', 'rechazado')
               then current_entry.approval_status
@@ -560,7 +572,11 @@ begin
     raise exception 'El jugador no tiene un alta aprobada y un carnet oficial';
   end if;
 
-  select coalesce(fp.verification_status, fp.carnet_status)
+  select case
+           when fp.verification_status = 'no_habilitado' or fp.carnet_status = 'no_habilitado' then 'no_habilitado'
+           when fp.verification_status = 'habilitado' or fp.carnet_status = 'habilitado' then 'habilitado'
+           else coalesce(fp.verification_status, fp.carnet_status, 'pendiente')
+         end
     into v_previous_status
   from public.fefutin_players fp
   where fp.id = v_registry_id
@@ -669,7 +685,11 @@ begin
     raise exception 'Solo podés verificar jugadores de un partido que tenés asignado y en el que participa su club';
   end if;
 
-  select coalesce(fp.verification_status, fp.carnet_status)
+  select case
+           when fp.verification_status = 'no_habilitado' or fp.carnet_status = 'no_habilitado' then 'no_habilitado'
+           when fp.verification_status = 'habilitado' or fp.carnet_status = 'habilitado' then 'habilitado'
+           else coalesce(fp.verification_status, fp.carnet_status, 'pendiente')
+         end
     into v_current_status
   from public.fefutin_players fp
   where fp.id = v_registry_id
