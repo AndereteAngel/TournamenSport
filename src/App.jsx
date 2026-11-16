@@ -2460,6 +2460,7 @@ export function TournamenSportApp() {
   const [managementInboxTab, setManagementInboxTab] = useState("torneos");
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
+  const [showFootballRain, setShowFootballRain] = useState(false);
   const [activeTournament, setActiveTournament] = useState(null);
   const [refereeMatchToOpen, setRefereeMatchToOpen] = useState(null);
   const [topScorersReturnView, setTopScorersReturnView] = useState("groups");
@@ -4457,12 +4458,38 @@ export function TournamenSportApp() {
     <div className="cr-container tc-theme-clash">
       {showWelcome && activeView !== "admin-login" && (
         <section className="fefutin-welcome" aria-label="Bienvenida a FEFUTIN">
+          {showFootballRain && (
+            <div className="fefutin-football-rain" aria-hidden="true">
+              {Array.from({ length: 26 }, (_, index) => (
+                <span
+                  key={index}
+                  style={{
+                    left: `${(index * 37) % 101}%`,
+                    animationDelay: `${(index % 9) * 0.09}s`,
+                    animationDuration: `${1.15 + (index % 5) * 0.16}s`,
+                    fontSize: `${1.5 + (index % 4) * 0.55}rem`,
+                  }}
+                >⚽</span>
+              ))}
+            </div>
+          )}
           <div className="fefutin-welcome-panel">
             <img src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166" alt="Logo histórico de FEFUTIN" className="fefutin-welcome-logo" />
             <div className="fefutin-welcome-kicker">FEDERACIÓN DE FÚTBOL INFANTIL</div>
             <h1>FEFUTIN</h1>
             <p>Pasión, formación y competencia.</p>
-            <button type="button" onClick={() => setShowWelcome(false)}>BIENVENIDOS</button>
+            <button
+              type="button"
+              disabled={showFootballRain}
+              onClick={() => {
+                if (showFootballRain) return;
+                setShowFootballRain(true);
+                window.setTimeout(() => {
+                  setShowWelcome(false);
+                  setShowFootballRain(false);
+                }, 1900);
+              }}
+            >BIENVENIDOS</button>
           </div>
         </section>
       )}
