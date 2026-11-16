@@ -389,7 +389,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
               </div>
 
               <div style={{ boxSizing: "border-box", width: "100%", padding: "clamp(.75rem,3vw,1.15rem)", display: "grid", gridTemplateColumns: "clamp(110px,22%,190px) minmax(0,1fr)", gap: "clamp(.75rem,2.5vw,1.25rem)", alignItems: "center" }}>
-                <div style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "grid", placeItems: "center" }}>
+                <div style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "grid", placeItems: "center", cursor: photoUrl ? "zoom-in" : "default" }} role="button" tabIndex={photoUrl ? 0 : -1} aria-label="Ampliar fotografía del jugador" onClick={() => photoUrl && setPhotoPreviewOpen(true)} onKeyDown={(event) => { if (photoUrl && (event.key === "Enter" || event.key === " ")) setPhotoPreviewOpen(true); }}>
                   {photoUrl ? <img src={photoUrl} alt={"Fotografía de " + selectedPlayer.first_name + " " + selectedPlayer.last_name} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ color: "#888", fontSize: "2.4rem" }}>⚽</span>}
                 </div>
                 <div style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "break-word" }}>
@@ -402,7 +402,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                     </div>
                     <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
                       <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>DNI</p>
-                      <p style={{ color: "#fff", fontSize: ".9rem", fontWeight: 800, margin: ".15rem 0 0" }}>{selectedPlayer.dni || "NO REGISTRADO"}</p>
+                      <button type="button" onClick={() => openDniDocuments(selectedPlayer)} style={{ color: "#fff", fontSize: ".9rem", fontWeight: 800, margin: ".15rem 0 0", padding: 0, border: 0, borderBottom: "1px dashed #e7a0aa", background: "transparent", cursor: "pointer", textAlign: "left" }}>{selectedPlayer.dni || "NO REGISTRADO"}　↗</button>
                     </div>
                     <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
                       <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>CLUB</p>
