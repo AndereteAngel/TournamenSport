@@ -404,7 +404,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </section>
                 )}
 
-                {mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && (
+                {mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "menu" && (
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: ".75rem", marginTop: "1rem" }}>
                     <button type="button" onClick={() => { setRosterView("registrados"); setEditingPlayer(null); }} style={{ ...buttonStyle, minHeight: "76px", background: rosterView === "registrados" ? "#b5122a" : "#171c27" }}>👥 JUGADORES REGISTRADOS</button>
                     <button type="button" onClick={() => { setRosterView("inscripcion"); setEditingPlayer(null); }} style={{ ...buttonStyle, minHeight: "76px", background: rosterView === "inscripcion" ? "#b5122a" : "#171c27" }}>📝 INSCRIPCIÓN</button>
@@ -497,6 +497,54 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                     </tbody>
                   </table>
                   {!filteredParticipations.some((item) => (rowsByParticipation[item.club_tournament_id] || []).length > 0) && <p style={{ color: "#aaa", textAlign: "center", padding: "1rem" }}>Todavía no hay jugadores registrados.</p>}
+                </div>
+              ) : mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "inscripcion" ? (
+                <div style={{ display: "grid", gap: "1rem", width: "100%", marginTop: "1rem" }}>
+                  <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".8rem", fontWeight: 800 }}>
+                    CATEGORÍA A INSCRIBIR
+                    <select value={rosterCategory} onChange={(event) => setRosterCategory(event.target.value)} style={filterInputStyle}>
+                      <option value="todas">Todas las categorías</option>
+                      {categoryOptions.map((category) => <option key={category} value={category}>{category}</option>)}
+                    </select>
+                  </label>
+                  {filteredParticipations.map((item) => {
+                    const players = rowsByParticipation[item.club_tournament_id] || [];
+                    return (
+                      <section key={item.club_tournament_id} style={{ width: "100%", minWidth: 0 }}>
+                        <h3 style={{ color: "#fff", fontSize: "1rem", margin: "0 0 .65rem" }}>{item.category_label}</h3>
+                        <div style={{ overflowX: "auto", border: "1px solid #444", borderRadius: "8px" }}>
+                          <table style={{ width: "100%", minWidth: "720px", borderCollapse: "collapse", color: "#fff", textAlign: "left", background: "#090909" }}>
+                            <thead><tr style={{ background: "#b5122a" }}>
+                              {["N.º", "APELLIDO", "NOMBRE", "DNI", "FECHA NAC.", "FOTO", ""].map((heading, i) => <th key={i} style={{ padding: ".6rem .5rem", fontSize: ".68rem", whiteSpace: "nowrap" }}>{heading}</th>)}
+                            </tr></thead>
+                            <tbody>
+                              {players.map((player, index) => {
+                                const locked = readOnly || player.approval_status === "aprobado" || player.approval_status === "rechazado";
+                                const photoUrl = player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : "";
+                                return <tr key={player.id} style={{ borderTop: "1px solid #333" }}>
+                                  <td style={{ padding: ".4rem .5rem", color: "#fca5a5", fontWeight: 900 }}>{index + 1}</td>
+                                  {["last_name", "first_name", "dni", "birth_date"].map((field) => <td key={field} style={{ padding: ".35rem" }}>
+                                    <input type={field === "birth_date" ? "date" : "text"} inputMode={field === "dni" ? "numeric" : undefined} value={player[field] || ""} disabled={locked} onChange={(event) => updatePlayer(item.club_tournament_id, player.id, field, event.target.value)} placeholder={field === "last_name" ? "Apellido" : field === "first_name" ? "Nombre" : field === "dni" ? "DNI" : ""} style={{ ...inputStyle, minWidth: field === "birth_date" ? "145px" : field === "dni" ? "110px" : "125px", padding: ".55rem .45rem", fontSize: ".8rem" }} />
+                                  </td>)}
+                                  <td style={{ padding: ".4rem .5rem", minWidth: "100px" }}>
+                                    {photoUrl ? <img src={photoUrl} alt="" style={{ width: "38px", height: "38px", objectFit: "cover", borderRadius: "5px", display: "block", marginBottom: ".25rem" }} /> : <span style={{ display: "block", color: "#999", fontSize: ".6rem", marginBottom: ".25rem" }}>SIN FOTO</span>}
+                                    {!locked && <label style={{ color: "#fca5a5", fontSize: ".68rem", fontWeight: 800, cursor: "pointer" }}>{uploadingPlayerId === player.id ? "Subiendo..." : "Cargar foto"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingPlayerId === player.id} onChange={(event) => uploadPlayerPhoto(item.club_tournament_id, player.id, event.target.files?.[0])} style={{ display: "none" }} /></label>}
+                                  </td>
+                                  <td style={{ padding: ".35rem" }}>{!locked && <button type="button" onClick={() => removePlayer(item.club_tournament_id, player.id)} style={{ ...buttonStyle, padding: ".4rem .55rem" }} aria-label="Quitar jugador">✕</button>}</td>
+                                </tr>;
+                              })}
+                              {!players.length && <tr><td colSpan={7} style={{ padding: "1rem", color: "#aaa", textAlign: "center" }}>Todavía no hay jugadores cargados en esta categoría.</td></tr>}
+                            </tbody>
+                          </table>
+                        </div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".6rem", flexWrap: "wrap", marginTop: ".65rem" }}>
+                          <button type="button" style={buttonStyle} onClick={() => addPlayer(item.club_tournament_id)}>＋ Agregar jugador</button>
+                          <button type="button" className="cr-btn-gold" disabled={savingId === item.club_tournament_id} onClick={() => saveRoster(item, false)}>{savingId === item.club_tournament_id ? "Guardando..." : "GUARDAR PLANILLA"}</button>
+                        </div>
+                      </section>
+                    );
+                  })}
+                  {!filteredParticipations.length && <p style={{ color: "#aaa", textAlign: "center" }}>Primero creá una categoría para cargar su planilla.</p>}
                 </div>
               ) : (filteredParticipations.map((item, tournamentIndex) => {
                 const allPlayers = rowsByParticipation[item.club_tournament_id] || [];
