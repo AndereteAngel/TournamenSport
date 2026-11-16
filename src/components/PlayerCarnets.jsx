@@ -234,7 +234,6 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                 </div>
               </div>
             )}
-            </article>
             <style>{`
               @keyframes fefutinCarnetSway {
                 0%, 100% { transform: perspective(900px) rotateX(0deg) rotateZ(0deg) translateY(0); }
