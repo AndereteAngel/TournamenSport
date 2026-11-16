@@ -2871,6 +2871,32 @@ body, body[data-tc-theme="clash"], body[data-tc-theme="arena"] {
   padding: 24px;
   background: radial-gradient(circle at 50% 25%, #343b49 0%, #171c27 58%, #10141c 100%);
 }
+.fefutin-football-rain {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fefutin-football-rain span {
+  position: absolute;
+  top: -12vh;
+  display: block;
+  line-height: 1;
+  filter: drop-shadow(0 3px 5px rgba(0,0,0,.28));
+  animation-name: fefutin-football-fall;
+  animation-timing-function: cubic-bezier(.35,.05,.65,.95);
+  animation-fill-mode: forwards;
+}
+@keyframes fefutin-football-fall {
+  0% { transform: translate3d(0,-8vh,0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate3d(24px,115vh,0) rotate(540deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fefutin-football-rain span { animation-duration: .01ms !important; }
+}
 .fefutin-welcome-panel {
   width: min(100%, 480px);
   display: flex;
