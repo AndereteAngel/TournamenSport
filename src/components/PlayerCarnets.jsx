@@ -78,7 +78,8 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
   const filteredPlayers = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("es");
     return players.filter((player) => {
-      const matchesSearch = !query || [player.first_name, player.last_name, player.dni, player.carnet_number, player.club_name].some((value) => String(value || "").toLocaleLowerCase("es").includes(query));
+      const searchFields = embedded ? [player.first_name, player.last_name] : [player.first_name, player.last_name, player.dni, player.carnet_number, player.club_name];
+      const matchesSearch = !query || searchFields.some((value) => String(value || "").toLocaleLowerCase("es").includes(query));
       const matchesCategory = categoryFilter === "todas" || player.category_label === categoryFilter;
       const matchesStatus = statusFilter === "todos" || (player.carnet_status || "pendiente") === statusFilter;
       return matchesSearch && matchesCategory && matchesStatus;
@@ -117,8 +118,8 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))", gap: ".7rem", marginBottom: "1rem", padding: ".85rem", border: "1px solid #444", borderRadius: "10px", background: "#171717" }}>
           <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
-            Buscar carnet o jugador
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nombre, DNI o N° de carnet..." style={fieldStyle} />
+            Buscar jugador
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nombre o apellido..." style={fieldStyle} />
           </label>
           <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
             Categoría
@@ -146,7 +147,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
             <select value={selectedPlayer?.carnet_number || ""} onChange={(event) => setSelectedKey(event.target.value)} style={fieldStyle}>
               {filteredPlayers.map((player) => (
                 <option key={player.carnet_number} value={player.carnet_number}>
-                  {[player.last_name, player.first_name].filter(Boolean).join(", ")} · {player.carnet_number}
+                  {[player.last_name, player.first_name].filter(Boolean).join(", ")}
                 </option>
               ))}
             </select>
