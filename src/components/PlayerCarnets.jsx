@@ -182,7 +182,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                     <strong style={{ color: "#fff", fontSize: ".85rem" }}>CARNET DEL JUGADOR</strong>
                     <button type="button" onClick={() => setCarnetAlertOpen(false)} style={{ border: "1px solid #b5122a", borderRadius: "8px", background: "#111", color: "#fff", padding: ".5rem .8rem", cursor: "pointer" }}>✕ Cerrar</button>
                   </div>
-                  <article className="fefutin-carnet-motion" style={{ width: "100%", maxWidth: "760px", aspectRatio: "1.586 / 1", minHeight: "250px", boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "14px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", animation: "fefutinCarnetSway 5.5s ease-in-out infinite", transformOrigin: "50% 85%" }}>
+                  <article className="fefutin-carnet-motion fefutin-carnet-card" style={{ width: "100%", maxWidth: "760px", aspectRatio: "1.586 / 1", minHeight: "250px", boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "14px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", animation: "fefutinCarnetSway 5.5s ease-in-out infinite", transformOrigin: "50% 85%" }}>
               <div style={{ boxSizing: "border-box", width: "100%", padding: ".8rem 1rem", background: "#b5122a", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem" }}>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, color: "#fff", fontSize: ".78rem", fontWeight: 900, letterSpacing: ".1em" }}>FEFUTIN</p>
@@ -241,6 +241,88 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                 48% { transform: perspective(900px) rotateX(-0.6deg) rotateZ(0.55deg) translateY(-4px); }
                 72% { transform: perspective(900px) rotateX(0.8deg) rotateZ(-0.35deg) translateY(-1px); }
               }
+              @media (max-width: 520px) and (orientation: portrait) {
+                .fefutin-carnet-card {
+                  aspect-ratio: auto !important;
+                  min-height: 0 !important;
+                  height: auto !important;
+                  border-radius: 10px !important;
+                  animation: none !important;
+                }
+                .fefutin-carnet-card > div:first-child {
+                  padding: .45rem .6rem !important;
+                  min-height: 48px;
+                }
+                .fefutin-carnet-card > div:first-child p:first-child {
+                  font-size: .68rem !important;
+                }
+                .fefutin-carnet-card > div:first-child p:last-child {
+                  font-size: .48rem !important;
+                  letter-spacing: .02em !important;
+                }
+                .fefutin-carnet-card > div:first-child img {
+                  width: 38px !important;
+                  height: 38px !important;
+                }
+                .fefutin-carnet-card > div:nth-child(2) {
+                  height: auto !important;
+                  min-height: 0 !important;
+                  padding: .5rem !important;
+                  grid-template-columns: 76px minmax(0, 1fr) !important;
+                  gap: .55rem !important;
+                  align-items: start !important;
+                }
+                .fefutin-carnet-card > div:nth-child(2) > div:first-child {
+                  width: 76px !important;
+                  max-height: 102px;
+                  aspect-ratio: 3 / 4 !important;
+                }
+                .fefutin-carnet-card > div:nth-child(2) > div:first-child span {
+                  font-size: 1.5rem !important;
+                }
+                .fefutin-carnet-card > div:nth-child(2) > div:nth-child(2) {
+                  min-width: 0 !important;
+                }
+                .fefutin-carnet-card > div:nth-child(2) > div:nth-child(2) > p {
+                  font-size: .52rem !important;
+                  margin-bottom: .2rem !important;
+                }
+                .fefutin-carnet-card h3 {
+                  font-size: .82rem !important;
+                  line-height: 1.12 !important;
+                  margin-bottom: .45rem !important;
+                }
+                .fefutin-carnet-card > div:nth-child(2) > div:nth-child(2) > div {
+                  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                  gap: .38rem .5rem !important;
+                }
+                .fefutin-carnet-card > div:nth-child(2) > div:nth-child(2) > div > div {
+                  min-width: 0 !important;
+                  padding-bottom: .22rem !important;
+                }
+                .fefutin-carnet-card > div:nth-child(2) > div:nth-child(2) > div > div p:first-child {
+                  font-size: .46rem !important;
+                  letter-spacing: .02em !important;
+                  line-height: 1.1 !important;
+                }
+                .fefutin-carnet-card > div:nth-child(2) > div:nth-child(2) > div > div p:last-child {
+                  font-size: .66rem !important;
+                  line-height: 1.15 !important;
+                  overflow-wrap: anywhere !important;
+                }
+                .fefutin-carnet-card > div:nth-child(2) > div:nth-child(2) > div > div img {
+                  width: 20px !important;
+                  height: 20px !important;
+                }
+                .fefutin-carnet-card > div:last-child {
+                  padding: .38rem .55rem !important;
+                  min-height: 28px;
+                }
+                .fefutin-carnet-card > div:last-child span {
+                  font-size: .46rem !important;
+                  letter-spacing: .02em !important;
+                }
+              }
               @media (prefers-reduced-motion: reduce) {
                 .fefutin-carnet-motion { animation: none !important; }
               }
@@ -255,7 +337,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
           </p>
         ) : (
           <>
-            <article className="fefutin-carnet-motion" style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "18px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", animation: "fefutinCarnetSway 5.5s ease-in-out infinite", transformOrigin: "50% 85%" }}>
+            <article className="fefutin-carnet-motion fefutin-carnet-card" style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "18px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", animation: "fefutinCarnetSway 5.5s ease-in-out infinite", transformOrigin: "50% 85%" }}>
               <div style={{ boxSizing: "border-box", width: "100%", padding: ".8rem 1rem", background: "#b5122a", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem" }}>
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, color: "#fff", fontSize: ".78rem", fontWeight: 900, letterSpacing: ".1em" }}>FEFUTIN</p>
