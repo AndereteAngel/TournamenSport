@@ -2889,10 +2889,35 @@ body, body[data-tc-theme="clash"], body[data-tc-theme="arena"] {
   animation-fill-mode: forwards;
 }
 @keyframes fefutin-football-fall {
-  0% { transform: translate3d(0,-8vh,0) rotate(0deg); opacity: 0; }
+  0% {
+    transform: translate3d(0,-8vh,0) rotate(0deg);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(.45,0,.9,.6);
+  }
   10% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { transform: translate3d(24px,115vh,0) rotate(540deg); opacity: 0; }
+  70% {
+    transform: translate3d(12px,100vh,0) rotate(390deg);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(.12,.72,.35,1);
+  }
+  80% {
+    transform: translate3d(17px,78vh,0) rotate(455deg);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(.45,0,.9,.6);
+  }
+  88% {
+    transform: translate3d(21px,100vh,0) rotate(510deg);
+    opacity: 1;
+    animation-timing-function: cubic-bezier(.12,.72,.35,1);
+  }
+  94% {
+    transform: translate3d(24px,91vh,0) rotate(545deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(28px,100vh,0) rotate(570deg);
+    opacity: 0;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .fefutin-football-rain span { animation-duration: .01ms !important; }
