@@ -4956,11 +4956,38 @@ export function TournamenSportApp() {
                     });
                     setActiveDivisionTournamentIndex(nearest);
                   }}
-                  onWheel={(event) => {
+                  onMouseEnter={(event) => {
                     const container = event.currentTarget;
-                    if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
-                      event.preventDefault();
-                      container.scrollBy({ left: event.deltaY, behavior: "auto" });
+                    if (container.__fefutinAutoAdvance) return;
+                    container.__fefutinAutoAdvance = window.setInterval(() => {
+                      const cards = Array.from(container.children);
+                      if (cards.length < 2) return;
+                      const center = container.getBoundingClientRect().left + container.clientWidth / 2;
+                      let nearest = 0;
+                      let distance = Infinity;
+                      cards.forEach((card, index) => {
+                        const rect = card.getBoundingClientRect();
+                        const currentDistance = Math.abs(center - (rect.left + rect.width / 2));
+                        if (currentDistance < distance) { distance = currentDistance; nearest = index; }
+                      });
+                      const nextIndex = (nearest + 1) % cards.length;
+                      if (nextIndex === 0) {
+                        container.scrollTo({ left: 0, behavior: "smooth" });
+                      } else {
+                        const nextRect = cards[nextIndex].getBoundingClientRect();
+                        const nextCenter = nextRect.left + nextRect.width / 2;
+                        container.scrollTo({
+                          left: container.scrollLeft + nextCenter - center,
+                          behavior: "smooth",
+                        });
+                      }
+                    }, 2000);
+                  }}
+                  onMouseLeave={(event) => {
+                    const container = event.currentTarget;
+                    if (container.__fefutinAutoAdvance) {
+                      window.clearInterval(container.__fefutinAutoAdvance);
+                      container.__fefutinAutoAdvance = null;
                     }
                   }}
                   style={{
