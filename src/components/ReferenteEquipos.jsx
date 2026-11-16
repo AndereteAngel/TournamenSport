@@ -559,27 +559,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   } : { display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gap: "1rem", marginTop: "1rem" }}
                 >
               {mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "registrados" ? (
-                <div style={{ width: "100%", overflowX: "auto", border: "1px solid #333", borderRadius: "10px", background: "#080808" }}>
-                  <table style={{ width: "100%", minWidth: "460px", borderCollapse: "collapse", color: "#fff", textAlign: "left" }}>
-                    <thead><tr style={{ background: "#b5122a" }}>
-                      {["N.º", "FOTO", "JUGADOR", "DNI", "CATEGORÍA"].map((heading) => <th key={heading} style={{ padding: ".75rem .6rem", fontSize: ".72rem", letterSpacing: ".04em", whiteSpace: "nowrap" }}>{heading}</th>)}
-                    </tr></thead>
-                    <tbody>
-                      {filteredParticipations.flatMap((item) => (rowsByParticipation[item.club_tournament_id] || []).map((player) => ({ ...player, category_label: item.category_label }))).map((player, index) => {
-                        const photoUrl = player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : "";
-                        return <tr key={player.id} style={{ borderTop: "1px solid #333" }}>
-                          <td style={{ padding: ".55rem .6rem", color: "#fca5a5", fontWeight: 900 }}>{index + 1}</td>
-                          <td style={{ padding: ".45rem .6rem" }}>
-                            {photoUrl ? <img src={photoUrl} alt="" style={{ width: "42px", height: "42px", objectFit: "cover", borderRadius: "6px", display: "block" }} /> : <span style={{ color: "#999", fontSize: ".62rem" }}>SIN FOTO</span>}
-                          </td>
-                          <td style={{ padding: ".55rem .6rem", fontWeight: 800 }}>{[player.first_name, player.last_name].filter(Boolean).join(" ") || "Nombre pendiente"}</td>
-                          <td style={{ padding: ".55rem .6rem", whiteSpace: "nowrap" }}>{player.dni || "—"}</td>
-                          <td style={{ padding: ".55rem .6rem", color: "#fca5a5", whiteSpace: "nowrap" }}>{player.category_label}</td>
-                        </tr>;
-                      })}
-                    </tbody>
-                  </table>
-                  {!filteredParticipations.some((item) => (rowsByParticipation[item.club_tournament_id] || []).length > 0) && <p style={{ color: "#aaa", textAlign: "center", padding: "1rem" }}>Todavía no hay jugadores registrados.</p>}
+                <div style={{ width: "100%", marginTop: "1rem" }}>
+                  <PlayerCarnets currentUser={currentUser} clubId={activeClubId} embedded />
                 </div>
               ) : mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "inscripcion" ? (
                 <div style={{ display: "grid", gap: "1rem", width: "100%", marginTop: "1rem" }}>
