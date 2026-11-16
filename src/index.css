@@ -6379,3 +6379,51 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     height: 0 !important;
   }
 }
+
+
+/* FEFUTIN — controles laterales para navegar manualmente las cards de torneos. */
+#root .tc-division-tournament-carousel-shell {
+  position: relative;
+  width: 100%;
+}
+#root .tc-division-carousel-arrow {
+  position: absolute;
+  z-index: 10;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 58px;
+  padding: 0;
+  border: 1px solid rgba(255,255,255,.7);
+  border-radius: 12px;
+  background: rgba(181,18,42,.96);
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 5px 16px rgba(0,0,0,.42);
+  transition: background .18s ease, opacity .18s ease, transform .18s ease;
+}
+#root .tc-division-carousel-arrow-left { left: 4px; }
+#root .tc-division-carousel-arrow-right { right: 4px; }
+#root .tc-division-carousel-arrow:hover:not(:disabled) {
+  background: #d51b38;
+  transform: translateY(-50%) scale(1.06);
+}
+#root .tc-division-carousel-arrow:disabled {
+  opacity: .28;
+  cursor: default;
+  box-shadow: none;
+}
+@media (max-width: 600px) {
+  #root .tc-division-carousel-arrow {
+    width: 34px;
+    height: 48px;
+    font-size: 1.65rem;
+  }
+  #root .tc-division-carousel-arrow-left { left: 2px; }
+  #root .tc-division-carousel-arrow-right { right: 2px; }
+}
