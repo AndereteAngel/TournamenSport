@@ -66,10 +66,10 @@ begin
     p.username,
     p.email,
     c.referente_phone,
-    cr.id,
+    coalesce(cr.id, c.id),
     null::uuid,
     'PLANTEL PERMANENTE'::text,
-    cr.category_label,
+    coalesce(cr.category_label, 'SIN CATEGORÍAS'),
     null::uuid,
     'borrador'::text,
     null::timestamptz,
@@ -99,12 +99,12 @@ begin
       where rp.roster_id = cr.id
         and rp.removed_at is null
     ), '[]'::jsonb)
-  from public.fefutin_club_rosters cr
-  join public.fefutin_clubs c on c.id = cr.club_id
+  from public.fefutin_clubs c
   join public.profiles p on p.id = c.referente_user_id
+  left join public.fefutin_club_rosters cr on cr.club_id = c.id
   where c.is_active = true
     and (v_profile.role in ('admin', 'directivo') or c.id = v_profile.club_id)
-  order by c.name, cr.category_label;
+  order by c.name, cr.category_label nulls first;
 end;
 $function$;
 
