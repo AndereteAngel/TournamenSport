@@ -283,7 +283,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
 
         {loading ? (
           <p style={{ color: "#ddd", textAlign: "center", padding: "2rem" }}>Cargando clubes y categorías...</p>
-        ) : participations.length === 0 ? (
+        ) : participations.length === 0 && !(mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "inscripcion") ? (
           <div style={{ border: "1px dashed #555", borderRadius: "10px", padding: "1.5rem", textAlign: "center", color: "#ddd", marginTop: "1rem" }}>
             <strong>No hay categorías registradas todavía.</strong>
             <p style={{ color: "#aaa", marginBottom: 0 }}>Podés crear las categorías permanentes desde LISTAS DE BUENA FE. No necesitás estar inscripto en un torneo.</p>
@@ -411,7 +411,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </div>
                 )}
 
-                {(mode === "torneos" || selectedSection === "torneos" || selectedSection === "listas" && (currentUser?.role !== "referente" || rosterView !== "menu")) && (
+                {(mode === "torneos" || selectedSection === "torneos" || selectedSection === "listas" && (currentUser?.role !== "referente" || rosterView !== "menu")) && !(selectedSection === "listas" && currentUser?.role === "referente") && (
                   <div style={{ display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: ".7rem", padding: ".85rem", marginTop: "1rem", border: "1px solid #444", borderRadius: "10px", background: "#171717" }}>
                     {(mode === "torneos" || selectedSection === "torneos") ? (
                       <>
@@ -475,7 +475,30 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                     WebkitOverflowScrolling: "touch", scrollbarWidth: "thin", perspective: "900px"
                   } : { display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gap: "1rem", marginTop: "1rem" }}
                 >
-              {filteredParticipations.map((item, tournamentIndex) => {
+              {mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "registrados" ? (
+                <div style={{ width: "100%", overflowX: "auto", border: "1px solid #333", borderRadius: "10px", background: "#080808" }}>
+                  <table style={{ width: "100%", minWidth: "460px", borderCollapse: "collapse", color: "#fff", textAlign: "left" }}>
+                    <thead><tr style={{ background: "#b5122a" }}>
+                      {["N.º", "FOTO", "JUGADOR", "DNI", "CATEGORÍA"].map((heading) => <th key={heading} style={{ padding: ".75rem .6rem", fontSize: ".72rem", letterSpacing: ".04em", whiteSpace: "nowrap" }}>{heading}</th>)}
+                    </tr></thead>
+                    <tbody>
+                      {filteredParticipations.flatMap((item) => (rowsByParticipation[item.club_tournament_id] || []).map((player) => ({ ...player, category_label: item.category_label }))).map((player, index) => {
+                        const photoUrl = player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : "";
+                        return <tr key={player.id} style={{ borderTop: "1px solid #333" }}>
+                          <td style={{ padding: ".55rem .6rem", color: "#fca5a5", fontWeight: 900 }}>{index + 1}</td>
+                          <td style={{ padding: ".45rem .6rem" }}>
+                            {photoUrl ? <img src={photoUrl} alt="" style={{ width: "42px", height: "42px", objectFit: "cover", borderRadius: "6px", display: "block" }} /> : <span style={{ color: "#999", fontSize: ".62rem" }}>SIN FOTO</span>}
+                          </td>
+                          <td style={{ padding: ".55rem .6rem", fontWeight: 800 }}>{[player.first_name, player.last_name].filter(Boolean).join(" ") || "Nombre pendiente"}</td>
+                          <td style={{ padding: ".55rem .6rem", whiteSpace: "nowrap" }}>{player.dni || "—"}</td>
+                          <td style={{ padding: ".55rem .6rem", color: "#fca5a5", whiteSpace: "nowrap" }}>{player.category_label}</td>
+                        </tr>;
+                      })}
+                    </tbody>
+                  </table>
+                  {!filteredParticipations.some((item) => (rowsByParticipation[item.club_tournament_id] || []).length > 0) && <p style={{ color: "#aaa", textAlign: "center", padding: "1rem" }}>Todavía no hay jugadores registrados.</p>}
+                </div>
+              ) : (filteredParticipations.map((item, tournamentIndex) => {
                 const allPlayers = rowsByParticipation[item.club_tournament_id] || [];
                 const players = selectedSection === "listas" ? filteredPlayersFor(item) : allPlayers;
                 const logoUrl = item.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(item.logo_path).data.publicUrl : "";
@@ -518,9 +541,11 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                     )}
 
                     <div style={{ margin: ".9rem 0", padding: ".75rem", borderRadius: "8px", background: "#171c27" }}>
-                      <strong style={{ color: "#fff", display: "block" }}>{mode === "torneos" ? item.tournament_title : "PLANTEL PERMANENTE"}</strong>
-                      <span style={{ color: "#fca5a5", fontWeight: 800, fontSize: ".9rem" }}>{item.category_label}</span>
-                      <div style={{ color: "#aaa", fontSize: ".78rem", marginTop: ".25rem" }}>Equipo: {item.club_name} · {item.category_label}</div>
+                      <strong style={{ color: "#fff", display: "block" }}>{mode === "torneos" ? item.tournament_title : selectedSection === "listas" && currentUser?.role === "referente" ? item.category_label : "PLANTEL PERMANENTE"}</strong>
+                      {!(selectedSection === "listas" && currentUser?.role === "referente") && <>
+                        <span style={{ color: "#fca5a5", fontWeight: 800, fontSize: ".9rem" }}>{item.category_label}</span>
+                        <div style={{ color: "#aaa", fontSize: ".78rem", marginTop: ".25rem" }}>Equipo: {item.club_name} · {item.category_label}</div>
+                      </>}
                     </div>
 
                     {mode === "torneos" || selectedSection === "torneos" ? (
@@ -639,7 +664,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                     )}
                   </article>
                 );
-              })}
+              }))}
                 </div>
                 {filteredParticipations.length === 0 && (mode === "torneos" || selectedSection === "torneos" || selectedSection === "listas") && (
                   <p style={{ color: "#aaa", textAlign: "center", padding: "1.2rem" }}>No hay resultados para los filtros seleccionados.</p>
