@@ -1095,7 +1095,7 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
                 className="referee-stat-card-button"
                 style={{ width: "100%", minWidth: 0, textAlign: "left", color: "#fff", cursor: "pointer", display: "flex", flexDirection: "column", gap: "0.65rem", background: "transparent", border: 0, padding: 0 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.6rem", paddingBottom: "0.65rem", borderBottom: "1px solid #343d4b" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.6rem", paddingBottom: "0.65rem", paddingRight: "2.5rem", borderBottom: "1px solid #343d4b" }}>
                   <span style={{ color: "#ff9aa8", fontSize: "0.65rem", fontWeight: 900, letterSpacing: "0.12em" }}>FEFUTIN</span>
                   <span style={{ color: "#aeb7c5", fontSize: "0.62rem", fontWeight: 800, letterSpacing: "0.08em" }}>CREDENCIAL DE ÁRBITRO</span>
                 </div>
@@ -1203,9 +1203,6 @@ function RefereeStats({ onBack, canManageAccess = false, onDeactivateReferee }) 
         Se cuentan partidos con resultado completo y árbitro identificado. Los registros anteriores a la identificación del árbitro no se atribuyen retroactivamente.
       </p>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
-        <button type="button" className="tc-form-back" onClick={onBack}>← Volver al inicio</button>
-      </div>
     </div>
   );
 }
