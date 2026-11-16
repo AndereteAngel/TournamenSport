@@ -91,9 +91,7 @@ begin
             when fp.verification_status = 'habilitado' or fp.carnet_status = 'habilitado' then 'habilitado'
             else coalesce(fp.verification_status, fp.carnet_status, 'pendiente')
           end,
-          'sort_order', row_number() over (
-            order by rp.last_name, rp.first_name, rp.created_at
-          )
+          'sort_order', 0
         ) order by rp.last_name, rp.first_name, rp.created_at
       )
       from public.fefutin_club_roster_players rp
