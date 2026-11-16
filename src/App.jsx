@@ -5056,18 +5056,27 @@ export function TournamenSportApp() {
                   className="tc-division-carousel-arrow tc-division-carousel-arrow-left"
                   aria-label="Ver torneos anteriores"
                   title="Anterior"
-                  disabled={activeDivisionTournamentIndex <= 0}
                   onClick={(event) => {
-                    const container = event.currentTarget.parentElement.querySelector(".tc-division-tournament-carousel");
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const shell = event.currentTarget.closest(".tc-division-tournament-carousel-shell");
+                    const container = shell?.querySelector(".tc-division-tournament-carousel");
                     if (!container) return;
                     const cards = Array.from(container.children);
-                    const targetIndex = Math.max(0, activeDivisionTournamentIndex - 1);
-                    const target = cards[targetIndex];
-                    if (!target) return;
-                    const containerRect = container.getBoundingClientRect();
-                    const targetRect = target.getBoundingClientRect();
+                    if (cards.length < 2) return;
+                    const center = container.getBoundingClientRect().left + container.clientWidth / 2;
+                    let nearest = 0;
+                    let distance = Infinity;
+                    cards.forEach((card, index) => {
+                      const rect = card.getBoundingClientRect();
+                      const d = Math.abs(center - (rect.left + rect.width / 2));
+                      if (d < distance) { distance = d; nearest = index; }
+                    });
+                    const target = cards[Math.max(0, nearest - 1)];
+                    if (!target || nearest === 0) return;
+                    const rect = target.getBoundingClientRect();
                     container.scrollTo({
-                      left: container.scrollLeft + (targetRect.left + targetRect.width / 2) - (containerRect.left + containerRect.width / 2),
+                      left: container.scrollLeft + (rect.left + rect.width / 2) - center,
                       behavior: "smooth",
                     });
                   }}
@@ -5079,18 +5088,27 @@ export function TournamenSportApp() {
                   className="tc-division-carousel-arrow tc-division-carousel-arrow-right"
                   aria-label="Ver torneos siguientes"
                   title="Siguiente"
-                  disabled={activeDivisionTournamentIndex >= visibleTournaments.length - 1}
                   onClick={(event) => {
-                    const container = event.currentTarget.parentElement.querySelector(".tc-division-tournament-carousel");
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const shell = event.currentTarget.closest(".tc-division-tournament-carousel-shell");
+                    const container = shell?.querySelector(".tc-division-tournament-carousel");
                     if (!container) return;
                     const cards = Array.from(container.children);
-                    const targetIndex = Math.min(cards.length - 1, activeDivisionTournamentIndex + 1);
-                    const target = cards[targetIndex];
-                    if (!target) return;
-                    const containerRect = container.getBoundingClientRect();
-                    const targetRect = target.getBoundingClientRect();
+                    if (cards.length < 2) return;
+                    const center = container.getBoundingClientRect().left + container.clientWidth / 2;
+                    let nearest = 0;
+                    let distance = Infinity;
+                    cards.forEach((card, index) => {
+                      const rect = card.getBoundingClientRect();
+                      const d = Math.abs(center - (rect.left + rect.width / 2));
+                      if (d < distance) { distance = d; nearest = index; }
+                    });
+                    const target = cards[Math.min(cards.length - 1, nearest + 1)];
+                    if (!target || nearest >= cards.length - 1) return;
+                    const rect = target.getBoundingClientRect();
                     container.scrollTo({
-                      left: container.scrollLeft + (targetRect.left + targetRect.width / 2) - (containerRect.left + containerRect.width / 2),
+                      left: container.scrollLeft + (rect.left + rect.width / 2) - center,
                       behavior: "smooth",
                     });
                   }}
