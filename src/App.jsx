@@ -5365,13 +5365,8 @@ export function TournamenSportApp() {
                   <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>NUEVA PARTICIPACIÓN</strong>
                   <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>Registrá tu club en FEFUTIN y cargá su información institucional. No necesitás elegir un torneo.</span>
                 </button>
-              ) : isReferente && currentUser?.clubId && currentUser?.approvalStatus === "aprobado" ? (
-                <button type="button" onClick={() => setActiveView("referente-solicitar-torneo")} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
-                  <span style={{ fontSize: "1.6rem" }}>🏆</span>
-                  <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>SOLICITAR PARTICIPACIÓN</strong>
-                  <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>Tu club ya está registrado. Solicitá participar en los torneos disponibles.</span>
-                </button>
-              ) : isReferente && currentUser?.clubId ? (
+              ) : isReferente && currentUser?.clubId && currentUser?.approvalStatus === "aprobado" ? null
+              : isReferente && currentUser?.clubId ? (
                 <div role="status" style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff" }}>
                   <span style={{ fontSize: "1.6rem" }}>⌛</span>
                   <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>CLUB REGISTRADO</strong>
@@ -5392,11 +5387,13 @@ export function TournamenSportApp() {
                     <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>{isReferente ? "MI CLUB" : "FICHA DE EQUIPOS"}</strong>
                     <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>{isReferente ? "Datos institucionales y carnets de jugadores" : "Club, equipos y jugadores"}</span>
                   </button>
-                  <button type="button" onClick={() => setActiveView("referente-torneos")} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
-                    <span style={{ fontSize: "1.6rem" }}>🏆</span>
-                    <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>MIS TORNEOS</strong>
-                    <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>Acceso directo a las competencias de tu club</span>
-                  </button>
+                  {!isReferente && (
+                    <button type="button" onClick={() => setActiveView("referente-torneos")} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
+                      <span style={{ fontSize: "1.6rem" }}>🏆</span>
+                      <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>MIS TORNEOS</strong>
+                      <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>Acceso directo a las competencias de tu club</span>
+                    </button>
+                  )}
                 </>
               )}
             </section>
