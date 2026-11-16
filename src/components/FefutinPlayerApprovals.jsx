@@ -57,27 +57,17 @@ export function FefutinPlayerApprovals() {
     setLoading(true);
     setError("");
     try {
-      const { data, error: rpcError } = await supabase.rpc("get_fefutin_my_teams");
+      const { data, error: rpcError } = await supabase.rpc("get_fefutin_player_registry_overview");
     if (rpcError) {
       console.error("Error al cargar jugadores FEFUTIN:", rpcError);
-      setError(rpcError.message || "No se pudo cargar la lista de jugadores.");
+      setError(rpcError.message || "No se pudo cargar el registro permanente de jugadores.");
       setPlayers([]);
     } else {
-      const rows = (data || []).flatMap((team) => {
-        let teamPlayers = team.players || [];
-        if (typeof teamPlayers === "string") {
-          try { teamPlayers = JSON.parse(teamPlayers); } catch { teamPlayers = []; }
-        }
-        return (Array.isArray(teamPlayers) ? teamPlayers : []).map((player) => ({
-          ...player,
-          player_entry_id: player.id,
-          club_id: team.club_id,
-          club_name: team.club_name,
-          tournament_id: team.tournament_id,
-          tournament_title: team.tournament_title,
-          category_label: team.category_label,
-        }));
-      });
+      const rows = (data || []).map((player) => ({
+        ...player,
+        player_entry_id: player.player_entry_id,
+        tournament_title: player.tournament_title || "PLANTEL PERMANENTE",
+      }));
       setPlayers(rows);
     }
     } catch (loadError) {
@@ -120,7 +110,6 @@ export function FefutinPlayerApprovals() {
     const groups = new Map();
     filteredPlayers.forEach((player) => {
       const key = [
-        player.tournament_id || player.tournament_title || "sin-torneo",
         player.club_id || player.club_name || "sin-club",
         player.category_label || "sin-categoria",
       ].join("::");
@@ -128,7 +117,7 @@ export function FefutinPlayerApprovals() {
       if (!groups.has(key)) {
         groups.set(key, {
           key,
-          tournamentTitle: player.tournament_title || "Torneo sin nombre",
+          tournamentTitle: "PLANTEL PERMANENTE",
           clubName: player.club_name || "Equipo sin nombre",
           category: player.category_label || "Categoría sin especificar",
           players: [],
@@ -235,7 +224,7 @@ export function FefutinPlayerApprovals() {
           <option value="todas">Todas las categorías</option>
           {categories.map((category) => <option key={category} value={category}>{category}</option>)}
         </select>
-        <input aria-label="Buscar jugador" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar jugador, DNI o torneo..." style={fieldStyle} />
+        <input aria-label="Buscar jugador" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar jugador, DNI o club..." style={fieldStyle} />
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "#ddd", fontSize: ".82rem", margin: "0 0 .7rem" }}>
@@ -260,7 +249,7 @@ export function FefutinPlayerApprovals() {
                 <article key={card.key} style={{ border: "1px solid #555", borderTop: "3px solid #b5122a", borderRadius: "12px", background: "#202020", padding: ".9rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: ".7rem", flexWrap: "wrap", marginBottom: ".8rem" }}>
                     <div>
-                      <span style={{ color: "#ffb3bf", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".08em" }}>TORNEO</span>
+                      <span style={{ color: "#ffb3bf", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".08em" }}>PLANTEL PERMANENTE</span>
                       <h4 style={{ color: "#fff", margin: ".15rem 0", fontSize: "1rem" }}>{card.tournamentTitle}</h4>
                       <p style={{ color: "#ccc", margin: 0, fontSize: ".78rem" }}>{card.clubName} · {card.category}</p>
                     </div>
