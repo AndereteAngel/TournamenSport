@@ -76,7 +76,6 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
     setParticipations(items);
     if (currentUser?.role === "referente" && items.length > 0) {
       setSelectedClubId(items[0].club_id);
-      setSelectedSection(null);
     }
     const nextRows = {};
     items.forEach((item) => {
@@ -87,7 +86,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
     });
     setRowsByParticipation(nextRows);
     setLoading(false);
-  }, [mode]);
+  }, [mode, currentUser?.role]);
 
   useEffect(() => {
     loadParticipations();
@@ -284,8 +283,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
           <p style={{ color: "#ddd", textAlign: "center", padding: "2rem" }}>Cargando clubes y categorías...</p>
         ) : participations.length === 0 ? (
           <div style={{ border: "1px dashed #555", borderRadius: "10px", padding: "1.5rem", textAlign: "center", color: "#ddd", marginTop: "1rem" }}>
-            <strong>No hay categorías habilitadas todavía.</strong>
-            <p style={{ color: "#aaa", marginBottom: 0 }}>Cuando Admin o Directivo apruebe la inscripción de tu club, las participaciones aparecerán acá.</p>
+            <strong>No hay categorías registradas todavía.</strong>
+            <p style={{ color: "#aaa", marginBottom: 0 }}>Podés crear las categorías permanentes desde LISTAS DE BUENA FE. No necesitás estar inscripto en un torneo.</p>
           </div>
         ) : (
           <>
