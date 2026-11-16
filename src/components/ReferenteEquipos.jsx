@@ -52,6 +52,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [rosterSearch, setRosterSearch] = useState("");
   const [rosterCategory, setRosterCategory] = useState("todas");
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [rosterView, setRosterView] = useState("menu");
 
   const loadParticipations = useCallback(async () => {
     setLoading(true);
@@ -242,6 +243,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
             if (mode === "equipos" && selectedSection) {
               setSelectedSection(null);
               setEditingPlayer(null);
+              setRosterView("menu");
             } else if (mode === "equipos" && activeClubId && currentUser?.role !== "referente") {
               setSelectedClubId(null);
               setEditingPlayer(null);
@@ -392,7 +394,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </div>
                 )}
 
-                {mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && (
+                {mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "inscripcion" && (
                   <section style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: ".6rem", alignItems: "end", padding: ".9rem", marginTop: "1rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171717" }}>
                     <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".78rem", fontWeight: 800 }}>
                       AGREGAR CATEGORÍA PERMANENTE
@@ -402,7 +404,14 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </section>
                 )}
 
-                {(mode === "torneos" || selectedSection === "torneos" || selectedSection === "listas") && (
+                {mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: ".75rem", marginTop: "1rem" }}>
+                    <button type="button" onClick={() => { setRosterView("registrados"); setEditingPlayer(null); }} style={{ ...buttonStyle, minHeight: "76px", background: rosterView === "registrados" ? "#b5122a" : "#171c27" }}>👥 JUGADORES REGISTRADOS</button>
+                    <button type="button" onClick={() => { setRosterView("inscripcion"); setEditingPlayer(null); }} style={{ ...buttonStyle, minHeight: "76px", background: rosterView === "inscripcion" ? "#b5122a" : "#171c27" }}>📝 INSCRIPCIÓN</button>
+                  </div>
+                )}
+
+                {(mode === "torneos" || selectedSection === "torneos" || selectedSection === "listas" && (currentUser?.role !== "referente" || rosterView !== "menu")) && (
                   <div style={{ display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: ".7rem", padding: ".85rem", marginTop: "1rem", border: "1px solid #444", borderRadius: "10px", background: "#171717" }}>
                     {(mode === "torneos" || selectedSection === "torneos") ? (
                       <>
