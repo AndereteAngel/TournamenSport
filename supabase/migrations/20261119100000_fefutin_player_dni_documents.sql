@@ -151,4 +151,40 @@ $function$;
 revoke all on function public.save_fefutin_permanent_roster_with_dni(uuid, jsonb, text, text, text) from public, anon;
 grant execute on function public.save_fefutin_permanent_roster_with_dni(uuid, jsonb, text, text, text) to authenticated;
 
+
+-- Admin/Directivo obtiene únicamente las rutas de documentos del jugador.
+-- La interfaz genera URLs firmadas de corta duración desde el bucket privado.
+create or replace function public.get_fefutin_player_dni_documents(
+  p_player_entry_id uuid
+)
+returns table (dni_front_path text, dni_back_path text)
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_profile public.profiles%rowtype;
+begin
+  select p.* into v_profile
+  from public.profiles p
+  where p.id = auth.uid();
+
+  if not found
+     or v_profile.role not in ('admin', 'directivo')
+     or v_profile.approval_status <> 'aprobado'
+     or v_profile.deactivated_at is not null then
+    raise exception 'Solo Admin o Directivo habilitado puede consultar documentos de identidad';
+  end if;
+
+  return query
+  select rp.dni_front_path, rp.dni_back_path
+  from public.fefutin_club_roster_players rp
+  where rp.id = p_player_entry_id
+    and rp.removed_at is null;
+end;
+$function$;
+
+revoke all on function public.get_fefutin_player_dni_documents(uuid) from public, anon;
+grant execute on function public.get_fefutin_player_dni_documents(uuid) to authenticated;
+
 commit;
