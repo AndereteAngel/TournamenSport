@@ -29,7 +29,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
     const loadCarnets = async () => {
       setLoading(true);
       setError("");
-      const { data, error: loadError } = await supabase.rpc("get_fefutin_my_teams");
+      const { data, error: loadError } = await supabase.rpc("get_fefutin_my_permanent_rosters");
       if (!active) return;
       if (loadError) {
         setError(loadError.message || "No se pudieron cargar los carnets de jugadores.");
