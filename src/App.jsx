@@ -4956,6 +4956,13 @@ export function TournamenSportApp() {
                     });
                     setActiveDivisionTournamentIndex(nearest);
                   }}
+                  onWheel={(event) => {
+                    const container = event.currentTarget;
+                    if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+                      event.preventDefault();
+                      container.scrollBy({ left: event.deltaY, behavior: "auto" });
+                    }
+                  }}
                   style={{
                     display: "flex",
                     flexDirection: "row",
