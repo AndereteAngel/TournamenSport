@@ -4977,11 +4977,12 @@ export function TournamenSportApp() {
                     perspective: "900px",
                   }}
                 >
-                  {visibleTournaments.map((t) => {
+                  {visibleTournaments.map((t, index) => {
                     const category = getTournamentCategory(t);
                     return (
                       <div
                         key={t.id}
+                        onMouseEnter={() => setActiveDivisionTournamentIndex(index)}
                         style={{
                           position: "relative",
                           flex: "0 0 min(76%, 330px)",
@@ -4991,10 +4992,10 @@ export function TournamenSportApp() {
                           boxSizing: "border-box",
                           alignSelf: "center",
                           scrollSnapAlign: "center",
-                          zIndex: activeDivisionTournamentIndex === visibleTournaments.indexOf(t) ? 3 : 1,
-                          marginLeft: visibleTournaments.indexOf(t) === 0 ? 0 : "-58px",
-                          transform: `translateY(${activeDivisionTournamentIndex === visibleTournaments.indexOf(t) ? "-3px" : "7px"}) scale(${activeDivisionTournamentIndex === visibleTournaments.indexOf(t) ? 1.08 : 0.78}) rotateY(${activeDivisionTournamentIndex > visibleTournaments.indexOf(t) ? "7deg" : activeDivisionTournamentIndex < visibleTournaments.indexOf(t) ? "-7deg" : "0deg"})`,
-                          opacity: Math.abs(activeDivisionTournamentIndex - visibleTournaments.indexOf(t)) > 2 ? 0.58 : activeDivisionTournamentIndex === visibleTournaments.indexOf(t) ? 1 : 0.82,
+                          zIndex: activeDivisionTournamentIndex === index ? 3 : 1,
+                          marginLeft: index === 0 ? 0 : "-58px",
+                          transform: `translateY(${activeDivisionTournamentIndex === index ? "-3px" : "7px"}) scale(${activeDivisionTournamentIndex === index ? 1.08 : 0.78}) rotateY(${activeDivisionTournamentIndex > index ? "7deg" : activeDivisionTournamentIndex < index ? "-7deg" : "0deg"})`,
+                          opacity: Math.abs(activeDivisionTournamentIndex - index) > 2 ? 0.58 : activeDivisionTournamentIndex === index ? 1 : 0.82,
                           transition: "transform 260ms cubic-bezier(.2,.8,.2,1), opacity 260ms ease, box-shadow 260ms ease",
                         }}
                       >
