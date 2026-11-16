@@ -4460,13 +4460,13 @@ export function TournamenSportApp() {
         <section className="fefutin-welcome" aria-label="Bienvenida a FEFUTIN">
           {showFootballRain && (
             <div className="fefutin-football-rain" aria-hidden="true">
-              {Array.from({ length: 26 }, (_, index) => (
+              {Array.from({ length: 44 }, (_, index) => (
                 <span
                   key={index}
                   style={{
                     left: `${(index * 37) % 101}%`,
-                    animationDelay: `${(index % 9) * 0.09}s`,
-                    animationDuration: `${1.15 + (index % 5) * 0.16}s`,
+                    animationDelay: `${(index % 8) * 0.035}s`,
+                    animationDuration: `${1.42 + (index % 4) * 0.055}s`,
                     fontSize: `${1.5 + (index % 4) * 0.55}rem`,
                   }}
                 >⚽</span>
