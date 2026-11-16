@@ -204,6 +204,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
 
   const isManager = currentUser?.role === "admin" || currentUser?.role === "directivo";
   const isRegistrationScreen = mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "inscripcion";
+  const isRosterMenuScreen = mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "menu";
   const clubs = [...new Map(participations.map((item) => [item.club_id, item])).values()];
   const activeClubId = currentUser?.role === "referente"
     ? (selectedClubId || clubs[0]?.club_id || null)
@@ -237,7 +238,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   return (
     <div className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: 0, minHeight: "70vh", boxSizing: "border-box" }}>
       <section className="cr-card" style={{ width: "100%", maxWidth: "100%", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)", boxSizing: "border-box", background: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
-        {!isRegistrationScreen && <>
+        {!isRegistrationScreen && !isRosterMenuScreen && <>
         <button
           type="button"
           className="tc-form-back"
@@ -743,6 +744,12 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
               INSCRIPCIÓN
             </h2>
           </>
+        )}
+        {isRosterMenuScreen && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: ".75rem", width: "100%", margin: 0 }}>
+            <button type="button" onClick={() => { setRosterView("registrados"); setEditingPlayer(null); }} style={{ ...buttonStyle, minHeight: "76px" }}>👥 JUGADORES REGISTRADOS</button>
+            <button type="button" onClick={() => { setRosterView("inscripcion"); setEditingPlayer(null); }} style={{ ...buttonStyle, minHeight: "76px" }}>📝 INSCRIPCIÓN</button>
+          </div>
         )}
       </section>
     </div>
