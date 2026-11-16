@@ -247,6 +247,76 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
             `}</style>
             <p style={{ color: "#aaa", fontSize: ".78rem", textAlign: "center", marginTop: "1rem" }}>Credencial generada desde el registro oficial de jugadores.</p>
           </>
+        ) : !selectedPlayer ? (
+          <p style={{ color: "#ddd", textAlign: "center", padding: "1.5rem" }}>
+            {players.length === 0
+              ? "Todavía no hay jugadores aprobados con carnet para mostrar. El carnet aparece cuando Admin o Directivo aprueba al jugador."
+              : "No hay carnets que coincidan con los filtros seleccionados."}
+          </p>
+        ) : (
+          <>
+            <article className="fefutin-carnet-motion" style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "18px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", animation: "fefutinCarnetSway 5.5s ease-in-out infinite", transformOrigin: "50% 85%" }}>
+              <div style={{ boxSizing: "border-box", width: "100%", padding: ".8rem 1rem", background: "#b5122a", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem" }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, color: "#fff", fontSize: ".78rem", fontWeight: 900, letterSpacing: ".1em" }}>FEFUTIN</p>
+                  <p style={{ margin: ".15rem 0 0", color: "#fff", fontSize: ".62rem", fontWeight: 700, letterSpacing: ".06em" }}>FEDERACIÓN DE FÚTBOL INFANTIL</p>
+                </div>
+                <img src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166" alt="Logo oficial de FEFUTIN" style={{ flex: "0 0 auto", width: "54px", height: "54px", objectFit: "contain", padding: "3px", boxSizing: "border-box", background: "#fff", border: "1px solid rgba(255,255,255,.8)", borderRadius: "8px" }} />
+              </div>
+
+              <div style={{ boxSizing: "border-box", width: "100%", padding: "clamp(.75rem,3vw,1.15rem)", display: "grid", gridTemplateColumns: "clamp(110px,22%,190px) minmax(0,1fr)", gap: "clamp(.75rem,2.5vw,1.25rem)", alignItems: "center" }}>
+                <div style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "grid", placeItems: "center" }}>
+                  {photoUrl ? <img src={photoUrl} alt={"Fotografía de " + selectedPlayer.first_name + " " + selectedPlayer.last_name} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ color: "#888", fontSize: "2.4rem" }}>⚽</span>}
+                </div>
+                <div style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "break-word" }}>
+                  <p style={{ color: "#e7a0aa", fontSize: ".65rem", fontWeight: 900, letterSpacing: ".1em", margin: "0 0 .35rem" }}>CREDENCIAL OFICIAL</p>
+                  <h3 style={{ color: "#fff", fontSize: "clamp(1rem,4vw,1.35rem)", lineHeight: 1.15, margin: "0 0 .8rem" }}>{[selectedPlayer.first_name, selectedPlayer.last_name].filter(Boolean).join(" ")}</h3>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: ".65rem .9rem" }}>
+                    <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
+                      <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>NÚMERO FEFUTIN</p>
+                      <p style={{ color: "#fff", fontSize: ".95rem", fontWeight: 900, margin: ".15rem 0 0" }}>{selectedPlayer.carnet_number}</p>
+                    </div>
+                    <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
+                      <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>DNI</p>
+                      <p style={{ color: "#fff", fontSize: ".9rem", fontWeight: 800, margin: ".15rem 0 0" }}>{selectedPlayer.dni || "NO REGISTRADO"}</p>
+                    </div>
+                    <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
+                      <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>CLUB</p>
+                      <div style={{ display: "flex", alignItems: "center", gap: ".45rem", marginTop: ".2rem" }}>
+                        {logoUrl && <img src={logoUrl} alt="" style={{ width: "28px", height: "28px", objectFit: "contain", background: "#fff", borderRadius: "5px" }} />}
+                        <p style={{ color: "#fff", fontSize: ".84rem", fontWeight: 800, margin: 0 }}>{selectedPlayer.club_name}</p>
+                      </div>
+                    </div>
+                    <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
+                      <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>CATEGORÍA</p>
+                      <p style={{ color: "#fff", fontSize: ".84rem", margin: ".15rem 0 0" }}>{selectedPlayer.category_label || "—"}</p>
+                    </div>
+                    <div>
+                      <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>ESTADO DE HABILITACIÓN</p>
+                      <p style={{ color: statusColor[verificationStatus] || "#facc15", fontSize: ".82rem", fontWeight: 900, margin: ".15rem 0 0" }}>{statusLabel[verificationStatus] || "PENDIENTE"}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ boxSizing: "border-box", width: "100%", padding: ".6rem 1rem", borderTop: "1px solid #b5122a", background: "#090909", display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem" }}>
+                <span style={{ color: "#ddd", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em" }}>JUGADOR FEFUTIN</span>
+                <span style={{ color: "#e7a0aa", fontSize: ".6rem", fontWeight: 800 }}>CARNET DIGITAL · FEFUTIN</span>
+              </div>
+            </article>
+            <style>{`
+              @keyframes fefutinCarnetSway {
+                0%, 100% { transform: perspective(900px) rotateX(0deg) rotateZ(0deg) translateY(0); }
+                22% { transform: perspective(900px) rotateX(1.2deg) rotateZ(-0.65deg) translateY(-2px); }
+                48% { transform: perspective(900px) rotateX(-0.6deg) rotateZ(0.55deg) translateY(-4px); }
+                72% { transform: perspective(900px) rotateX(0.8deg) rotateZ(-0.35deg) translateY(-1px); }
+              }
+              @media (prefers-reduced-motion: reduce) {
+                .fefutin-carnet-motion { animation: none !important; }
+              }
+            `}</style>
+            <p style={{ color: "#aaa", fontSize: ".78rem", textAlign: "center", marginTop: "1rem" }}>Credencial generada desde el registro oficial de jugadores.</p>
+          </>
         )}
       </section>
     </div>
