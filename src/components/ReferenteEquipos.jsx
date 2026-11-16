@@ -203,6 +203,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   };
 
   const isManager = currentUser?.role === "admin" || currentUser?.role === "directivo";
+  const isRegistrationScreen = mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "inscripcion";
   const clubs = [...new Map(participations.map((item) => [item.club_id, item])).values()];
   const activeClubId = currentUser?.role === "referente"
     ? (selectedClubId || clubs[0]?.club_id || null)
@@ -236,6 +237,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   return (
     <div className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: 0, minHeight: "70vh", boxSizing: "border-box" }}>
       <section className="cr-card" style={{ width: "100%", maxWidth: "100%", margin: "auto", padding: "clamp(1rem, 3vw, 2rem)", boxSizing: "border-box", background: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
+        {!isRegistrationScreen && <>
         <button
           type="button"
           className="tc-form-back"
@@ -724,6 +726,24 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
           <button type="button" className="tc-form-back" onClick={loadParticipations} disabled={loading}>↻ Actualizar</button>
         </div>
+        </>}
+        {isRegistrationScreen && (
+          <>
+            <button
+              type="button"
+              className="tc-form-back"
+              onClick={() => {
+                setRosterView("menu");
+                setEditingPlayer(null);
+              }}
+            >
+              ← Volver
+            </button>
+            <h2 className="cr-title" style={{ color: "#fff", margin: "1.25rem 0 0" }}>
+              INSCRIPCIÓN
+            </h2>
+          </>
+        )}
       </section>
     </div>
   );
