@@ -48,6 +48,7 @@ export function FefutinPlayerApprovals() {
   const [clubFilter, setClubFilter] = useState("todos");
   const [categoryFilter, setCategoryFilter] = useState("todas");
   const [search, setSearch] = useState("");
+  const [dniDocuments, setDniDocuments] = useState({});
 
   const loadingRef = useRef(false);
 
@@ -132,6 +133,34 @@ export function FefutinPlayerApprovals() {
       || a.category.localeCompare(b.category, "es")
     );
   }, [filteredPlayers]);
+
+  const viewDniDocuments = async (player) => {
+    setError("");
+    const { data, error: rpcError } = await supabase.rpc("get_fefutin_player_dni_documents", {
+      p_player_entry_id: player.player_entry_id,
+    });
+    if (rpcError) {
+      setError(rpcError.message || "No se pudieron consultar los documentos del DNI.");
+      return;
+    }
+    const documents = data?.[0];
+    if (!documents?.dni_front_path || !documents?.dni_back_path) {
+      setError("Esta inscripción todavía no tiene cargados los dos lados del DNI.");
+      return;
+    }
+    const [front, back] = await Promise.all([
+      supabase.storage.from("fefutin-player-dni").createSignedUrl(documents.dni_front_path, 300),
+      supabase.storage.from("fefutin-player-dni").createSignedUrl(documents.dni_back_path, 300),
+    ]);
+    if (front.error || back.error) {
+      setError(front.error?.message || back.error?.message || "No se pudieron abrir los documentos.");
+      return;
+    }
+    setDniDocuments((current) => ({
+      ...current,
+      [player.player_entry_id]: { front: front.data.signedUrl, back: back.data.signedUrl },
+    }));
+  };
 
   const decide = async (player) => {
     if (!window.confirm(`¿Confirmás activar a ${player.first_name} ${player.last_name}? Se generará su carnet FEFUTIN con estado PENDIENTE.`)) return;
@@ -278,6 +307,13 @@ export function FefutinPlayerApprovals() {
                             <span style={{ display: "inline-block", marginTop: ".35rem", color: statusColor(status), fontSize: ".68rem", fontWeight: 800 }}>
                               {statusLabel(status)}
                             </span>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: ".55rem", marginTop: ".45rem" }}>
+                              <button type="button" onClick={() => viewDniDocuments(player)} style={{ border: "1px solid #777", borderRadius: "6px", background: "#252525", color: "#fff", padding: ".35rem .55rem", fontSize: ".66rem", fontWeight: 800, cursor: "pointer" }}>CONSULTAR DNI</button>
+                              {dniDocuments[player.player_entry_id] && <>
+                                <a href={dniDocuments[player.player_entry_id].front} target="_blank" rel="noreferrer" style={{ color: "#93c5fd", fontSize: ".7rem", alignSelf: "center" }}>Ver frente</a>
+                                <a href={dniDocuments[player.player_entry_id].back} target="_blank" rel="noreferrer" style={{ color: "#93c5fd", fontSize: ".7rem", alignSelf: "center" }}>Ver dorso</a>
+                              </>}
+                            </div>
                           </div>
                           {canActivate ? (
                             <button type="button" className="cr-btn-gold" disabled={busy} onClick={() => decide(player)} style={{ whiteSpace: "nowrap", padding: ".55rem .75rem", fontSize: ".75rem" }}>
