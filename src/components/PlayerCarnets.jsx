@@ -96,6 +96,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
   const photoUrl = selectedPlayer?.photo_path
     ? supabase.storage.from("fefutin-player-photos").getPublicUrl(selectedPlayer.photo_path).data.publicUrl
     : "";
+  const samplePhotoUrl = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 420"><rect width="320" height="420" fill="#242424"/><circle cx="160" cy="132" r="72" fill="#555"/><path d="M38 390c8-91 55-139 122-139s114 48 122 139" fill="#555"/><circle cx="160" cy="132" r="72" fill="none" stroke="#b5122a" stroke-width="8"/><text x="160" y="400" fill="#ddd" font-family="Arial,sans-serif" font-size="18" text-anchor="middle">FOTO DE MUESTRA</text></svg>');
   const logoUrl = selectedPlayer?.logo_path
     ? supabase.storage.from("fefutin-clubs").getPublicUrl(selectedPlayer.logo_path).data.publicUrl
     : "";
@@ -207,7 +208,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
               {filteredPlayers.map((player, index) => (
                 <button key={player.carnet_number} type="button" onClick={() => { setSelectedKey(player.carnet_number); setCarnetAlertOpen(true); }} style={{ display: "grid", gridTemplateColumns: "42px 52px minmax(0,1fr) auto", alignItems: "center", gap: ".7rem", width: "100%", padding: ".65rem", textAlign: "left", border: "1px solid #444", borderRadius: "9px", background: "#101010", color: "#fff", cursor: "pointer" }}>
                   <span style={{ color: "#fca5a5", fontWeight: 900 }}>{index + 1}</span>
-                  {player.photo_path ? <img src={supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl} alt="" style={{ width: "48px", height: "48px", borderRadius: "6px", objectFit: "cover" }} /> : <span style={{ width: "48px", height: "48px", display: "grid", placeItems: "center", borderRadius: "6px", background: "#242424" }}>⚽</span>}
+                  <img src={player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : samplePhotoUrl} alt="" style={{ width: "48px", height: "48px", borderRadius: "6px", objectFit: "cover" }} />
                   <span style={{ minWidth: 0 }}>
                     <strong style={{ display: "block", overflowWrap: "anywhere" }}>{[player.last_name, player.first_name].filter(Boolean).join(", ")}</strong>
                     <span style={{ display: "block", color: "#fca5a5", fontSize: ".75rem", marginTop: ".2rem" }}>{player.category_label || "Sin categoría"}</span>
@@ -234,9 +235,9 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
               </div>
 
               <div style={{ boxSizing: "border-box", width: "100%", height: "calc(100% - 108px)", minHeight: 0, padding: "clamp(.45rem,1.5vw,.8rem)", display: "grid", gridTemplateColumns: "clamp(92px,19%,140px) minmax(0,1fr)", gap: "clamp(.5rem,1.5vw,.9rem)", alignItems: "center" }}>
-                <div style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "grid", placeItems: "center", cursor: photoUrl ? "zoom-in" : "default" }} role="button" tabIndex={photoUrl ? 0 : -1} aria-label="Ampliar fotografía del jugador" onClick={() => photoUrl && setPhotoPreviewOpen(true)} onKeyDown={(event) => { if (photoUrl && (event.key === "Enter" || event.key === " ")) setPhotoPreviewOpen(true); }}>
-                  {photoUrl ? <img src={photoUrl} alt={"Fotografía de " + selectedPlayer.first_name + " " + selectedPlayer.last_name} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ color: "#888", fontSize: "2.4rem" }}>⚽</span>}
-                </div>
+                <button type="button" onClick={() => setPhotoPreviewOpen(true)} aria-label="Ampliar fotografía del jugador" style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", padding: 0, border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "block", cursor: "zoom-in" }}>
+                  <img src={photoUrl || samplePhotoUrl} alt={photoUrl ? "Fotografía de " + selectedPlayer.first_name + " " + selectedPlayer.last_name : "Fotografía de muestra"} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
+                </button>
                 <div style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "break-word" }}>
                   <p style={{ color: "#e7a0aa", fontSize: ".65rem", fontWeight: 900, letterSpacing: ".1em", margin: "0 0 .35rem" }}>CREDENCIAL OFICIAL</p>
                   <h3 style={{ color: "#fff", fontSize: "clamp(1rem,4vw,1.35rem)", lineHeight: 1.15, margin: "0 0 .8rem" }}>{[selectedPlayer.first_name, selectedPlayer.last_name].filter(Boolean).join(" ")}</h3>
@@ -389,9 +390,9 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
               </div>
 
               <div style={{ boxSizing: "border-box", width: "100%", padding: "clamp(.75rem,3vw,1.15rem)", display: "grid", gridTemplateColumns: "clamp(110px,22%,190px) minmax(0,1fr)", gap: "clamp(.75rem,2.5vw,1.25rem)", alignItems: "center" }}>
-                <div style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "grid", placeItems: "center", cursor: photoUrl ? "zoom-in" : "default" }} role="button" tabIndex={photoUrl ? 0 : -1} aria-label="Ampliar fotografía del jugador" onClick={() => photoUrl && setPhotoPreviewOpen(true)} onKeyDown={(event) => { if (photoUrl && (event.key === "Enter" || event.key === " ")) setPhotoPreviewOpen(true); }}>
-                  {photoUrl ? <img src={photoUrl} alt={"Fotografía de " + selectedPlayer.first_name + " " + selectedPlayer.last_name} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ color: "#888", fontSize: "2.4rem" }}>⚽</span>}
-                </div>
+                <button type="button" onClick={() => setPhotoPreviewOpen(true)} aria-label="Ampliar fotografía del jugador" style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", padding: 0, border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "block", cursor: "zoom-in" }}>
+                  <img src={photoUrl || samplePhotoUrl} alt={photoUrl ? "Fotografía de " + selectedPlayer.first_name + " " + selectedPlayer.last_name : "Fotografía de muestra"} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} />
+                </button>
                 <div style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "break-word" }}>
                   <p style={{ color: "#e7a0aa", fontSize: ".65rem", fontWeight: 900, letterSpacing: ".1em", margin: "0 0 .35rem" }}>CREDENCIAL OFICIAL</p>
                   <h3 style={{ color: "#fff", fontSize: "clamp(1rem,4vw,1.35rem)", lineHeight: 1.15, margin: "0 0 .8rem" }}>{[selectedPlayer.first_name, selectedPlayer.last_name].filter(Boolean).join(" ")}</h3>
@@ -443,10 +444,10 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
           </>
         )}
 
-        {photoPreviewOpen && photoUrl && selectedPlayer && (
+        {photoPreviewOpen && selectedPlayer && (
           <div role="dialog" aria-modal="true" aria-label="Fotografía ampliada del jugador" onClick={(event) => { if (event.target === event.currentTarget) setPhotoPreviewOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 11000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", background: "rgba(0,0,0,.94)" }}>
             <button type="button" onClick={() => setPhotoPreviewOpen(false)} style={{ position: "absolute", top: "1rem", right: "1rem", zIndex: 1, border: "1px solid #b5122a", borderRadius: "9px", padding: ".65rem .9rem", color: "#fff", background: "#171717", cursor: "pointer" }}>✕ Cerrar</button>
-            <img src={photoUrl} alt={"Fotografía ampliada de " + selectedPlayer.first_name + " " + selectedPlayer.last_name} style={{ display: "block", maxWidth: "min(94vw, 720px)", maxHeight: "84vh", objectFit: "contain", border: "2px solid #b5122a", borderRadius: "12px", boxShadow: "0 16px 60px rgba(0,0,0,.7)" }} />
+            <img src={photoUrl || samplePhotoUrl} alt={photoUrl ? "Fotografía ampliada de " + selectedPlayer.first_name + " " + selectedPlayer.last_name : "Fotografía de muestra"} style={{ display: "block", maxWidth: "min(94vw, 720px)", maxHeight: "84vh", objectFit: "contain", border: "2px solid #b5122a", borderRadius: "12px", boxShadow: "0 16px 60px rgba(0,0,0,.7)" }} />
           </div>
         )}
 
