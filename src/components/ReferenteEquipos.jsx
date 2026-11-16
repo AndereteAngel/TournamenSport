@@ -585,7 +585,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                 const photoUrl = player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : "";
                                 return (
                                   <div key={player.id} style={{ display: "grid", gridTemplateColumns: "76px minmax(0, 1fr) auto", alignItems: "center", columnGap: ".85rem", rowGap: ".5rem", padding: ".8rem", border: "1px solid #333", borderRadius: "10px", background: "#080808", minWidth: 0 }}>
-                                    <button type="button" onClick={() => setEditingPlayer({ participationId: item.club_tournament_id, playerId: player.id })} aria-label={`Ver ficha de ${player.first_name} ${player.last_name}`} title="Ver ficha personal" style={{ gridColumn: "1", gridRow: "1", width: "76px", height: "76px", padding: 0, border: "1px solid #b5122a", borderRadius: "9px", overflow: "hidden", background: "#222", cursor: "pointer", display: "grid", placeItems: "center" }}>
+                                    <button type="button" onClick={() => rosterView !== "registrados" && setEditingPlayer({ participationId: item.club_tournament_id, playerId: player.id })} disabled={rosterView === "registrados"} aria-label={`Ver ficha de ${player.first_name} ${player.last_name}`} title="Ver ficha personal" style={{ gridColumn: "1", gridRow: "1", width: "76px", height: "76px", padding: 0, border: "1px solid #b5122a", borderRadius: "9px", overflow: "hidden", background: "#222", cursor: rosterView === "registrados" ? "default" : "pointer", display: "grid", placeItems: "center" }}>
                                       {photoUrl ? <img src={photoUrl} alt={`Foto de ${player.first_name} ${player.last_name}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} /> : <span style={{ color: "#aaa", fontSize: ".62rem" }}>SIN FOTO</span>}
                                     </button>
                                     <div style={{ minWidth: 0, gridColumn: "2", gridRow: "1", alignSelf: "center" }}>
@@ -608,7 +608,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                         </div>
                                       )}
                                     </div>
-                                    {!readOnly && item.team_status !== "presentada" && player.approval_status !== "aprobado" && player.approval_status !== "rechazado" && (
+                                    {!readOnly && rosterView !== "registrados" && item.team_status !== "presentada" && player.approval_status !== "aprobado" && player.approval_status !== "rechazado" && (
                                       <button type="button" onClick={() => removePlayer(item.club_tournament_id, player.id)} title="Quitar jugador" aria-label="Quitar jugador" style={{ gridColumn: "3", gridRow: "1", padding: ".55rem .7rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#171c27", color: "#fecaca", cursor: "pointer" }}>✕</button>
                                     )}
                                   </div>
@@ -616,7 +616,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                               })}
                               {!players.length && <p style={{ padding: "1rem", textAlign: "center", color: "#aaa" }}>{rosterSearch.trim() ? "No hay jugadores que coincidan con la búsqueda." : "Todavía no agregaste jugadores a esta categoría."}</p>}
                             </div>
-                            {!readOnly && item.team_status !== "presentada" && (
+                            {!readOnly && rosterView !== "registrados" && item.team_status !== "presentada" && (
                               <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", justifyContent: "space-between", marginTop: ".85rem" }}>
                                 <button type="button" style={buttonStyle} onClick={() => addPlayer(item.club_tournament_id)}>＋ Agregar jugador</button>
                                 <div style={{ display: "flex", gap: ".55rem", flexWrap: "wrap" }}>
