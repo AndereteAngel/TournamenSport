@@ -52,7 +52,7 @@ export function TournamentNotice({ notice, onClose, confirmation, onResolveConfi
         <section
           role="alertdialog"
           aria-modal="true"
-          aria-label="Confirmar acción de TournamentClash"
+          aria-label="Confirmar acción de FEFUTIN"
           onClick={(event) => event.stopPropagation()}
           style={{
             width: "100%",
@@ -68,7 +68,7 @@ export function TournamentNotice({ notice, onClose, confirmation, onResolveConfi
           }}
         >
           <div style={{ color: "#facc15", fontSize: "0.62rem", fontWeight: 900, letterSpacing: "0.16em" }}>
-            TOURNAMENTCLASH
+            FEFUTIN
           </div>
           <div aria-hidden="true" style={{ width: "48px", height: "48px", margin: "0.7rem auto", display: "grid", placeItems: "center", borderRadius: "50%", border: "1px solid #fbbf24", background: "rgba(251,191,36,0.09)", fontSize: "1.55rem" }}>
             <TCIcon name="shield" size={25} />
@@ -116,7 +116,7 @@ export function TournamentNotice({ notice, onClose, confirmation, onResolveConfi
       <section
         role="alertdialog"
         aria-modal="true"
-        aria-label="Aviso de TournamentClash"
+        aria-label="Aviso de FEFUTIN"
         onClick={(event) => event.stopPropagation()}
         style={{
           width: "100%",
@@ -133,7 +133,7 @@ export function TournamentNotice({ notice, onClose, confirmation, onResolveConfi
         }}
       >
         <div style={{ color: "#facc15", fontSize: "0.62rem", fontWeight: 900, letterSpacing: "0.16em" }}>
-          TOURNAMENTCLASH
+          FEFUTIN
         </div>
         <div
           aria-hidden="true"
