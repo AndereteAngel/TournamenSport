@@ -3224,9 +3224,17 @@ export function TournamenSportApp() {
 
     if (error) {
       console.error("Error al registrar solicitud:", error);
-      showNotice(error.message?.toLowerCase().includes("already")
-        ? "Ese email ya está registrado. Probá iniciar sesión."
-        : "No se pudo crear la cuenta. Revisá los datos e intentá nuevamente.");
+      const registrationError = (error.message || "").toLowerCase();
+
+      if (registrationError.includes("already") || registrationError.includes("registered")) {
+        showNotice("Ese email ya está registrado. Probá iniciar sesión o recuperar la contraseña.");
+      } else if (registrationError.includes("password") && registrationError.includes("short")) {
+        showNotice("La contraseña es demasiado corta. Usá al menos 6 caracteres.");
+      } else if (registrationError.includes("rate limit") || registrationError.includes("too many")) {
+        showNotice("Se realizaron demasiados intentos. Esperá unos minutos y volvé a probar.");
+      } else {
+        showNotice("No se pudo crear la cuenta: " + (error.message || "Supabase no informó el motivo. Revisá la consola del navegador."));
+      }
       return;
     }
 
