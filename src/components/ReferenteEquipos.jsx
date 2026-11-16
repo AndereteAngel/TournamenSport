@@ -53,6 +53,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [rosterCategory, setRosterCategory] = useState("todas");
   const [newCategoryName, setNewCategoryName] = useState("");
   const [rosterView, setRosterView] = useState("menu");
+  const [registrationPlayer, setRegistrationPlayer] = useState({ first_name: "", last_name: "", dni: "", birth_date: "", category_roster_id: "", photo_path: "", dni_front_path: "", dni_back_path: "" });
+  const [registrationUploads, setRegistrationUploads] = useState({ photo: false, front: false, back: false });
 
   const loadParticipations = useCallback(async () => {
     setLoading(true);
@@ -131,6 +133,84 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
     if (uploadError) setError(uploadError.message || "No se pudo subir la fotografía.");
     else updatePlayer(participationId, playerId, "photo_path", path);
     setUploadingPlayerId(null);
+  };
+
+  const uploadRegistrationDocument = async (kind, file) => {
+    if (!file) return;
+    const isPhoto = kind === "photo";
+    const allowed = isPhoto
+      ? ["image/jpeg", "image/png", "image/webp"]
+      : ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+    if (!allowed.includes(file.type)) {
+      setError(isPhoto ? "La foto debe estar en formato JPG, PNG o WEBP." : "El DNI debe ser una imagen JPG, PNG, WEBP o PDF.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("El archivo no puede superar los 5 MB.");
+      return;
+    }
+    setRegistrationUploads((previous) => ({ ...previous, [kind]: true }));
+    setError("");
+    const extension = file.name.split(".").pop()?.toLowerCase() || (isPhoto ? "jpg" : "jpg");
+    const bucket = isPhoto ? "fefutin-player-photos" : "fefutin-player-dni";
+    const path = `${currentUser.id}/inscripcion-${Date.now()}-${kind}.${extension}`;
+    const { error: uploadError } = await supabase.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type });
+    if (uploadError) {
+      setError(uploadError.message || "No se pudo subir el archivo.");
+    } else {
+      setRegistrationPlayer((previous) => ({ ...previous, [kind === "photo" ? "photo_path" : kind === "front" ? "dni_front_path" : "dni_back_path"]: path }));
+      setNotice(kind === "photo" ? "Fotografía cargada." : kind === "front" ? "Frente del DNI cargado de forma privada." : "Dorso del DNI cargado de forma privada.");
+    }
+    setRegistrationUploads((previous) => ({ ...previous, [kind]: false }));
+  };
+
+  const submitIndividualPlayer = async () => {
+    const form = registrationPlayer;
+    const category = visibleParticipations.find((item) => item.club_tournament_id === form.category_roster_id);
+    if (!category) return setError("Elegí una categoría del club.");
+    if (!form.first_name.trim() || !form.last_name.trim() || !form.dni.trim() || !form.birth_date) {
+      return setError("Completá nombre, apellido, DNI y fecha de nacimiento.");
+    }
+    if (!form.photo_path || !form.dni_front_path || !form.dni_back_path) {
+      return setError("Cargá la foto del jugador y el frente y dorso del DNI.");
+    }
+    const existingPlayers = rowsByParticipation[category.club_tournament_id] || [];
+    const newPlayer = {
+      id: `nuevo-${Date.now()}`,
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+      dni: form.dni.trim(),
+      birth_date: form.birth_date,
+      photo_path: form.photo_path,
+      jersey_number: "",
+    };
+    const payload = [...existingPlayers, newPlayer].map((player) => ({
+      id: player.id,
+      first_name: player.first_name || "",
+      last_name: player.last_name || "",
+      dni: player.dni || "",
+      birth_date: player.birth_date || "",
+      photo_path: player.photo_path || "",
+    }));
+    setSavingId(category.club_tournament_id);
+    setError("");
+    setNotice("");
+    const { error: saveError } = await supabase.rpc("save_fefutin_permanent_roster_with_dni", {
+      p_roster_id: category.club_tournament_id,
+      p_players: payload,
+      p_player_dni: form.dni,
+      p_dni_front_path: form.dni_front_path,
+      p_dni_back_path: form.dni_back_path,
+    });
+    setSavingId(null);
+    if (saveError) {
+      console.error("Error al inscribir jugador:", saveError);
+      setError(saveError.message || "No se pudo guardar la inscripción.");
+      return;
+    }
+    setRegistrationPlayer({ first_name: "", last_name: "", dni: "", birth_date: "", category_roster_id: category.club_tournament_id, photo_path: "", dni_front_path: "", dni_back_path: "" });
+    setNotice("Jugador inscripto correctamente. Su ficha quedó pendiente de revisión de Admin o Directivo.");
+    await loadParticipations();
   };
 
   const removePlayer = (participationId, playerId) => {
@@ -741,8 +821,66 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
               ← Volver
             </button>
             <h2 className="cr-title" style={{ color: "#fff", margin: "1.25rem 0 0" }}>
-              INSCRIPCIÓN
+              INSCRIPCIÓN DE JUGADOR
             </h2>
+            <p style={{ color: "#ccc", lineHeight: 1.5 }}>Completá una ficha por jugador. Al guardar, quedará pendiente de revisión para la emisión de su carnet FEFUTIN.</p>
+            <div style={{ display: "grid", gap: ".9rem", marginTop: "1rem" }}>
+              <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".8rem", fontWeight: 800 }}>
+                CLUB ACTUAL
+                <input value={club?.club_name || participations[0]?.club_name || ""} readOnly style={{ ...inputStyle, background: "#e5e7eb" }} />
+              </label>
+              <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".8rem", fontWeight: 800 }}>
+                CATEGORÍA
+                <select value={registrationPlayer.category_roster_id || ""} onChange={(event) => setRegistrationPlayer((previous) => ({ ...previous, category_roster_id: event.target.value }))} style={inputStyle}>
+                  <option value="">Seleccioná la categoría</option>
+                  {visibleParticipations.filter((item) => item.category_label && item.category_label !== "SIN CATEGORÍAS").map((item) => <option key={item.club_tournament_id} value={item.club_tournament_id}>{item.category_label}</option>)}
+                </select>
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))", gap: ".75rem" }}>
+                <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".8rem", fontWeight: 800 }}>APELLIDO
+                  <input value={registrationPlayer.last_name} onChange={(event) => setRegistrationPlayer((previous) => ({ ...previous, last_name: event.target.value }))} placeholder="Apellido" style={inputStyle} />
+                </label>
+                <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".8rem", fontWeight: 800 }}>NOMBRE
+                  <input value={registrationPlayer.first_name} onChange={(event) => setRegistrationPlayer((previous) => ({ ...previous, first_name: event.target.value }))} placeholder="Nombre" style={inputStyle} />
+                </label>
+                <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".8rem", fontWeight: 800 }}>DNI
+                  <input inputMode="numeric" value={registrationPlayer.dni} onChange={(event) => setRegistrationPlayer((previous) => ({ ...previous, dni: event.target.value.replace(/[^0-9]/g, "") }))} placeholder="Número de documento" style={inputStyle} />
+                </label>
+                <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".8rem", fontWeight: 800 }}>FECHA DE NACIMIENTO
+                  <input type="date" value={registrationPlayer.birth_date} onChange={(event) => setRegistrationPlayer((previous) => ({ ...previous, birth_date: event.target.value }))} style={inputStyle} />
+                </label>
+              </div>
+              <section style={{ display: "grid", gap: ".65rem", padding: ".9rem", border: "1px solid #444", borderRadius: "10px" }}>
+                <strong style={{ color: "#fff" }}>DOCUMENTO NACIONAL DE IDENTIDAD</strong>
+                <p style={{ color: "#aaa", fontSize: ".75rem", margin: 0 }}>Los archivos se guardan en un espacio privado y solo pueden consultarlos el referente correspondiente y las autoridades FEFUTIN.</p>
+                {[
+                  ["front", "FRENTE DEL DNI", registrationPlayer.dni_front_path],
+                  ["back", "DORSO DEL DNI", registrationPlayer.dni_back_path],
+                ].map(([kind, label, path]) => <label key={kind} style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".78rem", fontWeight: 800 }}>
+                  {label}
+                  <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" disabled={registrationUploads[kind]} onChange={(event) => uploadRegistrationDocument(kind, event.target.files?.[0])} style={{ color: "#fff" }} />
+                  <span style={{ color: path ? "#86efac" : "#fca5a5", fontSize: ".72rem" }}>{registrationUploads[kind] ? "Subiendo..." : path ? "Documento cargado de forma privada" : "Pendiente de carga · máximo 5 MB"}</span>
+                </label>)}
+              </section>
+              <section style={{ display: "grid", gap: ".65rem", padding: ".9rem", border: "1px solid #444", borderRadius: "10px" }}>
+                <strong style={{ color: "#fff" }}>FOTOGRAFÍA DEL JUGADOR</strong>
+                {registrationPlayer.photo_path ? <img src={supabase.storage.from("fefutin-player-photos").getPublicUrl(registrationPlayer.photo_path).data.publicUrl} alt="Foto del jugador" style={{ width: "112px", height: "132px", objectFit: "cover", borderRadius: "8px", border: "1px solid #b5122a" }} /> : <span style={{ color: "#fca5a5", fontSize: ".75rem" }}>Todavía no se cargó una fotografía.</span>}
+                <label style={{ ...buttonStyle, display: "inline-block", width: "fit-content", cursor: "pointer" }}>
+                  {registrationUploads.photo ? "Subiendo fotografía..." : registrationPlayer.photo_path ? "Cambiar fotografía" : "＋ Cargar fotografía"}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" disabled={registrationUploads.photo} onChange={(event) => uploadRegistrationDocument("photo", event.target.files?.[0])} style={{ display: "none" }} />
+                </label>
+                <span style={{ color: "#aaa", fontSize: ".72rem" }}>JPG, PNG o WEBP · máximo 5 MB.</span>
+              </section>
+              <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".8rem", fontWeight: 800 }}>
+                NÚMERO DE CARNET FEFUTIN
+                <input value="Se asignará automáticamente cuando Admin o Directivo apruebe el alta" readOnly style={{ ...inputStyle, background: "#e5e7eb", fontSize: ".78rem" }} />
+              </label>
+              {error && <p role="alert" style={{ color: "#fecaca", background: "#450a0a", padding: ".7rem", borderRadius: "8px" }}>{error}</p>}
+              {notice && <p role="status" style={{ color: "#bbf7d0", background: "#052e16", padding: ".7rem", borderRadius: "8px" }}>{notice}</p>}
+              <button type="button" className="cr-btn-gold" disabled={savingId !== null || Object.values(registrationUploads).some(Boolean) || visibleParticipations.length === 0} onClick={submitIndividualPlayer} style={{ width: "100%", minHeight: "48px" }}>
+                {savingId ? "GUARDANDO INSCRIPCIÓN..." : "GUARDAR INSCRIPCIÓN DEL JUGADOR"}
+              </button>
+            </div>
           </>
         )}
         {isRosterMenuScreen && (
