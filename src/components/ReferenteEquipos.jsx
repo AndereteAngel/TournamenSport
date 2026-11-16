@@ -51,11 +51,13 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [activeTournamentIndex, setActiveTournamentIndex] = useState(0);
   const [rosterSearch, setRosterSearch] = useState("");
   const [rosterCategory, setRosterCategory] = useState("todas");
+  const [newCategoryName, setNewCategoryName] = useState("");
 
   const loadParticipations = useCallback(async () => {
     setLoading(true);
     setError("");
-    const { data, error: loadError } = await supabase.rpc("get_fefutin_my_teams");
+    const rpcName = mode === "torneos" ? "get_fefutin_my_teams" : "get_fefutin_my_permanent_rosters";
+    const { data, error: loadError } = await supabase.rpc(rpcName);
     if (loadError) {
       console.error("Error al cargar fichas FEFUTIN:", loadError);
       setError(loadError.message || "No se pudieron cargar las categorías de tu club.");
@@ -66,7 +68,10 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
 
     const items = (data || []).map((item) => ({
       ...item,
-      players: Array.isArray(item.players) ? item.players : [],
+      players: (Array.isArray(item.players) ? item.players : []).map((player) => ({
+        ...player,
+        jersey_number: player.jersey_number || "Sin especificar",
+      })),
     }));
     setParticipations(items);
     if (currentUser?.role === "referente" && items.length > 0) {
@@ -82,7 +87,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
     });
     setRowsByParticipation(nextRows);
     setLoading(false);
-  }, []);
+  }, [mode]);
 
   useEffect(() => {
     loadParticipations();
@@ -153,11 +158,16 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
       jersey_number: player.jersey_number || "",
       photo_path: player.photo_path || "",
     }));
-    const { error: saveError } = await supabase.rpc("save_fefutin_team_roster", {
-      p_club_tournament_id: item.club_tournament_id,
-      p_players: payload,
-      p_submit: submit,
-    });
+    const { error: saveError } = mode === "torneos"
+      ? await supabase.rpc("save_fefutin_team_roster", {
+          p_club_tournament_id: item.club_tournament_id,
+          p_players: payload,
+          p_submit: submit,
+        })
+      : await supabase.rpc("save_fefutin_permanent_roster", {
+          p_roster_id: item.club_tournament_id,
+          p_players: payload.map(({ jersey_number, ...player }) => player),
+        });
 
     if (saveError) {
       console.error("Error al guardar lista de buena fe:", saveError);
@@ -166,11 +176,30 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
       return;
     }
 
-    setNotice(submit
-      ? `Lista de ${item.category_label} presentada correctamente.`
-      : `Borrador de ${item.category_label} guardado.`);
+    setNotice(mode === "torneos"
+      ? (submit ? `Lista de ${item.category_label} presentada correctamente.` : `Borrador de ${item.category_label} guardado.`)
+      : `Plantel permanente de ${item.category_label} guardado correctamente.`);
     await loadParticipations();
     setSavingId(null);
+  };
+
+  const createPermanentCategory = async () => {
+    const category = newCategoryName.trim();
+    if (!category) {
+      setError("Escribí el nombre de la categoría.");
+      return;
+    }
+    setError("");
+    const { error: createError } = await supabase.rpc("create_fefutin_permanent_roster", {
+      p_category_label: category,
+    });
+    if (createError) {
+      setError(createError.message || "No se pudo crear la categoría.");
+      return;
+    }
+    setNewCategoryName("");
+    setNotice(`Categoría ${category} creada. Ya podés cargar su plantel.`);
+    await loadParticipations();
   };
 
   const isManager = currentUser?.role === "admin" || currentUser?.role === "directivo";
@@ -183,7 +212,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const visibleParticipations = mode === "equipos" && activeClubId
     ? participations.filter((item) => item.club_id === activeClubId)
     : participations;
-  const categoryOptions = [...new Set(visibleParticipations.map((item) => item.category_label).filter(Boolean))].sort((a, b) => a.localeCompare(b, "es"));
+  const categoryOptions = [...new Set(visibleParticipations.map((item) => item.category_label).filter((category) => category && category !== "SIN CATEGORÍAS"))].sort((a, b) => a.localeCompare(b, "es"));
   const filteredParticipations = visibleParticipations.filter((item) => {
     if (mode === "torneos" || selectedSection === "torneos") {
       const query = tournamentSearch.trim().toLocaleLowerCase("es");
@@ -192,7 +221,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
       const matchesStatus = tournamentStatus === "todos" || (tournamentStatus === "pendiente" ? !["presentada", "borrador"].includes(item.team_status) : item.team_status === tournamentStatus);
       return matchesSearch && matchesCategory && matchesStatus;
     }
-    if (selectedSection === "listas") return rosterCategory === "todas" || item.category_label === rosterCategory;
+    if (selectedSection === "listas") return item.category_label !== "SIN CATEGORÍAS" && (rosterCategory === "todas" || item.category_label === rosterCategory);
     return true;
   });
   const filteredPlayersFor = (item) => {
@@ -364,6 +393,16 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </div>
                 )}
 
+                {mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && (
+                  <section style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: ".6rem", alignItems: "end", padding: ".9rem", marginTop: "1rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171717" }}>
+                    <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".78rem", fontWeight: 800 }}>
+                      AGREGAR CATEGORÍA PERMANENTE
+                      <input value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") createPermanentCategory(); }} placeholder="Ej.: Infantil 2018, Femenino..." style={filterInputStyle} maxLength={80} />
+                    </label>
+                    <button type="button" style={buttonStyle} onClick={createPermanentCategory}>＋ Crear</button>
+                  </section>
+                )}
+
                 {(mode === "torneos" || selectedSection === "torneos" || selectedSection === "listas") && (
                   <div style={{ display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: ".7rem", padding: ".85rem", marginTop: "1rem", border: "1px solid #444", borderRadius: "10px", background: "#171717" }}>
                     {(mode === "torneos" || selectedSection === "torneos") ? (
@@ -471,7 +510,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                     )}
 
                     <div style={{ margin: ".9rem 0", padding: ".75rem", borderRadius: "8px", background: "#171c27" }}>
-                      <strong style={{ color: "#fff", display: "block" }}>{item.tournament_title}</strong>
+                      <strong style={{ color: "#fff", display: "block" }}>{mode === "torneos" ? item.tournament_title : "PLANTEL PERMANENTE"}</strong>
                       <span style={{ color: "#fca5a5", fontWeight: 800, fontSize: ".9rem" }}>{item.category_label}</span>
                       <div style={{ color: "#aaa", fontSize: ".78rem", marginTop: ".25rem" }}>Equipo: {item.club_name} · {item.category_label}</div>
                     </div>
@@ -571,14 +610,20 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                               <div style={{ display: "flex", gap: ".6rem", flexWrap: "wrap", justifyContent: "space-between", marginTop: ".85rem" }}>
                                 <button type="button" style={buttonStyle} onClick={() => addPlayer(item.club_tournament_id)}>＋ Agregar jugador</button>
                                 <div style={{ display: "flex", gap: ".55rem", flexWrap: "wrap" }}>
-                                  <button type="button" style={buttonStyle} disabled={savingId === item.club_tournament_id} onClick={() => saveRoster(item, false)}>{savingId === item.club_tournament_id ? "Guardando..." : "Guardar borrador"}</button>
-                                  <button type="button" className="cr-btn-gold" disabled={savingId === item.club_tournament_id} onClick={() => saveRoster(item, true)}>{savingId === item.club_tournament_id ? "Enviando..." : "Presentar lista"}</button>
+                                  {mode === "torneos" ? (
+                                    <>
+                                      <button type="button" style={buttonStyle} disabled={savingId === item.club_tournament_id} onClick={() => saveRoster(item, false)}>{savingId === item.club_tournament_id ? "Guardando..." : "Guardar borrador"}</button>
+                                      <button type="button" className="cr-btn-gold" disabled={savingId === item.club_tournament_id} onClick={() => saveRoster(item, true)}>{savingId === item.club_tournament_id ? "Enviando..." : "Presentar lista"}</button>
+                                    </>
+                                  ) : (
+                                    <button type="button" className="cr-btn-gold" disabled={savingId === item.club_tournament_id} onClick={() => saveRoster(item, false)}>{savingId === item.club_tournament_id ? "Guardando..." : "GUARDAR PLANTEL PERMANENTE"}</button>
+                                  )}
                                 </div>
                               </div>
                             )}
                           </>
                         )}
-                        {item.team_status === "presentada" && <p style={{ color: "#facc15", fontSize: ".78rem" }}>Lista presentada: las modificaciones están bloqueadas mientras se revisan las altas.</p>}
+                        {mode === "torneos" && item.team_status === "presentada" && <p style={{ color: "#facc15", fontSize: ".78rem" }}>Lista presentada: las modificaciones están bloqueadas mientras se revisan las altas.</p>}
                         {item.submitted_at && <p style={{ color: "#86efac", fontSize: ".78rem", marginBottom: 0 }}>Presentada: {new Date(item.submitted_at).toLocaleString("es-AR")}</p>}
                       </>
                     )}
