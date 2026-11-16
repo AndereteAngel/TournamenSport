@@ -544,12 +544,14 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                               <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Fecha de nacimiento
                                 <input type="date" value={currentEditingPlayer.birth_date || ""} disabled={readOnly || item.team_status === "presentada" || currentEditingPlayer.approval_status === "aprobado" || currentEditingPlayer.approval_status === "rechazado"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "birth_date", event.target.value)} style={{ ...inputStyle, WebkitAppearance: "none", appearance: "none", display: "block", fontSize: "0.9rem", lineHeight: "normal", padding: "0.65rem 0.7rem", height: "54px", minHeight: "54px", maxWidth: "100%", borderRadius: "7px" }} />
                               </label>
-                              <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Número de camiseta
-                                <select value={currentEditingPlayer.jersey_number || "Sin especificar"} disabled={readOnly || item.team_status === "presentada" || currentEditingPlayer.approval_status === "aprobado" || currentEditingPlayer.approval_status === "rechazado"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "jersey_number", event.target.value)} style={inputStyle}>
-                                  <option value="Sin especificar">Sin especificar</option>
-                                  {Array.from({ length: 99 }, (_, number) => number + 1).map((number) => <option key={number} value={String(number)}>{number}</option>)}
-                                </select>
-                              </label>
+                              {mode === "torneos" && (
+                                <label style={{ color: "#eee", display: "grid", gap: ".35rem", fontSize: ".82rem" }}>Número de camiseta
+                                  <select value={currentEditingPlayer.jersey_number || "Sin especificar"} disabled={readOnly || item.team_status === "presentada" || currentEditingPlayer.approval_status === "aprobado" || currentEditingPlayer.approval_status === "rechazado"} onChange={(event) => updatePlayer(item.club_tournament_id, currentEditingPlayer.id, "jersey_number", event.target.value)} style={inputStyle}>
+                                    <option value="Sin especificar">Sin especificar</option>
+                                    {Array.from({ length: 99 }, (_, number) => number + 1).map((number) => <option key={number} value={String(number)}>{number}</option>)}
+                                  </select>
+                                </label>
+                              )}
                             </div>
                             <div style={{ marginTop: "1rem", display: "grid", gap: ".55rem" }}>
                               <span style={{ color: "#eee", fontSize: ".82rem", fontWeight: 700 }}>Fotografía individual</span>
