@@ -4404,7 +4404,12 @@ export function TournamenSportApp() {
   const refereeAssignedMatchCount = refereeJornadas.reduce((total, jornada) =>
     total + jornada.detallesPartidos.filter((detail) => detail.instancia !== "Pendiente de fixture" && detail.matchId).length, 0);
   const refereePendingMatchCount = refereeJornadas.reduce((total, jornada) =>
-    total + jornada.detallesPartidos.filter((detail) => detail.instancia !== "Pendiente de fixture" && detail.matchId && !detail.referee_closed).length, 0);
+    total + jornada.detallesPartidos.filter((detail) =>
+      detail.instancia !== "Pendiente de fixture" &&
+      detail.matchId &&
+      String(detail.referee_id || "") === String(currentUser?.id || "") &&
+      !detail.referee_closed
+    ).length, 0);
   const referenteNextMatch = (() => {
     if (!isReferente || !referenteParticipations.length || !tournaments.length) return null;
     const today = new Date();
