@@ -157,9 +157,8 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
                             <button
                               type="button"
                               style={buttonStyle}
-                              disabled={!category || sendingId === tournament.id || Boolean(sendingId) || String(tournament.status || "").trim().toLocaleLowerCase("es") !== "inscripciones"}
+                              disabled={!category || sendingId === tournament.id || Boolean(sendingId)}
                               onClick={() => requestTournament(tournament)}
-                              title={String(tournament.status || "").trim().toLocaleLowerCase("es") !== "inscripciones" ? "Las inscripciones de este torneo están cerradas" : ""}
                             >
                               {sendingId === tournament.id ? "ENVIANDO..." : "INSCRIBIRSE"}
                             </button>
