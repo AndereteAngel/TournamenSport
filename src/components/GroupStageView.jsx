@@ -23,6 +23,7 @@ export function GroupStageView({
   const [targetMatchId, setTargetMatchId] = useState(null);
   const [myMatchesView, setMyMatchesView] = useState("pending");
   const [selectedSheetMatch, setSelectedSheetMatch] = useState(null);
+  const [selectedSheetContext, setSelectedSheetContext] = useState({ phase: "groups", groupIndex: 0, roundIndex: null });
 
   useEffect(() => {
     if (!targetMatchId) return;
@@ -43,12 +44,23 @@ export function GroupStageView({
   }, [activeGroupIndex, selectedRound, targetMatchId]);
 
   useEffect(() => {
-    if (!openAssignedMatch || !Array.isArray(tournament.groups)) return;
-    const groupIndex = Number(openAssignedMatch.groupIndex);
-    const group = tournament.groups[groupIndex];
-    const match = group?.matches?.find((item) => String(item?.id) === String(openAssignedMatch.matchId));
-    if (!match) return;
-    setActiveGroupIndex(groupIndex);
+    if (!openAssignedMatch) return;
+    const phase = openAssignedMatch.phase === "playoffs" ? "playoffs" : "groups";
+    let match = null;
+    if (phase === "playoffs") {
+      const roundIndex = Number(openAssignedMatch.roundIndex);
+      match = tournament.playoffs?.[roundIndex]?.find((item) => String(item?.id) === String(openAssignedMatch.matchId)) || null;
+      if (!match) return;
+      setSelectedSheetContext({ phase, groupIndex: null, roundIndex });
+    } else {
+      if (!Array.isArray(tournament.groups)) return;
+      const groupIndex = Number(openAssignedMatch.groupIndex);
+      const group = tournament.groups[groupIndex];
+      match = group?.matches?.find((item) => String(item?.id) === String(openAssignedMatch.matchId)) || null;
+      if (!match) return;
+      setActiveGroupIndex(groupIndex);
+      setSelectedSheetContext({ phase, groupIndex, roundIndex: null });
+    }
     setSelectedSheetMatch(match);
     onAssignedMatchOpened?.();
   }, [openAssignedMatch, tournament.id]);
@@ -813,7 +825,7 @@ export function GroupStageView({
               {(isAdmin || isReferente || (isReferee && String(match.referee_id || "") === String(currentUser?.id || ""))) && (
                 <button
                   type="button"
-                  onClick={() => setSelectedSheetMatch(match)}
+                  onClick={() => { setSelectedSheetContext({ phase: "groups", groupIndex: activeGroupIndex, roundIndex: null }); setSelectedSheetMatch(match); }}
                   style={{
                     gridColumn: "1 / -1",
                     width: "100%",
@@ -858,8 +870,9 @@ export function GroupStageView({
           readOnly={isReferente}
           onCloseMatch={async ({ score1, score2 }) => {
             const closed = await onCloseMatch?.({
-              phase: "groups",
-              groupIndex: activeGroupIndex,
+              phase: selectedSheetContext.phase || "groups",
+              groupIndex: selectedSheetContext.phase === "groups" ? selectedSheetContext.groupIndex : null,
+              roundIndex: selectedSheetContext.phase === "playoffs" ? selectedSheetContext.roundIndex : null,
               matchId: selectedSheetMatch.id,
               score1,
               score2,
