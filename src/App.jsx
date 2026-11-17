@@ -3394,7 +3394,7 @@ export function TournamenSportApp() {
         teams: [],
         matches: [],
         capacity: Number(config.maxParticipants),
-        numGroups: config.format === "groups_playoff" ? Number(config.numGroups) : 1,
+        numGroups: ["groups", "groups_playoff"].includes(config.format) ? Number(config.numGroups) : 1,
         category_config: [{
           division: entry.division,
           categoryType: entry.categoryType,
@@ -3596,10 +3596,9 @@ export function TournamenSportApp() {
     const registration = (activeTournament.groups || []).find((group) => group?.name === "__INSCRIPCIONES__");
     const fixtureGeneration = String(registration?.fixtureGeneration || "");
     const matchIdPrefix = fixtureGeneration ? `${fixtureGeneration}-` : "";
-    const configuredGroups = activeTournament.format === "groups_playoff"
-      ? Number(registration?.numGroups || 2)
-      : 1;
-    const numGroups = activeTournament.format === "groups_playoff"
+    const usesGroups = ["groups", "groups_playoff"].includes(activeTournament.format);
+    const configuredGroups = usesGroups ? Number(registration?.numGroups || 2) : 1;
+    const numGroups = usesGroups
       ? Math.max(1, Math.min(configuredGroups, Math.floor(participants.length / 2)))
       : 1;
 
@@ -3608,7 +3607,13 @@ export function TournamenSportApp() {
       return;
     }
 
-    const detalleInicio = activeTournament.format === "single_elimination" ? "Las inscripciones se cerrarán y se generarán las llaves de eliminación directa." : "Las inscripciones se cerrarán y se generarán los grupos y partidos.";
+    const detalleInicio = activeTournament.format === "single_elimination"
+      ? "Las inscripciones se cerrarán y se generarán las llaves de eliminación directa."
+      : activeTournament.format === "groups"
+        ? "Las inscripciones se cerrarán y se generarán los grupos, sin fase de playoff."
+        : activeTournament.format === "groups_playoff"
+          ? "Las inscripciones se cerrarán y se generarán los grupos y luego la fase de playoff."
+          : "Las inscripciones se cerrarán y se generará el calendario todos contra todos.";
     const confirmar = await confirmTournament(`¿Dar comienzo a "${activeTournament.title}" con ${participants.length} participantes? ${detalleInicio}`);
     if (!confirmar) return;
 
@@ -3891,7 +3896,7 @@ export function TournamenSportApp() {
         ...groups[registrationIndex],
         teams: Array.isArray(config.teams) ? config.teams : [],
         capacity: Number(config.maxParticipants),
-        numGroups: config.format === "groups_playoff" ? Number(config.numGroups) : 1,
+        numGroups: ["groups", "groups_playoff"].includes(config.format) ? Number(config.numGroups) : 1,
         category_config: Array.isArray(config.category_config) ? config.category_config : [],
       };
       groups[registrationIndex] = registration;
@@ -3910,7 +3915,7 @@ export function TournamenSportApp() {
         .from("tournaments")
         .update({
           title: updatedTournament.title,
-          game: `Fútbol · ${config.category_config?.[0]?.division || getTournamentDivision(activeTournament)} · ${config.turno} · ${config.category_config?.[0]?.categories?.[0] || getTournamentCategory(activeTournament)}` ,
+          game: `Fútbol · ${config.category_config?.[0]?.division || getTournamentDivision(activeTournament)} · ${config.turno || "Semanal"} · ${config.category_config?.[0]?.categories?.[0] || getTournamentCategory(activeTournament)}` ,
           format: updatedTournament.format,
           qualifiers_per_group: updatedTournament.qualifiers_per_group,
           is_public: updatedTournament.is_public,
@@ -3939,7 +3944,7 @@ export function TournamenSportApp() {
 
     const shuffled = [...config.teams].sort(() => 0.5 - Math.random());
     const isDirectElimination = config.format === "single_elimination";
-    const numGroups = config.format === "groups_playoff" ? config.numGroups : 1;
+    const numGroups = ["groups", "groups_playoff"].includes(config.format) ? config.numGroups : 1;
     const groups = [];
 
     if (isDirectElimination) {
@@ -4257,6 +4262,21 @@ export function TournamenSportApp() {
         showNotice(`⚠️ Todavía quedan ${pendingMatches.length} partido(s) sin resultado. La liga se finaliza cuando se completen todas las fechas.`);
         return;
       }
+    } else if (format === "groups") {
+      const groups = Array.isArray(activeTournament?.groups) ? activeTournament.groups : [];
+      const groupMatches = groups.flatMap((group) => group.matches || []);
+      if (!groupMatches.length) {
+        showNotice("⚠️ No se puede finalizar el torneo porque no tiene partidos programados.");
+        return;
+      }
+      const pendingMatches = groupMatches.filter((match) =>
+        match.score1 === null || match.score1 === undefined ||
+        match.score2 === null || match.score2 === undefined
+      );
+      if (pendingMatches.length) {
+        showNotice(`⚠️ Todavía quedan ${pendingMatches.length} partido(s) sin resultado.`);
+        return;
+      }
     } else {
       const groups = Array.isArray(activeTournament?.groups) ? activeTournament.groups : [];
       const groupMatches = groups.flatMap((group) => group.matches || []);
@@ -4294,7 +4314,7 @@ export function TournamenSportApp() {
     const finishedObj = {
       ...activeTournament,
       status: "Finalizado",
-      playoffs: format === "league" ? null : activeTournament.playoffs,
+      playoffs: ["league", "groups"].includes(format) ? null : activeTournament.playoffs,
     };
     const { error } = await supabase
       .from("tournaments")
