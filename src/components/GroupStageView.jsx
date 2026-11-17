@@ -246,7 +246,6 @@ export function GroupStageView({
               awayTeam: team2,
               score1: null,
               score2: null,
-              match_date: getFefutinMatchDate(roundIndex + 1),
             });
           }
         }
