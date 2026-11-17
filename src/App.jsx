@@ -4222,24 +4222,35 @@ export function TournamenSportApp() {
     const configuredBranches = Array.isArray(registrationGroup?.category_config)
       ? registrationGroup.category_config
       : [];
+    const tournamentIdentity = (
+      String(tournament.title || "") + " " + String(tournament.game || "")
+    ).toLocaleLowerCase("es");
+    const hasFefutinIdentity = tournamentIdentity.includes("fefutin");
+    const hasFutsalIdentity =
+      /futsal/.test(tournamentIdentity) ||
+      configuredBranches.some((branch) =>
+        String(branch?.division || "").toLocaleLowerCase("es").includes("futsal")
+      );
 
-    const categoryEntries = configuredBranches.flatMap((branch) => {
-      const division = String(branch.division || "").trim();
-      const configuredCategories = (Array.isArray(branch.categories) ? branch.categories : [])
-        .map((category) => String(category || "").trim()).filter(Boolean);
-      // En FEFUTIN Futsal se muestran siempre las tres divisiones oficiales,
-      // incluso en torneos creados antes de agrupar las categorías en un solo registro.
-      const isFefutinFutsal = division.toLocaleLowerCase("es") === "futsal" &&
-        String(tournament.title || "").toLocaleLowerCase("es").includes("fefutin");
-      const categories = isFefutinFutsal
-        ? ["U15", "U17", "Primera"]
-        : configuredCategories;
-      return categories.map((category) => ({
-        division,
-        categoryType: String(branch.categoryType || "").trim(),
-        category,
-      }));
-    }).filter((entry) => entry.division && entry.category);
+    // FEFUTIN Futsal es una única inscripción que habilita tres categorías.
+    // No dependemos de que el registro antiguo tenga completa category_config.
+    const isFefutinFutsal = hasFefutinIdentity && hasFutsalIdentity;
+    const categoryEntries = isFefutinFutsal
+      ? ["U15", "U17", "Primera"].map((category) => ({
+          division: "Futsal",
+          categoryType: "Categoría",
+          category,
+        }))
+      : configuredBranches.flatMap((branch) => {
+          const division = String(branch.division || "").trim();
+          const configuredCategories = (Array.isArray(branch.categories) ? branch.categories : [])
+            .map((category) => String(category || "").trim()).filter(Boolean);
+          return configuredCategories.map((category) => ({
+            division,
+            categoryType: String(branch.categoryType || "").trim(),
+            category,
+          }));
+        }).filter((entry) => entry.division && entry.category);
 
     const displayTournaments = categoryEntries.length
       ? categoryEntries.map((entry) => {
@@ -4252,6 +4263,7 @@ export function TournamenSportApp() {
           return {
             ...tournament,
             game: displayGame,
+            category_detail: entry.category,
             groups: displayGroups,
             displayKey: `${tournament.id}-${entry.division}-${entry.category}`,
           };
