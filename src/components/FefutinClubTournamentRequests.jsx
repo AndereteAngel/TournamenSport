@@ -135,52 +135,43 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
           {loading ? <p style={{ color: "#ccc" }}>Cargando torneos...</p> : tournaments.length === 0 ? (
             <p style={{ color: "#aaa", marginBottom: 0 }}>Todavía no hay torneos creados.</p>
           ) : (
-            <div style={{ width: "100%", overflowX: "auto", marginTop: "1rem" }}>
-              <table style={{ width: "100%", minWidth: "560px", borderCollapse: "collapse", color: "#fff", fontSize: ".88rem" }}>
-                <thead>
-                  <tr style={{ background: "#202020", textAlign: "left" }}>
-                    <th style={{ padding: ".75rem", borderBottom: "1px solid #555" }}>TORNEO</th>
-                    <th style={{ padding: ".75rem", borderBottom: "1px solid #555" }}>RAMA / CATEGORÍA</th>
-                    <th style={{ padding: ".75rem", borderBottom: "1px solid #555" }}>PARTICIPACIÓN</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tournaments.flatMap((tournament) =>
-                    getTournamentCategoryEntries(tournament).map((entry) => {
-                      const categoryLabel = `${entry.division} · ${entry.category}`;
-                      const requestKey = `${tournament.id}::${normalizeCategoryLabel(categoryLabel)}`;
-                      const isLinked = linkedCategoryKeys.has(requestKey);
-                      const isPending = pendingCategoryKeys.has(requestKey);
-                      return (
-                        <tr key={requestKey} style={{ borderBottom: "1px solid #383838" }}>
-                          <td style={{ padding: ".8rem .75rem", fontWeight: 800 }}>{tournament.title || "Torneo sin nombre"}</td>
-                          <td style={{ padding: ".8rem .75rem", color: "#d1d5db" }}>{categoryLabel}</td>
-                          <td style={{ padding: ".8rem .75rem" }}>
-                            {isLinked ? (
-                              <span style={{ display: "inline-flex", color: "#86efac", background: "#052e16", border: "1px solid #166534", borderRadius: "7px", padding: ".55rem .7rem", fontWeight: 900, fontSize: ".75rem" }}>
-                                ✓ INSCRIPTO
-                              </span>
-                            ) : isPending ? (
-                              <span style={{ display: "inline-block", color: "#fde68a", background: "#422006", border: "1px solid #a16207", borderRadius: "7px", padding: ".55rem .7rem", fontWeight: 900, fontSize: ".72rem" }}>
-                                SOLICITUD PENDIENTE
-                              </span>
-                            ) : (
-                              <button
-                                type="button"
-                                style={{ ...buttonStyle, minWidth: "132px", minHeight: "42px", whiteSpace: "nowrap", display: "inline-block" }}
-                                disabled={Boolean(sendingId)}
-                                onClick={() => requestTournament(tournament, categoryLabel)}
-                              >
-                                {sendingId === requestKey ? "ENVIANDO..." : "INSCRIBIRSE"}
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+            <div style={{ display: "grid", gap: ".7rem", width: "100%", marginTop: "1rem" }}>
+              {tournaments.flatMap((tournament) =>
+                getTournamentCategoryEntries(tournament).map((entry) => {
+                  const categoryLabel = `${entry.division} · ${entry.category}`;
+                  const requestKey = `${tournament.id}::${normalizeCategoryLabel(categoryLabel)}`;
+                  const isLinked = linkedCategoryKeys.has(requestKey);
+                  const isPending = pendingCategoryKeys.has(requestKey);
+                  return (
+                    <article key={requestKey} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: ".65rem", padding: ".9rem", border: "1px solid #444", borderRadius: "9px", background: "#111", minWidth: 0 }}>
+                      <div style={{ minWidth: 0 }}>
+                        <strong style={{ color: "#fff", display: "block", overflowWrap: "anywhere" }}>{tournament.title || "Torneo sin nombre"}</strong>
+                        <span style={{ color: "#d1d5db", display: "block", fontSize: ".9rem", marginTop: ".25rem", overflowWrap: "anywhere" }}>{categoryLabel}</span>
+                      </div>
+                      <div style={{ width: "100%", minWidth: 0 }}>
+                        {isLinked ? (
+                          <span style={{ display: "inline-flex", width: "100%", boxSizing: "border-box", justifyContent: "center", color: "#86efac", background: "#052e16", border: "1px solid #166534", borderRadius: "7px", padding: ".75rem", fontWeight: 900, fontSize: ".8rem" }}>
+                            ✓ INSCRIPTO
+                          </span>
+                        ) : isPending ? (
+                          <span style={{ display: "inline-flex", width: "100%", boxSizing: "border-box", justifyContent: "center", color: "#fde68a", background: "#422006", border: "1px solid #a16207", borderRadius: "7px", padding: ".75rem", fontWeight: 900, fontSize: ".8rem", textAlign: "center" }}>
+                            SOLICITUD PENDIENTE
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            style={{ ...buttonStyle, display: "block", width: "100%", minHeight: "46px", boxSizing: "border-box", fontSize: ".9rem" }}
+                            disabled={Boolean(sendingId)}
+                            onClick={() => requestTournament(tournament, categoryLabel)}
+                          >
+                            {sendingId === requestKey ? "ENVIANDO..." : "INSCRIBIRSE"}
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })
+              )}
             </div>
           )}
           <p style={{ color: "#aaa", fontSize: ".78rem", marginBottom: 0, marginTop: ".8rem" }}>
