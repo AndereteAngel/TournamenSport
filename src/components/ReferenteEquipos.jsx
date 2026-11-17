@@ -787,7 +787,6 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
         )}
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
           <button type="button" className="tc-form-back" onClick={loadParticipations} disabled={loading}>↻ Actualizar</button>
-        </>}
         </div>
         </>}
         {isRegistrationScreen && (
