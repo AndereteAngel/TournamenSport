@@ -194,55 +194,60 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   });
 
   const [filterBranch, setFilterBranch] = useState("");
-  const [filterTournament, setFilterTournament] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
-  const [filterDocumentType, setFilterDocumentType] = useState("");
+  const [filterTurn, setFilterTurn] = useState("Semanal");
   const [documentViewBySheet, setDocumentViewBySheet] = useState({});
 
+  const normalizeBranch = (value) => {
+    const branch = String(value || "").trim().toLocaleLowerCase("es");
+    if (branch.includes("infantil") || branch.includes("baby")) return "Baby fútbol";
+    if (branch.includes("femenin") || branch.includes("mujer")) return "Femenino";
+    if (branch.includes("mayor") || branch.includes("senior") || branch.includes("sénior")) return "Sénior";
+    if (branch.includes("futsal")) return "Futsal";
+    return value ? String(value).trim() : "Sin rama";
+  };
   const getTournamentBranch = (tournament) => {
     const parts = String(tournament?.game || "").split("·").map((part) => part.trim());
-    return parts.find((part) => ["Infantil", "Femenino", "Mayores"].includes(part)) || "Sin rama";
+    const explicit = parts.find((part) =>
+      ["Infantil", "Femenino", "Mayores", "Baby fútbol", "Sénior", "Futsal"].includes(part)
+    );
+    if (explicit) return normalizeBranch(explicit);
+    const game = String(tournament?.game || "").toLocaleLowerCase("es");
+    if (game.includes("futsal")) return "Futsal";
+    if (game.includes("femenin") || game.includes("mujer")) return "Femenino";
+    if (game.includes("senior") || game.includes("sénior") || game.includes("mayor")) return "Sénior";
+    return "Baby fútbol";
   };
-  const getTournamentCategory = (tournament) => {
-    const parts = String(tournament?.game || "").split("·").map((part) => part.trim());
-    return parts.length > 2 ? parts.slice(2).join(" · ") : "Sin categoría";
+  const getTournamentTurn = (tournament) => {
+    const parts = String(tournament?.game || "").split("·").map((part) => part.trim().toLocaleLowerCase("es"));
+    return parts.includes("fin de semana") ? "Fin de semana" : "Semanal";
   };
   const archivedTournaments = [...tournaments].sort((a, b) =>
     String(a.title || "Torneo sin nombre").localeCompare(String(b.title || "Torneo sin nombre"), "es")
   );
-  const branches = [...new Set(archivedTournaments.map(getTournamentBranch))]
-    .filter((branch) => branch !== "Sin rama")
-    .sort((a, b) => a.localeCompare(b, "es"));
-  const tournamentsForBranch = archivedTournaments.filter((tournament) =>
-    !filterBranch || getTournamentBranch(tournament) === filterBranch
-  );
-  const sheetsForSelectedTournament = sheets.filter((sheet) =>
-    !filterTournament || String(sheet.tournament_id) === String(filterTournament)
-  );
-  const selectedTournament = archivedTournaments.find((item) => String(item.id) === String(filterTournament));
-  const categories = [...new Set([
-    ...sheetsForSelectedTournament.map((sheet) => String(sheet.categoria || "").trim()),
-    ...jornadaSheets.filter((sheet) => !filterTournament || String(sheet.tournament_id) === String(filterTournament) || (sheet.tournament_ids || []).includes(filterTournament))
-      .flatMap((sheet) => Array.isArray(sheet.categorias) ? sheet.categorias : []),
-    ...(selectedTournament ? [getTournamentCategory(selectedTournament)] : []),
-  ].filter((category) => category && category !== "Sin categoría"))]
-    .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+  const ramas = ["Baby fútbol", "Femenino", "Sénior", "Futsal"];
+  const findTournamentsForSheet = (sheet) => {
+    const ids = [sheet?.tournament_id, ...(Array.isArray(sheet?.tournament_ids) ? sheet.tournament_ids : [])]
+      .filter(Boolean).map(String);
+    return archivedTournaments.filter((item) => ids.includes(String(item.id)));
+  };
+  const matchesSheetFilters = (sheet) => {
+    const linkedTournaments = findTournamentsForSheet(sheet);
+    const sheetBranch = normalizeBranch(sheet?.rama);
+    const branchMatches = !filterBranch || (
+      (sheet?.rama && sheetBranch === filterBranch) ||
+      linkedTournaments.some((item) => getTournamentBranch(item) === filterBranch)
+    );
+    const turnMatches = !filterTurn || linkedTournaments.some((item) => getTournamentTurn(item) === filterTurn) ||
+      (!linkedTournaments.length && filterTurn === "Semanal");
+    return branchMatches && turnMatches;
+  };
 
-  const filteredJornadaSheets = jornadaSheets.filter((sheet) => {
-    if (filterDocumentType === "partido") return false;
-    const tournament = archivedTournaments.find((item) => String(item.id) === String(sheet.tournament_id));
-    const sheetCategories = Array.isArray(sheet.categorias) ? sheet.categorias : [];
-    return (!filterBranch || getTournamentBranch(tournament) === filterBranch) &&
-      (!filterTournament || String(sheet.tournament_id) === String(filterTournament) || (sheet.tournament_ids || []).includes(filterTournament)) &&
-      (!filterCategory || sheetCategories.includes(filterCategory));
-  });
-
+  const filteredJornadaSheets = jornadaSheets.filter(matchesSheetFilters);
   const filteredSheets = sheets.filter((sheet) => {
-    if (filterDocumentType === "jornada") return false;
     const tournament = archivedTournaments.find((item) => String(item.id) === String(sheet.tournament_id));
-    return (!filterBranch || getTournamentBranch(tournament) === filterBranch) &&
-      (!filterTournament || String(sheet.tournament_id) === String(filterTournament)) &&
-      (!filterCategory || String(sheet.categoria || getTournamentCategory(tournament)) === filterCategory);
+    return Boolean(tournament) &&
+      (!filterBranch || getTournamentBranch(tournament) === filterBranch) &&
+      (!filterTurn || getTournamentTurn(tournament) === filterTurn);
   });
 
   const isPhotoForSheet = (photo, sheet) => {
@@ -271,19 +276,10 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   };
 
   const filteredPhotos = photos.filter((photo) => {
-    if (filterDocumentType === "partido" && photo.document_type !== "category") return false;
-    if (filterDocumentType === "jornada" && photo.document_type === "category") return false;
     const photoTournament = archivedTournaments.find((item) => String(item.id) === String(photo.tournament_id));
-    const relatedSheets = sheets.filter((sheet) => isPhotoForSheet(photo, sheet));
-    const photoCategory = String(photo.categoria || getTournamentCategory(photoTournament) || "").trim();
-    const matchesPhotoCategory = !filterCategory || (
-      photo.document_type === "category"
-        ? photoCategory === filterCategory
-        : relatedSheets.some((sheet) => String(sheet.categoria || getTournamentCategory(photoTournament)) === filterCategory)
-    );
-    return (!filterBranch || getTournamentBranch(photoTournament) === filterBranch) &&
-      (!filterTournament || String(photo.tournament_id) === String(filterTournament)) &&
-      matchesPhotoCategory;
+    return Boolean(photoTournament) &&
+      (!filterBranch || getTournamentBranch(photoTournament) === filterBranch) &&
+      (!filterTurn || getTournamentTurn(photoTournament) === filterTurn);
   });
 
   const photosForSheet = (sheet) => filteredPhotos.filter((photo) => isPhotoForSheet(photo, sheet));
@@ -331,47 +327,32 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
           </form>
         ) : (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: ".65rem", margin: "1rem 0" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: ".65rem", margin: "1rem 0" }}>
               <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
-                RAMA
-                <select value={filterBranch} onChange={(event) => {
-                  setFilterBranch(event.target.value);
-                  setFilterTournament("");
-                  setFilterCategory("");
-                }} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
-                  <option value="">Todas las ramas</option>
-                  {branches.map((item) => <option key={item} value={item}>{item}</option>)}
+                1. RAMA
+                <select value={filterBranch} onChange={(event) => setFilterBranch(event.target.value)} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
+                  <option value="">Elegí la rama</option>
+                  {ramas.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
               </label>
-              <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
-                TORNEO
-                <select value={filterTournament} onChange={(event) => {
-                  setFilterTournament(event.target.value);
-                  setFilterCategory("");
-                }} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
-                  <option value="">Todos los torneos</option>
-                  {tournamentsForBranch.map((item) => <option key={item.id} value={item.id}>{item.title || "Torneo sin nombre"}</option>)}
-                </select>
-              </label>
-              <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
-                CATEGORÍA
-                <select value={filterCategory} onChange={(event) => setFilterCategory(event.target.value)} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
-                  <option value="">Todas</option>
-                  {categories.map((item) => <option key={item} value={item}>{item}</option>)}
-                </select>
-              </label>
-              <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
-                TIPO DE PLANILLA
-                <select value={filterDocumentType} onChange={(event) => setFilterDocumentType(event.target.value)} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
-                  <option value="">Todas</option>
-                  <option value="partido">Por partido</option>
-                  <option value="jornada">Por jornada</option>
-                </select>
-              </label>
+              {filterBranch && (
+                <label style={{ display: "grid", gap: ".3rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
+                  2. TURNO
+                  <select value={filterTurn} onChange={(event) => setFilterTurn(event.target.value)} style={{ minWidth: 0, padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
+                    <option value="Semanal">Semanal</option>
+                    <option value="Fin de semana">Fin de semana</option>
+                  </select>
+                </label>
+              )}
             </div>
+            {filterBranch && (
+              <p style={{ color: "#f3a0ad", textAlign: "center", fontSize: ".8rem", margin: "0 0 .8rem" }}>
+                {filterBranch} · {filterTurn} · Todas las categorías
+              </p>
+            )}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", margin: "1rem 0 .7rem" }}>
-              <strong style={{ color: "#fff", fontSize: ".85rem" }}>{filterDocumentType === "jornada" ? "JORNADAS ENCONTRADAS" : "DOCUMENTOS ENCONTRADOS"}</strong>
-              <span style={{ color: "#bbb", fontSize: ".75rem" }}>{(filterDocumentType === "jornada" ? filteredJornadaSheets.length : filteredSheets.length + filteredJornadaSheets.length) + filteredPhotos.length} resultado(s)</span>
+              <strong style={{ color: "#fff", fontSize: ".85rem" }}>"PLANILLAS CARGADAS"</strong>
+              <span style={{ color: "#bbb", fontSize: ".75rem" }}>{filteredSheets.length + filteredJornadaSheets.length + filteredPhotos.length} resultado(s)</span>
             </div>
             {loading ? <p style={{ color: "#ccc", textAlign: "center", padding: "1.5rem" }}>Cargando archivo...</p> : error ? <p role="alert" style={{ color: "#fca5a5" }}>{error}</p> : (
               <div style={{ display: "grid", gap: ".75rem" }}>
@@ -447,10 +428,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
                     <small style={{ display: "block", color: "#bbb", textAlign: "right", marginTop: ".5rem" }}>Cerrada el {formatDate(String(sheet.closed_at || sheet.jornada_date).slice(0, 10))}</small>
                   </article>
                 ))}
-                {(filterDocumentType === "jornada"
-                  ? filteredPhotos.filter((photo) => photo.document_type !== "category")
-                  : filteredPhotos.filter((photo) => !sheets.some((sheet) => isPhotoForSheet(photo, sheet)))
-                ).map((photo) => (
+                {filteredPhotos.filter((photo) => !sheets.some((sheet) => isPhotoForSheet(photo, sheet))).map((photo) => (
                   <article key={`photo-${photo.id}`} style={{ border: "1px solid #555", borderRadius: "10px", background: "#171c27", padding: ".85rem" }}>
                     <strong style={{ color: "#fff" }}>{getTournamentTitle(photo.tournament_id)} · {photo.jornada_label || "Jornada"}</strong>
                     <small style={{ display: "block", color: "#bbb", margin: ".25rem 0 .6rem" }}>{formatDate(photo.jornada_date)} · {photo.referee_name || "Árbitro sin identificar"}</small>
