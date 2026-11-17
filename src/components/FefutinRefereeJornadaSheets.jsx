@@ -31,7 +31,8 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       tournamentId: tournamentIds[0] || null,
       tournamentIds,
       tournamentTitle: jornada.torneo || "Torneo FEFUTIN",
-      branch: jornada.rama || "Infantil",
+      branch: jornada.rama || "Baby fútbol",
+      turno: jornada.turno || "Semanal",
       teamLocal: jornada.team1,
       teamVisitor: jornada.team2,
       categories: jornada.categorias || [],
@@ -191,7 +192,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
             <div style={{ textAlign: "center", color: "#fff", fontWeight: 900 }}>
               {jornada.teamLocal} <span style={{ color: "#f3a0ad" }}>VS.</span> {jornada.teamVisitor}
             </div>
-            <small style={{ display: "block", textAlign: "center", color: "#bbb", marginTop: ".3rem" }}>{jornada.tournamentTitle} · {jornada.branch} · {jornada.categories.length} categoría(s)</small>
+            <small style={{ display: "block", textAlign: "center", color: "#bbb", marginTop: ".3rem" }}>{jornada.tournamentTitle} · {jornada.branch} · {jornada.turno} · {jornada.categories.length} categoría(s)</small>
             <div style={{ display: "grid", gap: ".4rem", marginTop: ".7rem" }}>
               {jornada.details.map((detail, index) => {
                 const tienePartido = detail.instancia !== "Pendiente de fixture" && Boolean(detail.matchId);
@@ -200,6 +201,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
                   <div key={`${jornada.key}-${index}`} style={{ display: "grid", gridTemplateColumns: "minmax(0, .7fr) minmax(0, 1.5fr)", gap: ".35rem .5rem", alignItems: "center", padding: ".55rem", background: "#080b10", borderRadius: "7px", color: "#eee", fontSize: ".72rem" }}>
                     <strong style={{ color: "#f3a0ad" }}>{detail.categoria}</strong>
                     <span>{detail.team1} {detail.score1 == null ? "—" : detail.score1} - {detail.score2 == null ? "—" : detail.score2} {detail.team2}</span>
+                    <small style={{ gridColumn: "1 / -1", color: "#9ca3af" }}>{detail.groupName || detail.instancia}{detail.round ? ` · Fecha ${detail.round}` : ""}</small>
                     <span style={{ gridColumn: "1 / -1", color: "#d1d5db" }}>{jornada.teamLocal}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam1 + " pts" : "Pendiente"}</strong> · {jornada.teamVisitor}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam2 + " pts" : "Pendiente"}</strong></span>
                     {tienePartido && (
                       <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap", borderTop: "1px solid #343a40", paddingTop: ".45rem", marginTop: ".1rem" }}>
