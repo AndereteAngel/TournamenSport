@@ -40,6 +40,8 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [sheetId, setSheetId] = useState(null);
+  const [sheetIds, setSheetIds] = useState({ local: null, visitante: null });
+  const [activeSide, setActiveSide] = useState("local");
   const [metadata, setMetadata] = useState({
     jornada: String(match?.round || ""),
     sede: "",
@@ -163,41 +165,61 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           throw new Error("Las listas oficiales de ambos equipos deben tener jugadores vinculados a sus carnets para generar la planilla.");
         }
 
-        const { data: existingSheet, error: sheetError } = await supabase
+        const { data: existingSheets, error: sheetError } = await supabase
           .from("fefutin_match_sheets")
           .select("*")
           .eq("tournament_id", tournament.id)
-          .eq("match_id", String(match.id))
-          .maybeSingle();
+          .eq("match_id", String(match.id));
         if (sheetError) throw sheetError;
 
-        if (existingSheet) {
-          setSheetId(existingSheet.id);
+        const localSheet = (existingSheets || []).find((item) => item.lado === "local");
+        const visitorSheet = (existingSheets || []).find((item) => item.lado === "visitante");
+        const legacySheet = (existingSheets || []).find((item) => !item.lado || item.lado === "conjunta");
+        const metadataSheet = localSheet || visitorSheet || legacySheet;
+        setSheetIds({ local: localSheet?.id || null, visitante: visitorSheet?.id || null });
+        setSheetId(localSheet?.id || legacySheet?.id || null);
+
+        if (metadataSheet) {
           setMetadata({
-            jornada: existingSheet.jornada || String(match?.round || ""),
-            sede: existingSheet.sede || localClub.headquarters_address || "",
-            fecha_partido: existingSheet.fecha_partido || "",
-            arbitro_designado: assignedRefereeName || existingSheet.arbitro_designado || "",
-            observaciones: existingSheet.observaciones || "",
+            jornada: metadataSheet.jornada || String(match?.round || ""),
+            sede: metadataSheet.sede || localClub.headquarters_address || "",
+            fecha_partido: metadataSheet.fecha_partido || "",
+            arbitro_designado: assignedRefereeName || metadataSheet.arbitro_designado || "",
+            observaciones: metadataSheet.observaciones || "",
           });
-          const { data: savedPlayers, error: savedPlayersError } = await supabase
-            .from("fefutin_match_sheet_players")
-            .select("*")
-            .eq("match_sheet_id", existingSheet.id);
-          if (savedPlayersError) throw savedPlayersError;
-          const savedByPlayer = new Map((savedPlayers || []).map((item) => [item.player_id, item]));
-          const mergeSaved = (players) => players.map((player) => {
-            const saved = savedByPlayer.get(player.player_id);
-            return saved ? { ...player, ...saved, carnet_number: player.carnet_number, dni: player.dni } : player;
-          });
-          local = mergeSaved(local);
-          visitor = mergeSaved(visitor);
         } else {
           setMetadata((current) => ({
             ...current,
             sede: current.sede || localClub.headquarters_address || "",
             arbitro_designado: assignedRefereeName || current.arbitro_designado || "",
           }));
+        }
+
+        const sheetIdsToLoad = [localSheet?.id, visitorSheet?.id, legacySheet?.id].filter(Boolean);
+        if (sheetIdsToLoad.length) {
+          const { data: savedPlayers, error: savedPlayersError } = await supabase
+            .from("fefutin_match_sheet_players")
+            .select("*")
+            .in("match_sheet_id", sheetIdsToLoad);
+          if (savedPlayersError) throw savedPlayersError;
+
+          const localSaved = (savedPlayers || []).filter((item) =>
+            item.match_sheet_id === (localSheet?.id || legacySheet?.id) &&
+            normalize(item.club) === normalize(localName)
+          );
+          const visitorSaved = (savedPlayers || []).filter((item) =>
+            item.match_sheet_id === (visitorSheet?.id || legacySheet?.id) &&
+            normalize(item.club) === normalize(visitorName)
+          );
+          const mergeSaved = (players, rows) => {
+            const savedByPlayer = new Map(rows.map((item) => [item.player_id, item]));
+            return players.map((player) => {
+              const saved = savedByPlayer.get(player.player_id);
+              return saved ? { ...player, ...saved, carnet_number: player.carnet_number, dni: player.dni } : player;
+            });
+          };
+          local = mergeSaved(local, localSaved);
+          visitor = mergeSaved(visitor, visitorSaved);
         }
 
         if (!cancelled) {
@@ -229,7 +251,8 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
     setError("");
     setNotice("");
     try {
-      const payload = {
+      const userId = (await supabase.auth.getUser()).data?.user?.id || null;
+      const basePayload = {
         tournament_id: tournament.id,
         match_id: String(match.id),
         jornada: metadata.jornada || null,
@@ -240,57 +263,67 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         categoria: category || null,
         arbitro_designado: metadata.arbitro_designado || null,
         observaciones: metadata.observaciones || null,
-        updated_by: (await supabase.auth.getUser()).data?.user?.id || null,
+        updated_by: userId,
       };
-      const { data: sheet, error: saveSheetError } = await supabase
-        .from("fefutin_match_sheets")
-        .upsert(payload, { onConflict: "tournament_id,match_id" })
-        .select("id")
-        .single();
-      if (saveSheetError) throw saveSheetError;
-      setSheetId(sheet.id);
 
-      const allPlayers = [...localPlayers, ...visitorPlayers].map((player) => ({
-        match_sheet_id: sheet.id,
-        player_id: player.player_id,
-        club: player.club,
-        nombre: player.nombre,
-        apellido: player.apellido,
-        numero_camiseta: player.numero_camiseta === "" ? null : Number(player.numero_camiseta),
-        goles: Number(player.goles || 0),
-        es_capitan: Boolean(player.es_capitan),
-        tarjetas_amarillas: Number(player.tarjetas_amarillas || 0),
-        tarjetas_rojas: Number(player.tarjetas_rojas || 0),
-        estado_habilitacion: (() => {
-          const status = normalize(player.estado_habilitacion);
-          if (status === "habilitado") return "habilitado";
-          if (status === "no habilitado" || status === "no_habilitado") return "no_habilitado";
-          return "pendiente";
-        })(),
-        observaciones: player.observaciones || null,
-      }));
+      const saveSide = async (lado, players) => {
+        const { data: sheet, error: saveSheetError } = await supabase
+          .from("fefutin_match_sheets")
+          .upsert({ ...basePayload, lado }, { onConflict: "tournament_id,match_id,lado" })
+          .select("id")
+          .single();
+        if (saveSheetError) throw saveSheetError;
 
-      const { data: existingRows, error: existingRowsError } = await supabase
-        .from("fefutin_match_sheet_players")
-        .select("id, player_id")
-        .eq("match_sheet_id", sheet.id);
-      if (existingRowsError) throw existingRowsError;
-      const existingByPlayer = new Map((existingRows || []).map((row) => [row.player_id, row.id]));
-      const currentIds = new Set(allPlayers.map((player) => player.player_id));
+        const allPlayers = players.map((player) => ({
+          match_sheet_id: sheet.id,
+          player_id: player.player_id,
+          club: player.club,
+          nombre: player.nombre,
+          apellido: player.apellido,
+          numero_camiseta: player.numero_camiseta === "" ? null : Number(player.numero_camiseta),
+          goles: Number(player.goles || 0),
+          es_capitan: Boolean(player.es_capitan),
+          tarjetas_amarillas: Number(player.tarjetas_amarillas || 0),
+          tarjetas_rojas: Number(player.tarjetas_rojas || 0),
+          estado_habilitacion: (() => {
+            const status = normalize(player.estado_habilitacion);
+            if (status === "habilitado") return "habilitado";
+            if (status === "no habilitado" || status === "no_habilitado") return "no_habilitado";
+            return "pendiente";
+          })(),
+          observaciones: player.observaciones || null,
+        }));
 
-      for (const player of allPlayers) {
-        const existingId = existingByPlayer.get(player.player_id);
-        const result = existingId
-          ? await supabase.from("fefutin_match_sheet_players").update(player).eq("id", existingId)
-          : await supabase.from("fefutin_match_sheet_players").insert(player);
-        if (result.error) throw result.error;
-      }
+        const { data: existingRows, error: existingRowsError } = await supabase
+          .from("fefutin_match_sheet_players")
+          .select("id, player_id")
+          .eq("match_sheet_id", sheet.id);
+        if (existingRowsError) throw existingRowsError;
+        const existingByPlayer = new Map((existingRows || []).map((row) => [row.player_id, row.id]));
+        const currentIds = new Set(allPlayers.map((player) => player.player_id));
 
-      const removedIds = (existingRows || []).filter((row) => !currentIds.has(row.player_id)).map((row) => row.id);
-      if (removedIds.length) {
-        const { error: deleteError } = await supabase.from("fefutin_match_sheet_players").delete().in("id", removedIds);
-        if (deleteError) throw deleteError;
-      }
+        for (const player of allPlayers) {
+          const existingId = existingByPlayer.get(player.player_id);
+          const result = existingId
+            ? await supabase.from("fefutin_match_sheet_players").update(player).eq("id", existingId)
+            : await supabase.from("fefutin_match_sheet_players").insert(player);
+          if (result.error) throw result.error;
+        }
+
+        const removedIds = (existingRows || []).filter((row) => !currentIds.has(row.player_id)).map((row) => row.id);
+        if (removedIds.length) {
+          const { error: deleteError } = await supabase.from("fefutin_match_sheet_players").delete().in("id", removedIds);
+          if (deleteError) throw deleteError;
+        }
+        return sheet.id;
+      };
+
+      const [localSheetId, visitorSheetId] = await Promise.all([
+        saveSide("local", localPlayers),
+        saveSide("visitante", visitorPlayers),
+      ]);
+      setSheetIds({ local: localSheetId, visitante: visitorSheetId });
+      setSheetId(localSheetId);
       setNotice("Planilla guardada correctamente.");
       return true;
     } catch (err) {
@@ -376,7 +409,8 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
       </td>
     </>;
   };
-  const rowCount = Math.max(localPlayers.length, visitorPlayers.length);
+  const activePlayers = activeSide === "local" ? localPlayers : visitorPlayers;
+  const activeClubName = activeSide === "local" ? localName : visitorName;
   const finalScoreLocal = localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
   const finalScoreVisitor = visitorPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
 
@@ -569,19 +603,20 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
               <span>Firma del referente visitante</span>
             </div>
           </div>
+          <div className="fefutin-no-print" style={{display:"flex",gap:8,margin:"12px 0",flexWrap:"wrap"}}>
+            <button type="button" onClick={()=>setActiveSide("local")} aria-pressed={activeSide==="local"} style={{flex:1,minWidth:130,padding:10,border:"1px solid #b5122a",borderRadius:6,background:activeSide==="local"?"#b5122a":"#fff",color:activeSide==="local"?"#fff":"#171c27",fontWeight:800}}>PLANILLA LOCAL</button>
+            <button type="button" onClick={()=>setActiveSide("visitante")} aria-pressed={activeSide==="visitante"} style={{flex:1,minWidth:130,padding:10,border:"1px solid #343a40",borderRadius:6,background:activeSide==="visitante"?"#343a40":"#fff",color:activeSide==="visitante"?"#fff":"#171c27",fontWeight:800}}>PLANILLA VISITANTE</button>
+          </div>
           <div className="fefutin-sheet-table-wrap">
             <table className="fefutin-sheet-table">
               <colgroup>
-                <col style={{width:"4%"}} /><col style={{width:"22%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} />
-                <col style={{width:"4%"}} /><col style={{width:"22%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} /><col style={{width:"8%"}} />
+                <col style={{width:"7%"}} /><col style={{width:"42%"}} /><col style={{width:"15%"}} /><col style={{width:"12%"}} /><col style={{width:"24%"}} />
               </colgroup>
               <thead>
-                <tr><th className="team-local" colSpan={5}>EQUIPO LOCAL · {localName}</th><th className="team-visitor" colSpan={5}>EQUIPO VISITANTE · {visitorName}</th></tr>
-                <tr><th>N°</th><th>JUGADOR</th><th>EST.</th><th>G</th><th>T A/R</th><th>N°</th><th>JUGADOR</th><th>EST.</th><th>G</th><th>T A/R</th></tr>
+                <tr><th className={activeSide==="local"?"team-local":"team-visitor"} colSpan={5}>PLANILLA DEL EQUIPO {activeSide==="local"?"LOCAL":"VISITANTE"} · {activeClubName}</th></tr>
+                <tr><th>N°</th><th>JUGADOR</th><th>EST.</th><th>G</th><th>T A/R</th></tr>
               </thead>
-              <tbody>{Array.from({length:rowCount},(_,index)=><tr key={index}>
-                {renderPlayerCell(localPlayers[index],"local")}{renderPlayerCell(visitorPlayers[index],"visitante")}
-              </tr>)}</tbody>
+              <tbody>{activePlayers.map((player)=><tr key={player.player_id}>{renderPlayerCell(player,activeSide)}</tr>)}</tbody>
             </table>
           </div>
           <div className="fefutin-sheet-result" aria-live="polite">
