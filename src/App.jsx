@@ -97,8 +97,7 @@ function RefereePreJornada({ onBack }) {
   const [arbitros, setArbitros] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [ramaSeleccionada, setRamaSeleccionada] = useState("");
-  const [competenciaKey, setCompetenciaKey] = useState("");
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("Todas");
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState("Semanal");
   const [partidoKey, setPartidoKey] = useState("");
   const [paginaPartidos, setPaginaPartidos] = useState(0);
   const [mensaje, setMensaje] = useState("");
@@ -138,31 +137,22 @@ function RefereePreJornada({ onBack }) {
   // al componente principal y no está disponible en este ámbito.
   const obtenerRama = torneo => {
     const partes = String(torneo?.game || "").split("·").map(p => p.trim());
-    const explicita = partes.find(p => ["Infantil", "Femenino", "Mayores"].includes(p));
+    const explicita = partes.find(p => ["Infantil", "Femenino", "Mayores", "Baby fútbol", "Sénior", "Futsal"].includes(p));
+    if (explicita === "Infantil") return "Baby fútbol";
+    if (explicita === "Mayores") return "Sénior";
     if (explicita) return explicita;
     const referencia = (textoSeguro(getTournamentCategory(torneo)) + " " + String(torneo?.game || "")).toLocaleLowerCase("es");
+    if (/futsal/.test(referencia)) return "Futsal";
     if (/femenin|mujer/.test(referencia)) return "Femenino";
-    if (/mayor|adult|senior|primera/.test(referencia)) return "Mayores";
-    return "Infantil";
+    if (/senior|sénior|mayor|adult/.test(referencia)) return "Sénior";
+    return "Baby fútbol";
   };
-  const obtenerCategoria = torneo => textoSeguro(getTournamentCategory(torneo)) || "General";
-  const ramas = [{ value:"Infantil", label:"Infantiles" }, { value:"Femenino", label:"Femenino" }, { value:"Mayores", label:"Mayores" }];
-  const torneosRama = torneos.filter(t => obtenerRama(t).toLocaleLowerCase("es") === ramaSeleccionada.toLocaleLowerCase("es"));
-  const claveCompetencia = t => String(t?.title || "").trim().toLocaleLowerCase("es") + "|" +
-    String(t?.created_by_user_id || t?.created_by || "").trim().toLocaleLowerCase("es");
-  const competencias = [...new Map(torneosRama.map(t => [claveCompetencia(t), {
-    key: claveCompetencia(t),
-    title: String(t.title || "Competencia sin nombre").trim(),
-  }])).values()].sort((a,b) => a.title.localeCompare(b.title, "es"));
-  const competencia = competencias.find(c => c.key === competenciaKey);
-  const torneosCompetencia = competencia
-    ? torneosRama.filter(t => claveCompetencia(t) === competencia.key)
-    : [];
-  const categorias = [...new Set(torneosCompetencia.map(obtenerCategoria))]
-    .sort((a,b) => a.localeCompare(b, "es", { numeric:true }));
-  const torneosFiltrados = categoriaSeleccionada === "Todas"
-    ? torneosCompetencia
-    : torneosCompetencia.filter(t => obtenerCategoria(t) === categoriaSeleccionada);
+  const obtenerTurno = torneo => {
+    const partes = String(torneo?.game || "").split("·").map(p => p.trim().toLocaleLowerCase("es"));
+    return partes.includes("fin de semana") ? "Fin de semana" : "Semanal";
+  };
+  const ramas = ["Baby fútbol", "Femenino", "Sénior", "Futsal"];
+  const torneosFiltrados = torneos.filter(t => obtenerRama(t) === ramaSeleccionada && obtenerTurno(t) === turnoSeleccionado);
 
   const esPartidoValido = match => {
     const equipo1 = textoSeguro(match?.team1).trim();
@@ -172,57 +162,32 @@ function RefereePreJornada({ onBack }) {
       equipo2.toLocaleLowerCase("es") !== "pasaje directo";
   };
 
-  // Una jornada agrupa el cruce entre dos clubes en todas las categorías
-  // de la misma competencia. El filtro de categoría limita qué cruces se muestran,
-  // pero la designación se aplica a todas las categorías de ese mismo cruce.
-  const normalizarEquipo = valor => textoSeguro(valor).trim().toLocaleLowerCase("es")
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const claveEnfrentamiento = match => [
-    normalizarEquipo(match?.team1),
-    normalizarEquipo(match?.team2),
-  ].sort().join("::");
-
-  const partidosDeCompetencia = torneosCompetencia.flatMap(torneo =>
+  // Agrupa cada enfrentamiento entre clubes con todas sus categorías de la rama y turno.
+  const normalizarEquipo = valor => textoSeguro(valor).trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+  const claveEnfrentamiento = match => [normalizarEquipo(match?.team1), normalizarEquipo(match?.team2)].sort().join("::");
+  const partidosDeSeleccion = torneosFiltrados.flatMap(torneo =>
     (Array.isArray(torneo?.groups) ? torneo.groups : []).flatMap((grupo, groupIndex) => {
       if (grupo?.name === "__INSCRIPCIONES__") return [];
-      return (Array.isArray(grupo?.matches) ? grupo.matches : [])
-        .map((match, matchIndex) => ({
-          torneoId: torneo.id,
-          grupoIndex: groupIndex,
-          matchIndex,
-          match,
-          categoria: obtenerCategoria(torneo),
-        }))
-        .filter(item => esPartidoValido(item.match));
+      return (Array.isArray(grupo?.matches) ? grupo.matches : []).map((match, matchIndex) => ({
+        torneoId: torneo.id, grupoIndex, matchIndex, match, categoria: obtenerCategoria(torneo),
+      })).filter(item => esPartidoValido(item.match));
     })
   );
-
   const partidosPorEnfrentamiento = new Map();
-  partidosDeCompetencia.forEach(item => {
+  partidosDeSeleccion.forEach(item => {
     const key = claveEnfrentamiento(item.match);
     if (!partidosPorEnfrentamiento.has(key)) partidosPorEnfrentamiento.set(key, []);
     partidosPorEnfrentamiento.get(key).push(item);
   });
-
   const jornadasMap = new Map();
-  torneosFiltrados.forEach(torneo => {
-    (Array.isArray(torneo?.groups) ? torneo.groups : []).forEach(grupo => {
-      if (grupo?.name === "__INSCRIPCIONES__") return;
-      (Array.isArray(grupo?.matches) ? grupo.matches : []).forEach(match => {
-        if (!esPartidoValido(match)) return;
-        const key = claveEnfrentamiento(match);
-        if (!key || jornadasMap.has(key)) return;
-        const partidosJornada = partidosPorEnfrentamiento.get(key) || [];
-        jornadasMap.set(key, {
-          key,
-          match,
-          team1: textoSeguro(match.team1),
-          team2: textoSeguro(match.team2),
-          partidos: partidosJornada,
-          categorias: [...new Set(partidosJornada.map(item => item.categoria))]
-            .sort((a, b) => a.localeCompare(b, "es", { numeric: true })),
-        });
-      });
+  partidosDeSeleccion.forEach(item => {
+    const key = claveEnfrentamiento(item.match);
+    if (!key || jornadasMap.has(key)) return;
+    const partidosJornada = partidosPorEnfrentamiento.get(key) || [];
+    jornadasMap.set(key, {
+      key, match: item.match, team1: textoSeguro(item.match.team1), team2: textoSeguro(item.match.team2),
+      partidos: partidosJornada,
+      categorias: [...new Set(partidosJornada.map(partido => partido.categoria))].sort((a,b) => a.localeCompare(b,"es",{numeric:true})),
     });
   });
   const jornadas = [...jornadasMap.values()].sort((a, b) =>
@@ -296,33 +261,27 @@ function RefereePreJornada({ onBack }) {
 
   const estilo = { background:"#171c27", color:"#fff", border:"1px solid #b5122a", borderRadius:"12px", padding:"1rem", width:"100%" };
   const selector = { background:"#fff", color:"#171c27", border:"1px solid #b5122a", borderRadius:"9px", padding:".7rem", width:"100%", marginTop:".5rem" };
-  if (cargando) return <section style={{...estilo, textAlign:"center"}}><h2>PRE-JORNADA</h2><p>Cargando competencias y árbitros…</p></section>;
+  if (cargando) return <section style={{...estilo, textAlign:"center"}}><h2>PRE-JORNADA</h2><p>Cargando torneos y árbitros…</p></section>;
 
   return <main style={{maxWidth:"1000px", margin:"0 auto", paddingBottom:"2rem", color:"#fff"}}>
     <section style={{...estilo, marginBottom:"1rem"}}>
       <h2 style={{textAlign:"center", marginTop:0}}>PRE-JORNADA · DESIGNACIONES</h2>
       <label style={{display:"block", marginTop:".8rem"}}>1. Rama
-        <select value={ramaSeleccionada} onChange={e=>{setRamaSeleccionada(e.target.value);setCompetenciaKey("");setCategoriaSeleccionada("Todas");setPartidoKey("");setPaginaPartidos(0);setMensaje("");}} style={selector}>
+        <select value={ramaSeleccionada} onChange={e=>{setRamaSeleccionada(e.target.value);setPartidoKey("");setPaginaPartidos(0);setMensaje("");}} style={selector}>
           <option value="">Elegí la rama</option>
-          {ramas.map(r=><option key={r.value} value={r.value}>{r.label}</option>)}
+          {ramas.map(r=><option key={r} value={r}>{r}</option>)}
         </select>
       </label>
-      {ramaSeleccionada && <label style={{display:"block", marginTop:".8rem"}}>2. Competencia
-        <select value={competenciaKey} onChange={e=>{setCompetenciaKey(e.target.value);setCategoriaSeleccionada("Todas");setPartidoKey("");setPaginaPartidos(0);setMensaje("");}} style={selector}>
-          <option value="">Elegí la competencia</option>
-          {competencias.map(c=><option key={c.key} value={c.key}>{c.title}</option>)}
-        </select>
-      </label>}
-      {competencia && <label style={{display:"block", marginTop:".8rem"}}>3. Categorías
-        <select value={categoriaSeleccionada} onChange={e=>{setCategoriaSeleccionada(e.target.value);setPartidoKey("");setPaginaPartidos(0);setMensaje("");}} style={selector}>
-          <option value="Todas">Todas las categorías</option>
-          {categorias.map(c=><option key={c} value={c}>{c}</option>)}
+      {ramaSeleccionada && <label style={{display:"block", marginTop:".8rem"}}>2. Turno
+        <select value={turnoSeleccionado} onChange={e=>{setTurnoSeleccionado(e.target.value);setPartidoKey("");setPaginaPartidos(0);setMensaje("");}} style={selector}>
+          <option value="Semanal">Semanal</option>
+          <option value="Fin de semana">Fin de semana</option>
         </select>
       </label>}
     </section>
 
-    {competencia && <>
-      <h3 style={{margin:".5rem 0 1rem",textAlign:"center"}}>{competencia.title} · {ramaSeleccionada} · {categoriaSeleccionada === "Todas" ? "Todas las categorías" : categoriaSeleccionada}</h3>
+    {ramaSeleccionada && <>
+      <h3 style={{margin:".5rem 0 1rem",textAlign:"center"}}>{ramaSeleccionada} · {turnoSeleccionado} · Todas las categorías</h3>
       {!partidosPagina.length && paginaPartidos === 0 ? <p style={{...estilo,textAlign:"center"}}>Todavía no hay jornadas para esta selección.</p> :
         !partido ? <>
           <p style={{textAlign:"center",color:"#fff"}}>Jornadas desde la {paginaPartidos * partidosPorPagina + 1} · Página {paginaPartidos + 1} · Mostrando {partidosPagina.length} jornadas</p>
@@ -343,7 +302,7 @@ function RefereePreJornada({ onBack }) {
         <section style={{display:"grid",gap:".85rem"}}>
           <button type="button" onClick={()=>{setPartidoKey("");setMensaje("");}} style={{justifySelf:"start",background:"transparent",color:"#fff",border:"1px solid #b5122a",borderRadius:"8px",padding:".55rem .8rem"}}>← Volver a los enfrentamientos</button>
           <section style={{...estilo,textAlign:"center"}}>
-            <div style={{fontSize:".8rem",color:"#fca5a5",fontWeight:700,marginBottom:".5rem"}}>{competencia.title} · {partido.categorias.join(" · ")}</div>
+            <div style={{fontSize:".8rem",color:"#fca5a5",fontWeight:700,marginBottom:".5rem"}}>{ramaSeleccionada + ' · ' + turnoSeleccionado} · {partido.categorias.join(" · ")}</div>
             <h3 style={{margin:".2rem 0 1rem"}}>{partido.team1} <span style={{color:"#fca5a5"}}>VS</span> {partido.team2}</h3>
             <h4 style={{margin:"0 0 .5rem"}}>DESIGNAR ÁRBITRO PARA TODA LA JORNADA</h4>
             <p style={{fontSize:".85rem",color:"#d1d5db"}}>{arbitroAsignado ? "🔒 Jornada designada. La asignación queda bloqueada para directivos y administración: " + arbitroAsignado.username : (designacionParcial ? "La jornada tiene designaciones diferentes o incompletas. Elegí un árbitro para unificar todos sus partidos." : "Elegí un árbitro. Se asignará a todos los partidos de este cruce en las categorías de la competencia.")}</p>
