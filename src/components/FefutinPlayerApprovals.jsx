@@ -44,7 +44,7 @@ export function FefutinPlayerApprovals() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   // El buzón abre mostrando todo el historial, no solamente los pendientes.
-  const [statusFilter, setStatusFilter] = useState("todos");
+  const [statusFilter, setStatusFilter] = useState("pendiente_alta");
   const [clubFilter, setClubFilter] = useState("todos");
   const [categoryFilter, setCategoryFilter] = useState("todas");
   const [search, setSearch] = useState("");
