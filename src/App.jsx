@@ -3332,20 +3332,21 @@ export function TournamenSportApp() {
     }
 
     const configuredBranches = Array.isArray(config.category_config) ? config.category_config : [];
-    const categoryEntries = configuredBranches.flatMap((branch) =>
-      (Array.isArray(branch.categories) ? branch.categories : []).map((category) => ({
-        division: String(branch.division || "").trim(),
-        categoryType: String(branch.categoryType || config.categoryType || "").trim(),
-        category: String(category || "").trim(),
-      }))
-    ).filter((entry) => entry.division && entry.category);
+    const branchesToCreate = configuredBranches.map((branch) => ({
+      division: String(branch.division || "").trim(),
+      categoryType: String(branch.categoryType || config.categoryType || "").trim(),
+      categories: [...new Set((Array.isArray(branch.categories) ? branch.categories : [])
+        .map((category) => String(category || "").trim()).filter(Boolean))],
+    })).filter((branch) => branch.division && branch.categories.length);
 
-    if (!categoryEntries.length) {
+    if (!branchesToCreate.length) {
       showNotice("Seleccioná al menos una combinación de rama y categoría.");
       return;
     }
 
-    const tournamentsToCreate = categoryEntries.map((entry) => {
+    // Un registro de torneo por rama. Las categorías quedan agrupadas
+    // dentro de category_config para mantener una única inscripción por rama.
+    const tournamentsToCreate = branchesToCreate.map((branch) => {
       const randomCode = "TS-" + Math.floor(1000 + Math.random() * 9000);
       const registrationGroup = {
         id: 0,
@@ -3355,16 +3356,16 @@ export function TournamenSportApp() {
         capacity: Number(config.maxParticipants),
         numGroups: ["groups", "groups_playoff"].includes(config.format) ? Number(config.numGroups) : 1,
         category_config: [{
-          division: entry.division,
-          categoryType: entry.categoryType,
-          categories: [entry.category],
+          division: branch.division,
+          categoryType: branch.categoryType,
+          categories: branch.categories,
         }],
       };
 
       return {
         code: randomCode,
         title: config.title,
-        game: `Fútbol · ${entry.division} · ${config.turno} · ${entry.category}`,
+        game: `Fútbol · ${branch.division} · ${config.turno} · ${branch.categories[0]}`,
         format: config.format,
         qualifiers_per_group: config.qualifiersPerGroup,
         is_public: config.isPublic,
@@ -4222,13 +4223,23 @@ export function TournamenSportApp() {
       ? registrationGroup.category_config
       : [];
 
-    const categoryEntries = configuredBranches.flatMap((branch) =>
-      (Array.isArray(branch.categories) ? branch.categories : []).map((category) => ({
-        division: String(branch.division || "").trim(),
+    const categoryEntries = configuredBranches.flatMap((branch) => {
+      const division = String(branch.division || "").trim();
+      const configuredCategories = (Array.isArray(branch.categories) ? branch.categories : [])
+        .map((category) => String(category || "").trim()).filter(Boolean);
+      // En FEFUTIN Futsal se muestran siempre las tres divisiones oficiales,
+      // incluso en torneos creados antes de agrupar las categorías en un solo registro.
+      const isFefutinFutsal = division.toLocaleLowerCase("es") === "futsal" &&
+        String(tournament.title || "").toLocaleLowerCase("es").includes("fefutin");
+      const categories = isFefutinFutsal
+        ? ["U15", "U17", "Primera"]
+        : configuredCategories;
+      return categories.map((category) => ({
+        division,
         categoryType: String(branch.categoryType || "").trim(),
-        category: String(category || "").trim(),
-      }))
-    ).filter((entry) => entry.division && entry.category);
+        category,
+      }));
+    }).filter((entry) => entry.division && entry.category);
 
     const displayTournaments = categoryEntries.length
       ? categoryEntries.map((entry) => {
