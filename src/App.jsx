@@ -2473,7 +2473,6 @@ export function TournamenSportApp() {
   const [tournaments, setTournaments] = useState([]);
   const [tournamentCategoryFilter, setTournamentCategoryFilter] = useState("Todas");
   const [tournamentDivisionFilter, setTournamentDivisionFilter] = useState("Todas");
-  const [divisionCategorySearch, setDivisionCategorySearch] = useState("");
   const [activeDivisionTournamentIndex, setActiveDivisionTournamentIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [editingTournament, setEditingTournament] = useState(false);
@@ -4466,7 +4465,6 @@ export function TournamenSportApp() {
         onClick={() => {
           setTournamentDivisionFilter(division);
           setTournamentCategoryFilter("Todas");
-          setDivisionCategorySearch("");
           setActiveView("division-tournaments");
         }}
       >
@@ -4968,36 +4966,15 @@ export function TournamenSportApp() {
                 <div><span>FEFUTIN</span><strong>FÚTBOL · {tournamentDivisionFilter.toLocaleUpperCase("es")}</strong></div>
               </div>
               <h2 className="cr-title">TORNEOS DE {tournamentDivisionFilter.toLocaleUpperCase("es")}</h2>
-              <div className="tc-division-search">
-                <span aria-hidden="true">⌕</span>
-                <input
-                  type="search"
-                  value={divisionCategorySearch}
-                  onChange={(event) => setDivisionCategorySearch(event.target.value)}
-                  placeholder="Buscar por categoría o torneo..."
-                  aria-label={`Buscar torneos de ${tournamentDivisionFilter} por categoría o nombre`}
-                />
-                {divisionCategorySearch && (
-                  <button type="button" onClick={() => setDivisionCategorySearch("")} aria-label="Limpiar búsqueda">×</button>
-                )}
-              </div>
             </div>
             {(() => {
               const branchTournaments = tournaments.filter((t) => getTournamentDivision(t) === tournamentDivisionFilter);
-              const query = divisionCategorySearch.trim().toLocaleLowerCase("es");
-              const visibleTournaments = branchTournaments.filter((t) => {
-                const category = getTournamentCategory(t);
-                return !query ||
-                  String(t.title || "").toLocaleLowerCase("es").includes(query) ||
-                  String(category || "").toLocaleLowerCase("es").includes(query);
-              });
+              const visibleTournaments = branchTournaments;
 
               if (!branchTournaments.length) {
                 return <p style={{ color: "#fff" }}>Todavía no hay torneos creados en esta rama.</p>;
               }
-              if (!visibleTournaments.length) {
-                return <p className="tc-division-search-empty">No encontramos torneos para “{divisionCategorySearch}”. Probá con otra categoría o nombre.</p>;
-              }
+}
 
               return (
                 <>
