@@ -537,7 +537,7 @@ export function GroupStageView({
         )}
       </div>
 
-      {/* SELECTOR DE CATEGORÍAS / GRUPOS */}
+      {/* CARRUSEL DE CATEGORÍAS / GRUPOS */}
       <section style={{ width: "100%", marginBottom: "1.5rem" }}>
         <div
           style={{
@@ -546,29 +546,16 @@ export function GroupStageView({
             justifyContent: "space-between",
             marginBottom: "0.75rem",
             gap: "1rem",
-            flexWrap: "wrap",
           }}
         >
           <div style={{ minWidth: 0 }}>
-            <h3
-              style={{
-                fontSize: "0.9rem",
-                fontWeight: 900,
-                textTransform: "uppercase",
-                color: "#fff",
-                margin: 0,
-                letterSpacing: "0.5px",
-              }}
-            >
+            <h3 style={{ fontSize: "0.9rem", fontWeight: 900, textTransform: "uppercase", color: "#fff", margin: 0, letterSpacing: "0.5px" }}>
               {isLeague ? "Categorías de la competencia" : "Grupos de la competencia"}
             </h3>
             <span style={{ display: "block", fontSize: "0.72rem", color: "#b8b8b8", marginTop: "0.25rem" }}>
-              {isLeague
-                ? "Seleccioná una categoría para consultar sus partidos y tabla de posiciones."
-                : "Seleccioná el grupo que querés consultar."}
+              Deslizá para ver las categorías.
             </span>
           </div>
-
           <button
             type="button"
             onClick={onOpenTopScorers}
@@ -591,10 +578,17 @@ export function GroupStageView({
 
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))",
+            display: "flex",
+            flexDirection: "row",
+            flexWrap: "nowrap",
             gap: "0.75rem",
             width: "100%",
+            overflowX: "auto",
+            overflowY: "hidden",
+            padding: "0.2rem 0.1rem 0.65rem",
+            boxSizing: "border-box",
+            WebkitOverflowScrolling: "touch",
+            scrollSnapType: "x mandatory",
           }}
         >
           {tournament.groups.map((group, idx) => {
@@ -614,7 +608,9 @@ export function GroupStageView({
                 }}
                 aria-pressed={selected}
                 style={{
-                  minWidth: 0,
+                  flex: "0 0 165px",
+                  width: "165px",
+                  minWidth: "165px",
                   minHeight: "112px",
                   padding: "0.9rem",
                   display: "flex",
@@ -631,6 +627,7 @@ export function GroupStageView({
                   color: "#fff",
                   cursor: "pointer",
                   boxShadow: selected ? "0 0 0 2px rgba(181,18,42,0.16)" : "none",
+                  scrollSnapAlign: "start",
                 }}
               >
                 <span style={{ fontSize: "0.95rem", fontWeight: 900, lineHeight: 1.25, overflowWrap: "anywhere" }}>
@@ -645,7 +642,7 @@ export function GroupStageView({
                   </span>
                 </span>
                 <span style={{ color: selected ? "#ffb3bf" : "#c4c7ce", fontSize: "0.7rem", fontWeight: 800 }}>
-                  {selected ? "CATEGORÍA SELECCIONADA" : "VER CATEGORÍA →"}
+                  {selected ? "SELECCIONADA" : "VER CATEGORÍA →"}
                 </span>
               </button>
             );
