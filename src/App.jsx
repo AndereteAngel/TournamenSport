@@ -4881,7 +4881,7 @@ export function TournamenSportApp() {
               <h2 className="cr-title">TORNEOS DE {tournamentDivisionFilter.toLocaleUpperCase("es")}</h2>
             </div>
             {(() => {
-              const branchTournaments = tournaments.filter((t) => getTournamentDivision(t) === tournamentDivisionFilter);
+              const branchTournaments = filteredTournaments.filter((t) => getTournamentDivision(t) === tournamentDivisionFilter);
               if (!branchTournaments.length) {
                 return <p style={{ color: "#fff" }}>Todavía no hay torneos creados en esta rama.</p>;
               }
@@ -4930,7 +4930,7 @@ export function TournamenSportApp() {
                     const category = getTournamentCategory(t);
                     return (
                       <div
-                        key={t.id}
+                        key={t.displayKey || t.id}
                         onMouseEnter={() => setActiveDivisionTournamentIndex(index)}
                         style={{
                           position: "relative",
