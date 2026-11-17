@@ -195,6 +195,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
             <div style={{ display: "grid", gap: ".4rem", marginTop: ".7rem" }}>
               {jornada.details.map((detail, index) => {
                 const tienePartido = detail.instancia !== "Pendiente de fixture" && Boolean(detail.matchId);
+                const asignadoAEsteArbitro = String(detail.referee_id || "") === String(currentUser?.id || "");
                 return (
                   <div key={`${jornada.key}-${index}`} style={{ display: "grid", gridTemplateColumns: "minmax(0, .7fr) minmax(0, 1.5fr)", gap: ".35rem .5rem", alignItems: "center", padding: ".55rem", background: "#080b10", borderRadius: "7px", color: "#eee", fontSize: ".72rem" }}>
                     <strong style={{ color: "#f3a0ad" }}>{detail.categoria}</strong>
@@ -202,9 +203,11 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
                     <span style={{ gridColumn: "1 / -1", color: "#d1d5db" }}>{jornada.teamLocal}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam1 + " pts" : "Pendiente"}</strong> · {jornada.teamVisitor}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam2 + " pts" : "Pendiente"}</strong></span>
                     {tienePartido && (
                       <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap", borderTop: "1px solid #343a40", paddingTop: ".45rem", marginTop: ".1rem" }}>
-                        <span style={{ color: detail.referee_closed ? "#86efac" : "#fcd34d", fontWeight: 800, fontSize: ".66rem" }}>{detail.referee_closed ? "ENCUENTRO CERRADO" : "PLANILLA PENDIENTE"}</span>
-                        <button type="button" disabled={!onOpenMatch} onClick={() => onOpenMatch?.(detail)} style={{ padding: ".5rem .7rem", border: "1px solid #b5122a", borderRadius: "7px", background: detail.referee_closed ? "#242a32" : "#b5122a", color: "#fff", fontWeight: 900, fontSize: ".68rem", cursor: onOpenMatch ? "pointer" : "not-allowed" }}>
-                          {detail.referee_closed ? "VER PLANILLA" : "CARGAR PLANILLA"}
+                        <span style={{ color: detail.referee_closed ? "#86efac" : asignadoAEsteArbitro ? "#fcd34d" : "#fca5a5", fontWeight: 800, fontSize: ".66rem" }}>
+                          {detail.referee_closed ? "ENCUENTRO CERRADO" : asignadoAEsteArbitro ? "PLANILLA PENDIENTE" : "ASIGNADO A OTRO ÁRBITRO"}
+                        </span>
+                        <button type="button" disabled={!onOpenMatch || !asignadoAEsteArbitro} onClick={() => onOpenMatch?.(detail)} style={{ padding: ".5rem .7rem", border: "1px solid #b5122a", borderRadius: "7px", background: detail.referee_closed ? "#242a32" : asignadoAEsteArbitro ? "#b5122a" : "#444", color: "#fff", fontWeight: 900, fontSize: ".68rem", cursor: onOpenMatch && asignadoAEsteArbitro ? "pointer" : "not-allowed", opacity: asignadoAEsteArbitro ? 1 : .6 }}>
+                          {detail.referee_closed ? "VER PLANILLA" : asignadoAEsteArbitro ? "CARGAR PLANILLA" : "SIN ACCESO"}
                         </button>
                       </div>
                     )}
