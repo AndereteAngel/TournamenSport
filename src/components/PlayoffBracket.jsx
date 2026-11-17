@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TCIcon } from "./TCIcon";
 import { FefutinMatchSheet } from "./FefutinMatchSheet";
 
@@ -11,10 +11,22 @@ export function PlayoffBracket({
   isReferente = false,
   currentUser,
   onCloseMatch,
+  openAssignedMatch = null,
+  onAssignedMatchOpened,
   clubLogos = [],
 }) {
   const rounds = tournament.playoffs || [];
   const [selectedSheetMatch, setSelectedSheetMatch] = useState(null);
+
+  useEffect(() => {
+    if (!openAssignedMatch || openAssignedMatch.phase !== "playoffs") return;
+    const roundIndex = Number(openAssignedMatch.roundIndex);
+    const match = rounds[roundIndex]?.find((item) => String(item?.id) === String(openAssignedMatch.matchId));
+    if (!match) return;
+    setSelectedSheetMatch({ ...match, round: String(roundIndex + 1), roundIndex });
+    onAssignedMatchOpened?.();
+  }, [openAssignedMatch, tournament.id]);
+
   const getClubLogo = (teamName) => {
     const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
     return clubLogos.find((club) => normalize(club.name) === normalize(teamName))?.url || "";
