@@ -470,32 +470,35 @@ export function GroupStageView({
         )}
       </div>
 
-      {/* SELECTOR DE GRUPOS */}
-      <div style={{ marginBottom: "1.5rem" }}>
+      {/* SELECTOR DE CATEGORÍAS / GRUPOS */}
+      <section style={{ width: "100%", marginBottom: "1.5rem" }}>
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            marginBottom: "0.65rem",
+            marginBottom: "0.75rem",
             gap: "1rem",
+            flexWrap: "wrap",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", minWidth: 0 }}>
+          <div style={{ minWidth: 0 }}>
             <h3
               style={{
-                fontSize: "0.8rem",
-                fontWeight: "bold",
+                fontSize: "0.9rem",
+                fontWeight: 900,
                 textTransform: "uppercase",
-                color: "#9ca3af",
+                color: "#fff",
                 margin: 0,
                 letterSpacing: "0.5px",
               }}
             >
-              Seleccionar grupo
+              {isLeague ? "Categorías de la competencia" : "Grupos de la competencia"}
             </h3>
-            <span style={{ fontSize: "0.7rem", color: "#6b7280", whiteSpace: "nowrap" }}>
-              {tournament.groups.length} grupos
+            <span style={{ display: "block", fontSize: "0.72rem", color: "#b8b8b8", marginTop: "0.25rem" }}>
+              {isLeague
+                ? "Seleccioná una categoría para consultar sus partidos y tabla de posiciones."
+                : "Seleccioná el grupo que querés consultar."}
             </span>
           </div>
 
@@ -504,7 +507,7 @@ export function GroupStageView({
             onClick={onOpenTopScorers}
             style={{
               flex: "0 0 auto",
-              padding: "0.45rem 0.7rem",
+              padding: "0.5rem 0.75rem",
               background: "#171c27",
               border: "1px solid #b5122a",
               borderRadius: "8px",
@@ -521,46 +524,67 @@ export function GroupStageView({
 
         <div
           style={{
-            display: "flex",
-            gap: "0.6rem",
-            overflowX: "auto",
-            padding: "0.2rem 0.1rem 0.5rem",
-            WebkitOverflowScrolling: "touch",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))",
+            gap: "0.75rem",
+            width: "100%",
           }}
         >
-          {tournament.groups.map((group, idx) => (
-            <button
-              key={group.id}
-              onClick={() => setActiveGroupIndex(idx)}
-              style={{
-                flex: "0 0 auto",
-                minWidth: "76px",
-                padding: "0.65rem 1rem",
-                background:
-                  idx === activeGroupIndex
-                    ? "linear-gradient(135deg, #1b5fa8, #123d70)"
-                    : "rgba(18,16,25,0.9)",
-                border:
-                  idx === activeGroupIndex
-                    ? "1px solid #ffd700"
-                    : "1px solid #2d2b3b",
-                color: idx === activeGroupIndex ? "#fff" : "#9ca3af",
-                borderRadius: "9px",
-                fontWeight: "bold",
-                cursor: "pointer",
-                fontSize: "0.78rem",
-                whiteSpace: "nowrap",
-                boxShadow:
-                  idx === activeGroupIndex
-                    ? "0 4px 14px rgba(27,95,168,0.25)"
-                    : "none",
-              }}
-            >
-              {group.name}
-            </button>
-          ))}
+          {tournament.groups.map((group, idx) => {
+            const selected = idx === activeGroupIndex;
+            const completedMatches = (group.matches || []).filter((match) =>
+              match.score1 !== null && match.score1 !== undefined &&
+              match.score2 !== null && match.score2 !== undefined
+            ).length;
+            return (
+              <button
+                key={group.id || group.categoryLabel || idx}
+                type="button"
+                onClick={() => {
+                  setActiveGroupIndex(idx);
+                  setSelectedRound("all");
+                  setMatchSearch("");
+                }}
+                aria-pressed={selected}
+                style={{
+                  minWidth: 0,
+                  minHeight: "112px",
+                  padding: "0.9rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: "0.65rem",
+                  textAlign: "left",
+                  background: selected
+                    ? "linear-gradient(145deg, #651321, #241017)"
+                    : "linear-gradient(145deg, #171c27, #0d1017)",
+                  border: selected ? "2px solid #b5122a" : "1px solid #424650",
+                  borderRadius: "12px",
+                  color: "#fff",
+                  cursor: "pointer",
+                  boxShadow: selected ? "0 0 0 2px rgba(181,18,42,0.16)" : "none",
+                }}
+              >
+                <span style={{ fontSize: "0.95rem", fontWeight: 900, lineHeight: 1.25, overflowWrap: "anywhere" }}>
+                  {group.categoryLabel || group.name}
+                </span>
+                <span style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", fontSize: "0.7rem", color: "#e5e7eb" }}>
+                  <span style={{ padding: "0.22rem 0.4rem", borderRadius: "5px", background: "rgba(255,255,255,0.1)" }}>
+                    {(group.teams || []).length} clubes
+                  </span>
+                  <span style={{ padding: "0.22rem 0.4rem", borderRadius: "5px", background: "rgba(255,255,255,0.1)" }}>
+                    {completedMatches}/{(group.matches || []).length} partidos
+                  </span>
+                </span>
+                <span style={{ color: selected ? "#ffb3bf" : "#c4c7ce", fontSize: "0.7rem", fontWeight: 800 }}>
+                  {selected ? "CATEGORÍA SELECCIONADA" : "VER CATEGORÍA →"}
+                </span>
+              </button>
+            );
+          })}
         </div>
-      </div>
+      </section>
 
       {/* TABLA DE POSICIONES */}
       <div
