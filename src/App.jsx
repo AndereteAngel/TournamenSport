@@ -5267,7 +5267,7 @@ export function TournamenSportApp() {
                 <strong style={{ display: "block", color: "#171c27", fontSize: ".9rem", letterSpacing: ".07em" }}>DESIGNACIONES</strong>
                 <small style={{ display: "block", color: "#444", marginTop: ".2rem" }}>
                   {refereeJornadas.length
-                    ? `${refereeJornadas.length} jornada(s) · ${refereePendingMatchCount} partido(s) pendiente(s) · Abrir planillas`
+                    ? `${refereeJornadas.length} jornada(s) · ${refereeAssignedMatchCount} encuentro(s) · ${refereePendingMatchCount} pendiente(s)`
                     : "Todavía no tenés jornadas designadas"}
                 </small>
               </span>
