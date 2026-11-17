@@ -4378,6 +4378,11 @@ export function TournamenSportApp() {
     )
   ) : [];
   const hasPendingRefereeAssignments = assignedRefereeMatches.some((match) => !match.refereeClosed);
+  const refereeJornadas = isArbitro ? obtenerJornadasDeArbitro(tournaments, currentUser?.id) : [];
+  const refereeAssignedMatchCount = refereeJornadas.reduce((total, jornada) =>
+    total + jornada.detallesPartidos.filter((detail) => detail.instancia !== "Pendiente de fixture" && detail.matchId).length, 0);
+  const refereePendingMatchCount = refereeJornadas.reduce((total, jornada) =>
+    total + jornada.detallesPartidos.filter((detail) => detail.instancia !== "Pendiente de fixture" && detail.matchId && !detail.referee_closed).length, 0);
   const referenteNextMatch = (() => {
     if (!isReferente || !referenteParticipations.length || !tournaments.length) return null;
     const today = new Date();
@@ -4908,32 +4913,27 @@ export function TournamenSportApp() {
           <section style={{ width: "100%", maxWidth: "900px", margin: "auto", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff" }}>
             <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>← Volver</button>
             <h2 style={{ color: "#fff", margin: "1rem 0 .35rem", letterSpacing: ".06em" }}>MIS DESIGNACIONES</h2>
-            <p style={{ color: "#ccc", fontSize: ".82rem", marginTop: 0 }}>Partidos asignados a tu cuenta arbitral.</p>
+            <p style={{ color: "#ccc", fontSize: ".82rem", marginTop: 0 }}>Tus jornadas asignadas, todos sus encuentros y las planillas que tenés que completar.</p>
             <button type="button" onClick={() => setActiveView("referee-sheet-photo")} style={{ width: "100%", margin: ".6rem 0 1rem", padding: ".75rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#b5122a", color: "#fff", fontWeight: 900, cursor: "pointer" }}>📷 SUBIR FOTO DE PLANILLA GENERAL FIRMADA</button>
-            <FefutinRefereeJornadaSheets jornadas={obtenerJornadasDeArbitro(tournaments, currentUser?.id)} currentUser={currentUser} />
-            {assignedRefereeMatches.length === 0 ? (
-              <p style={{ color: "#ddd", padding: "1rem 0" }}>No tenés partidos designados actualmente.</p>
-            ) : (
-              <div style={{ display: "grid", gap: ".7rem" }}>
-                {assignedRefereeMatches.map((item, index) => (
-                  <article key={`${item.tournament.id}-${item.groupIndex}-${item.matchId}`} style={{ border: "1px solid #b5122a", borderRadius: "10px", padding: ".85rem", background: "#171c27" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", alignItems: "center", flexWrap: "wrap" }}>
-                      <strong style={{ color: "#fff", fontSize: ".8rem" }}>{item.tournamentTitle}</strong>
-                      <span style={{ color: item.refereeClosed ? "#86efac" : "#fca5a5", fontSize: ".68rem", fontWeight: 900 }}>{item.refereeClosed ? "PARTIDO CERRADO" : "PENDIENTE"}</span>
-                    </div>
-                    <div style={{ color: "#ddd", fontSize: ".75rem", margin: ".35rem 0" }}>{item.category} · {item.groupName}{item.round ? ` · Fecha ${item.round}` : ""}</div>
-                    <div style={{ color: "#fff", fontWeight: 900, textAlign: "center", padding: ".55rem 0" }}>{item.team1} <span style={{ color: "#b5122a" }}>VS.</span> {item.team2}</div>
-                    <button type="button" onClick={() => {
-                      setActiveTournament(item.tournament);
-                      setRefereeMatchToOpen({ groupIndex: item.groupIndex, matchId: item.matchId });
-                      setActiveView("groups");
-                    }} style={{ width: "100%", padding: ".65rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#fff", color: "#171c27", fontWeight: 900, cursor: "pointer" }}>
-                      {item.refereeClosed ? "VER PLANILLA" : "ABRIR PLANILLA"}
-                    </button>
-                  </article>
-                ))}
-              </div>
-            )}
+            <FefutinRefereeJornadaSheets
+              jornadas={refereeJornadas}
+              currentUser={currentUser}
+              onOpenMatch={(detail) => {
+                const tournament = tournaments.find((item) => String(item.id) === String(detail.tournament_id));
+                if (!tournament) {
+                  showNotice("No se encontró el torneo de este encuentro. Actualizá la página e intentá nuevamente.");
+                  return;
+                }
+                setActiveTournament(tournament);
+                setRefereeMatchToOpen({
+                  phase: detail.phase || "groups",
+                  groupIndex: detail.groupIndex,
+                  roundIndex: detail.roundIndex,
+                  matchId: detail.matchId,
+                });
+                setActiveView("groups");
+              }}
+            />
           </section>
         </div>
       ) : activeView === "division-tournaments" ? (
@@ -5251,19 +5251,27 @@ export function TournamenSportApp() {
             <span className="tc-home-about-arrow">→</span>
           </button>
 
-          {isArbitro && assignedRefereeMatches.length > 0 && (
+          {isArbitro && (
             <button
               type="button"
               onClick={() => setActiveView("referee-designations")}
-              aria-label={`Ver mis designaciones: ${assignedRefereeMatches.length} partidos`}
+              aria-label={refereeJornadas.length
+                ? `Ver ${refereeJornadas.length} jornadas designadas y ${refereePendingMatchCount} partidos pendientes`
+                : "Abrir designaciones: todavía no tenés jornadas asignadas"}
+              aria-live="polite"
               className="tc-home-designations-card"
-              style={{ width: "100%", display: "flex", alignItems: "center", gap: ".8rem", margin: "1rem 0", padding: "1rem", background: "#fff", border: "2px solid #b5122a", borderRadius: "12px", color: "#171c27", textAlign: "left", cursor: "pointer", boxShadow: "0 3px 12px rgba(181,18,42,.12)" }}
+              style={{ width: "100%", display: "flex", alignItems: "center", gap: ".8rem", margin: "1rem 0", padding: "1rem", background: "#fff", border: "2px solid #b5122a", borderRadius: "12px", color: "#171c27", textAlign: "left", cursor: "pointer", boxShadow: refereeJornadas.length ? "0 3px 14px rgba(181,18,42,.2)" : "0 3px 12px rgba(181,18,42,.08)" }}
             >
-              <span aria-hidden="true" style={{ width: "12px", height: "12px", flex: "0 0 12px", borderRadius: "50%", background: "#dc2626", boxShadow: "0 0 0 4px rgba(220,38,38,.12)" }} />
-              <span style={{ flex: 1 }}>
+              <span aria-hidden="true" style={{ width: "13px", height: "13px", flex: "0 0 13px", borderRadius: "50%", background: refereeJornadas.length ? "#dc2626" : "#9ca3af", boxShadow: refereeJornadas.length ? "0 0 0 5px rgba(220,38,38,.13)" : "none" }} />
+              <span style={{ flex: 1, minWidth: 0 }}>
                 <strong style={{ display: "block", color: "#171c27", fontSize: ".9rem", letterSpacing: ".07em" }}>DESIGNACIONES</strong>
-                <small style={{ display: "block", color: "#444", marginTop: ".2rem" }}>{assignedRefereeMatches.length} partido(s) asignado(s) · Abrir planillas</small>
+                <small style={{ display: "block", color: "#444", marginTop: ".2rem" }}>
+                  {refereeJornadas.length
+                    ? `${refereeJornadas.length} jornada(s) · ${refereePendingMatchCount} partido(s) pendiente(s) · Abrir planillas`
+                    : "Todavía no tenés jornadas designadas"}
+                </small>
               </span>
+              {refereeJornadas.length > 0 && <strong style={{ minWidth: "28px", height: "28px", padding: "0 .35rem", display: "grid", placeItems: "center", borderRadius: "20px", background: "#b5122a", color: "#fff", fontSize: ".8rem" }}>{refereeJornadas.length}</strong>}
               <span aria-hidden="true" style={{ color: "#b5122a", fontSize: "1.3rem", fontWeight: 900 }}>→</span>
             </button>
           )}
