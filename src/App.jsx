@@ -4320,13 +4320,19 @@ export function TournamenSportApp() {
   )].sort((a, b) => a.localeCompare(b, "es"));
 
   const getTournamentDivision = (tournament) => {
-    const parts = String(tournament?.game || "").split(" · ").map((part) => part.trim());
-    const explicitDivision = parts.find((part) => ["Infantil", "Femenino", "Mayores"].includes(part));
-    if (explicitDivision) return explicitDivision;
-    const category = `${getTournamentCategory(tournament)} ${tournament?.game || ""}`.toLocaleLowerCase("es");
-    if (/femenin|mujer/.test(category)) return "Femenino";
-    if (/mayor|adult|senior|primera/.test(category)) return "Mayores";
-    return "Infantil";
+    const registrationGroup = (Array.isArray(tournament?.groups) ? tournament.groups : [])
+      .find((group) => group?.name === "__INSCRIPCIONES__");
+    const configuredDivision = (Array.isArray(registrationGroup?.category_config) ? registrationGroup.category_config : [])
+      .map((branch) => String(branch?.division || ""))
+      .join(" ");
+    const source = (configuredDivision + " " + String(tournament?.game || "") + " " + getTournamentCategory(tournament)).toLocaleLowerCase("es");
+
+    // Futsal tiene prioridad para no clasificarlo como infantil o mayores.
+    if (/futsal/.test(source)) return "Futsal";
+    if (/femenin|mujer/.test(source)) return "Femenino";
+    if (/mayor|adult|senior|sénior|primera/.test(source)) return "Séniors";
+    if (/infantil|baby|formativ/.test(source)) return "Babyfútbol";
+    return "Babyfútbol";
   };
 
   const filteredTournaments = tournaments.flatMap((tournament) => {
@@ -5238,9 +5244,10 @@ export function TournamenSportApp() {
             </div>
           </div>
           <div className="tc-home-divisions" aria-label="Divisiones de la liga">
-            {renderDivisionCard("Infantil", "/WhatsApp%20Image%202026-10-31%20at%2010.45.23.jpeg", "INFANTIL")}
+            {renderDivisionCard("Babyfútbol", "/WhatsApp%20Image%202026-10-31%20at%2010.45.23.jpeg", "BABY FÚTBOL")}
             {renderDivisionCard("Femenino", "/WhatsApp%20Image%202026-10-30%20at%2021.11.20.jpeg", "FEMENINO")}
-            {renderDivisionCard("Mayores", "/WhatsApp%20Image%202026-10-30%20at%2020.59.32.jpeg", "MAYORES")}
+            {renderDivisionCard("Futsal", "/WhatsApp%20Image%202026-10-30%20at%2020.59.32.jpeg", "FUTSAL")}
+            {renderDivisionCard("Séniors", "/WhatsApp%20Image%202026-10-30%20at%2020.59.32.jpeg", "SÉNIORS")}
           </div>
           {isPublicVisitor && <FefutinVisitorPromoCarousel />}
           {isReferente && (
