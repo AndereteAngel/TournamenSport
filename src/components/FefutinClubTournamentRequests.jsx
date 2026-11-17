@@ -1,22 +1,30 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 
-function getTournamentCategoryLabel(tournament) {
+function normalizeCategoryLabel(value) {
+  return String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+}
+
+function getTournamentCategoryEntries(tournament) {
   const registrationGroup = (Array.isArray(tournament?.groups) ? tournament.groups : [])
     .find((group) => group?.name === "__INSCRIPCIONES__");
   const categoryConfig = Array.isArray(registrationGroup?.category_config)
     ? registrationGroup.category_config
     : [];
-  const branch = categoryConfig[0];
-  const division = String(branch?.division || "").trim();
-  const category = Array.isArray(branch?.categories)
-    ? String(branch.categories[0] || "").trim()
-    : "";
-
-  if (division && category) return `${division} · ${category}`;
+  const entries = categoryConfig.flatMap((branch) =>
+    (Array.isArray(branch?.categories) ? branch.categories : [])
+      .map((category) => ({
+        division: String(branch?.division || "").trim(),
+        category: String(category || "").trim(),
+      }))
+      .filter((entry) => entry.division && entry.category)
+  );
+  if (entries.length) return entries;
 
   const parts = String(tournament?.game || "").split(" · ").map((part) => part.trim());
-  return parts.length >= 3 ? `${parts[1]} · ${parts.slice(2).join(" · ")}` : "";
+  return parts.length >= 3
+    ? [{ division: parts[1], category: parts.slice(3).join(" · ") || parts[2] }]
+    : [];
 }
 
 const panelStyle = {
@@ -65,22 +73,23 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const linkedTournamentIds = useMemo(
-    () => new Set(participations.map((item) => item.tournament_id)),
+  const linkedCategoryKeys = useMemo(
+    () => new Set(participations.map((item) =>
+      `${item.tournament_id}::${normalizeCategoryLabel(item.category_label)}`
+    )),
     [participations]
   );
-  const pendingTournamentIds = useMemo(
-    () => new Set(requests.filter((item) => item.status === "pendiente").map((item) => item.tournament_id)),
+  const pendingCategoryKeys = useMemo(
+    () => new Set(requests
+      .filter((item) => item.status === "pendiente")
+      .map((item) => `${item.tournament_id}::${normalizeCategoryLabel(item.category_label)}`)),
     [requests]
   );
-  const requestTournament = async (tournament) => {
-    if (sendingId || !tournament?.id) return;
-    const categoryLabel = getTournamentCategoryLabel(tournament);
-    if (!categoryLabel) {
-      setError("No pudimos identificar la rama y categoría de este torneo. Revisá la configuración antes de solicitarlo.");
-      return;
-    }
-    setSendingId(tournament.id);
+
+  const requestTournament = async (tournament, categoryLabel) => {
+    const requestKey = `${tournament.id}::${normalizeCategoryLabel(categoryLabel)}`;
+    if (sendingId || !tournament?.id || !categoryLabel) return;
+    setSendingId(requestKey);
     setError("");
     setNotice("");
     const { error: requestError } = await supabase.rpc("submit_fefutin_club_tournament_request", {
@@ -91,7 +100,7 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
       console.error("Error al solicitar participación en torneo:", requestError);
       setError(requestError.message || "No se pudo enviar la solicitud.");
     } else {
-      setNotice(`Solicitud enviada para ${tournament.title || "el torneo"}. Quedó pendiente de aprobación.`);
+      setNotice(`Solicitud enviada para ${tournament.title || "el torneo"} · ${categoryLabel}. Quedó pendiente de aprobación.`);
       await loadData();
       onSubmitted?.();
     }
@@ -136,37 +145,40 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
                   </tr>
                 </thead>
                 <tbody>
-                  {tournaments.map((tournament) => {
-                    const category = getTournamentCategoryLabel(tournament);
-                    const isLinked = linkedTournamentIds.has(tournament.id);
-                    const isPending = pendingTournamentIds.has(tournament.id);
-                    return (
-                      <tr key={tournament.id} style={{ borderBottom: "1px solid #383838" }}>
-                        <td style={{ padding: ".8rem .75rem", fontWeight: 800 }}>{tournament.title || "Torneo sin nombre"}</td>
-                        <td style={{ padding: ".8rem .75rem", color: "#d1d5db" }}>{category || tournament.game || "Fútbol"}</td>
-                        <td style={{ padding: ".8rem .75rem" }}>
-                          {isLinked ? (
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: ".35rem", color: "#86efac", background: "#052e16", border: "1px solid #166534", borderRadius: "7px", padding: ".55rem .7rem", fontWeight: 900, fontSize: ".75rem" }}>
-                              ✓ INSCRIPTO
-                            </span>
-                          ) : isPending ? (
-                            <span style={{ display: "inline-block", color: "#fde68a", background: "#422006", border: "1px solid #a16207", borderRadius: "7px", padding: ".55rem .7rem", fontWeight: 900, fontSize: ".72rem" }}>
-                              SOLICITUD PENDIENTE
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              style={buttonStyle}
-                              disabled={!category || sendingId === tournament.id || Boolean(sendingId)}
-                              onClick={() => requestTournament(tournament)}
-                            >
-                              {sendingId === tournament.id ? "ENVIANDO..." : "INSCRIBIRSE"}
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {tournaments.flatMap((tournament) =>
+                    getTournamentCategoryEntries(tournament).map((entry) => {
+                      const categoryLabel = `${entry.division} · ${entry.category}`;
+                      const requestKey = `${tournament.id}::${normalizeCategoryLabel(categoryLabel)}`;
+                      const isLinked = linkedCategoryKeys.has(requestKey);
+                      const isPending = pendingCategoryKeys.has(requestKey);
+                      return (
+                        <tr key={requestKey} style={{ borderBottom: "1px solid #383838" }}>
+                          <td style={{ padding: ".8rem .75rem", fontWeight: 800 }}>{tournament.title || "Torneo sin nombre"}</td>
+                          <td style={{ padding: ".8rem .75rem", color: "#d1d5db" }}>{categoryLabel}</td>
+                          <td style={{ padding: ".8rem .75rem" }}>
+                            {isLinked ? (
+                              <span style={{ display: "inline-flex", color: "#86efac", background: "#052e16", border: "1px solid #166534", borderRadius: "7px", padding: ".55rem .7rem", fontWeight: 900, fontSize: ".75rem" }}>
+                                ✓ INSCRIPTO
+                              </span>
+                            ) : isPending ? (
+                              <span style={{ display: "inline-block", color: "#fde68a", background: "#422006", border: "1px solid #a16207", borderRadius: "7px", padding: ".55rem .7rem", fontWeight: 900, fontSize: ".72rem" }}>
+                                SOLICITUD PENDIENTE
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                style={{ ...buttonStyle, minWidth: "132px", minHeight: "42px", whiteSpace: "nowrap", display: "inline-block" }}
+                                disabled={Boolean(sendingId)}
+                                onClick={() => requestTournament(tournament, categoryLabel)}
+                              >
+                                {sendingId === requestKey ? "ENVIANDO..." : "INSCRIBIRSE"}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
