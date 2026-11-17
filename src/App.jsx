@@ -4934,7 +4934,7 @@ export function TournamenSportApp() {
                   roundIndex: detail.roundIndex,
                   matchId: detail.matchId,
                 });
-                setActiveView("groups");
+                setActiveView(tournament.format === "single_elimination" ? "playoffs" : "groups");
               }}
             />
           </section>
@@ -6128,6 +6128,8 @@ export function TournamenSportApp() {
               isReferente={isReferente}
             currentUser={currentUser}
             onCloseMatch={handleCloseMatch}
+            openAssignedMatch={refereeMatchToOpen}
+            onAssignedMatchOpened={() => setRefereeMatchToOpen(null)}
             clubLogos={fefutinTournamentClubs.map((club) => ({
               name: club.club_name,
               url: club.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl : "",
