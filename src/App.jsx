@@ -4354,29 +4354,51 @@ export function TournamenSportApp() {
     });
   });
 
-  const assignedRefereeMatches = isArbitro ? tournaments.flatMap((tournament) =>
-    (Array.isArray(tournament.groups) ? tournament.groups : []).flatMap((group, groupIndex) =>
+  const assignedRefereeMatches = isArbitro ? tournaments.flatMap((tournament) => {
+    const groupMatches = (Array.isArray(tournament.groups) ? tournament.groups : []).flatMap((group, groupIndex) =>
       (Array.isArray(group?.matches) ? group.matches : [])
+        .filter((match) => match?.id != null && match?.referee_id === currentUser?.id &&
+          match.team1 && match.team2 &&
+          String(match.team1).toLocaleLowerCase("es") !== "pasaje directo" &&
+          String(match.team2).toLocaleLowerCase("es") !== "pasaje directo")
         .map((match) => ({
           tournament,
           tournamentTitle: tournament.title || "Torneo FEFUTIN",
           category: getTournamentCategory(tournament),
           groupName: group?.name || `Grupo ${groupIndex + 1}`,
           groupIndex,
-          matchId: match?.id,
-          team1: match?.team1 || "",
-          team2: match?.team2 || "",
-          refereeClosed: Boolean(match?.referee_closed),
-          round: match?.round || null,
+          roundIndex: null,
+          phase: "groups",
+          matchId: match.id,
+          team1: match.team1 || "",
+          team2: match.team2 || "",
+          refereeClosed: Boolean(match.referee_closed),
+          round: match.round || null,
         }))
-        .filter((item) => item.matchId != null && item.team1 && item.team2 &&
-          item.team1.toLocaleLowerCase("es") !== "pasaje directo" &&
-          item.team2.toLocaleLowerCase("es") !== "pasaje directo" &&
-          (tournament.groups[groupIndex].matches || []).some((candidate) =>
-            candidate?.id === item.matchId && candidate?.referee_id === currentUser?.id
-          ))
-    )
-  ) : [];
+    );
+    const playoffMatches = (Array.isArray(tournament.playoffs) ? tournament.playoffs : []).flatMap((round, roundIndex) =>
+      (Array.isArray(round) ? round : [])
+        .filter((match) => match?.id != null && match?.referee_id === currentUser?.id &&
+          match.team1 && match.team2 &&
+          String(match.team1).toLocaleLowerCase("es") !== "pasaje directo" &&
+          String(match.team2).toLocaleLowerCase("es") !== "pasaje directo")
+        .map((match) => ({
+          tournament,
+          tournamentTitle: tournament.title || "Torneo FEFUTIN",
+          category: getTournamentCategory(tournament),
+          groupName: `Eliminatorias · Ronda ${roundIndex + 1}`,
+          groupIndex: null,
+          roundIndex,
+          phase: "playoffs",
+          matchId: match.id,
+          team1: match.team1 || "",
+          team2: match.team2 || "",
+          refereeClosed: Boolean(match.referee_closed),
+          round: roundIndex + 1,
+        }))
+    );
+    return [...groupMatches, ...playoffMatches];
+  }) : [];
   const hasPendingRefereeAssignments = assignedRefereeMatches.some((match) => !match.refereeClosed);
   const refereeJornadas = isArbitro ? obtenerJornadasDeArbitro(tournaments, currentUser?.id) : [];
   const refereeAssignedMatchCount = refereeJornadas.reduce((total, jornada) =>
