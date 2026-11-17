@@ -870,6 +870,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
             <button type="button" onClick={() => { setRosterView("inscripcion"); setEditingPlayer(null); }} style={{ ...buttonStyle, minHeight: "76px" }}>📝 INSCRIPCIÓN</button>
           </div>
         )}
+        </>}
       </section>
     </div>
   );
