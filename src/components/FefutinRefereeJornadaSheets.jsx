@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "../supabaseClient";
 
-export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser }) {
+export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpenMatch }) {
   const [savedKeys, setSavedKeys] = useState(() => new Set());
   const [savingKey, setSavingKey] = useState("");
   const [message, setMessage] = useState("");
@@ -183,7 +183,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser }) {
   return (
     <section style={{ display: "grid", gap: ".75rem", margin: "1rem 0" }}>
       <h3 style={{ margin: ".2rem 0", color: "#fff", fontSize: ".9rem", letterSpacing: ".05em" }}>PLANILLAS GENERALES POR JORNADA</h3>
-      <p style={{ color: "#bbb", fontSize: ".78rem", margin: 0 }}>Esta planilla utiliza los mismos partidos, categorías y puntos que DATOS POR JORNADA en la tarjeta del árbitro.</p>
+      <p style={{ color: "#bbb", fontSize: ".78rem", margin: 0 }}>Cada categoría tiene su planilla individual para cargar al finalizar el encuentro. Cuando estén cerrados todos los partidos, se habilita el cierre y archivo de la planilla general de la jornada.</p>
       {planillas.map((jornada) => {
         const archived = savedKeys.has(jornada.jornadaKey);
         return (
@@ -193,13 +193,24 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser }) {
             </div>
             <small style={{ display: "block", textAlign: "center", color: "#bbb", marginTop: ".3rem" }}>{jornada.tournamentTitle} · {jornada.branch} · {jornada.categories.length} categoría(s)</small>
             <div style={{ display: "grid", gap: ".4rem", marginTop: ".7rem" }}>
-              {jornada.details.map((detail, index) => (
-                <div key={`${jornada.key}-${index}`} style={{ display: "grid", gridTemplateColumns: "minmax(0, .7fr) minmax(0, 1.5fr)", gap: ".35rem .5rem", alignItems: "center", padding: ".5rem", background: "#080b10", borderRadius: "7px", color: "#eee", fontSize: ".72rem" }}>
-                  <strong style={{ color: "#f3a0ad" }}>{detail.categoria}</strong>
-                  <span>{detail.team1} {detail.score1 == null ? "—" : detail.score1} - {detail.score2 == null ? "—" : detail.score2} {detail.team2}</span>
-                  <span style={{ gridColumn: "1 / -1", color: "#d1d5db" }}>{jornada.teamLocal}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam1 + " pts" : "Pendiente"}</strong> · {jornada.teamVisitor}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam2 + " pts" : "Pendiente"}</strong></span>
-                </div>
-              ))}
+              {jornada.details.map((detail, index) => {
+                const tienePartido = detail.instancia !== "Pendiente de fixture" && Boolean(detail.matchId);
+                return (
+                  <div key={`${jornada.key}-${index}`} style={{ display: "grid", gridTemplateColumns: "minmax(0, .7fr) minmax(0, 1.5fr)", gap: ".35rem .5rem", alignItems: "center", padding: ".55rem", background: "#080b10", borderRadius: "7px", color: "#eee", fontSize: ".72rem" }}>
+                    <strong style={{ color: "#f3a0ad" }}>{detail.categoria}</strong>
+                    <span>{detail.team1} {detail.score1 == null ? "—" : detail.score1} - {detail.score2 == null ? "—" : detail.score2} {detail.team2}</span>
+                    <span style={{ gridColumn: "1 / -1", color: "#d1d5db" }}>{jornada.teamLocal}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam1 + " pts" : "Pendiente"}</strong> · {jornada.teamVisitor}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam2 + " pts" : "Pendiente"}</strong></span>
+                    {tienePartido && (
+                      <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap", borderTop: "1px solid #343a40", paddingTop: ".45rem", marginTop: ".1rem" }}>
+                        <span style={{ color: detail.referee_closed ? "#86efac" : "#fcd34d", fontWeight: 800, fontSize: ".66rem" }}>{detail.referee_closed ? "ENCUENTRO CERRADO" : "PLANILLA PENDIENTE"}</span>
+                        <button type="button" disabled={!onOpenMatch} onClick={() => onOpenMatch?.(detail)} style={{ padding: ".5rem .7rem", border: "1px solid #b5122a", borderRadius: "7px", background: detail.referee_closed ? "#242a32" : "#b5122a", color: "#fff", fontWeight: 900, fontSize: ".68rem", cursor: onOpenMatch ? "pointer" : "not-allowed" }}>
+                          {detail.referee_closed ? "VER PLANILLA" : "CARGAR PLANILLA"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".5rem", marginTop: ".7rem" }}>
               <button type="button" onClick={() => printJornada(jornada, false)} style={{ padding: ".6rem .4rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#fff", color: "#171c27", fontWeight: 900, fontSize: ".7rem" }}>IMPRIMIR EN BLANCO</button>
