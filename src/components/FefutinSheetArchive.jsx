@@ -242,13 +242,13 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     return branchMatches && turnMatches;
   };
 
-  const filteredJornadaSheets = jornadaSheets.filter(matchesSheetFilters);
-  const filteredSheets = sheets.filter((sheet) => {
+  const filteredJornadaSheets = filterBranch ? jornadaSheets.filter(matchesSheetFilters) : [];
+  const filteredSheets = filterBranch ? sheets.filter((sheet) => {
     const tournament = archivedTournaments.find((item) => String(item.id) === String(sheet.tournament_id));
     return Boolean(tournament) &&
       (!filterBranch || getTournamentBranch(tournament) === filterBranch) &&
       (!filterTurn || getTournamentTurn(tournament) === filterTurn);
-  });
+  }) : [];
 
   const isPhotoForSheet = (photo, sheet) => {
     if (String(photo.tournament_id) !== String(sheet.tournament_id)) return false;
@@ -275,12 +275,12 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     return Boolean(sameJornada || sameDate || missingAssociationData);
   };
 
-  const filteredPhotos = photos.filter((photo) => {
+  const filteredPhotos = filterBranch ? photos.filter((photo) => {
     const photoTournament = archivedTournaments.find((item) => String(item.id) === String(photo.tournament_id));
     return Boolean(photoTournament) &&
       (!filterBranch || getTournamentBranch(photoTournament) === filterBranch) &&
       (!filterTurn || getTournamentTurn(photoTournament) === filterTurn);
-  });
+  }) : [];
 
   const photosForSheet = (sheet) => filteredPhotos.filter((photo) => isPhotoForSheet(photo, sheet));
 
@@ -350,8 +350,12 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
                 {filterBranch} · {filterTurn} · Todas las categorías
               </p>
             )}
+            {!filterBranch ? (
+              <p style={{ color: "#bbb", textAlign: "center", padding: "1.2rem" }}>Elegí una rama para consultar las planillas cargadas de todas sus categorías.</p>
+            ) : (
+              <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", margin: "1rem 0 .7rem" }}>
-              <strong style={{ color: "#fff", fontSize: ".85rem" }}>"PLANILLAS CARGADAS"</strong>
+              <strong style={{ color: "#fff", fontSize: ".85rem" }}>PLANILLAS CARGADAS</strong>
               <span style={{ color: "#bbb", fontSize: ".75rem" }}>{filteredSheets.length + filteredJornadaSheets.length + filteredPhotos.length} resultado(s)</span>
             </div>
             {loading ? <p style={{ color: "#ccc", textAlign: "center", padding: "1.5rem" }}>Cargando archivo...</p> : error ? <p role="alert" style={{ color: "#fca5a5" }}>{error}</p> : (
@@ -439,6 +443,8 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
               </div>
             )}
             <button type="button" className="tc-form-back" onClick={loadArchive} disabled={loading} style={{ marginTop: "1rem" }}>↻ Actualizar archivo</button>
+              </>
+            )}
           </>
         )}
       </section>
