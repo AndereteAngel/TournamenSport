@@ -2457,7 +2457,7 @@ export function TournamenSportApp() {
   const [authMode, setAuthMode] = useState("login");
   const [registerInput, setRegisterInput] = useState({ username: "", requestedRole: "arbitro" });
   const [activeView, setActiveView] = useState("home");
-  const [managementInboxTab, setManagementInboxTab] = useState("torneos");
+  const [managementInboxTab, setManagementInboxTab] = useState(null);
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);
   const [showFootballRain, setShowFootballRain] = useState(false);
@@ -4720,7 +4720,7 @@ export function TournamenSportApp() {
               </div>
               <button type="button" className="tc-form-back" onClick={refreshPendingRequests} disabled={loadingAccessRequests}>↻ Actualizar</button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 210px), 1fr))", gap: ".8rem", margin: "1rem 0 1.4rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: ".65rem", margin: "1rem 0 1.4rem" }}>
               {[
                 { id: "torneos", title: "TORNEOS", subtitle: "Clubes e inscripciones", count: activeClubs.length + pendingAccessRequests.filter((r) => r.requested_role === "referente" || r.requested_role === "directivo").length + pendingClubTournamentRequestsCount, icon: "🏆" },
                 { id: "jugadores", title: "JUGADORES", subtitle: "Llamados, altas y carnets", count: "GESTIÓN", icon: "⚽" },
@@ -4728,7 +4728,7 @@ export function TournamenSportApp() {
               ].map((item) => {
                 const selected = managementInboxTab === item.id;
                 return <button key={item.id} type="button" onClick={() => setManagementInboxTab(item.id)} aria-pressed={selected}
-                  style={{ textAlign: "left", cursor: "pointer", border: selected ? "2px solid #b5122a" : "1px solid #555", borderRadius: "12px", background: selected ? "#391018" : "#111", color: "#fff", padding: "1rem", boxShadow: selected ? "0 0 0 2px rgba(181,18,42,.18)" : "none" }}>
+                  style={{ minWidth: 0, textAlign: "center", cursor: "pointer", border: selected ? "2px solid #b5122a" : "1px solid #555", borderRadius: "12px", background: selected ? "#391018" : "#111", color: "#fff", padding: ".8rem .35rem", boxShadow: selected ? "0 0 0 2px rgba(181,18,42,.18)" : "none" }}>
                   <span style={{ fontSize: "1.5rem" }}>{item.icon}</span>
                   <strong style={{ display: "block", marginTop: ".45rem", fontSize: ".95rem", letterSpacing: ".06em" }}>{item.title}</strong>
                   <span style={{ display: "block", color: "#ccc", fontSize: ".76rem", marginTop: ".2rem" }}>{item.subtitle}</span>
@@ -4736,6 +4736,7 @@ export function TournamenSportApp() {
                 </button>;
               })}
             </div>
+            {managementInboxTab && <>
             {accessActionError && <div role="alert" style={{ border: "1px solid #b5122a", color: "#fff", background: "#391018", borderRadius: "8px", padding: "0.8rem", marginBottom: "1rem" }}>{accessActionError}</div>}
             {managementInboxTab !== "jugadores" && (loadingAccessRequests ? (
               <p style={{ color: "#fff", textAlign: "center", padding: "2rem" }}>Cargando solicitudes...</p>
@@ -4898,6 +4899,7 @@ export function TournamenSportApp() {
                 <RefereeStats onBack={() => setManagementInboxTab("arbitros")} canManageAccess={true} onDeactivateReferee={handleDeactivateReferee} />
               </div>
             </div>}
+            </>}
           </section>
         </div>
       ) : activeView === "referee-carnets" && isArbitro ? (
@@ -5404,7 +5406,7 @@ export function TournamenSportApp() {
                 <button
                   type="button"
                   className={"tc-home-about-card tc-home-referee-card" + (hasPendingGeneral ? " tc-home-general-approvals-pending" : "")}
-                  onClick={() => { setAccessActionError(""); setActiveView("access-requests"); }}
+                  onClick={() => { setAccessActionError(""); setManagementInboxTab(null); setActiveView("access-requests"); }}
                   aria-label={"Abrir altas generales" + (hasPendingGeneral ? ", " + totalPendingGeneral + " solicitudes pendientes" : "")}
                   aria-live="polite"
                   style={{ position: "relative", animation: hasPendingGeneral ? "fefutinGeneralPendingPulse 1.7s ease-in-out infinite" : "none" }}
