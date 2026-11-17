@@ -5975,6 +5975,7 @@ export function TournamenSportApp() {
                 name: club.club_name,
                 url: club.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl : "",
               }))}
+              registeredClubs={fefutinTournamentClubs}
             />
           )}
 
