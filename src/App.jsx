@@ -4718,7 +4718,7 @@ export function TournamenSportApp() {
                 <h2 className="cr-title" style={{ margin: "0.35rem 0" }}>CENTRO DE GESTIÓN FEFUTIN</h2>
                 <p style={{ color: "var(--tc-text, #fff)", opacity: 0.75, margin: 0 }}>Organizá todos los llamados y registros desde estas tres secciones.</p>
               </div>
-              <button type="button" className="tc-form-back" onClick={refreshPendingRequests} disabled={loadingAccessRequests}>↻ Actualizar</button>
+              <button type="button" className="tc-form-back" onClick={() => { setManagementInboxTab(null); setAccessActionError(""); refreshPendingRequests(); }} disabled={loadingAccessRequests}>↻ Reiniciar vista</button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: ".65rem", margin: "1rem 0 1.4rem" }}>
               {[
@@ -4728,11 +4728,11 @@ export function TournamenSportApp() {
               ].map((item) => {
                 const selected = managementInboxTab === item.id;
                 return <button key={item.id} type="button" onClick={() => setManagementInboxTab(item.id)} aria-pressed={selected}
-                  style={{ minWidth: 0, textAlign: "center", cursor: "pointer", border: selected ? "2px solid #b5122a" : "1px solid #555", borderRadius: "12px", background: selected ? "#391018" : "#111", color: "#fff", padding: ".8rem .35rem", boxShadow: selected ? "0 0 0 2px rgba(181,18,42,.18)" : "none" }}>
+                  style={{ minWidth: 0, width: "100%", height: "100%", boxSizing: "border-box", overflow: "hidden", textAlign: "center", cursor: "pointer", border: selected ? "2px solid #b5122a" : "1px solid #555", borderRadius: "12px", background: selected ? "#391018" : "#111", color: "#fff", padding: ".75rem .3rem", boxShadow: selected ? "0 0 0 2px rgba(181,18,42,.18)" : "none" }}>
                   <span style={{ fontSize: "1.5rem" }}>{item.icon}</span>
-                  <strong style={{ display: "block", marginTop: ".45rem", fontSize: ".95rem", letterSpacing: ".06em" }}>{item.title}</strong>
-                  <span style={{ display: "block", color: "#ccc", fontSize: ".76rem", marginTop: ".2rem" }}>{item.subtitle}</span>
-                  <span style={{ display: "inline-block", marginTop: ".7rem", color: "#fff", background: "#b5122a", borderRadius: "20px", padding: ".22rem .6rem", fontSize: ".68rem", fontWeight: 800 }}>{item.count}</span>
+                  <strong style={{ display: "block", width: "100%", minWidth: 0, marginTop: ".45rem", fontSize: "clamp(.68rem, 2.2vw, .95rem)", lineHeight: 1.15, letterSpacing: ".02em", overflowWrap: "anywhere", hyphens: "auto" }}>{item.title}</strong>
+                  <span style={{ display: "block", width: "100%", minWidth: 0, color: "#ccc", fontSize: "clamp(.57rem, 1.7vw, .76rem)", lineHeight: 1.2, marginTop: ".25rem", overflowWrap: "anywhere", hyphens: "auto" }}>{item.subtitle}</span>
+                  <span style={{ display: "inline-block", maxWidth: "100%", boxSizing: "border-box", whiteSpace: "normal", overflowWrap: "anywhere", marginTop: ".6rem", color: "#fff", background: "#b5122a", borderRadius: "20px", padding: ".22rem .45rem", fontSize: "clamp(.55rem, 1.6vw, .68rem)", lineHeight: 1.15, fontWeight: 800 }}>{item.count}</span>
                 </button>;
               })}
             </div>
