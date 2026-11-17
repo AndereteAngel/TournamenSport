@@ -3,14 +3,17 @@ import { TCIcon } from "./TCIcon";
 import { supabase } from "../supabaseClient";
 import { TournamentNotice, useTournamentNotice } from "./TournamentNotice";
 
-const TOURNAMENT_BRANCHES = ["Infantil", "Femenino", "Mayores"];
-const CURRENT_YEAR = new Date().getFullYear();
-const FIRST_INFANTIL_YEAR = CURRENT_YEAR - 1;
+const TOURNAMENT_BRANCHES = ["Baby fútbol", "Femenino", "Sénior", "Futsal"];
 const CATEGORY_OPTIONS = {
-  Infantil: Array.from({ length: 10 }, (_, index) => String(FIRST_INFANTIL_YEAR - index)),
-  Femenino: ["Sub-15", "Sub-17", "Primera"],
-  Mayores: ["Primera", "Reserva"],
+  "Baby fútbol": ["Cat. 2014", "Cat. 2015", "Cat. 2016", "Cat. 2017", "Cat. 2018", "Cat. 2019", "Cat. 2020", "Cat. 2021"],
+  Femenino: ["+30", "Libre"],
+  "Sénior": ["+30", "Libre"],
+  Futsal: ["U15", "U17", "Primera"],
 };
+const normalizeDivision = (value) => ({
+  Infantil: "Baby fútbol",
+  Mayores: "Sénior",
+}[String(value || "").trim()] || String(value || "").trim());
 
 export function CreateTournament({
   onSave,
@@ -47,10 +50,11 @@ export function CreateTournament({
       return {
         title: "",
         game: "Fútbol",
-        division: "Infantil",
-        categoryType: "Año de nacimiento",
-        categoryDetail: String(FIRST_INFANTIL_YEAR),
+        division: "Baby fútbol",
+        categoryType: "Categoría",
+        categoryDetail: "",
         categoryConfig: [],
+        turno: "Semanal",
         format: "league",
         numGroups: 2,
         qualifiersPerGroup: 2,
@@ -68,11 +72,19 @@ export function CreateTournament({
     const sports = ["Fútbol", "Futsal", "Básquet", "Vóley", "Handball", "Hockey", "Rugby", "Tenis", "Atletismo", "Natación", "Otro deporte"];
     const storedGame = String(initialData.game || "Fútbol");
     const gameParts = storedGame.split(" · ").map((part) => part.trim());
-    const divisionFromStoredGame = gameParts.find((part) => ["Infantil", "Femenino", "Mayores"].includes(part)) || "Infantil";
+    const storedDivision = gameParts.find((part) => ["Infantil", "Femenino", "Mayores", "Baby fútbol", "Sénior", "Futsal"].includes(part)) || "Baby fútbol";
+    const divisionFromStoredGame = normalizeDivision(storedDivision);
+    const turnoFromStoredGame = gameParts.find((part) => ["Semanal", "Fin de semana"].includes(part)) || "Semanal";
     const categoryIndex = gameParts.length - 1;
     const detailFromStoredGame = categoryIndex > 0 ? gameParts[categoryIndex] : "";
+    const normalizedDetail = /^Cat\.\s*20\d{2}$/i.test(detailFromStoredGame)
+      ? detailFromStoredGame.replace(/^Cat\.\s*/i, "Cat. ")
+      : detailFromStoredGame;
     const gameFromStoredValue = gameParts[0] || "Fútbol";
-    const categoryDetail = String(initialData.category_detail || detailFromStoredGame || "").trim();
+    const rawCategoryDetail = String(initialData.category_detail || normalizedDetail || "").trim();
+    const categoryDetail = divisionFromStoredGame === "Baby fútbol" && /^\d{4}$/.test(rawCategoryDetail)
+      ? `Cat. ${rawCategoryDetail}`
+      : rawCategoryDetail;
     const knownDivisions = ["Primera", "Reserva", "Tercera", "Cuarta", "Quinta", "Sexta", "Otra división"];
     const knownFormative = ["Premini", "Mini", "Infantiles", "Menores", "Cadetes", "Juveniles", "Sub-14", "Sub-16", "Sub-18", "Sub-21", "Otra categoría"];
     const inferredCategoryType = /^\d{4}$/.test(categoryDetail)
@@ -90,8 +102,20 @@ export function CreateTournament({
       categoryType: initialData.category_type || inferredCategoryType,
       categoryDetail,
       categoryConfig: savedCategoryConfig.length
-        ? savedCategoryConfig
+        ? savedCategoryConfig.map((item) => {
+            const division = normalizeDivision(item.division);
+            return {
+              ...item,
+              division,
+              categories: (item.categories || []).map((category) =>
+                division === "Baby fútbol" && /^\d{4}$/.test(String(category))
+                  ? `Cat. ${category}`
+                  : category
+              ),
+            };
+          })
         : [{ division: divisionFromStoredGame, categoryType: initialData.category_type || inferredCategoryType, categories: categoryDetail ? [categoryDetail] : [] }],
+      turno: turnoFromStoredGame,
       format: initialData.format || "groups_playoff",
       numGroups:
         initialData.format === "league" ? 1 : initialData.groups?.length || 2,
@@ -379,7 +403,7 @@ export function CreateTournament({
         {/* RAMAS Y CATEGORÍAS HABILITADAS */}
         <div style={{ padding: "0.9rem", border: "1px solid rgba(181,18,42,0.55)", borderRadius: "10px", background: "rgba(181,18,42,0.08)" }}>
           <label className="sports-label">Ramas y categorías del torneo</label>
-          <p className="sports-help">Activá las ramas que tendrá el torneo y elegí las categorías en las que podrán inscribirse los clubes.</p>
+          <p className="sports-help">Podés seleccionar varias ramas y categorías. Se creará un torneo independiente por cada categoría seleccionada.</p>
           <div style={{ display: "grid", gap: "0.65rem", marginTop: "0.75rem" }}>
             {TOURNAMENT_BRANCHES.map((division) => {
               const branch = (formData.categoryConfig || []).find((item) => item.division === division);
@@ -404,16 +428,6 @@ export function CreateTournament({
                           ))}
                         </div>
                       )}
-                      <div style={{ display: "flex", gap: "0.45rem", marginTop: "0.7rem" }}>
-                        <input
-                          value={customCategoryInputs[division] || ""}
-                          onChange={(e) => setCustomCategoryInputs((prev) => ({ ...prev, [division]: e.target.value }))}
-                          placeholder="Agregar otra categoría"
-                          className="cr-input"
-                          style={{ minWidth: 0, flex: 1 }}
-                        />
-                        <button type="button" onClick={() => addCustomCategory(division)} className="cr-btn-gold" style={{ padding: "0.55rem 0.75rem" }}>Agregar</button>
-                      </div>
                       {selectedCategories.length > 0 && (
                         <p style={{ color: "#fff", fontSize: "0.78rem", margin: "0.65rem 0 0" }}>
                           Habilitadas: {selectedCategories.join(" · ")}
@@ -429,6 +443,18 @@ export function CreateTournament({
 
         {/* Las ramas y categorías se administran exclusivamente en el bloque superior. */}
 
+        {/* TURNO */}
+
+        <div>
+          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "4px" }}>
+            Turno
+          </label>
+          <select value={formData.turno || "Semanal"} onChange={(e) => setFormData({ ...formData, turno: e.target.value })} className="cr-input" style={{ cursor: "pointer" }}>
+            <option value="Semanal">Semanal</option>
+            <option value="Fin de semana">Fin de semana</option>
+          </select>
+        </div>
+
         {/* FORMATO DE COMPETENCIA */}
 
         <div>
@@ -436,9 +462,10 @@ export function CreateTournament({
             Formato de competencia
           </label>
           <select value={formData.format} onChange={(e) => setFormData({ ...formData, format: e.target.value })} className="cr-input" style={{ cursor: "pointer" }}>
-            <option value="league">Todos contra todos (Liga)</option>
+            <option value="groups">Grupos</option>
+            <option value="single_elimination">Playoff</option>
             <option value="groups_playoff">Grupos + Playoff</option>
-            <option value="single_elimination">Eliminación directa (Playoff)</option>
+            <option value="league">Todos contra todos</option>
           </select>
           <span className="sports-help">Todos contra todos: cada equipo juega contra todos los demás y la tabla define al campeón.</span>
         </div>
@@ -447,7 +474,7 @@ export function CreateTournament({
             GRUPOS
             =================================================== */}
 
-        {formData.format === "groups_playoff" && (
+        {(formData.format === "groups" || formData.format === "groups_playoff") && (
           <div
             style={{
               display: "grid",
