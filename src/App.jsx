@@ -3595,171 +3595,71 @@ export function TournamenSportApp() {
       }];
       playoffs = generatePlayoffBrackets(shuffled);
     } else if (isLeague) {
-      // Calendario todos contra todos: cada equipo juega una vez por fecha.
-      // En liga respetamos el orden de inscripción para que el calendario sea previsible.
-      const scheduleTeams = [...participants];
-      if (scheduleTeams.length % 2 !== 0) scheduleTeams.push(null);
-      const totalRounds = scheduleTeams.length - 1;
-      const rounds = [];
-
-      for (let roundIndex = 0; roundIndex < totalRounds; roundIndex++) {
-        const roundMatches = [];
-        for (let i = 0; i < scheduleTeams.length / 2; i++) {
-          const home = scheduleTeams[i];
-          const away = scheduleTeams[scheduleTeams.length - 1 - i];
-          if (home && away) {
-            roundMatches.push({
-              round: roundIndex + 1,
-              team1: home,
-              team2: away,
-              score1: null,
-              score2: null,
-            });
-          }
+      // FEFUTIN: la inscripción es única por torneo, pero cada club participa
+      // en una fila por categoría. Cada categoría debe tener su propio todos-contra-todos.
+      const clubsByCategory = new Map();
+      (fefutinTournamentClubs || []).forEach((club) => {
+        const clubName = String(club.club_name || "").trim();
+        if (!clubName) return;
+        const categoryLabel = String(club.category_label || "Categoría general").trim();
+        if (!clubsByCategory.has(categoryLabel)) clubsByCategory.set(categoryLabel, []);
+        const categoryTeams = clubsByCategory.get(categoryLabel);
+        if (!categoryTeams.some((name) => name.toLocaleLowerCase("es") === clubName.toLocaleLowerCase("es"))) {
+          categoryTeams.push(clubName);
         }
-        rounds.push(roundMatches);
-        scheduleTeams.splice(1, 0, scheduleTeams.pop());
-      }
-
-      // Ordenar las fechas para que el primer participante juegue primero
-      // contra el segundo, luego el tercero, etc. (ej.: 1-2 / 3-4).
-      const participantOrder = new Map(participants.map((name, index) => [name, index]));
-      rounds.sort((a, b) => {
-        const opponentA = a.find((match) => match.team1 === participants[0] || match.team2 === participants[0]);
-        const opponentB = b.find((match) => match.team1 === participants[0] || match.team2 === participants[0]);
-        const indexA = participantOrder.get(opponentA?.team1 === participants[0] ? opponentA.team2 : opponentA?.team1) ?? 0;
-        const indexB = participantOrder.get(opponentB?.team1 === participants[0] ? opponentB.team2 : opponentB?.team1) ?? 0;
-        return indexA - indexB;
       });
 
-      // Optimizar la localía sobre el calendario completo, no partido por partido.
-      // Cada partido puede invertir su orientación; buscamos minimizar repeticiones
-      // consecutivas y mantener equilibrados los totales de local/visitante.
-      const fixtures = rounds.flatMap((roundMatches, roundIndex) =>
-        [...roundMatches]
-          .sort((a, b) => {
-            const firstA = Math.min(participantOrder.get(a.team1) ?? 0, participantOrder.get(a.team2) ?? 0);
-            const firstB = Math.min(participantOrder.get(b.team1) ?? 0, participantOrder.get(b.team2) ?? 0);
-            return firstA - firstB;
-          })
-          .map((match, matchIndex) => ({
-            ...match,
-            round: roundIndex + 1,
-            id: `fecha-${roundIndex + 1}-partido-${matchIndex + 1}`,
-          }))
-      );
+      const categories = [...clubsByCategory.entries()]
+        .filter(([, teams]) => teams.length > 0)
+        .sort(([a], [b]) => a.localeCompare(b, "es"));
 
-      // Buscamos alternar localía en los partidos consecutivos que juega cada
-      // equipo, manteniendo el reparto total lo más equilibrado posible.
-      const evaluateOrientation = (orientation) => {
-        const venuesByTeam = new Map(participants.map((team) => [team, []]));
-        fixtures.forEach((match, index) => {
-          const home = orientation[index] ? match.team2 : match.team1;
-          const away = orientation[index] ? match.team1 : match.team2;
-          venuesByTeam.get(home)?.push({ round: match.round, venue: "L" });
-          venuesByTeam.get(away)?.push({ round: match.round, venue: "V" });
-        });
+      const categoriesWithoutEnoughTeams = categories.filter(([, teams]) => teams.length < 2);
+      if (!categories.length || categoriesWithoutEnoughTeams.length) {
+        const missingCategories = categoriesWithoutEnoughTeams.map(([label]) => label).join(", ");
+        showNotice(missingCategories
+          ? `Cada categoría necesita al menos 2 clubes aprobados. Revisá: ${missingCategories}.`
+          : "No se encontraron clubes aprobados con categorías asignadas.");
+        return;
+      }
 
-        let imbalance = 0;
-        let repeats = 0;
-        let longRuns = 0;
-        let localRepeatRuns = 0;
-        let visitorRepeatRuns = 0;
-        venuesByTeam.forEach((venues) => {
-          venues.sort((a, b) => a.round - b.round);
-          let local = 0;
-          let visitor = 0;
-          let streak = 1;
-          for (let i = 0; i < venues.length; i++) {
-            if (venues[i].venue === "L") local++;
-            else visitor++;
-            if (i > 0) {
-              if (venues[i].venue === venues[i - 1].venue) {
-                repeats++;
-                streak++;
-                if (venues[i].venue === "L") localRepeatRuns++;
-                else visitorRepeatRuns++;
-                if (streak >= 3) longRuns++;
-              } else {
-                streak = 1;
-              }
+      groups = categories.map(([categoryLabel, categoryTeams], categoryIndex) => {
+        // Algoritmo circular: todos juegan contra todos una vez dentro de su categoría.
+        const rotation = [...categoryTeams];
+        if (rotation.length % 2 !== 0) rotation.push(null);
+        const totalRounds = rotation.length - 1;
+        const matches = [];
+
+        for (let roundIndex = 0; roundIndex < totalRounds; roundIndex++) {
+          let matchNumber = 0;
+          for (let i = 0; i < rotation.length / 2; i++) {
+            const team1 = rotation[i];
+            const team2 = rotation[rotation.length - 1 - i];
+            if (team1 && team2) {
+              matchNumber++;
+              matches.push({
+                id: `cat-${categoryIndex + 1}-fecha-${roundIndex + 1}-partido-${matchNumber}`,
+                round: roundIndex + 1,
+                team1,
+                team2,
+                homeTeam: team1,
+                awayTeam: team2,
+                score1: null,
+                score2: null,
+                match_date: getFefutinMatchDate(roundIndex + 1),
+              });
             }
           }
-          const minimumDifference = venues.length % 2;
-          imbalance += Math.max(0, Math.abs(local - visitor) - minimumDifference);
-        });
-        // Una repetición de local se compensa con una repetición de visitante.
-        // Es preferible alternar, pero si no se puede, evitamos que los
-        // equipos acumulen rachas de un solo tipo de localía.
-        const repeatImbalance = Math.abs(localRepeatRuns - visitorRepeatRuns);
-        return imbalance * 100000 + repeatImbalance * 5000 + repeats * 1000 + longRuns * 100;
-      };
-
-      let seed = participants.reduce((sum, name, index) => {
-        for (let i = 0; i < name.length; i++) sum = (sum * 31 + name.charCodeAt(i)) >>> 0;
-        return (sum + index + 1) >>> 0;
-      }, 20261023);
-      const random = () => {
-        seed = (seed * 1664525 + 1013904223) >>> 0;
-        return seed / 4294967296;
-      };
-
-      let bestOrientation = fixtures.map(() => false);
-      let bestScore = evaluateOrientation(bestOrientation);
-      const iterations = Math.max(2500, fixtures.length * fixtures.length * 20);
-
-      // Reinicios deterministas y búsqueda global aproximada: prioriza que
-      // cada equipo alterne local/visitante y evita desequilibrios como 5-1.
-      for (let attempt = 0; attempt < 48; attempt++) {
-        let orientation = fixtures.map(() => random() < 0.5);
-        let currentScore = evaluateOrientation(orientation);
-        let temperature = 1500;
-
-        for (let step = 0; step < iterations; step++) {
-          const candidate = [...orientation];
-          const first = Math.floor(random() * fixtures.length);
-          candidate[first] = !candidate[first];
-          if (fixtures.length > 1 && random() < 0.3) {
-            let second = Math.floor(random() * fixtures.length);
-            if (second === first) second = (second + 1) % fixtures.length;
-            candidate[second] = !candidate[second];
-          }
-
-          const candidateScore = evaluateOrientation(candidate);
-          const delta = candidateScore - currentScore;
-          if (delta < 0 || random() < Math.exp(-delta / temperature)) {
-            orientation = candidate;
-            currentScore = candidateScore;
-          }
-          temperature *= 0.996;
-          if (currentScore < bestScore) {
-            bestScore = currentScore;
-            bestOrientation = [...orientation];
-          }
-          if (bestScore === 0) break;
+          rotation.splice(1, 0, rotation.pop());
         }
-        if (bestScore === 0) break;
-      }
 
-      const matches = fixtures.map((match, index) => {
-        const shouldReverse = bestOrientation[index];
-        const home = shouldReverse ? match.team2 : match.team1;
-        const away = shouldReverse ? match.team1 : match.team2;
         return {
-          ...match,
-          team1: home,
-          team2: away,
-          homeTeam: home,
-          awayTeam: away,
-          match_date: getFefutinMatchDate(match.round),
+          id: categoryIndex + 1,
+          name: categoryLabel,
+          categoryLabel,
+          teams: categoryTeams,
+          matches,
         };
       });
-      groups = [{
-        id: 1,
-        name: "Todos contra todos",
-        teams: shuffled,
-        matches,
-      }];
     } else {
       groups = Array.from({ length: numGroups }, (_, index) => ({
         id: index + 1,
