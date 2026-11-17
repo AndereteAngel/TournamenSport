@@ -432,7 +432,6 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "1rem", marginTop: "1.25rem" }}>
                 {[
                   { id: "torneos", title: "TORNEOS", description: "Torneos y categorías participantes", symbol: "🏆" },
-                  { id: "listas", title: "LISTAS DE BUENA FE", description: "Jugadores organizados por categoría", symbol: "📋" },
                   { id: "datos", title: "DATOS DEL CLUB", description: "Información institucional y escudo", symbol: "🏟️" },
                   { id: "carnets", title: "CARNETS", description: "Credenciales digitales de los jugadores", symbol: "🪪" },
                 ].map((section) => (
@@ -470,7 +469,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
               </div>
             ) : (
               <>
-                {(mode === "equipos" && selectedSection !== "listas" || isManager && mode === "torneos") && club && (
+                {(mode === "equipos" && selectedSection !== "listas" && selectedSection !== "torneos" || isManager && mode === "torneos") && club && (
                   <div style={{ display: "flex", alignItems: "center", gap: ".8rem", padding: ".8rem", margin: "1rem 0", background: "#171c27", borderRadius: "10px" }}>
                     {club.logo_path && <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt={club.club_name} style={{ width: "58px", height: "58px", objectFit: "contain", background: "#fff", borderRadius: "8px" }} />}
                     <div><strong>{club.club_name}</strong><div style={{ color: "#ccc", fontSize: ".85rem" }}>{club.headquarters_address}</div></div>
@@ -494,7 +493,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </div>
                 )}
 
-                {(mode === "torneos" || selectedSection === "torneos" || selectedSection === "listas" && (currentUser?.role !== "referente" || rosterView !== "menu")) && !(selectedSection === "listas" && currentUser?.role === "referente") && (
+                {selectedSection !== "torneos" && (mode === "torneos" || selectedSection === "listas" && (currentUser?.role !== "referente" || rosterView !== "menu")) && !(selectedSection === "listas" && currentUser?.role === "referente") && (
                   <div style={{ display: "grid", width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", alignSelf: "stretch", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,190px),1fr))", gap: ".7rem", padding: ".85rem", marginTop: "1rem", border: "1px solid #444", borderRadius: "10px", background: "#171717" }}>
                     {(mode === "torneos" || selectedSection === "torneos") ? (
                       <>
@@ -778,7 +777,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 );
               }))}
                 </div>
-                {filteredParticipations.length === 0 && (mode === "torneos" || selectedSection === "torneos" || selectedSection === "listas") && (
+                {filteredParticipations.length === 0 && (mode === "torneos" || selectedSection === "listas") && (
                   <p style={{ color: "#aaa", textAlign: "center", padding: "1.2rem" }}>No hay resultados para los filtros seleccionados.</p>
                 )}
               </>
