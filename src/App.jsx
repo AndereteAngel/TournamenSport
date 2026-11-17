@@ -4969,12 +4969,9 @@ export function TournamenSportApp() {
             </div>
             {(() => {
               const branchTournaments = tournaments.filter((t) => getTournamentDivision(t) === tournamentDivisionFilter);
-              const visibleTournaments = branchTournaments;
-
               if (!branchTournaments.length) {
                 return <p style={{ color: "#fff" }}>Todavía no hay torneos creados en esta rama.</p>;
               }
-}
 
               return (
                 <>
@@ -5016,7 +5013,7 @@ export function TournamenSportApp() {
                     perspective: "900px",
                   }}
                 >
-                  {visibleTournaments.map((t, index) => {
+                  {branchTournaments.map((t, index) => {
                     const category = getTournamentCategory(t);
                     return (
                       <div
