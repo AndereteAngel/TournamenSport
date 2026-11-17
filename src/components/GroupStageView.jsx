@@ -69,7 +69,7 @@ export function GroupStageView({
   const isFinalized = String(tournament.status || "").trim().toLocaleLowerCase("es") === "finalizado";
   const canEditResults = (isAdmin || isReferee) && !isFinalized;
   const canEditFixtureScores = isAdmin && !isFinalized;
-  const canAdvanceToPlayoffs = isAdmin && !isFinalized;
+  const canAdvanceToPlayoffs = isAdmin && !isFinalized && tournament.format === "groups_playoff";
 
   // El resumen se calcula según el participante elegido en el torneo,
   // que puede tener un nombre distinto al usuario con el que inició sesión.
