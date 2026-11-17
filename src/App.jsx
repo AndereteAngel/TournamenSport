@@ -4828,6 +4828,8 @@ export function TournamenSportApp() {
 
             {managementInboxTab === "jugadores" && <FefutinPlayerApprovals />}
 
+            {managementInboxTab === "torneos" && <FefutinClubTournamentRequests onChanged={async () => { await loadActiveClubs(); await refreshPendingRequests(); }} />}
+
             {managementInboxTab === "torneos" && <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
                 <div>
@@ -4869,9 +4871,7 @@ export function TournamenSportApp() {
               )}
             </div>}
 
-            {managementInboxTab === "torneos" && <FefutinClubTournamentRequests onChanged={async () => { await loadActiveClubs(); await refreshPendingRequests(); }} />}
-
-            {managementInboxTab === "arbitros" && <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
+                        {managementInboxTab === "arbitros" && <div style={{ borderTop: "1px solid #3a3a3a", marginTop: "1.75rem", paddingTop: "1.4rem" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
                 <div>
                   <h3 style={{ color: "#fff", margin: 0 }}>ÁRBITROS ACTIVOS</h3>
