@@ -337,6 +337,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
         >
           {mode === "equipos" && selectedSection ? currentUser?.role === "referente" ? "← Volver a MI CLUB" : "← Volver a la ficha del club" : mode === "equipos" && activeClubId && currentUser?.role !== "referente" ? "← Volver a clubes" : "← Volver al inicio"}
         </button>
+        {selectedSection !== "torneos" && <>
         <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".72rem", margin: "1.25rem 0 .35rem" }}>
           {isManager ? "GESTIÓN DE CLUBES" : "ÁREA DEL REFERENTE"}
         </p>
@@ -786,6 +787,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
         )}
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
           <button type="button" className="tc-form-back" onClick={loadParticipations} disabled={loading}>↻ Actualizar</button>
+        </>}
         </div>
         </>}
         {isRegistrationScreen && (
