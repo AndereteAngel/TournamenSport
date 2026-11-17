@@ -4072,7 +4072,7 @@ body[data-tc-theme="arena"],
 /* FEFUTIN — divisiones de la liga en una única fila adaptable. */
 .tc-home-divisions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   width: 100%;
   margin: 0 auto 1.35rem;
@@ -4133,7 +4133,7 @@ body[data-tc-theme="arena"],
   cursor: pointer;
 }
 @media (max-width: 520px) {
-  .tc-home-divisions { gap: 7px; }
+  .tc-home-divisions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
   .tc-home-division-card { height: 108px; border-radius: 9px; }
   .tc-home-division-card span { padding: 9px 2px; font-size: .65rem; letter-spacing: .02em; }
 }
