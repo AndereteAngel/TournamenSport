@@ -40,7 +40,6 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [sheetId, setSheetId] = useState(null);
-  const [sheetIds, setSheetIds] = useState({ local: null, visitante: null });
   const [activeSide, setActiveSide] = useState("local");
   const [metadata, setMetadata] = useState({
     jornada: String(match?.round || ""),
@@ -176,7 +175,6 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         const visitorSheet = (existingSheets || []).find((item) => item.lado === "visitante");
         const legacySheet = (existingSheets || []).find((item) => !item.lado || item.lado === "conjunta");
         const metadataSheet = localSheet || visitorSheet || legacySheet;
-        setSheetIds({ local: localSheet?.id || null, visitante: visitorSheet?.id || null });
         setSheetId(localSheet?.id || legacySheet?.id || null);
 
         if (metadataSheet) {
@@ -322,7 +320,6 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         saveSide("local", localPlayers),
         saveSide("visitante", visitorPlayers),
       ]);
-      setSheetIds({ local: localSheetId, visitante: visitorSheetId });
       setSheetId(localSheetId);
       setNotice("Planilla guardada correctamente.");
       return true;
