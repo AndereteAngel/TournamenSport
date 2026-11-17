@@ -73,10 +73,6 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
     () => new Set(requests.filter((item) => item.status === "pendiente").map((item) => item.tournament_id)),
     [requests]
   );
-  const availableTournaments = tournaments.filter((tournament) =>
-    !linkedTournamentIds.has(tournament.id) && !pendingTournamentIds.has(tournament.id)
-  );
-
   const requestTournament = async (tournament) => {
     if (sendingId || !tournament?.id) return;
     const categoryLabel = getTournamentCategoryLabel(tournament);
@@ -119,46 +115,66 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
         {notice && <p role="status" style={{ color: "#bbf7d0", background: "#052e16", border: "1px solid #166534", borderRadius: "8px", padding: ".75rem" }}>{notice}</p>}
 
         <section style={{ ...panelStyle, borderColor: "#444", marginTop: "1rem" }}>
-          <h3 style={{ color: "#fff", marginTop: 0 }}>Mis solicitudes</h3>
-          {loading ? <p style={{ color: "#ccc" }}>Cargando solicitudes...</p> : requests.length === 0 ? (
-            <p style={{ color: "#aaa", marginBottom: 0 }}>Todavía no solicitaste participar en nuevos torneos.</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".75rem", flexWrap: "wrap" }}>
+            <div>
+              <h3 style={{ color: "#fff", margin: 0 }}>TORNEOS CREADOS</h3>
+              <p style={{ color: "#aaa", fontSize: ".82rem", margin: ".3rem 0 0" }}>
+                Consultá los torneos y el estado de participación de tu club.
+              </p>
+            </div>
+          </div>
+          {loading ? <p style={{ color: "#ccc" }}>Cargando torneos...</p> : tournaments.length === 0 ? (
+            <p style={{ color: "#aaa", marginBottom: 0 }}>Todavía no hay torneos creados.</p>
           ) : (
-            <div style={{ display: "grid", gap: ".55rem" }}>
-              {requests.map((request) => (
-                <div key={request.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".7rem", flexWrap: "wrap", padding: ".7rem", background: "#151515", borderRadius: "8px" }}>
-                  <div>
-                    <strong style={{ color: "#fff", display: "block" }}>{request.tournament_title}</strong>
-                    <span style={{ color: "#bbb", fontSize: ".8rem" }}>{request.category_label}</span>
-                  </div>
-                  <span style={{ color: request.status === "aprobado" ? "#86efac" : request.status === "pendiente" ? "#facc15" : "#fca5a5", fontSize: ".7rem", fontWeight: 900 }}>{statusLabel(request.status)}</span>
-                </div>
-              ))}
+            <div style={{ width: "100%", overflowX: "auto", marginTop: "1rem" }}>
+              <table style={{ width: "100%", minWidth: "560px", borderCollapse: "collapse", color: "#fff", fontSize: ".88rem" }}>
+                <thead>
+                  <tr style={{ background: "#202020", textAlign: "left" }}>
+                    <th style={{ padding: ".75rem", borderBottom: "1px solid #555" }}>TORNEO</th>
+                    <th style={{ padding: ".75rem", borderBottom: "1px solid #555" }}>RAMA / CATEGORÍA</th>
+                    <th style={{ padding: ".75rem", borderBottom: "1px solid #555" }}>PARTICIPACIÓN</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tournaments.map((tournament) => {
+                    const category = getTournamentCategoryLabel(tournament);
+                    const isLinked = linkedTournamentIds.has(tournament.id);
+                    const isPending = pendingTournamentIds.has(tournament.id);
+                    return (
+                      <tr key={tournament.id} style={{ borderBottom: "1px solid #383838" }}>
+                        <td style={{ padding: ".8rem .75rem", fontWeight: 800 }}>{tournament.title || "Torneo sin nombre"}</td>
+                        <td style={{ padding: ".8rem .75rem", color: "#d1d5db" }}>{category || tournament.game || "Fútbol"}</td>
+                        <td style={{ padding: ".8rem .75rem" }}>
+                          {isLinked ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: ".35rem", color: "#86efac", background: "#052e16", border: "1px solid #166534", borderRadius: "7px", padding: ".55rem .7rem", fontWeight: 900, fontSize: ".75rem" }}>
+                              ✓ INSCRIPTO
+                            </span>
+                          ) : isPending ? (
+                            <span style={{ display: "inline-block", color: "#fde68a", background: "#422006", border: "1px solid #a16207", borderRadius: "7px", padding: ".55rem .7rem", fontWeight: 900, fontSize: ".72rem" }}>
+                              SOLICITUD PENDIENTE
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              style={buttonStyle}
+                              disabled={!category || sendingId === tournament.id || Boolean(sendingId) || String(tournament.status || "").trim().toLocaleLowerCase("es") !== "inscripciones"}
+                              onClick={() => requestTournament(tournament)}
+                              title={String(tournament.status || "").trim().toLocaleLowerCase("es") !== "inscripciones" ? "Las inscripciones de este torneo están cerradas" : ""}
+                            >
+                              {sendingId === tournament.id ? "ENVIANDO..." : "INSCRIBIRSE"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
-        </section>
-
-        <section style={{ ...panelStyle, borderColor: "#444", marginTop: "1rem" }}>
-          <h3 style={{ color: "#fff", marginTop: 0 }}>Torneos disponibles</h3>
-          <p style={{ color: "#aaa", fontSize: ".82rem", marginTop: "-.35rem" }}>La participación queda habilitada únicamente cuando Admin o Directivo apruebe la solicitud.</p>
-          {loading ? <p style={{ color: "#ccc" }}>Consultando torneos...</p> : availableTournaments.length === 0 ? (
-            <p style={{ color: "#aaa", marginBottom: 0 }}>No hay nuevos torneos disponibles para solicitar en este momento.</p>
-          ) : (
-            <div style={{ display: "grid", gap: ".7rem" }}>
-              {availableTournaments.map((tournament) => {
-                const category = getTournamentCategoryLabel(tournament);
-                return (
-                  <article key={tournament.id} style={{ border: "1px solid #b5122a", borderRadius: "9px", padding: ".85rem", background: "#111" }}>
-                    <strong style={{ display: "block", color: "#fff" }}>{tournament.title || "Torneo sin nombre"}</strong>
-                    <span style={{ display: "block", color: "#bbb", fontSize: ".82rem", margin: ".25rem 0 .7rem" }}>{tournament.game || "Fútbol"} · {tournament.status || "Sin estado"}</span>
-                    <span style={{ display: "block", color: "#ffb3bf", fontSize: ".8rem", marginBottom: ".75rem" }}>Rama y categoría: {category || "No identificada"}</span>
-                    <button type="button" style={buttonStyle} disabled={!category || sendingId === tournament.id || Boolean(sendingId)} onClick={() => requestTournament(tournament)}>
-                      {sendingId === tournament.id ? "ENVIANDO..." : "SOLICITAR PARTICIPACIÓN"}
-                    </button>
-                  </article>
-                );
-              })}
-            </div>
-          )}
+          <p style={{ color: "#aaa", fontSize: ".78rem", marginBottom: 0, marginTop: ".8rem" }}>
+            La inscripción queda confirmada cuando Admin o Directivo aprueba la solicitud.
+          </p>
         </section>
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
           <button type="button" className="tc-form-back" onClick={loadData} disabled={loading}>↻ Actualizar</button>
