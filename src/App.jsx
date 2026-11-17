@@ -5387,6 +5387,13 @@ export function TournamenSportApp() {
                     <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>{isReferente ? "MI CLUB" : "FICHA DE EQUIPOS"}</strong>
                     <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>{isReferente ? "Inscribí jugadores, cargá sus datos y documentos, y gestioná la lista de buena fe y sus carnets." : "Club, equipos y jugadores"}</span>
                   </button>
+                  {isReferente && currentUser?.clubId && currentUser?.approvalStatus === "aprobado" && (
+                    <button type="button" onClick={() => setActiveView("referente-solicitar-torneo")} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
+                      <span style={{ fontSize: "1.6rem" }}>🏆</span>
+                      <strong style={{ fontSize: ".9rem", letterSpacing: ".04em" }}>TORNEOS</strong>
+                      <span style={{ color: "#d1d5db", fontSize: ".8rem", lineHeight: 1.4 }}>Recorré los torneos disponibles y solicitá la inscripción de tu club.</span>
+                    </button>
+                  )}
                   {!isReferente && (
                     <button type="button" onClick={() => setActiveView("referente-torneos")} style={{ minHeight: "132px", padding: "1.1rem", display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "center", gap: ".45rem", textAlign: "left", background: "#171c27", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff", cursor: "pointer" }}>
                       <span style={{ fontSize: "1.6rem" }}>🏆</span>
