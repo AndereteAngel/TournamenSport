@@ -3704,7 +3704,9 @@ export function TournamenSportApp() {
     setActiveView(data[0].format === "single_elimination" ? "playoffs" : "groups");
     showNotice(data[0].format === "single_elimination"
       ? "🏆 ¡Torneo en marcha! Se generaron las llaves de eliminación directa."
-      : "🏆 ¡Torneo en marcha! Los grupos y partidos se generaron automáticamente.");
+      : data[0].format === "league"
+        ? "🏆 ¡Torneo en marcha! Se generó el todos contra todos por separado para cada categoría."
+        : "🏆 ¡Torneo en marcha! Los grupos y partidos se generaron automáticamente.");
   };
 
   // =========================================================
