@@ -314,7 +314,7 @@ export function GroupStageView({
             whiteSpace: "nowrap",
           }}
         >
-          FASE DE GRUPOS
+          {isLeague ? "TODOS CONTRA TODOS" : "FASE DE GRUPOS"}
         </span>
       </div>
 
