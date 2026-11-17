@@ -16,6 +16,7 @@ export function GroupStageView({
   openAssignedMatch = null,
   onAssignedMatchOpened,
   clubLogos = [],
+  registeredClubs = [],
 }) {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [selectedRound, setSelectedRound] = useState("all");
@@ -189,6 +190,73 @@ export function GroupStageView({
     });
     return rounds;
   };
+
+
+  // Si el torneo ya estaba iniciado con un único fixture general antes de
+  // separar las categorías, lo reconstruimos una sola vez desde las participaciones
+  // aprobadas. Nunca pisamos resultados que ya se hayan cargado.
+  useEffect(() => {
+    if (!isLeague || String(tournament.status || "").trim().toLocaleLowerCase("es") !== "en curso") return;
+    if (!Array.isArray(registeredClubs) || registeredClubs.length === 0) return;
+
+    const categoriesMap = new Map();
+    registeredClubs.forEach((club) => {
+      const teamName = String(club.club_name || "").trim();
+      const categoryLabel = String(club.category_label || "").trim();
+      if (!teamName || !categoryLabel) return;
+      if (!categoriesMap.has(categoryLabel)) categoriesMap.set(categoryLabel, []);
+      const teams = categoriesMap.get(categoryLabel);
+      if (!teams.some((team) => normalizarNombre(team) === normalizarNombre(teamName))) teams.push(teamName);
+    });
+
+    const categories = [...categoriesMap.entries()].sort(([a], [b]) => a.localeCompare(b, "es"));
+    if (categories.length < 2 || categories.some(([, teams]) => teams.length < 2)) return;
+
+    const existingGroups = Array.isArray(tournament.groups) ? tournament.groups : [];
+    const alreadySeparated = categories.every(([label]) =>
+      existingGroups.some((group) => String(group.categoryLabel || group.name || "").trim() === label)
+    ) && existingGroups.length === categories.length;
+    if (alreadySeparated) return;
+
+    const hasResults = existingGroups.some((group) =>
+      (group.matches || []).some((match) =>
+        (match.score1 !== null && match.score1 !== undefined) ||
+        (match.score2 !== null && match.score2 !== undefined)
+      )
+    );
+    if (hasResults) return;
+
+    const rebuiltGroups = categories.map(([categoryLabel, teams], categoryIndex) => {
+      const rotation = [...teams];
+      if (rotation.length % 2 !== 0) rotation.push(null);
+      const matches = [];
+      for (let roundIndex = 0; roundIndex < rotation.length - 1; roundIndex++) {
+        let matchNumber = 0;
+        for (let i = 0; i < rotation.length / 2; i++) {
+          const team1 = rotation[i];
+          const team2 = rotation[rotation.length - 1 - i];
+          if (team1 && team2) {
+            matchNumber++;
+            matches.push({
+              id: `cat-${categoryIndex + 1}-fecha-${roundIndex + 1}-partido-${matchNumber}`,
+              round: roundIndex + 1,
+              team1,
+              team2,
+              homeTeam: team1,
+              awayTeam: team2,
+              score1: null,
+              score2: null,
+              match_date: getFefutinMatchDate(roundIndex + 1),
+            });
+          }
+        }
+        rotation.splice(1, 0, rotation.pop());
+      }
+      return { id: categoryIndex + 1, name: categoryLabel, categoryLabel, teams, matches };
+    });
+
+    onUpdateTournament({ ...tournament, groups: rebuiltGroups, playoffs: null });
+  }, [isLeague, tournament.id, tournament.status, tournament.groups, registeredClubs, onUpdateTournament]);
 
   const roundsAreMissing = isLeague && currentGroup.matches.length > 1 &&
     currentGroup.matches.every((match) => Number(match.round || 1) === 1);
