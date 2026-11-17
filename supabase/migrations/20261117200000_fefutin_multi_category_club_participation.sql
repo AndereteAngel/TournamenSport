@@ -1,17 +1,10 @@
--- FEFUTIN: permite participaciones independientes por categoría dentro del mismo torneo.
--- Conserva las filas existentes y todas las relaciones por ID.
+-- FEFUTIN: una solicitud por torneo; al aprobar, habilita toda la tira de categorías.
+-- Conserva las solicitudes existentes y genera una participación por cada categoría del torneo.
 
 begin;
 
--- Una misma institución puede solicitar varias categorías del mismo torneo,
--- pero no duplicar una solicitud pendiente para la misma categoría.
-drop index if exists public.fefutin_club_tournament_requests_one_pending;
-
-create unique index fefutin_club_tournament_requests_one_pending
-  on public.fefutin_club_tournament_requests (club_id, tournament_id, category_label)
-  where status = 'pendiente';
-
--- Cada categoría aprobada tendrá su propia participación y su propia ficha de equipo.
+-- Una participación por club, torneo y categoría permite que el club quede habilitado
+-- en todas las categorías sin duplicar equipos dentro de una misma categoría.
 alter table public.fefutin_club_tournaments
   drop constraint if exists fefutin_club_tournaments_unique;
 
@@ -33,7 +26,6 @@ declare
   v_profile public.profiles%rowtype;
   v_club public.fefutin_clubs%rowtype;
   v_request_id uuid;
-  v_category_label text := nullif(trim(p_category_label), '');
 begin
   if v_user_id is null then
     raise exception 'Tenés que iniciar sesión para solicitar una participación';
@@ -70,34 +62,28 @@ begin
     raise exception 'El torneo seleccionado ya no existe';
   end if;
 
-  if v_category_label is null or char_length(v_category_label) > 120 then
-    raise exception 'No se pudo identificar una rama y categoría válida';
+  if exists (
+    select 1 from public.fefutin_club_tournament_requests r
+    where r.club_id = v_club.id
+      and r.tournament_id = p_tournament_id
+      and r.status = 'pendiente'
+  ) then
+    raise exception 'Ya existe una solicitud pendiente para ese torneo';
   end if;
 
   if exists (
     select 1 from public.fefutin_club_tournaments ct
     where ct.club_id = v_club.id
       and ct.tournament_id = p_tournament_id
-      and lower(trim(ct.category_label)) = lower(v_category_label)
   ) then
-    raise exception 'Tu club ya está habilitado para esa categoría de este torneo';
-  end if;
-
-  if exists (
-    select 1 from public.fefutin_club_tournament_requests r
-    where r.club_id = v_club.id
-      and r.tournament_id = p_tournament_id
-      and lower(trim(r.category_label)) = lower(v_category_label)
-      and r.status = 'pendiente'
-  ) then
-    raise exception 'Ya existe una solicitud pendiente para esa categoría';
+    raise exception 'Tu club ya está inscripto en ese torneo';
   end if;
 
   insert into public.fefutin_club_tournament_requests (
     club_id, tournament_id, category_label, requested_by
   )
   values (
-    v_club.id, p_tournament_id, v_category_label, v_user_id
+    v_club.id, p_tournament_id, 'TODA LA TIRA', v_user_id
   )
   returning id into v_request_id;
 
@@ -119,6 +105,7 @@ declare
   v_actor_role text;
   v_request public.fefutin_club_tournament_requests%rowtype;
   v_club public.fefutin_clubs%rowtype;
+  v_inserted_count integer := 0;
 begin
   select p.role into v_actor_role
   from public.profiles p
@@ -153,18 +140,43 @@ begin
     insert into public.fefutin_club_tournaments (
       club_id, tournament_id, category_label
     )
-    values (
-      v_request.club_id, v_request.tournament_id, v_request.category_label
-    )
+    select
+      v_request.club_id,
+      v_request.tournament_id,
+      trim(branch.value->>'division') || ' · ' || trim(category.value #>> '{}')
+    from public.tournaments t
+    cross join lateral jsonb_array_elements(coalesce(t.groups, '[]'::jsonb)) registration_group(value)
+    cross join lateral jsonb_array_elements(coalesce(registration_group.value->'category_config', '[]'::jsonb)) branch(value)
+    cross join lateral jsonb_array_elements(coalesce(branch.value->'categories', '[]'::jsonb)) category(value)
+    where t.id = v_request.tournament_id
+      and registration_group.value->>'name' = '__INSCRIPCIONES__'
+      and nullif(trim(branch.value->>'division'), '') is not null
+      and nullif(trim(category.value #>> '{}'), '') is not null
     on conflict (club_id, tournament_id, category_label) do nothing;
 
+    get diagnostics v_inserted_count = row_count;
+
+    if v_inserted_count = 0
+       and not exists (
+         select 1 from public.fefutin_club_tournaments ct
+         where ct.club_id = v_request.club_id
+           and ct.tournament_id = v_request.tournament_id
+       ) then
+      raise exception 'El torneo no tiene ramas y categorías configuradas para habilitar';
+    end if;
+
+    -- Cierra también solicitudes pendientes antiguas por categoría del mismo torneo.
     update public.fefutin_club_tournament_requests
     set status = 'aprobado', reviewed_by = v_actor_id, reviewed_at = now()
-    where id = p_request_id;
+    where club_id = v_request.club_id
+      and tournament_id = v_request.tournament_id
+      and status = 'pendiente';
   else
     update public.fefutin_club_tournament_requests
     set status = 'desestimado', reviewed_by = v_actor_id, reviewed_at = now()
-    where id = p_request_id;
+    where club_id = v_request.club_id
+      and tournament_id = v_request.tournament_id
+      and status = 'pendiente';
   end if;
 end;
 $$;
