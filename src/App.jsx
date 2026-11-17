@@ -3400,7 +3400,7 @@ export function TournamenSportApp() {
       setTournamentDivisionFilter("Todas");
       setTournamentCategoryFilter("Todas");
       setActiveView("division-tournaments");
-      showNotice(`Se crearon ${data.length} torneos, uno por cada combinación de rama y categoría. Todos quedan abiertos para recibir inscripciones.`);
+      showNotice(`Se crearon ${data.length} torneo(s), uno por cada rama seleccionada. Todas sus categorías quedan habilitadas para una única inscripción.`);
     }
   };
 
