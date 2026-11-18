@@ -3381,8 +3381,17 @@ export function TournamenSportApp() {
       return;
     }
 
-    // Un registro de torneo por rama. Las categorías quedan agrupadas
-    // dentro de category_config para mantener una única inscripción por rama.
+    // Un único torneo por rama. Los turnos y las categorías se crean
+    // como registros normalizados independientes dentro de ese torneo.
+    const selectedTurns = [...new Set(
+      (Array.isArray(config.turnos) && config.turnos.length ? config.turnos : [config.turno || "Semanal"])
+        .filter((turno) => ["Semanal", "Fin de semana"].includes(turno))
+    )];
+    if (!selectedTurns.length) {
+      showNotice("Seleccioná al menos un turno para cada rama.");
+      return;
+    }
+
     const tournamentsToCreate = branchesToCreate.map((branch) => {
       const randomCode = "TS-" + Math.floor(1000 + Math.random() * 9000);
       const registrationGroup = {
@@ -3402,7 +3411,7 @@ export function TournamenSportApp() {
       return {
         code: randomCode,
         title: config.title,
-        game: `Fútbol · ${branch.division} · ${config.turno} · ${branch.categories[0]}`,
+        game: `Fútbol · ${branch.division}`,
         format: config.format,
         qualifiers_per_group: config.qualifiersPerGroup,
         is_public: config.isPublic,
@@ -3432,12 +3441,43 @@ export function TournamenSportApp() {
     }
 
     if (data && data.length > 0) {
+      const setupResults = await Promise.all(data.map((tournament, index) => {
+        const branch = branchesToCreate[index];
+        return supabase.rpc("configure_fefutin_branch_tournament", {
+          p_tournament_id: tournament.id,
+          p_branch_name: branch.division,
+          p_turnos: selectedTurns,
+          p_categories: branch.categories,
+          p_format: config.format,
+          p_settings: {
+            num_groups: Number(config.numGroups) || 1,
+            qualifiers_per_group: Number(config.qualifiersPerGroup) || 2,
+            max_participants: Number(config.maxParticipants) || 16,
+          },
+        });
+      }));
+      const failedSetup = setupResults.find((result) => result.error);
+      if (failedSetup) {
+        console.error("Error al configurar turnos y categorías normalizados:", failedSetup.error);
+        const { error: cleanupError } = await supabase
+          .from("tournaments")
+          .delete()
+          .in("id", data.map((item) => item.id));
+        if (cleanupError) {
+          console.error("No se pudieron revertir los torneos creados sin configurar:", cleanupError);
+          showNotice(`Se crearon los torneos, pero falló la configuración de turnos: ${failedSetup.error.message}. No vuelvas a crearlos; hay que revisar estos registros.`);
+        } else {
+          showNotice(`No se guardó la estructura de turnos y categorías. Se revirtieron los torneos incompletos. Motivo: ${failedSetup.error.message}`);
+        }
+        return;
+      }
+
       setActiveTournament(null);
       setTournaments((prev) => [...data, ...prev]);
       setTournamentDivisionFilter("Todas");
       setTournamentCategoryFilter("Todas");
       setActiveView("division-tournaments");
-      showNotice(`Se crearon ${data.length} torneo(s), uno por cada rama seleccionada. Todas sus categorías quedan habilitadas para una única inscripción.`);
+      showNotice(`Se crearon ${data.length} torneo(s), uno por cada rama. Cada uno quedó organizado en ${selectedTurns.join(" y ")} con categorías independientes por turno.`);
     }
   };
 
