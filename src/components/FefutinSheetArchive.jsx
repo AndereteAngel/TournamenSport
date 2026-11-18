@@ -20,6 +20,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   const [playersBySheet, setPlayersBySheet] = useState({});
   const [photos, setPhotos] = useState([]);
   const [tournaments, setTournaments] = useState([]);
+  const [tournamentTurns, setTournamentTurns] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [selectedTournamentId, setSelectedTournamentId] = useState("");
@@ -53,12 +54,14 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
       { data: photoRows, error: photosError },
       { data: jornadaSheetRows, error: jornadaSheetsError },
       { data: tournamentRows, error: tournamentsError },
+      { data: turnRows, error: turnsError },
       { data: voidedRows, error: voidedError },
     ] = await Promise.all([
       supabase.from("fefutin_match_sheets").select("*").order("updated_at", { ascending: false }),
       supabase.from("fefutin_jornada_photos").select("*").order("jornada_date", { ascending: false }),
       supabase.from("fefutin_jornada_sheets").select("*").order("jornada_date", { ascending: false }),
       supabase.from("tournaments").select("id, title, game"),
+      supabase.rpc("get_fefutin_tournament_turns", { p_tournament_id: null }),
       supabase.from("fefutin_voided_match_sheets").select("sheet_id, photo_ids"),
     ]);
 
@@ -69,13 +72,13 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
       console.warn("Archivo FEFUTIN: tabla opcional de anulaciones no instalada; se continúa sin marcas de anulación.", voidedError);
     }
 
-    if (sheetsError || photosError || jornadaSheetsError || tournamentsError || (voidedError && !optionalVoidedTableMissing)) {
+    if (sheetsError || photosError || jornadaSheetsError || tournamentsError || turnsError || (voidedError && !optionalVoidedTableMissing)) {
       console.error("Error al cargar el archivo FEFUTIN:", { sheetsError, photosError, tournamentsError, voidedError });
       const failedQuery = sheetsError ? "fefutin_match_sheets" :
         photosError ? "fefutin_jornada_photos" :
         jornadaSheetsError ? "fefutin_jornada_sheets (aplicá la migración digital de jornada)" :
-        tournamentsError ? "tournaments" : "fefutin_voided_match_sheets";
-      const failure = sheetsError || photosError || jornadaSheetsError || tournamentsError || voidedError;
+        tournamentsError ? "tournaments" : turnsError ? "fefutin_tournament_turns" : "fefutin_voided_match_sheets";
+      const failure = sheetsError || photosError || jornadaSheetsError || tournamentsError || turnsError || voidedError;
       setError(`No se pudo cargar ${failedQuery}: ${failure?.message || failure?.details || "error de consulta o permisos"}`);
       setLoading(false);
       return;
@@ -118,6 +121,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     setPlayersBySheet(playersMap);
     setPhotos(photoItems);
     setTournaments(tournamentRows || []);
+    setTournamentTurns(turnRows || []);
     setLoading(false);
   };
 
@@ -221,6 +225,10 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     const parts = String(tournament?.game || "").split("·").map((part) => part.trim().toLocaleLowerCase("es"));
     return parts.includes("fin de semana") ? "Fin de semana" : "Semanal";
   };
+  const getSheetTurn = (sheet) =>
+    sheet?.turno ||
+    tournamentTurns.find((turn) => String(turn.turn_id) === String(sheet?.turn_id))?.turno ||
+    getTournamentTurn(tournaments.find((item) => String(item.id) === String(sheet?.tournament_id)));
   const archivedTournaments = [...tournaments].sort((a, b) =>
     String(a.title || "Torneo sin nombre").localeCompare(String(b.title || "Torneo sin nombre"), "es")
   );
@@ -237,8 +245,8 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
       (sheet?.rama && sheetBranch === filterBranch) ||
       linkedTournaments.some((item) => getTournamentBranch(item) === filterBranch)
     );
-    const turnMatches = !filterTurn || linkedTournaments.some((item) => getTournamentTurn(item) === filterTurn) ||
-      (!linkedTournaments.length && filterTurn === "Semanal");
+    const turnMatches = !filterTurn || getSheetTurn(sheet) === filterTurn ||
+      (!sheet?.turno && !sheet?.turn_id && linkedTournaments.some((item) => getTournamentTurn(item) === filterTurn));
     return branchMatches && turnMatches;
   };
 
@@ -247,7 +255,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     const tournament = archivedTournaments.find((item) => String(item.id) === String(sheet.tournament_id));
     return Boolean(tournament) &&
       (!filterBranch || getTournamentBranch(tournament) === filterBranch) &&
-      (!filterTurn || getTournamentTurn(tournament) === filterTurn);
+      (!filterTurn || getSheetTurn(sheet) === filterTurn);
   }) : [];
 
   const isPhotoForSheet = (photo, sheet) => {
@@ -279,7 +287,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     const photoTournament = archivedTournaments.find((item) => String(item.id) === String(photo.tournament_id));
     return Boolean(photoTournament) &&
       (!filterBranch || getTournamentBranch(photoTournament) === filterBranch) &&
-      (!filterTurn || getTournamentTurn(photoTournament) === filterTurn);
+      (!filterTurn || getSheetTurn(photo) === filterTurn || (!photo?.turn_id && getTournamentTurn(photoTournament) === filterTurn));
   }) : [];
 
   const photosForSheet = (sheet) => filteredPhotos.filter((photo) => isPhotoForSheet(photo, sheet));
@@ -417,7 +425,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
                       {sheet.team_local} · {sheet.puntos_local} pts <span style={{ color: "#f3a0ad" }}>VS.</span> {sheet.team_visitante} · {sheet.puntos_visitante} pts
                     </strong>
                     <small style={{ display: "block", color: "#bbb", marginTop: ".35rem", textAlign: "center" }}>
-                      {sheet.tournament_title} · {sheet.rama} · {formatDate(sheet.jornada_date)} · {sheet.referee_name || "Árbitro sin identificar"}
+                      {sheet.tournament_title} · {sheet.rama} · {sheet.turno || "Turno histórico"} · Jornada {sheet.journey_number || "—"} · {formatDate(sheet.jornada_date)} · {sheet.referee_name || "Árbitro sin identificar"}
                     </small>
                     <div style={{ display: "grid", gap: ".4rem", marginTop: ".75rem" }}>
                       {(Array.isArray(sheet.detalles) ? sheet.detalles : []).map((detail, index) => (
