@@ -219,7 +219,7 @@ begin
           if v_reason is null then
             if coalesce(v_match.value->>'match_date', v_match.value->>'scheduled_date', '') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' then
               begin
-            if coalesce(v_match.value->>'match_date', v_match.value->>'scheduled_date', '') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' then
+                v_match_date := coalesce(v_match.value->>'match_date', v_match.value->>'scheduled_date')::date;
               exception when others then
                 v_match_date := null;
               end;
@@ -273,19 +273,19 @@ begin
 
             if coalesce(v_match.value->>'referee_closed_at', '') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' then
               begin
-            if coalesce(v_match.value->>'referee_closed_at', '') ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' then
+                v_referee_closed_at := (v_match.value->>'referee_closed_at')::timestamptz;
               exception when others then
                 v_referee_closed_at := null;
               end;
             end if;
 
             if coalesce(v_match.value->>'score1', '') ~ '^[0-9]+$'
-            if coalesce(v_match.value->>'score1', '') ~ '^[0-9]+$'
-            if coalesce(v_match.value->>'score1', '') ~ '^[0-9]+$'
+               and length(v_match.value->>'score1') <= 9 then
+              v_score1 := (v_match.value->>'score1')::integer;
             end if;
             if coalesce(v_match.value->>'score2', '') ~ '^[0-9]+$'
-            if coalesce(v_match.value->>'score2', '') ~ '^[0-9]+$'
-            if coalesce(v_match.value->>'score2', '') ~ '^[0-9]+$'
+               and length(v_match.value->>'score2') <= 9 then
+              v_score2 := (v_match.value->>'score2')::integer;
             end if;
 
             v_status := case when v_referee_closed then 'finalizado' else 'programado' end;
