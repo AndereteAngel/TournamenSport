@@ -52,6 +52,7 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
     const propietario = String(tournament?.created_by_user_id || tournament?.created_by || "").trim().toLocaleLowerCase("es");
     const turno = obtenerTurno(tournament) || "Turno sin identificar";
     const competencia = [
+      String(tournament?.id || tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
       String(tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
       propietario,
       rama.toLocaleLowerCase("es"),
@@ -79,6 +80,7 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
         jornadas.set(key, {
           key,
           torneo: tournament.title || "Torneo sin nombre",
+          tournament_id: tournament.id || null,
           rama,
           turno,
           propietario,
@@ -190,12 +192,14 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
   jornadas.forEach((jornada) => {
     (torneos || []).forEach((tournament) => {
       const competenciaTorneo = [
+        String(tournament?.id || tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
         String(tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
         String(tournament?.created_by_user_id || tournament?.created_by || "").trim().toLocaleLowerCase("es"),
         obtenerRama(tournament).toLocaleLowerCase("es"),
         (obtenerTurno(tournament) || "Turno sin identificar").toLocaleLowerCase("es"),
       ].join("|");
       const competenciaJornada = [
+        String(jornada.tournament_id || jornada.torneo || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
         String(jornada.torneo || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
         jornada.propietario,
         jornada.rama.toLocaleLowerCase("es"),
