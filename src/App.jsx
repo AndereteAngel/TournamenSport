@@ -5240,21 +5240,48 @@ export function TournamenSportApp() {
                       <div style={{ width: "100%", maxWidth: "520px", maxHeight: "85vh", overflowY: "auto", padding: "1rem", border: "2px solid #b5122a", borderRadius: "12px", background: "#101010", color: "#fff", boxSizing: "border-box" }}>
                         <h3 style={{ margin: "0 0 .35rem", textAlign: "center" }}>PLANILLAS · FECHA {round}</h3>
                         <p style={{ margin: "0 0 1rem", color: "#ccc", textAlign: "center", fontSize: ".82rem" }}>{tournament.title || "Torneo FEFUTIN"} · {referenteJornadaMatches.length} partidos de la jornada</p>
-                        <div style={{ display: "grid", gap: ".6rem" }}>
-                          {referenteJornadaMatches.map(({ match: jornadaMatch, groupIndex, categoryLabel }) => (
-                            <button key={`${groupIndex}-${jornadaMatch.id}`} type="button"
-                              onClick={() => {
-                                setShowReferenteJornadaSheets(false);
-                                setActiveTournament(tournament);
-                                setRefereeMatchToOpen({ phase: "groups", groupIndex, matchId: jornadaMatch.id });
-                                setActiveView("groups");
-                              }}
-                              style={{ display: "grid", gap: ".25rem", width: "100%", padding: ".8rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#171c27", color: "#fff", textAlign: "left", cursor: "pointer" }}>
-                                                            <span style={{ fontWeight: 900 }}>{jornadaMatch.team1} vs. {jornadaMatch.team2}</span>
-                              <span style={{ color: "#ccc", fontSize: ".72rem" }}>ABRIR PLANILLA →</span>
-                            </button>
-                          ))}
-                        </div>
+                        {(() => {
+  const openCategorySheet = (item, side) => {
+    setShowReferenteJornadaSheets(false);
+    setActiveTournament(tournament);
+    setRefereeMatchToOpen({ phase: "groups", groupIndex: item.groupIndex, matchId: item.match.id, initialSide: side });
+    setActiveView("groups");
+  };
+  const printGeneralSheet = () => {
+    const popup = window.open("", "_blank", "width=900,height=700");
+    if (!popup) { window.alert("Permití las ventanas emergentes para imprimir la planilla general."); return; }
+    const escapeHtml = (value) => String(value == null ? "" : value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
+    const rows = referenteJornadaMatches.map((item) => {
+      const category = item.categoryLabel || tournament.groups?.[item.groupIndex]?.categoryLabel || "—";
+      return "<tr><td>" + escapeHtml(category) + "</td><td>" + escapeHtml(item.match.team1) + "</td><td>" + escapeHtml(item.match.team2) + "</td><td>_____ - _____</td></tr>";
+    }).join("");
+    const html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Planilla general FEFUTIN</title><style>@page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}.brand{color:#b5122a;font-weight:900;letter-spacing:3px;font-size:13px}header{border-bottom:4px solid #b5122a;padding-bottom:12px;margin-bottom:16px}h1{font-size:21px;margin:8px 0 5px}.meta{font-size:11px;color:#555}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:11px}th{background:#171c27;color:#fff;text-align:left;padding:8px 6px}td{height:38px;padding:7px 6px;border:1px solid #cfd3da}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><header><div class="brand">FEFUTIN</div><h1>PLANILLA GENERAL · JORNADA ' + escapeHtml(round) + '</h1><div class="meta">' + escapeHtml(tournament.title || "Torneo FEFUTIN") + ' · ' + escapeHtml(referenteJornadaMatches.length) + ' partidos</div></header><table><thead><tr><th>Categoría</th><th>Equipo local</th><th>Equipo visitante</th><th>Resultado</th></tr></thead><tbody>' + rows + '</tbody></table></body></html>';
+    popup.document.open(); popup.document.write(html); popup.document.close();
+    popup.onload = () => { popup.focus(); popup.print(); };
+  };
+  return (
+    <div style={{ display: "grid", gap: ".6rem" }}>
+      {referenteClubJornadaMatches.map((item, index) => {
+        const category = String(item.categoryLabel || tournament.groups?.[item.groupIndex]?.categoryLabel || "Categoría " + (index + 1)).trim();
+        return (
+          <div key={item.groupIndex + "-" + item.match.id} style={{ display: "grid", gap: ".4rem", padding: ".65rem", border: "1px solid #493039", borderRadius: "8px", background: "#171c27" }}>
+            <strong style={{ color: "#f3a0ad", fontSize: ".88rem" }}>{category.toLocaleUpperCase("es")}</strong>
+            <div style={{ color: "#fff", fontSize: ".78rem" }}>{item.match.team1} vs. {item.match.team2}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".45rem" }}>
+              <button type="button" onClick={() => openCategorySheet(item, "local")} style={{ padding: ".7rem .4rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#241015", color: "#fff", fontWeight: 900, cursor: "pointer" }}>PLANILLA LOCAL</button>
+              <button type="button" onClick={() => openCategorySheet(item, "visitante")} style={{ padding: ".7rem .4rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#241015", color: "#fff", fontWeight: 900, cursor: "pointer" }}>PLANILLA VISITANTE</button>
+            </div>
+          </div>
+        );
+      })}
+      <button type="button" onClick={printGeneralSheet} style={{ display: "grid", gap: ".25rem", width: "100%", padding: ".85rem", border: "2px solid #f3a0ad", borderRadius: "8px", background: "#b5122a", color: "#fff", textAlign: "left", cursor: "pointer" }}>
+        <strong>PLANILLA GENERAL</strong>
+        <span style={{ fontSize: ".72rem" }}>{referenteJornadaMatches.length} partidos · Todas las categorías de la jornada</span>
+        <span style={{ fontSize: ".72rem" }}>IMPRIMIR / GUARDAR PDF →</span>
+      </button>
+    </div>
+  );
+})()}
                         <button type="button" onClick={() => setShowReferenteJornadaSheets(false)} style={{ width: "100%", marginTop: "1rem", padding: ".75rem", border: "1px solid #777", borderRadius: "8px", background: "#fff", color: "#171c27", fontWeight: 900, cursor: "pointer" }}>CERRAR</button>
                       </div>
                     </div>
