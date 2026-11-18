@@ -154,7 +154,7 @@ export function FefutinTurnCompetition({
   };
 
   const startTurn = async () => {
-    if (!canManage || starting || !turn?.turn_id) return;
+    if (!canManage || starting || !turn?.turn_id || !categories.length || !allFormatsSupported) return;
     setStarting(true);
     setError("");
     setNotice("");
