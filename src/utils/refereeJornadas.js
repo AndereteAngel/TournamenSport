@@ -245,6 +245,7 @@ export const normalizarJornadasDeTurno = (rows, refereeId) => {
         legacy_phase: match.legacy_phase || null,
         legacy_group_index: match.legacy_group_index ?? null,
         legacy_source_match_id: match.legacy_source_match_id || null,
+        legacy_pending_review: Boolean(match.legacy_pending_review),
         round_id: match.round_id || null,
         turn_id: match.turn_id || row.turn_id,
         turno: row.turno || null,
