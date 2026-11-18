@@ -9,40 +9,40 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
   const [archiveLoaded, setArchiveLoaded] = useState(false);
   const archivingKeysRef = useRef(new Set());
 
-  // Se consume exactamente el cálculo que alimenta DATOS POR JORNADA
-  // en la tarjeta de estadísticas de cada árbitro.
   const planillas = useMemo(() => (jornadas || []).map((jornada) => {
-    const details = (jornada.detallesPartidos || []).map((detail) => ({
-      ...detail,
-      categoria: detail.categoria || "Sin categoría",
-      resultadoCargado: Boolean(detail.resultadoCargado),
-      referee_id: detail.referee_id || null,
-      referee_closed: Boolean(detail.referee_closed),
-    }));
-    const matches = details.filter((detail) => detail.instancia !== "Pendiente de fixture");
-    const allAssignedToThisReferee = matches.length > 0 &&
-      matches.every((detail) => detail.referee_id === currentUser?.id);
-    const allClosed = allAssignedToThisReferee &&
-      matches.every((detail) => detail.referee_closed);
-    const tournamentIds = [...new Set(details.map((detail) => detail.tournament_id).filter(Boolean))];
+    const details = (jornada.detallesPartidos || [])
+      .filter((detail) => detail.matchId || detail.id)
+      .map((detail) => ({
+        ...detail,
+        matchId: String(detail.matchId || detail.id),
+        categoria: detail.categoria || "Sin categoría",
+        resultadoCargado: Boolean(detail.resultadoCargado),
+        referee_id: detail.referee_id || null,
+        referee_closed: Boolean(detail.referee_closed),
+      }));
+    const assignedMatches = details.filter((detail) =>
+      String(detail.referee_id || "") === String(currentUser?.id || "")
+    );
+    const allClosed = details.length > 0 && details.every((detail) => detail.referee_closed);
     return {
       key: jornada.key,
-      jornadaKey: jornada.key,
-      tournamentId: tournamentIds[0] || null,
-      tournamentIds,
+      jornadaKey: jornada.jornadaKey || jornada.key,
+      turnJourneyId: jornada.turn_journey_id || jornada.jornadaKey || jornada.key,
+      turnId: jornada.turn_id || null,
+      tournamentId: jornada.tournament_id || null,
+      tournamentIds: [...new Set(details.map((detail) => detail.tournament_id).filter(Boolean)
+        .concat(jornada.tournament_id ? [jornada.tournament_id] : []))],
       tournamentTitle: jornada.torneo || "Torneo FEFUTIN",
-      branch: jornada.rama || "Baby fútbol",
-      turno: jornada.turno || "Semanal",
-      teamLocal: jornada.team1,
-      teamVisitor: jornada.team2,
-      categories: jornada.categorias || [],
+      branch: jornada.rama || "Rama sin identificar",
+      turno: jornada.turno || "Turno sin identificar",
+      journeyNumber: jornada.journey_number || details[0]?.round || "—",
+      scheduledDate: jornada.scheduled_date || details.find((detail) => detail.scheduled_date)?.scheduled_date || null,
+      categories: jornada.categorias || [...new Set(details.map((detail) => detail.categoria))],
       details,
-      pointsLocal: Number(jornada.puntosTeam1 || 0),
-      pointsVisitor: Number(jornada.puntosTeam2 || 0),
+      assignedMatches,
       allClosed,
-      allAssignedToThisReferee,
-      matchCount: matches.length,
-      partidosJugados: jornada.partidosJugados || 0,
+      matchCount: details.length,
+      partidosJugados: details.filter((detail) => detail.resultadoCargado).length,
     };
   }), [jornadas, currentUser?.id]);
 
@@ -64,7 +64,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
   }, [currentUser?.id]);
 
   const printJornada = (jornada, withResults) => {
-    const popup = window.open("", "_blank", "width=900,height=700");
+    const popup = window.open("", "_blank", "width=1000,height=750");
     if (!popup) {
       setError("El navegador bloqueó la impresión. Permití las ventanas emergentes para imprimir la planilla.");
       return;
@@ -76,40 +76,37 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       const result = withResults && detail.resultadoCargado
         ? `${detail.score1} - ${detail.score2}`
         : withResults ? "— - —" : "_____ - _____";
-      const points = withResults && detail.resultadoCargado
-        ? `<td>${detail.puntosTeam1}</td><td>${detail.puntosTeam2}</td>`
-        : withResults ? "<td>—</td><td>—</td>" : "<td></td>";
-      return `<tr><td>${escapeHtml(detail.categoria)}</td><td>${escapeHtml(detail.team1 || jornada.teamLocal)} ${result} ${escapeHtml(detail.team2 || jornada.teamVisitor)}</td>${points}</tr>`;
+      const referee = detail.referee_name || (detail.referee_id ? "Árbitro designado" : "Sin designar");
+      return `<tr><td>${escapeHtml(detail.categoria)}</td><td>${escapeHtml(detail.team1 || "—")}</td><td class="score">${result}</td><td>${escapeHtml(detail.team2 || "—")}</td><td>${escapeHtml(referee)}</td></tr>`;
     }).join("");
-    const headerPoints = withResults
-      ? `<p class="totals">${escapeHtml(jornada.teamLocal)}: <strong>${jornada.pointsLocal} puntos</strong> · ${escapeHtml(jornada.teamVisitor)}: <strong>${jornada.pointsVisitor} puntos</strong></p>`
-      : "";
-    const tableHeaders = withResults
-      ? `<th>Puntos ${escapeHtml(jornada.teamLocal)}</th><th>Puntos ${escapeHtml(jornada.teamVisitor)}</th>`
-      : "<th>Observaciones</th>";
-    const signature = withResults ? "" : `<div class="signatures"><div>Firma referente local<br><br>____________________________</div><div>Firma referente visitante<br><br>____________________________</div></div><p class="ref">Árbitro: ${escapeHtml(currentUser?.username || "________________")} · Matrícula: __________________</p>`;
+    const dateLabel = jornada.scheduledDate
+      ? new Date(`${jornada.scheduledDate}T12:00:00`).toLocaleDateString("es-AR")
+      : "Fecha a confirmar";
+    const signatures = withResults ? "" : `<div class="signatures"><div>Firma de árbitro/s<br><br>____________________________</div><div>Firma de responsable de jornada<br><br>____________________________</div></div>`;
     popup.document.open();
     popup.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Planilla general FEFUTIN</title><style>
-      @page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}
+      @page{size:A4 portrait;margin:13mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}
       header{border-bottom:4px solid #b5122a;padding-bottom:12px;margin-bottom:16px}.brand{color:#b5122a;font-weight:900;letter-spacing:3px;font-size:13px}
-      h1{font-size:21px;margin:8px 0 5px}.meta{font-size:11px;color:#555}.clubs{font-size:17px;font-weight:900;margin-top:12px}
-      table{width:100%;border-collapse:collapse;margin-top:16px;font-size:10px}th{background:#171c27;color:#fff;text-align:left;padding:8px 6px}
-      td{height:38px;padding:7px 6px;border-bottom:1px solid #cfd3da}.totals{margin-top:14px;font-size:12px}
-      .signatures{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:48px;text-align:center;font-size:11px;page-break-inside:avoid}
-      .ref{margin-top:22px;font-size:11px}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+      h1{font-size:20px;margin:8px 0 5px}.meta{font-size:11px;color:#555}.journey{font-size:16px;font-weight:900;margin-top:10px}
+      table{width:100%;border-collapse:collapse;margin-top:16px;font-size:9px}th{background:#171c27;color:#fff;text-align:left;padding:8px 6px}
+      td{height:34px;padding:6px;border-bottom:1px solid #cfd3da}.score{text-align:center;font-weight:900;white-space:nowrap}
+      .signatures{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:42px;text-align:center;font-size:11px;page-break-inside:avoid}
+      @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
       </style></head><body><header><div class="brand">FEFUTIN</div><h1>PLANILLA OFICIAL GENERAL DE JORNADA</h1>
-      <div class="meta">${escapeHtml(jornada.tournamentTitle)} · Rama ${escapeHtml(jornada.branch)} · ${escapeHtml(jornada.categories.join(" · "))}</div>
-      <div class="clubs">${escapeHtml(jornada.teamLocal)} VS. ${escapeHtml(jornada.teamVisitor)}</div></header>
-      <table><thead><tr><th>Categoría</th><th>Resultado</th>${tableHeaders}</tr></thead><tbody>${rows}</tbody></table>
-      ${headerPoints}${signature}</body></html>`);
+      <div class="meta">${escapeHtml(jornada.tournamentTitle)} · Rama ${escapeHtml(jornada.branch)} · Turno ${escapeHtml(jornada.turno)}</div>
+      <div class="journey">JORNADA ${escapeHtml(jornada.journeyNumber)} · ${escapeHtml(dateLabel)}</div>
+      <div class="meta">${jornada.matchCount} encuentros · ${escapeHtml(jornada.categories.join(" · "))}</div></header>
+      <table><thead><tr><th>Categoría</th><th>Local</th><th>Resultado</th><th>Visitante</th><th>Árbitro</th></tr></thead><tbody>${rows}</tbody></table>
+      ${signatures}</body></html>`);
     popup.document.close();
     window.setTimeout(() => { popup.focus(); popup.print(); }, 300);
   };
 
   const archiveJornada = async (jornada) => {
-    if (!currentUser?.id || !jornada?.allClosed || savedKeys.has(jornada.jornadaKey) || savingKey) return;
-    if (!jornada.tournamentId) {
-      setError("No se pudo identificar el torneo de esta planilla. No se archivó para evitar guardar información incompleta.");
+    if (!currentUser?.id || !jornada?.allClosed || !jornada.assignedMatches.length ||
+        savedKeys.has(jornada.jornadaKey) || savingKey) return;
+    if (!jornada.tournamentId || !jornada.turnJourneyId) {
+      setError("No se pudo identificar la rama, el turno o la jornada. No se archivó para evitar guardar información incompleta.");
       return;
     }
     setSavingKey(jornada.jornadaKey);
@@ -119,17 +116,20 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       jornada_key: jornada.jornadaKey,
       tournament_id: jornada.tournamentId,
       tournament_ids: jornada.tournamentIds,
+      turn_id: jornada.turnId,
+      turn_journey_id: jornada.turnJourneyId,
       tournament_title: jornada.tournamentTitle,
       rama: jornada.branch,
-      team_local: jornada.teamLocal,
-      team_visitante: jornada.teamVisitor,
+      turno: jornada.turno,
+      team_local: "TODOS LOS CLUBES",
+      team_visitante: "TODOS LOS CLUBES",
       referee_id: currentUser.id,
       referee_name: currentUser.username || null,
-      jornada_date: new Date().toISOString().slice(0, 10),
+      jornada_date: jornada.scheduledDate || new Date().toISOString().slice(0, 10),
       categorias: jornada.categories,
       detalles: jornada.details,
-      puntos_local: jornada.pointsLocal,
-      puntos_visitante: jornada.pointsVisitor,
+      puntos_local: 0,
+      puntos_visitante: 0,
       closed_at: new Date().toISOString(),
     };
     const { error: insertError } = await supabase.from("fefutin_jornada_sheets").insert(payload);
@@ -144,22 +144,37 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       return;
     }
     setSavedKeys((previous) => new Set([...previous, jornada.jornadaKey]));
-    setMessage("Planilla general cerrada y guardada en el archivo institucional.");
+    setMessage("Planilla general de la jornada cerrada y guardada en el archivo institucional.");
   };
 
-  // Guarda en el archivo institucional las jornadas completas sin exigir un paso manual.
   useEffect(() => {
     if (!archiveLoaded || !currentUser?.id) return;
     const saveCompleted = async () => {
       for (const jornada of planillas) {
-        if (!jornada.allClosed || savedKeys.has(jornada.jornadaKey) || archivingKeysRef.current.has(jornada.jornadaKey) || !jornada.tournamentId) continue;
+        if (!jornada.allClosed || !jornada.assignedMatches.length ||
+            savedKeys.has(jornada.jornadaKey) ||
+            archivingKeysRef.current.has(jornada.jornadaKey) ||
+            !jornada.tournamentId || !jornada.turnJourneyId) continue;
         archivingKeysRef.current.add(jornada.jornadaKey);
         const payload = {
-          jornada_key: jornada.jornadaKey, tournament_id: jornada.tournamentId, tournament_ids: jornada.tournamentIds,
-          tournament_title: jornada.tournamentTitle, rama: jornada.branch, team_local: jornada.teamLocal,
-          team_visitante: jornada.teamVisitor, referee_id: currentUser.id, referee_name: currentUser.username || null,
-          jornada_date: new Date().toISOString().slice(0, 10), categorias: jornada.categories, detalles: jornada.details,
-          puntos_local: jornada.pointsLocal, puntos_visitante: jornada.pointsVisitor, closed_at: new Date().toISOString(),
+          jornada_key: jornada.jornadaKey,
+          tournament_id: jornada.tournamentId,
+          tournament_ids: jornada.tournamentIds,
+          turn_id: jornada.turnId,
+          turn_journey_id: jornada.turnJourneyId,
+          tournament_title: jornada.tournamentTitle,
+          rama: jornada.branch,
+          turno: jornada.turno,
+          team_local: "TODOS LOS CLUBES",
+          team_visitante: "TODOS LOS CLUBES",
+          referee_id: currentUser.id,
+          referee_name: currentUser.username || null,
+          jornada_date: jornada.scheduledDate || new Date().toISOString().slice(0, 10),
+          categorias: jornada.categories,
+          detalles: jornada.details,
+          puntos_local: 0,
+          puntos_visitante: 0,
+          closed_at: new Date().toISOString(),
         };
         const { error: insertError } = await supabase.from("fefutin_jornada_sheets").insert(payload);
         if (insertError && insertError.code !== "23505") {
@@ -177,59 +192,56 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
   if (!planillas.length) {
     return <section style={{ margin: "1rem 0", padding: "1rem", border: "1px solid #555", borderRadius: "10px", color: "#ddd" }}>
       <strong>PLANILLAS GENERALES POR JORNADA</strong>
-      <p style={{ marginBottom: 0, fontSize: ".82rem" }}>Todavía no tenés cruces de clubes designados para generar una planilla general.</p>
+      <p style={{ marginBottom: 0, fontSize: ".82rem" }}>Todavía no tenés jornadas con partidos designados.</p>
     </section>;
   }
 
   return (
     <section style={{ display: "grid", gap: ".75rem", margin: "1rem 0" }}>
       <h3 style={{ margin: ".2rem 0", color: "#fff", fontSize: ".9rem", letterSpacing: ".05em" }}>PLANILLAS GENERALES POR JORNADA</h3>
-      <p style={{ color: "#bbb", fontSize: ".78rem", margin: 0 }}>Cada categoría tiene su planilla individual para cargar al finalizar el encuentro. Cuando estén cerrados todos los partidos, se habilita el cierre y archivo de la planilla general de la jornada.</p>
+      <p style={{ color: "#bbb", fontSize: ".78rem", margin: 0 }}>Cada planilla reúne todos los encuentros de la misma jornada y turno, aunque pertenezcan a categorías distintas. Cada partido conserva su planilla individual.</p>
       {planillas.map((jornada) => {
         const archived = savedKeys.has(jornada.jornadaKey);
+        const dateLabel = jornada.scheduledDate
+          ? new Date(`${jornada.scheduledDate}T12:00:00`).toLocaleDateString("es-AR")
+          : "Fecha a confirmar";
         return (
           <article key={jornada.key} style={{ padding: ".85rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171c27" }}>
             <div style={{ textAlign: "center", color: "#fff", fontWeight: 900 }}>
-              {jornada.teamLocal} <span style={{ color: "#f3a0ad" }}>VS.</span> {jornada.teamVisitor}
+              JORNADA {jornada.journeyNumber} · {dateLabel}
             </div>
-            <small style={{ display: "block", textAlign: "center", color: "#bbb", marginTop: ".3rem" }}>{jornada.tournamentTitle} · {jornada.branch} · {jornada.turno} · {jornada.categories.length} categoría(s)</small>
+            <small style={{ display: "block", textAlign: "center", color: "#bbb", marginTop: ".3rem" }}>{jornada.tournamentTitle} · {jornada.branch} · {jornada.turno} · {jornada.matchCount} encuentro(s) · {jornada.categories.length} categoría(s)</small>
             <div style={{ display: "grid", gap: ".4rem", marginTop: ".7rem" }}>
-              {jornada.details.map((detail, index) => {
-                const tienePartido = detail.instancia !== "Pendiente de fixture" && Boolean(detail.matchId);
-                const asignadoAEsteArbitro = String(detail.referee_id || "") === String(currentUser?.id || "");
+              {jornada.details.map((detail) => {
+                const assignedToThisReferee = String(detail.referee_id || "") === String(currentUser?.id || "");
+                const canOpen = assignedToThisReferee || ["admin", "directivo"].includes(String(currentUser?.role || "").toLowerCase());
                 return (
-                  <div key={`${jornada.key}-${index}`} style={{ display: "grid", gridTemplateColumns: "minmax(0, .7fr) minmax(0, 1.5fr)", gap: ".35rem .5rem", alignItems: "center", padding: ".55rem", background: "#080b10", borderRadius: "7px", color: "#eee", fontSize: ".72rem" }}>
+                  <div key={detail.matchId} style={{ display: "grid", gridTemplateColumns: "minmax(0, .7fr) minmax(0, 1.7fr)", gap: ".35rem .5rem", alignItems: "center", padding: ".6rem", background: "#080b10", borderRadius: "7px", color: "#eee", fontSize: ".72rem" }}>
                     <strong style={{ color: "#f3a0ad" }}>{detail.categoria}</strong>
-                    <span>{detail.team1} {detail.score1 == null ? "—" : detail.score1} - {detail.score2 == null ? "—" : detail.score2} {detail.team2}</span>
-                    <small style={{ gridColumn: "1 / -1", color: "#9ca3af" }}>{detail.groupName || detail.instancia}{detail.round ? ` · Fecha ${detail.round}` : ""}</small>
-                    <span style={{ gridColumn: "1 / -1", color: "#d1d5db" }}>{jornada.teamLocal}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam1 + " pts" : "Pendiente"}</strong> · {jornada.teamVisitor}: <strong style={{ color: "#fff" }}>{detail.resultadoCargado ? detail.puntosTeam2 + " pts" : "Pendiente"}</strong></span>
-                    {tienePartido && (
-                      <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap", borderTop: "1px solid #343a40", paddingTop: ".45rem", marginTop: ".1rem" }}>
-                        <span style={{ color: detail.referee_closed ? "#86efac" : asignadoAEsteArbitro ? "#fcd34d" : "#fca5a5", fontWeight: 800, fontSize: ".66rem" }}>
-                          {detail.referee_closed ? "ENCUENTRO CERRADO" : asignadoAEsteArbitro ? "PLANILLA PENDIENTE" : "ASIGNADO A OTRO ÁRBITRO"}
-                        </span>
-                        <button type="button" disabled={!onOpenMatch || !asignadoAEsteArbitro} onClick={() => onOpenMatch?.(detail)} style={{ padding: ".5rem .7rem", border: "1px solid #b5122a", borderRadius: "7px", background: detail.referee_closed ? "#242a32" : asignadoAEsteArbitro ? "#b5122a" : "#444", color: "#fff", fontWeight: 900, fontSize: ".68rem", cursor: onOpenMatch && asignadoAEsteArbitro ? "pointer" : "not-allowed", opacity: asignadoAEsteArbitro ? 1 : .6 }}>
-                          {detail.referee_closed ? "VER PLANILLA" : asignadoAEsteArbitro ? "CARGAR PLANILLA" : "SIN ACCESO"}
-                        </button>
-                      </div>
-                    )}
+                    <span style={{ fontWeight: 800 }}>{detail.team1} <span style={{ color: "#f3a0ad" }}>{detail.score1 == null ? "—" : detail.score1} - {detail.score2 == null ? "—" : detail.score2}</span> {detail.team2}</span>
+                    <small style={{ gridColumn: "1 / -1", color: "#9ca3af" }}>
+                      {detail.scheduled_time ? `${detail.scheduled_time} · ` : ""}{detail.referee_closed ? "ENCUENTRO CERRADO" : assignedToThisReferee ? "PLANILLA PENDIENTE" : detail.referee_id ? "ASIGNADO A OTRO ÁRBITRO" : "SIN ÁRBITRO DESIGNADO"}
+                    </small>
+                    {detail.venue_address && <small style={{ gridColumn: "1 / -1", color: "#9ca3af" }}>Sede: {detail.venue_address}</small>}
+                    <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", borderTop: "1px solid #343a40", paddingTop: ".45rem" }}>
+                      <button
+                        type="button"
+                        disabled={!onOpenMatch || !canOpen}
+                        onClick={() => onOpenMatch?.(detail)}
+                        style={{ padding: ".5rem .7rem", border: "1px solid #b5122a", borderRadius: "7px", background: detail.referee_closed ? "#242a32" : canOpen ? "#b5122a" : "#444", color: "#fff", fontWeight: 900, fontSize: ".68rem", cursor: onOpenMatch && canOpen ? "pointer" : "not-allowed", opacity: canOpen ? 1 : .6 }}
+                      >
+                        {detail.referee_closed ? "VER PLANILLA" : canOpen ? "CARGAR PLANILLA" : "SIN ACCESO"}
+                      </button>
+                    </div>
                   </div>
                 );
               })}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".5rem", marginTop: ".7rem" }}>
-              <button type="button" onClick={() => printJornada(jornada, false)} style={{ padding: ".6rem .4rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#fff", color: "#171c27", fontWeight: 900, fontSize: ".7rem" }}>IMPRIMIR EN BLANCO</button>
-              <button type="button" onClick={() => printJornada(jornada, true)} style={{ padding: ".6rem .4rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#241015", color: "#fff", fontWeight: 900, fontSize: ".7rem" }}>IMPRIMIR CON RESULTADOS</button>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".5rem", marginTop: ".65rem" }}>
-              <div style={{ padding: ".55rem", border: "1px solid #b5122a", borderRadius: "7px" }}><small style={{ color: "#bbb" }}>TOTAL {jornada.teamLocal}</small><strong style={{ display: "block", color: "#fff" }}>{jornada.pointsLocal} puntos</strong></div>
-              <div style={{ padding: ".55rem", border: "1px solid #b5122a", borderRadius: "7px" }}><small style={{ color: "#bbb" }}>TOTAL {jornada.teamVisitor}</small><strong style={{ display: "block", color: "#fff" }}>{jornada.pointsVisitor} puntos</strong></div>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", flexWrap: "wrap", marginTop: ".7rem" }}>
-              <span style={{ color: archived ? "#86efac" : jornada.allClosed ? "#fca5a5" : "#fcd34d", fontSize: ".72rem", fontWeight: 800 }}>
-                {archived ? "PLANILLA GENERAL ARCHIVADA" : jornada.allClosed ? "LISTA PARA CERRAR" : jornada.allAssignedToThisReferee ? "PARTIDOS PENDIENTES DE CIERRE" : "DESIGNACIÓN INCOMPLETA"}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", flexWrap: "wrap", marginTop: ".75rem" }}>
+              <span style={{ color: archived ? "#86efac" : jornada.allClosed ? "#86efac" : "#fcd34d", fontSize: ".72rem", fontWeight: 800 }}>
+                {archived ? "PLANILLA GENERAL ARCHIVADA" : jornada.allClosed ? "TODOS LOS ENCUENTROS CERRADOS" : `${jornada.assignedMatches.length} PARTIDO(S) ASIGNADO(S) A VOS`}
               </span>
-              <button type="button" disabled={!jornada.allClosed || archived || savingKey === jornada.jornadaKey || Boolean(savingKey)} onClick={() => archiveJornada(jornada)} style={{ padding: ".65rem .8rem", border: "1px solid #b5122a", borderRadius: "8px", background: archived ? "#333" : "#b5122a", color: "#fff", fontWeight: 900, opacity: !jornada.allClosed || archived || savingKey ? .55 : 1 }}>
+              <button type="button" disabled={!jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey === jornada.jornadaKey || Boolean(savingKey)} onClick={() => archiveJornada(jornada)} style={{ padding: ".65rem .8rem", border: "1px solid #b5122a", borderRadius: "8px", background: archived ? "#333" : "#b5122a", color: "#fff", fontWeight: 900, opacity: !jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey ? .55 : 1 }}>
                 {archived ? "GUARDADA EN ARCHIVO" : savingKey === jornada.jornadaKey ? "GUARDANDO..." : "CERRAR Y ARCHIVAR PLANILLA"}
               </button>
             </div>
