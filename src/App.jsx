@@ -21,6 +21,7 @@ import { FefutinSheetArchive } from "./components/FefutinSheetArchive";
 import { FefutinGeneralStandings } from "./components/FefutinGeneralStandings";
 import { FefutinRefereeJornadaSheets } from "./components/FefutinRefereeJornadaSheets";
 import { FefutinMatchSheet } from "./components/FefutinMatchSheet";
+import { FefutinTurnCompetition } from "./components/FefutinTurnCompetition";
 import { supabase } from "./supabaseClient";
 import { obtenerJornadasDeArbitro, normalizarJornadasDeTurno } from "./utils/refereeJornadas";
 
@@ -2425,6 +2426,8 @@ export function TournamenSportApp() {
   const [refereeMatchToOpen, setRefereeMatchToOpen] = useState(null);
   const [normalizedMatchToOpen, setNormalizedMatchToOpen] = useState(null);
   const [normalizedRefereeJourneyRows, setNormalizedRefereeJourneyRows] = useState([]);
+  const [fefutinTurnsForActiveTournament, setFefutinTurnsForActiveTournament] = useState([]);
+  const [activeFefutinTurn, setActiveFefutinTurn] = useState(null);
   const [topScorersReturnView, setTopScorersReturnView] = useState("groups");
   const [fefutinTournamentClubs, setFefutinTournamentClubs] = useState([]);
   const [referenteParticipations, setReferenteParticipations] = useState([]);
@@ -4557,8 +4560,22 @@ export function TournamenSportApp() {
     return () => { cancelled = true; };
   }, [isReferente, referenteNextMatch?.tournament?.id]);
 
-  const openTournament = (tournament) => {
+  const openTournament = async (tournament) => {
     setActiveTournament(tournament);
+    if (tournament?.fefutin_branch_id) {
+      setActiveFefutinTurn(null);
+      const { data, error } = await supabase.rpc("get_fefutin_tournament_turns", {
+        p_tournament_id: tournament.id,
+      });
+      if (error) {
+        showNotice(error.message || "No se pudieron cargar los turnos de esta rama.");
+        setFefutinTurnsForActiveTournament([]);
+      } else {
+        setFefutinTurnsForActiveTournament(data || []);
+      }
+      setActiveView("fefutin-turns");
+      return;
+    }
     setActiveView(
       tournament.format !== "league" && tournament.playoffs && tournament.playoffs.length > 0
         ? "playoffs"
@@ -5051,6 +5068,35 @@ export function TournamenSportApp() {
             onClose={() => { setNormalizedMatchToOpen(null); setActiveView("referee-designations"); }}
           />
         </section>
+      ) : activeView === "fefutin-turns" && activeTournament ? (
+        <section className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: "1rem", boxSizing: "border-box", color: "#fff" }}>
+          <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>← Volver</button>
+          <header style={{ margin: "1rem 0", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", textAlign: "center" }}>
+            <small style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN · RAMA</small>
+            <h2 style={{ color: "#fff", margin: ".35rem 0" }}>{activeTournament.title}</h2>
+            <p style={{ color: "#bbb", margin: 0, fontSize: ".82rem" }}>Elegí el turno. Cada turno tiene sus propias categorías, inscripciones, jornadas y partidos.</p>
+          </header>
+          <div style={{ display: "grid", gap: ".7rem" }}>
+            {fefutinTurnsForActiveTournament.map((turn) => (
+              <button key={turn.turn_id} type="button" onClick={() => { setActiveFefutinTurn(turn); setActiveView("fefutin-turn-competition"); }} style={{ display: "grid", gap: ".4rem", padding: "1rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171c27", color: "#fff", textAlign: "left" }}>
+                <strong style={{ color: "#f3a0ad", fontSize: "1rem" }}>{turn.turno}</strong>
+                <span style={{ color: "#ddd", fontSize: ".82rem" }}>{(turn.categories || []).map((category) => category.name).join(" · ") || "Sin categorías configuradas"}</span>
+                <small style={{ color: "#aaa" }}>Estado: {turn.turn_status}</small>
+              </button>
+            ))}
+            {!fefutinTurnsForActiveTournament.length && <p style={{ color: "#bbb", textAlign: "center" }}>Esta rama todavía no tiene turnos configurados. Revisá la configuración de la competencia.</p>}
+          </div>
+        </section>
+      ) : activeView === "fefutin-turn-competition" && activeTournament && activeFefutinTurn ? (
+        <FefutinTurnCompetition
+          tournament={activeTournament}
+          turn={activeFefutinTurn}
+          currentUser={currentUser}
+          isAdmin={isAdmin}
+          isDirectivo={isDirectivo}
+          isReferee={isArbitro}
+          onBack={() => setActiveView("fefutin-turns")}
+        />
       ) : activeView === "referee-designations" && isArbitro ? (
         <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
           <section style={{ width: "100%", maxWidth: "900px", margin: "auto", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff" }}>
