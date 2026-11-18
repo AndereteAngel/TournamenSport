@@ -321,6 +321,38 @@ begin
       where turn_id is not null
       do nothing;
 
+    -- La lista de buena fe legacy se conserva; se crea tambien el vinculo
+    -- normalizado de cada jugador con la categoria/turno aprobados.
+    insert into public.fefutin_category_club_players (
+      tournament_category_club_id, roster_player_id, jersey_number, sort_order, status
+    )
+    select
+      tcc.id,
+      entry.roster_player_id,
+      entry.jersey_number,
+      entry.sort_order,
+      case entry.approval_status
+        when 'aprobado' then 'aprobado'
+        when 'rechazado' then 'rechazado'
+        else 'pendiente'
+      end
+    from public.fefutin_roster_tournament_entries entry
+    join public.fefutin_club_tournaments legacy
+      on legacy.id = entry.club_tournament_id
+    join public.fefutin_tournament_categories tc
+      on tc.turn_id = legacy.turn_id
+    join public.fefutin_categories cat on cat.id = tc.category_id
+    join public.fefutin_branches b on b.id = cat.branch_id
+    join public.fefutin_tournament_category_clubs tcc
+      on tcc.tournament_category_id = tc.id
+     and tcc.club_id = legacy.club_id
+     and tcc.status = 'aprobado'
+    where legacy.turn_id = v_request.turn_id
+      and legacy.club_id = v_request.club_id
+      and lower(trim(legacy.category_label)) =
+          lower(trim(b.name || ' · ' || cat.name))
+    on conflict (tournament_category_club_id, roster_player_id) do nothing;
+
     update public.fefutin_club_tournament_requests
     set status = 'aprobado', reviewed_by = v_actor_id, reviewed_at = now()
     where id = p_request_id;
