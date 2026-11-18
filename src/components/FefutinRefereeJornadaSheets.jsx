@@ -27,7 +27,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
     return {
       key: jornada.key,
       jornadaKey: jornada.jornadaKey || jornada.key,
-      turnJourneyId: jornada.turn_journey_id || jornada.jornadaKey || jornada.key,
+      turnJourneyId: jornada.turn_journey_id || null,
       turnId: jornada.turn_id || null,
       tournamentId: jornada.tournament_id || null,
       tournamentIds: [...new Set(details.map((detail) => detail.tournament_id).filter(Boolean)
@@ -105,7 +105,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
   const archiveJornada = async (jornada) => {
     if (!currentUser?.id || !jornada?.allClosed || !jornada.assignedMatches.length ||
         savedKeys.has(jornada.jornadaKey) || savingKey) return;
-    if (!jornada.tournamentId || !jornada.turnJourneyId) {
+    if (!jornada.tournamentId) {
       setError("No se pudo identificar la rama, el turno o la jornada. No se archivó para evitar guardar información incompleta.");
       return;
     }
@@ -155,7 +155,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
         if (!jornada.allClosed || !jornada.assignedMatches.length ||
             savedKeys.has(jornada.jornadaKey) ||
             archivingKeysRef.current.has(jornada.jornadaKey) ||
-            !jornada.tournamentId || !jornada.turnJourneyId) continue;
+            !jornada.tournamentId) continue;
         archivingKeysRef.current.add(jornada.jornadaKey);
         const payload = {
           jornada_key: jornada.jornadaKey,
