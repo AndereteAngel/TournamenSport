@@ -4022,13 +4022,22 @@ export function TournamenSportApp() {
     }
 
     if (normalizedMatchId) {
-      const { error: normalizedCloseError } = await supabase.rpc("referee_close_normalized_match_from_sheet", {
+      const { data: closedMatch, error: normalizedCloseError } = await supabase.rpc("referee_close_normalized_match_from_sheet", {
         p_match_id: normalizedMatchId,
       });
       if (normalizedCloseError) {
         showNotice(normalizedCloseError.message || "No se pudo cerrar el partido normalizado.");
         return false;
       }
+      setNormalizedRefereeJourneyRows((previous) => previous.map((journey) => ({
+        ...journey,
+        matches: (journey.matches || []).map((item) => String(item.id) === String(normalizedMatchId)
+          ? { ...item, ...closedMatch, score1: closedMatch?.score1, score2: closedMatch?.score2, referee_closed: true }
+          : item),
+      })));
+      setNormalizedMatchToOpen((previous) => previous
+        ? { ...previous, ...closedMatch, score1: closedMatch?.score1, score2: closedMatch?.score2, referee_closed: true }
+        : previous);
       showNotice("Partido cerrado correctamente. La planilla quedó bloqueada.");
       return true;
     }
