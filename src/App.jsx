@@ -5577,7 +5577,8 @@ export function TournamenSportApp() {
                                             const address = String(match.venue_address || homeClub?.headquarters_address || "").trim();
                       return (
                         <div key={`${groupIndex}-${match.id}`} style={{ padding: ".75rem", border: "1px solid #5b2732", borderRadius: "10px", background: "rgba(0,0,0,.25)" }}>
-                                                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".5rem" }}>
+                          <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".72rem", fontWeight: 900, marginBottom: ".55rem" }}>{categoryLabel}</div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".5rem" }}>
                             {[{ name: match.team1, logo: homeLogo }, { name: match.team2, logo: awayLogo }].map((club, index) => (
                               <div key={`${club.name}-${index}`} style={{ minWidth: 0, textAlign: "center" }}>
                                 <div style={{ height: "66px", display: "grid", placeItems: "center", marginBottom: ".3rem" }}>
