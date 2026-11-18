@@ -3472,12 +3472,24 @@ export function TournamenSportApp() {
         return;
       }
 
+      const { data: configuredRows, error: refreshCreatedError } = await supabase
+        .from("tournaments")
+        .select("*")
+        .in("id", data.map((item) => item.id));
+      const readyTournaments = !refreshCreatedError && configuredRows?.length === data.length
+        ? configuredRows
+        : data.map((item, index) => ({
+            ...item,
+            fefutin_branch_id: setupResults[index]?.data?.branch_id || item.fefutin_branch_id || null,
+            fefutin_turno: null,
+          }));
+
       setActiveTournament(null);
-      setTournaments((prev) => [...data, ...prev]);
+      setTournaments((prev) => [...readyTournaments, ...prev]);
       setTournamentDivisionFilter("Todas");
       setTournamentCategoryFilter("Todas");
       setActiveView("division-tournaments");
-      showNotice(`Se crearon ${data.length} torneo(s), uno por cada rama. Cada uno quedó organizado en ${selectedTurns.join(" y ")} con categorías independientes por turno.`);
+      showNotice(`Se crearon ${readyTournaments.length} torneo(s), uno por cada rama. Cada uno quedó organizado en ${selectedTurns.join(" y ")} con categorías independientes por turno.`);
     }
   };
 
