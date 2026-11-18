@@ -5177,7 +5177,7 @@ export function TournamenSportApp() {
           isAdmin={isAdmin}
           isDirectivo={isDirectivo}
           isReferee={isArbitro}
-          onBack={() => setActiveView("fefutin-turns")}
+          onBack={async () => { await refreshRefereeJourneyData(); setActiveView("fefutin-turns"); }}
         />
       ) : activeView === "referee-designations" && isArbitro ? (
         <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
