@@ -255,7 +255,7 @@ export function FefutinTurnCompetition({
                         )}
                       </div>
                       {canOpenSheet && (
-                        <button type="button" onClick={() => setSelectedMatch(match)} style={{ padding: ".55rem .65rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#b5122a", color: "#fff", fontSize: ".68rem", fontWeight: 900 }}>
+                        <button type="button" onClick={() => setSelectedMatch({ ...match, turn_journey_id: round.turn_journey_id, turno: competition?.turno || turn?.turno, journey_number: round.round_number })} style={{ padding: ".55rem .65rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#b5122a", color: "#fff", fontSize: ".68rem", fontWeight: 900 }}>
                           {match.referee_closed ? "VER PLANILLA" : "PLANILLA"}
                         </button>
                       )}
