@@ -76,6 +76,40 @@ join public.fefutin_categories c
   on c.branch_id = b.id and c.name = cc.category_name
 on conflict (tournament_id, category_id) do nothing;
 
+-- Respaldo para torneos que ya fueron iniciados y por eso no conservan
+-- el grupo técnico __INSCRIPCIONES__: reconstruir sus categorías desde las
+-- participaciones club/categoría que ya existen.
+with legacy_categories as (
+  select distinct
+    legacy.tournament_id,
+    case trim(split_part(legacy.category_label, ' · ', 1))
+      when 'Infantil' then 'Baby fútbol'
+      when 'Mayores' then 'Sénior'
+      else trim(split_part(legacy.category_label, ' · ', 1))
+    end as branch_name,
+    trim(substr(legacy.category_label, length(split_part(legacy.category_label, ' · ', 1)) + 4)) as category_name
+  from public.fefutin_club_tournaments legacy
+  where position(' · ' in legacy.category_label) > 0
+)
+insert into public.fefutin_tournament_categories (
+  tournament_id, category_id, format, status
+)
+select
+  lc.tournament_id,
+  c.id,
+  'league',
+  case
+    when lower(trim(coalesce(t.status, ''))) in ('finalizado', 'finalizada', 'completed') then 'finalizada'
+    when lower(trim(coalesce(t.status, ''))) in ('en curso', 'en_curso', 'iniciado') then 'en_curso'
+    else 'inscripcion'
+  end
+from legacy_categories lc
+join public.tournaments t on t.id = lc.tournament_id
+join public.fefutin_branches b on b.name = lc.branch_name
+join public.fefutin_categories c
+  on c.branch_id = b.id and lower(c.name) = lower(lc.category_name)
+on conflict (tournament_id, category_id) do nothing;
+
 -- 3) Pasar las participaciones ya aprobadas a cada categoría normalizada.
 -- La relación antigua permanece intacta para permitir una transición gradual.
 insert into public.fefutin_tournament_category_clubs (
