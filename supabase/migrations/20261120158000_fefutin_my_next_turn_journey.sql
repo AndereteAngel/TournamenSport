@@ -47,7 +47,7 @@ begin
   join public.fefutin_matches m on m.round_id = r.id
   where tcc.club_id = v_profile.club_id
     and tcc.status = 'aprobado'
-    and j.scheduled_date >= current_date
+    and j.scheduled_date >= (now() at time zone 'America/Argentina/Buenos_Aires')::date
     and m.status <> 'finalizado'
     and (m.local_club_id = v_profile.club_id or m.visitor_club_id = v_profile.club_id)
   order by j.scheduled_date, j.journey_number,
