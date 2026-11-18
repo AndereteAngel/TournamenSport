@@ -5256,8 +5256,8 @@ export function TournamenSportApp() {
       return "<tr><td>" + escapeHtml(category) + "</td><td>" + escapeHtml(item.match.team1) + "</td><td>" + escapeHtml(item.match.team2) + "</td><td>_____ - _____</td></tr>";
     }).join("");
     const html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Planilla general FEFUTIN</title><style>@page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}.brand{color:#b5122a;font-weight:900;letter-spacing:3px;font-size:13px}header{border-bottom:4px solid #b5122a;padding-bottom:12px;margin-bottom:16px}h1{font-size:21px;margin:8px 0 5px}.meta{font-size:11px;color:#555}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:11px}th{background:#171c27;color:#fff;text-align:left;padding:8px 6px}td{height:38px;padding:7px 6px;border:1px solid #cfd3da}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><header><div class="brand">FEFUTIN</div><h1>PLANILLA GENERAL · JORNADA ' + escapeHtml(round) + '</h1><div class="meta">' + escapeHtml(tournament.title || "Torneo FEFUTIN") + ' · ' + escapeHtml(referenteJornadaMatches.length) + ' partidos</div></header><table><thead><tr><th>Categoría</th><th>Equipo local</th><th>Equipo visitante</th><th>Resultado</th></tr></thead><tbody>' + rows + '</tbody></table></body></html>';
-    popup.document.open(); popup.document.write(html); popup.document.close();
     popup.onload = () => { popup.focus(); popup.print(); };
+    popup.document.open(); popup.document.write(html); popup.document.close();
   };
   return (
     <div style={{ display: "grid", gap: ".6rem" }}>
