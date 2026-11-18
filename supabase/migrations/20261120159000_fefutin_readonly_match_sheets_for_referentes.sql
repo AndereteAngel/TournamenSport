@@ -1,6 +1,49 @@
 -- FEFUTIN: permitir que el referente consulte, en modo lectura, planillas de partidos de su club.
 begin;
 
+create or replace function public.fefutin_referente_can_read_normalized_match(
+  p_match_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $function$
+  select exists (
+    select 1
+    from public.profiles p
+    join public.fefutin_matches m on m.id = p_match_id
+    where p.id = auth.uid()
+      and p.role = 'referente'
+      and p.approval_status = 'aprobado'
+      and p.deactivated_at is null
+      and p.club_id in (m.local_club_id, m.visitor_club_id)
+  );
+$function$;
+
+create or replace function public.fefutin_referente_can_read_normalized_sheet(
+  p_sheet_id uuid
+)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $function$
+  select exists (
+    select 1
+    from public.fefutin_match_sheets s
+    where s.id = p_sheet_id
+      and public.fefutin_referente_can_read_normalized_match(s.normalized_match_id)
+  );
+$function$;
+
+revoke all on function public.fefutin_referente_can_read_normalized_match(uuid) from public, anon;
+revoke all on function public.fefutin_referente_can_read_normalized_sheet(uuid) from public, anon;
+grant execute on function public.fefutin_referente_can_read_normalized_match(uuid) to authenticated;
+grant execute on function public.fefutin_referente_can_read_normalized_sheet(uuid) to authenticated;
+
 drop policy if exists fefutin_match_sheets_normalized_referente_select
   on public.fefutin_match_sheets;
 create policy fefutin_match_sheets_normalized_referente_select
@@ -8,16 +51,7 @@ on public.fefutin_match_sheets
 for select to authenticated
 using (
   normalized_match_id is not null
-  and exists (
-    select 1
-    from public.profiles p
-    join public.fefutin_matches m on m.id = normalized_match_id
-    where p.id = auth.uid()
-      and p.role = 'referente'
-      and p.approval_status = 'aprobado'
-      and p.deactivated_at is null
-      and p.club_id in (m.local_club_id, m.visitor_club_id)
-  )
+  and public.fefutin_referente_can_read_normalized_match(normalized_match_id)
 );
 
 drop policy if exists fefutin_match_sheet_players_normalized_referente_select
@@ -26,17 +60,7 @@ create policy fefutin_match_sheet_players_normalized_referente_select
 on public.fefutin_match_sheet_players
 for select to authenticated
 using (
-  exists (
-    select 1
-    from public.fefutin_match_sheets s
-    join public.fefutin_matches m on m.id = s.normalized_match_id
-    join public.profiles p on p.id = auth.uid()
-    where s.id = match_sheet_id
-      and p.role = 'referente'
-      and p.approval_status = 'aprobado'
-      and p.deactivated_at is null
-      and p.club_id in (m.local_club_id, m.visitor_club_id)
-  )
+  public.fefutin_referente_can_read_normalized_sheet(match_sheet_id)
 );
 
 create or replace function public.get_fefutin_match_sheet_roster(
