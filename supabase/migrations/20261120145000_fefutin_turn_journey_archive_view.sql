@@ -9,6 +9,21 @@ alter table public.fefutin_jornada_photos
   add column if not exists turno text,
   add column if not exists journey_number integer;
 
+-- Asignar el turno a los archivos anteriores cuando su torneo legacy tiene un turno identificable.
+update public.fefutin_jornada_sheets archive
+set turn_id = tt.id,
+    turno = tt.turno
+from public.fefutin_tournament_turns tt
+where archive.tournament_id = tt.tournament_id
+  and archive.turn_id is null;
+
+update public.fefutin_jornada_photos archive
+set turn_id = tt.id,
+    turno = tt.turno
+from public.fefutin_tournament_turns tt
+where archive.tournament_id = tt.tournament_id
+  and archive.turn_id is null;
+
 create index if not exists fefutin_jornada_sheets_turn_journey_idx
   on public.fefutin_jornada_sheets(turn_id, turn_journey_id, jornada_date desc);
 
