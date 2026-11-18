@@ -70,6 +70,23 @@ begin
         'legacy_phase', m.legacy_phase,
         'legacy_group_index', m.legacy_group_index,
         'legacy_source_match_id', m.legacy_match_payload->>'id',
+        'legacy_pending_review', exists (
+          select 1
+          from public.fefutin_legacy_match_migration_audit audit
+          where audit.source_tournament_id = t.id
+            and audit.migration_status = 'requiere_revision'
+            and (
+              nullif(trim(audit.match_payload->>'turno'), '') = tt.turno
+              or t.fefutin_turno = tt.turno
+              or t.game ilike '%' || tt.turno || '%'
+              or (
+                nullif(trim(audit.match_payload->>'turno'), '') is null
+                and t.fefutin_turno is null
+                and coalesce(t.game, '') not ilike '%Semanal%'
+                and coalesce(t.game, '') not ilike '%Fin de semana%'
+              )
+            )
+        ),
         'groupName', 'Jornada ' || tj.journey_number::text
       ) order by cat.sort_order, local_club.name, visitor_club.name, m.scheduled_time nulls last
     ) as matches
