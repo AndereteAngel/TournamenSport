@@ -10,19 +10,26 @@ as $function$
 declare
   v_round_id uuid;
   v_journey_id uuid;
+  v_category_id uuid;
+  v_turn_id uuid;
 begin
   v_round_id := case when tg_op = 'DELETE' then old.round_id else new.round_id end;
 
-  select r.turn_journey_id into v_journey_id
+  select r.turn_journey_id, r.tournament_category_id
+    into v_journey_id, v_category_id
   from public.fefutin_rounds r
   where r.id = v_round_id;
+
+  select tc.turn_id into v_turn_id
+  from public.fefutin_tournament_categories tc
+  where tc.id = v_category_id;
 
   if v_round_id is not null then
     update public.fefutin_rounds r
     set status = case
       when exists (
         select 1 from public.fefutin_matches m
-        where m.round_id = r.id and m.status = 'en_curso'
+        where m.round_id = r.id and m.status = 'en_juego'
       ) then 'en_curso'
       when exists (
         select 1 from public.fefutin_matches m
@@ -37,6 +44,47 @@ begin
     where r.id = v_round_id;
   end if;
 
+  if v_category_id is not null then
+    update public.fefutin_tournament_categories tc
+    set status = case
+      when exists (
+        select 1 from public.fefutin_matches m
+        join public.fefutin_rounds r on r.id = m.round_id
+        where r.tournament_category_id = tc.id and m.status = 'en_juego'
+      ) then 'en_curso'
+      when exists (
+        select 1 from public.fefutin_matches m
+        join public.fefutin_rounds r on r.id = m.round_id
+        where r.tournament_category_id = tc.id
+      ) and not exists (
+        select 1 from public.fefutin_matches m
+        join public.fefutin_rounds r on r.id = m.round_id
+        where r.tournament_category_id = tc.id and m.status <> 'finalizado'
+      ) then 'finalizada'
+      else 'en_curso'
+    end,
+    updated_at = now()
+    where tc.id = v_category_id;
+
+    update public.fefutin_tournament_turns tt
+    set status = case
+      when exists (
+        select 1 from public.fefutin_tournament_categories tc
+        where tc.turn_id = tt.id
+      ) and not exists (
+        select 1 from public.fefutin_tournament_categories tc
+        where tc.turn_id = tt.id and tc.status <> 'finalizada'
+      ) then 'finalizada'
+      when exists (
+        select 1 from public.fefutin_tournament_categories tc
+        where tc.turn_id = tt.id and tc.status in ('en_curso', 'finalizada')
+      ) then 'en_curso'
+      else 'inscripcion'
+    end,
+    updated_at = now()
+    where tt.id = v_turn_id;
+  end if;
+
   if v_journey_id is not null then
     update public.fefutin_turn_journeys j
     set status = case
@@ -44,7 +92,7 @@ begin
         select 1
         from public.fefutin_rounds r
         join public.fefutin_matches m on m.round_id = r.id
-        where r.turn_journey_id = j.id and m.status = 'en_curso'
+        where r.turn_journey_id = j.id and m.status = 'en_juego'
       ) then 'en_curso'
       when exists (
         select 1
