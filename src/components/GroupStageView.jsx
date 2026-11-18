@@ -24,6 +24,7 @@ export function GroupStageView({
   const [targetMatchId, setTargetMatchId] = useState(null);
   const [myMatchesView, setMyMatchesView] = useState("pending");
   const [selectedSheetMatch, setSelectedSheetMatch] = useState(null);
+  const [selectedSheetInitialSide, setSelectedSheetInitialSide] = useState("local");
   const [selectedSheetContext, setSelectedSheetContext] = useState({ phase: "groups", groupIndex: 0, roundIndex: null });
 
   useEffect(() => {
@@ -62,6 +63,7 @@ export function GroupStageView({
       setActiveGroupIndex(groupIndex);
       setSelectedSheetContext({ phase, groupIndex, roundIndex: null });
     }
+    setSelectedSheetInitialSide(openAssignedMatch.initialSide === "visitante" ? "visitante" : "local");
     setSelectedSheetMatch(match);
     onAssignedMatchOpened?.();
   }, [openAssignedMatch, tournament.id]);
@@ -879,6 +881,7 @@ export function GroupStageView({
           tournament={tournament}
           match={selectedSheetMatch}
           categoryLabel={currentGroup.categoryLabel || currentGroup.name || ""}
+          initialSide={selectedSheetInitialSide}
           isReferee={isReferee}
           isAdmin={isAdmin}
           readOnly={isReferente}
