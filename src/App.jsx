@@ -2427,6 +2427,7 @@ export function TournamenSportApp() {
   const [referenteParticipations, setReferenteParticipations] = useState([]);
   const [referenteMatchClubs, setReferenteMatchClubs] = useState([]);
   const [showReferenteJornadaSheets, setShowReferenteJornadaSheets] = useState(false);
+  const [referenteSheetCategoryFilter, setReferenteSheetCategoryFilter] = useState("Todas");
   const [loadingFefutinTournamentClubs, setLoadingFefutinTournamentClubs] = useState(false);
   const [showChampionCard, setShowChampionCard] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
@@ -5303,6 +5304,14 @@ export function TournamenSportApp() {
                         <h3 style={{ margin: "0 0 .35rem", textAlign: "center" }}>PLANILLAS · FECHA {round}</h3>
                         <p style={{ margin: "0 0 1rem", color: "#ccc", textAlign: "center", fontSize: ".82rem" }}>{tournament.title || "Torneo FEFUTIN"} · {referenteJornadaMatches.length} partidos de la jornada</p>
                         {(() => {
+  const jornadaCategories = [...new Set(referenteJornadaMatches.map((item) => String(item.categoryLabel || "").trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+  const filteredClubMatches = referenteClubJornadaMatches.filter((item) =>
+    referenteSheetCategoryFilter === "Todas" || String(item.categoryLabel || "").trim() === referenteSheetCategoryFilter
+  );
+  const filteredJornadaMatches = referenteJornadaMatches.filter((item) =>
+    referenteSheetCategoryFilter === "Todas" || String(item.categoryLabel || "").trim() === referenteSheetCategoryFilter
+  );
   const openCategorySheet = (item, side) => {
     setShowReferenteJornadaSheets(false);
     setActiveTournament(tournament);
@@ -5313,7 +5322,7 @@ export function TournamenSportApp() {
     const popup = window.open("", "_blank", "width=900,height=700");
     if (!popup) { window.alert("Permití las ventanas emergentes para imprimir la planilla general."); return; }
     const escapeHtml = (value) => String(value == null ? "" : value).replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]);
-    const rows = referenteJornadaMatches.map((item) => {
+    const rows = filteredJornadaMatches.map((item) => {
       const category = item.categoryLabel || tournament.groups?.[item.groupIndex]?.categoryLabel || "—";
       return "<tr><td>" + escapeHtml(category) + "</td><td>" + escapeHtml(item.match.team1) + "</td><td>" + escapeHtml(item.match.team2) + "</td><td>_____ - _____</td></tr>";
     }).join("");
@@ -5323,7 +5332,14 @@ export function TournamenSportApp() {
   };
   return (
     <div style={{ display: "grid", gap: ".6rem" }}>
-      {referenteClubJornadaMatches.map((item, index) => {
+      <label style={{ display: "grid", gap: ".35rem", marginBottom: ".8rem", color: "#f3a0ad", fontSize: ".78rem", fontWeight: 900 }}>
+        FILTRAR POR CATEGORÍA
+        <select value={referenteSheetCategoryFilter} onChange={(event) => setReferenteSheetCategoryFilter(event.target.value)} style={{ width: "100%", padding: ".7rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#fff", color: "#171c27", fontWeight: 700 }}>
+          <option value="Todas">Todas las categorías</option>
+          {jornadaCategories.map((category) => <option key={category} value={category}>{category}</option>)}
+        </select>
+      </label>
+      {filteredClubMatches.map((item, index) => {
         const category = String(item.categoryLabel || tournament.groups?.[item.groupIndex]?.categoryLabel || "Categoría " + (index + 1)).trim();
         return (
           <div key={item.groupIndex + "-" + item.match.id} style={{ display: "grid", gap: ".4rem", padding: ".65rem", border: "1px solid #493039", borderRadius: "8px", background: "#171c27" }}>
@@ -5338,7 +5354,7 @@ export function TournamenSportApp() {
       })}
       <button type="button" onClick={printGeneralSheet} style={{ display: "grid", gap: ".25rem", width: "100%", padding: ".85rem", border: "2px solid #f3a0ad", borderRadius: "8px", background: "#b5122a", color: "#fff", textAlign: "left", cursor: "pointer" }}>
         <strong>PLANILLA GENERAL</strong>
-        <span style={{ fontSize: ".72rem" }}>{referenteJornadaMatches.length} partidos · Todas las categorías de la jornada</span>
+        <span style={{ fontSize: ".72rem" }}>{filteredJornadaMatches.length} partidos · {referenteSheetCategoryFilter === "Todas" ? "Todas las categorías" : referenteSheetCategoryFilter}</span>
         <span style={{ fontSize: ".72rem" }}>IMPRIMIR / GUARDAR PDF →</span>
       </button>
     </div>
