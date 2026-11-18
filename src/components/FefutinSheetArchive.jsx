@@ -45,7 +45,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
           tournamentId: item.tournament.id,
           turnId: item.turn_id || null,
           turnJourneyId: item.turn_journey_id || null,
-          turno: item.turno || getTournamentTurn(item.tournament),
+          turno: item.turno || (String(item.tournament.game || "").toLocaleLowerCase("es").includes("fin de semana") ? "Fin de semana" : "Semanal"),
           journeyNumber: item.journey_number || item.round || null,
           scheduledDate: item.scheduled_date || null,
           title: item.tournamentTitle || item.tournament.title || "Torneo FEFUTIN",
@@ -182,7 +182,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
         turn_journey_id: selectedJourney.turnJourneyId,
         turno: selectedJourney.turno,
         journey_number: Number(selectedJourney.journeyNumber) || null,
-        jornada_date: selectedJourney.scheduledDate || jornadaDate,
+        jornada_date: jornadaDate,
         jornada_label: jornadaLabel.trim() || (selectedJourney.journeyNumber ? `Jornada ${selectedJourney.journeyNumber}` : null),
         referee_id: currentUser.id,
         referee_name: currentUser.username || null,
@@ -324,7 +324,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
         {mode === "upload" ? (
           <form onSubmit={uploadPhoto} style={{ display: "grid", gap: ".8rem", marginTop: "1rem" }}>
             <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".82rem" }}>
-              Torneo
+              Jornada asignada
               <select required value={selectedTournamentId} onChange={(event) => setSelectedTournamentId(event.target.value)} style={{ padding: ".75rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
                 {assignedJourneys.map((item) => <option key={item.key} value={item.key}>{item.title} · {item.turno} · Jornada {item.journeyNumber || "—"}</option>)}
               </select>
