@@ -55,6 +55,7 @@ export function CreateTournament({
         categoryDetail: "",
         categoryConfig: [],
         turno: "Semanal",
+        turnos: ["Semanal", "Fin de semana"],
         format: "league",
         numGroups: 2,
         qualifiersPerGroup: 2,
@@ -116,6 +117,7 @@ export function CreateTournament({
           })
         : [{ division: divisionFromStoredGame, categoryType: initialData.category_type || inferredCategoryType, categories: categoryDetail ? [categoryDetail] : [] }],
       turno: turnoFromStoredGame,
+      turnos: [turnoFromStoredGame],
       format: initialData.format || "groups_playoff",
       numGroups:
         initialData.format === "league" ? 1 : initialData.groups?.length || 2,
@@ -163,6 +165,15 @@ export function CreateTournament({
         ? [...new Set([...categories, category])]
         : categories.filter((item) => item !== category),
     });
+  };
+
+  const toggleTurn = (turno, checked) => {
+    setFormData((prev) => ({
+      ...prev,
+      turnos: checked
+        ? [...new Set([...(prev.turnos || []), turno])]
+        : (prev.turnos || []).filter((item) => item !== turno),
+    }));
   };
 
   const addCustomCategory = (division) => {
@@ -292,9 +303,18 @@ export function CreateTournament({
       return;
     }
 
+    const validTurnos = isEditing
+      ? [formData.turno || "Semanal"]
+      : [...new Set((formData.turnos || []).filter((turno) => ["Semanal", "Fin de semana"].includes(turno)))];
+    if (!validTurnos.length) {
+      showNotice("Seleccioná al menos un turno: Semanal o Fin de semana.");
+      return;
+    }
+
     onSave({
       ...formData,
       game: "Fútbol",
+      turnos: validTurnos,
       category_config: validCategoryConfig,
       maxParticipants: Number(formData.maxParticipants),
       teams,
@@ -403,7 +423,7 @@ export function CreateTournament({
         {/* RAMAS Y CATEGORÍAS HABILITADAS */}
         <div style={{ padding: "0.9rem", border: "1px solid rgba(181,18,42,0.55)", borderRadius: "10px", background: "rgba(181,18,42,0.08)" }}>
           <label className="sports-label">Ramas y categorías del torneo</label>
-          <p className="sports-help">Podés seleccionar varias ramas y categorías. Se creará un torneo independiente por cada categoría seleccionada.</p>
+          <p className="sports-help">Seleccioná las ramas y categorías. Se creará un torneo por rama; cada turno tendrá sus propias inscripciones, jornadas y partidos.</p>
           <div style={{ display: "grid", gap: "0.65rem", marginTop: "0.75rem" }}>
             {TOURNAMENT_BRANCHES.map((division) => {
               const branch = (formData.categoryConfig || []).find((item) => item.division === division);
@@ -443,16 +463,27 @@ export function CreateTournament({
 
         {/* Las ramas y categorías se administran exclusivamente en el bloque superior. */}
 
-        {/* TURNO */}
-
+        {/* TURNOS INDEPENDIENTES DENTRO DE CADA RAMA */}
         <div>
-          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "4px" }}>
-            Turno
+          <label style={{ display: "block", fontSize: "0.75rem", fontWeight: "bold", textTransform: "uppercase", color: "#d1d5db", marginBottom: "0.45rem" }}>
+            {isEditing ? "Turno del torneo" : "Turnos habilitados"}
           </label>
-          <select value={formData.turno || "Semanal"} onChange={(e) => setFormData({ ...formData, turno: e.target.value })} className="cr-input" style={{ cursor: "pointer" }}>
-            <option value="Semanal">Semanal</option>
-            <option value="Fin de semana">Fin de semana</option>
-          </select>
+          {isEditing ? (
+            <select value={formData.turno || "Semanal"} onChange={(e) => setFormData({ ...formData, turno: e.target.value })} className="cr-input" style={{ cursor: "pointer" }}>
+              <option value="Semanal">Semanal</option>
+              <option value="Fin de semana">Fin de semana</option>
+            </select>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: ".55rem" }}>
+              {["Semanal", "Fin de semana"].map((turno) => (
+                <label key={turno} style={{ display: "flex", alignItems: "center", gap: ".5rem", padding: ".7rem", border: "1px solid #555", borderRadius: "8px", color: "#fff", background: (formData.turnos || []).includes(turno) ? "rgba(181,18,42,.18)" : "#111", cursor: "pointer" }}>
+                  <input type="checkbox" checked={(formData.turnos || []).includes(turno)} onChange={(e) => toggleTurn(turno, e.target.checked)} />
+                  <strong>{turno}</strong>
+                </label>
+              ))}
+            </div>
+          )}
+          {!isEditing && <span className="sports-help">Podés habilitar ambos. Cada turno tendrá su inscripción y su tabla general independiente.</span>}
         </div>
 
         {/* FORMATO DE COMPETENCIA */}
