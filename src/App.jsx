@@ -4417,6 +4417,19 @@ export function TournamenSportApp() {
     return matchesCategory && matchesDivision ? [displayTournament] : [];
   });
 
+  const normalizedLegacyMatchKeys = new Set(
+    normalizedRefereeJourneyRows.flatMap((journey) =>
+      (journey.matches || [])
+        .filter((match) => match.legacy_phase && match.legacy_source_match_id != null)
+        .map((match) => [
+          journey.tournament_id,
+          match.legacy_phase,
+          match.legacy_group_index ?? -1,
+          String(match.legacy_source_match_id),
+        ].join("::"))
+    )
+  );
+
   const normalizedAssignedRefereeMatches = normalizedRefereeJourneyRows.flatMap((journey) =>
     (journey.matches || [])
       .filter((match) => String(match.referee_id || "") === String(currentUser?.id || ""))
@@ -4456,6 +4469,7 @@ export function TournamenSportApp() {
           groupIndex,
           roundIndex: null,
           phase: "groups",
+          sourceKey: [tournament.id, "groups", groupIndex, String(match.id)].join("::"),
           matchId: match.id,
           team1: match.team1 || "",
           team2: match.team2 || "",
@@ -4477,6 +4491,7 @@ export function TournamenSportApp() {
           groupIndex: null,
           roundIndex,
           phase: "playoffs",
+          sourceKey: [tournament.id, "playoffs", roundIndex, String(match.id)].join("::"),
           matchId: match.id,
           team1: match.team1 || "",
           team2: match.team2 || "",
@@ -4486,12 +4501,40 @@ export function TournamenSportApp() {
     );
     return [...groupMatches, ...playoffMatches];
   });
+  const unmatchedLegacyAssignedRefereeMatches = legacyAssignedRefereeMatches.filter((match) =>
+    !normalizedLegacyMatchKeys.has(match.sourceKey)
+  );
   const assignedRefereeMatches = isArbitro
-    ? (normalizedAssignedRefereeMatches.length ? normalizedAssignedRefereeMatches : legacyAssignedRefereeMatches)
+    ? [...normalizedAssignedRefereeMatches, ...unmatchedLegacyAssignedRefereeMatches]
     : [];
   const hasPendingRefereeAssignments = assignedRefereeMatches.some((match) => !match.refereeClosed);
   const normalizedRefereeJornadas = isArbitro ? normalizarJornadasDeTurno(normalizedRefereeJourneyRows, currentUser?.id) : [];
-  const refereeJornadas = isArbitro ? (normalizedRefereeJornadas.length ? normalizedRefereeJornadas : obtenerJornadasDeArbitro(tournaments, currentUser?.id)) : [];
+  const legacyTournamentsForReferee = tournaments.map((tournament) => ({
+    ...tournament,
+    groups: (Array.isArray(tournament.groups) ? tournament.groups : [])
+      .map((group, groupIndex) => ({
+        ...group,
+        matches: (Array.isArray(group?.matches) ? group.matches : []).filter((match) =>
+          !normalizedLegacyMatchKeys.has([
+            tournament.id, "groups", groupIndex, String(match.id),
+          ].join("::"))
+        ),
+      }))
+      .filter((group) => group?.name === "__INSCRIPCIONES__" || group.matches.length > 0),
+    playoffs: (Array.isArray(tournament.playoffs) ? tournament.playoffs : [])
+      .map((round, roundIndex) => Array.isArray(round)
+        ? round.filter((match) => !normalizedLegacyMatchKeys.has([
+            tournament.id, "playoffs", roundIndex, String(match.id),
+          ].join("::")))
+        : round)
+      .filter((round) => Array.isArray(round) && round.length > 0),
+  }));
+  const legacyRefereeJornadas = isArbitro
+    ? obtenerJornadasDeArbitro(legacyTournamentsForReferee, currentUser?.id)
+    : [];
+  const refereeJornadas = isArbitro
+    ? [...normalizedRefereeJornadas, ...legacyRefereeJornadas]
+    : [];
   const refereeAssignedMatchCount = refereeJornadas.reduce((total, jornada) =>
     total + jornada.detallesPartidos.filter((detail) => detail.instancia !== "Pendiente de fixture" && detail.matchId).length, 0);
   const refereePendingMatchCount = refereeJornadas.reduce((total, jornada) =>
