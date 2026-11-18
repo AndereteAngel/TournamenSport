@@ -64,11 +64,13 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
       ? Number(roundNumberValue)
       : null;
     const matchDate = String(match?.match_date || match?.scheduled_date || match?.date || "").slice(0, 10);
-    const journeyIdentity = matchDate
-      ? `fecha:${matchDate}`
-      : roundNumber
-        ? `jornada:${roundNumber}`
-        : `partido:${String(match?.id || instancia)}`;
+    const journeyIdentity = matchDate && roundNumber
+      ? `fecha:${matchDate}:jornada:${roundNumber}`
+      : matchDate
+        ? `fecha:${matchDate}`
+        : roundNumber
+          ? `jornada:${roundNumber}`
+          : `partido:${String(match?.id || instancia)}`;
     const key = competencia + "::" + journeyIdentity;
     const asignado = String(match?.referee_id || "") === String(refereeId);
 
