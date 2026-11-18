@@ -49,6 +49,7 @@ begin
     and tcc.status = 'aprobado'
     and j.scheduled_date >= current_date
     and m.status <> 'finalizado'
+    and (m.local_club_id = v_profile.club_id or m.visitor_club_id = v_profile.club_id)
   order by j.scheduled_date, j.journey_number,
     case tt.turno when 'Semanal' then 1 else 2 end,
     cat.sort_order
