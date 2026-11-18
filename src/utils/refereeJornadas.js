@@ -257,6 +257,7 @@ export const normalizarJornadasDeTurno = (rows, refereeId) => {
         score2: resultadoCargado ? score2 : null,
         resultadoCargado,
         referee_id: match.referee_id || null,
+        referee_name: match.referee_name || null,
         referee_closed: Boolean(match.referee_closed),
         referee_closed_at: match.referee_closed_at || null,
         round: match.round || row.journey_number || null,
