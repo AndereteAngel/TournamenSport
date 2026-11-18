@@ -5304,7 +5304,10 @@ export function TournamenSportApp() {
                         <h3 style={{ margin: "0 0 .35rem", textAlign: "center" }}>PLANILLAS · FECHA {round}</h3>
                         <p style={{ margin: "0 0 1rem", color: "#ccc", textAlign: "center", fontSize: ".82rem" }}>{tournament.title || "Torneo FEFUTIN"} · {referenteJornadaMatches.length} partidos de la jornada</p>
                         {(() => {
-  const jornadaCategories = [...new Set(referenteJornadaMatches.map((item) => String(item.categoryLabel || "").trim()).filter(Boolean))]
+  const jornadaCategories = [...new Set((tournament.groups || [])
+    .filter((group) => group?.name !== "__INSCRIPCIONES__")
+    .map((group) => String(group?.categoryLabel || group?.name || "").trim())
+    .filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
   const filteredClubMatches = referenteClubJornadaMatches.filter((item) =>
     referenteSheetCategoryFilter === "Todas" || String(item.categoryLabel || "").trim() === referenteSheetCategoryFilter
