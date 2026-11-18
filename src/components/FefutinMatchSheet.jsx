@@ -133,10 +133,22 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
           visitor = toSheetPlayers(rosterData.visitor.players, visitorName);
         } else {
           // Compatibilidad temporal: los partidos antiguos siguen leyendo sus inscripciones legacy.
-          const { data: registrations, error: registrationsError } = await supabase
+          let legacyTurnId = null;
+          if (tournament?.fefutin_branch_id) {
+            const { data: turnRows, error: turnRowsError } = await supabase.rpc("get_fefutin_tournament_turns", {
+              p_tournament_id: tournament.id,
+            });
+            if (turnRowsError) throw turnRowsError;
+            const legacyTurnName = tournament.fefutin_turno ||
+              (String(tournament.game || "").toLocaleLowerCase("es").includes("fin de semana") ? "Fin de semana" : "Semanal");
+            legacyTurnId = (turnRows || []).find((item) => item.turno === legacyTurnName)?.turn_id || null;
+          }
+          let registrationsQuery = supabase
             .from("fefutin_club_tournaments")
-            .select("id, category_label, club_id")
+            .select("id, category_label, club_id, turn_id")
             .eq("tournament_id", tournament.id);
+          if (legacyTurnId) registrationsQuery = registrationsQuery.eq("turn_id", legacyTurnId);
+          const { data: registrations, error: registrationsError } = await registrationsQuery;
           if (registrationsError) throw registrationsError;
 
           const categoryParts = String(category || "").split("·").map((part) => part.trim()).filter(Boolean);
@@ -219,11 +231,14 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
           visitor = visitorTeam ? buildPlayers(visitorTeam.id, visitorName) : [];
         }
 
-        const { data: existingSheets, error: sheetError } = await supabase
+        let existingSheetsQuery = supabase
           .from("fefutin_match_sheets")
           .select("*")
-          .eq("tournament_id", tournament.id)
-          .eq("match_id", String(match.id));
+          .eq("tournament_id", tournament.id);
+        existingSheetsQuery = isNormalizedMatch
+          ? existingSheetsQuery.eq("normalized_match_id", normalizedMatchId)
+          : existingSheetsQuery.eq("match_id", String(match.id));
+        const { data: existingSheets, error: sheetError } = await existingSheetsQuery;
         if (sheetError) throw sheetError;
 
         const localSheet = (existingSheets || []).find((item) => item.lado === "local");
