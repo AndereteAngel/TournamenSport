@@ -4412,7 +4412,7 @@ export function TournamenSportApp() {
   // que estén programados para la misma fecha; no se agrupa por número de ronda.
   const referenteClubJornadaMatches = (() => {
     if (!referenteNextMatch?.tournament) return [];
-    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const participations = referenteParticipations.filter((item) =>
       String(item.tournament_id) === String(referenteNextMatch.tournament.id)
     );
