@@ -104,6 +104,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
   const [selectedCompetition, setSelectedCompetition] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedTeam, setSelectedTeam] = useState("");
+  const [selectedTeamCategory, setSelectedTeamCategory] = useState("");
   const [turns, setTurns] = useState([]);
   const [sheets, setSheets] = useState([]);
   const [turnClubs, setTurnClubs] = useState([]);
@@ -215,6 +216,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
   useEffect(() => {
     setSelectedCategory("");
     setSelectedTeam("");
+    setSelectedTeamCategory("");
   }, [selectedCompetition]);
 
   const rows = useMemo(
@@ -226,7 +228,10 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
     [sheets, selectedCategory]
   );
   const selectedTeamMatches = selectedTeam
-    ? archivedMatches.filter((match) => normalize(match.team1) === normalize(selectedTeam) || normalize(match.team2) === normalize(selectedTeam))
+    ? archivedMatches.filter((match) =>
+        (normalize(match.team1) === normalize(selectedTeam) || normalize(match.team2) === normalize(selectedTeam)) &&
+        normalize(match.category) === normalize(selectedTeamCategory)
+      )
     : [];
 
   if (!competitions.length) return null;
@@ -330,7 +335,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
                         {clubLogos.find((club) => normalize(club.name) === normalize(team.name))?.url ? (
                           <img src={clubLogos.find((club) => normalize(club.name) === normalize(team.name)).url} alt={`Escudo de ${team.name}`} style={{ width: "30px", height: "30px", objectFit: "contain", flexShrink: 0 }} />
                         ) : null}
-                        <button className="fefutin-general-team-link" type="button" onClick={() => setSelectedTeam(team.name)}
+                        <button className="fefutin-general-team-link" type="button" onClick={() => { setSelectedTeam(team.name); setSelectedTeamCategory(team.category); }}
                           aria-label={`Ver partidos de ${team.name}`}
                           style={{}}>
                           {team.name}
