@@ -237,6 +237,7 @@ export const normalizarJornadasDeTurno = (rows, refereeId) => {
       const puntosTeam1 = resultadoCargado ? (score1 > score2 ? 3 : score1 < score2 ? 1 : 2) : 0;
       const puntosTeam2 = resultadoCargado ? (score2 > score1 ? 3 : score2 < score1 ? 1 : 2) : 0;
       return {
+        id: String(match.id),
         clave: String(match.id),
         matchId: String(match.id),
         normalizedMatchId: String(match.id),
