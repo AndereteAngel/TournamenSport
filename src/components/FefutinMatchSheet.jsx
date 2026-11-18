@@ -73,7 +73,9 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
             { data: refereeProfile, error: refereeProfileError },
             { data: refereeCarnets, error: refereeCarnetsError },
           ] = await Promise.all([
-            supabase.from("profiles").select("id, username").eq("id", match.referee_id).maybeSingle(),
+            (isReferee || isAdmin)
+              ? supabase.from("profiles").select("id, username").eq("id", match.referee_id).maybeSingle()
+              : Promise.resolve({ data: null, error: null }),
             isReferee || isAdmin
               ? supabase.rpc("get_fefutin_referee_carnets")
               : Promise.resolve({ data: [], error: null }),
