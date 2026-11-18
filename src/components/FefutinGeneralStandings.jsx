@@ -219,6 +219,11 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
     setSelectedTeamCategory("");
   }, [selectedCompetition]);
 
+  useEffect(() => {
+    setSelectedTeam("");
+    setSelectedTeamCategory("");
+  }, [selectedCategory]);
+
   const rows = useMemo(
     () => makeStandings(sheets, selectedCategory, turnClubs),
     [sheets, selectedCategory, turnClubs]
