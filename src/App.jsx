@@ -169,7 +169,7 @@ function RefereePreJornada({ onBack }) {
     (Array.isArray(torneo?.groups) ? torneo.groups : []).flatMap((grupo, groupIndex) => {
       if (grupo?.name === "__INSCRIPCIONES__") return [];
       return (Array.isArray(grupo?.matches) ? grupo.matches : []).map((match, matchIndex) => ({
-        torneoId: torneo.id, grupoIndex, matchIndex, match, categoria: obtenerCategoria(torneo),
+        torneoId: torneo.id, grupoIndex: groupIndex, matchIndex, match, categoria: obtenerCategoria(torneo),
       })).filter(item => esPartidoValido(item.match));
     })
   );
