@@ -395,6 +395,7 @@ export function PlayoffBracket({
               phase: "playoffs",
               roundIndex: selectedSheetMatch.roundIndex,
               matchId: selectedSheetMatch.id,
+              normalizedMatchId: selectedSheetMatch.round_id || selectedSheetMatch.tournament_category_id ? selectedSheetMatch.id : null,
               score1,
               score2,
             });
