@@ -181,6 +181,58 @@ create unique index if not exists fefutin_club_tournaments_turn_category_key
   on public.fefutin_club_tournaments(club_id, tournament_id, turn_id, category_label)
   where turn_id is not null;
 
+-- Compatibilidad de participaciones antiguas marcadas como TODA LA TIRA:
+-- crear una relacion legacy por categoria para que el disparador de planteles
+-- permanentes pueda copiar el roster exacto de cada categoria. La fila original
+-- TODA LA TIRA se conserva como respaldo.
+insert into public.fefutin_club_tournaments (
+  club_id, tournament_id, turn_id, category_label
+)
+select
+  legacy.club_id,
+  legacy.tournament_id,
+  legacy.turn_id,
+  b.name || ' · ' || cat.name
+from public.fefutin_club_tournaments legacy
+join public.fefutin_tournament_categories tc
+  on tc.turn_id = legacy.turn_id
+join public.fefutin_categories cat on cat.id = tc.category_id
+join public.fefutin_branches b on b.id = cat.branch_id
+where lower(trim(legacy.category_label)) = 'toda la tira'
+  and legacy.turn_id is not null
+on conflict (club_id, tournament_id, turn_id, category_label)
+  where turn_id is not null
+  do nothing;
+
+-- El trigger anterior puede haber sembrado las inscripciones desde los planteles
+-- permanentes. Vincular esos jugadores a la nueva relacion normalizada por categoria.
+insert into public.fefutin_category_club_players (
+  tournament_category_club_id, roster_player_id, jersey_number, sort_order, status
+)
+select
+  tcc.id,
+  entry.roster_player_id,
+  entry.jersey_number,
+  entry.sort_order,
+  case entry.approval_status
+    when 'aprobado' then 'aprobado'
+    when 'rechazado' then 'rechazado'
+    else 'pendiente'
+  end
+from public.fefutin_club_tournaments legacy
+join public.fefutin_tournament_categories tc
+  on tc.turn_id = legacy.turn_id
+join public.fefutin_categories cat on cat.id = tc.category_id
+join public.fefutin_branches b on b.id = cat.branch_id
+join public.fefutin_tournament_category_clubs tcc
+  on tcc.tournament_category_id = tc.id
+ and tcc.club_id = legacy.club_id
+ and tcc.status = 'aprobado'
+join public.fefutin_roster_tournament_entries entry
+  on entry.club_tournament_id = legacy.id
+where lower(trim(legacy.category_label)) = lower(trim(b.name || ' · ' || cat.name))
+on conflict (tournament_category_club_id, roster_player_id) do nothing;
+
 alter table public.fefutin_club_tournament_requests
   add column if not exists turn_id uuid;
 
