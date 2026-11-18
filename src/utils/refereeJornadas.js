@@ -37,6 +37,19 @@ const obtenerTurno = (tournament) => {
   return null;
 };
 
+const obtenerCategoriasConfiguradas = (tournament) => {
+  const registration = (Array.isArray(tournament?.groups) ? tournament.groups : [])
+    .find((group) => group?.name === "__INSCRIPCIONES__");
+  const branches = Array.isArray(registration?.category_config) ? registration.category_config : [];
+  const branchName = obtenerRama(tournament);
+  const branch = branches.find((item) =>
+    normalizarEquipo(item?.division) === normalizarEquipo(branchName)
+  ) || branches[0];
+  return [...new Set((Array.isArray(branch?.categories) ? branch.categories : [])
+    .map((category) => String(category || "").trim())
+    .filter(Boolean))];
+};
+
 export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
   if (!refereeId) return [];
 
@@ -58,7 +71,20 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
       rama.toLocaleLowerCase("es"),
       turno.toLocaleLowerCase("es"),
     ].join("|");
-    const categoria = getTournamentCategory(tournament);
+    const configuredCategories = obtenerCategoriasConfiguradas(tournament);
+    const rawCategory = String(
+      match?.category_label || match?.categoria || match?.category || ubicacion.categoryLabel || ""
+    ).trim();
+    const matchesConfiguredCategory = configuredCategories.some((item) =>
+      normalizarEquipo(rawCategory) === normalizarEquipo(item) ||
+      normalizarEquipo(rawCategory).endsWith(normalizarEquipo(item))
+    );
+    const categoria = configuredCategories.length
+      ? (matchesConfiguredCategory ? configuredCategories.find((item) =>
+          normalizarEquipo(rawCategory) === normalizarEquipo(item) ||
+          normalizarEquipo(rawCategory).endsWith(normalizarEquipo(item))
+        ) : configuredCategories.length === 1 ? configuredCategories[0] : "Sin categoría")
+      : (rawCategory ? rawCategory.split(" · ").pop().trim() : getTournamentCategory(tournament));
     const roundNumberValue = match?.round ?? match?.journey_number ??
       (ubicacion.roundIndex != null ? ubicacion.roundIndex + 1 : null);
     const roundNumber = roundNumberValue != null && /^[0-9]+$/.test(String(roundNumberValue))
@@ -166,6 +192,7 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
             groupIndex,
             roundIndex: null,
             groupName: group?.name || `Grupo ${groupIndex + 1}`,
+            categoryLabel: group?.categoryLabel || group?.name || null,
           })
         );
       });
@@ -207,10 +234,14 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
       ].join("|");
       if (competenciaTorneo !== competenciaJornada) return;
 
-      const categoria = getTournamentCategory(tournament);
-      if (!categoria || categoria === "Sin categoría" || jornada.categoriasSet.has(categoria)) return;
-      jornada.categoriasSet.add(categoria);
-      jornada.detallesPartidos.push({
+      const configuredCategories = obtenerCategoriasConfiguradas(tournament);
+      const categoriesToAdd = configuredCategories.length
+        ? configuredCategories
+        : [getTournamentCategory(tournament)].filter(Boolean);
+      categoriesToAdd.forEach((categoria) => {
+        if (!categoria || categoria === "Sin categoría" || jornada.categoriasSet.has(categoria)) return;
+        jornada.categoriasSet.add(categoria);
+        jornada.detallesPartidos.push({
         clave: String(tournament.id || tournament.title) + "::categoria-sin-cruce::" + categoria,
         matchId: null,
         phase: null,
@@ -231,6 +262,7 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
         referee_id: null,
         referee_closed: false,
         fechaOrden: 0,
+        });
       });
     });
   });
