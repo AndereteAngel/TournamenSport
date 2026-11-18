@@ -7,12 +7,14 @@ const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es")
 const makeStandings = (sheets, selectedCategory, clubEntries) => {
   const standings = new Map();
   const processed = new Set();
-  const ensureTeam = (name) => {
+  const ensureTeam = (name, categoryName) => {
     const teamName = typeof name === "string" ? name : String(name?.name || name?.club_name || name?.team_name || "");
-    const key = normalize(teamName);
-    if (!key) return null;
+    const category = String(categoryName || selectedCategory || "Sin categoría").trim();
+    const clubKey = normalize(teamName);
+    const key = selectedCategory ? clubKey : `${normalize(category)}::${clubKey}`;
+    if (!clubKey) return null;
     if (!standings.has(key)) standings.set(key, {
-      name: teamName.trim(), played: 0, wins: 0, draws: 0, losses: 0,
+      name: teamName.trim(), category, played: 0, wins: 0, draws: 0, losses: 0,
       goalsFor: 0, goalsAgainst: 0, points: 0,
     });
     return standings.get(key);
@@ -20,7 +22,7 @@ const makeStandings = (sheets, selectedCategory, clubEntries) => {
 
   (clubEntries || []).forEach((entry) => {
     if (selectedCategory && normalize(entry.category_name) !== normalize(selectedCategory)) return;
-    ensureTeam(entry.club_name);
+    ensureTeam(entry.club_name, entry.category_name);
   });
 
   sheets.forEach((sheet) => {
@@ -31,8 +33,8 @@ const makeStandings = (sheets, selectedCategory, clubEntries) => {
       if (processed.has(matchKey)) return;
       processed.add(matchKey);
 
-      const team1 = ensureTeam(detail.team1);
-      const team2 = ensureTeam(detail.team2);
+      const team1 = ensureTeam(detail.team1, detail.categoria);
+      const team2 = ensureTeam(detail.team2, detail.categoria);
       if (!team1 || !team2) return;
       const score1 = Number(detail.score1);
       const score2 = Number(detail.score2);
@@ -61,6 +63,7 @@ const makeStandings = (sheets, selectedCategory, clubEntries) => {
     b.points - a.points ||
     b.goalDifference - a.goalDifference ||
     b.goalsFor - a.goalsFor ||
+    a.category.localeCompare(b.category, "es", { numeric: true }) ||
     a.name.localeCompare(b.name, "es")
   );
 };
@@ -312,15 +315,16 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
 
           {!!rows.length && (
             <div style={{ overflowX: "auto", marginTop: ".8rem" }}>
-              <table style={{ width: "100%", minWidth: "540px", borderCollapse: "collapse", color: "#fff", fontSize: ".76rem" }}>
+              <table style={{ width: "100%", minWidth: "610px", borderCollapse: "collapse", color: "#fff", fontSize: ".76rem" }}>
                 <thead><tr style={{ background: "#b5122a" }}>
-                  {["POS", "CLUB", "PTS", "PJ", "PG", "PE", "PP", "GF", "GC", "DIF"].map((heading) =>
+                  {["POS", "CATEGORÍA", "CLUB", "PTS", "PJ", "PG", "PE", "PP", "GF", "GC", "DIF"].map((heading) =>
                     <th key={heading} style={{ padding: ".55rem .35rem", textAlign: heading === "CLUB" ? "left" : "center", whiteSpace: "nowrap" }}>{heading}</th>
                   )}
                 </tr></thead>
                 <tbody>{rows.map((team, index) => (
                   <tr key={normalize(team.name)} style={{ borderBottom: "1px solid #454545", background: index % 2 ? "#202633" : "#11151d" }}>
                     <td style={{ padding: ".55rem .35rem", textAlign: "center", fontWeight: 900 }}>{index + 1}</td>
+                    <td style={{ padding: ".55rem .35rem", textAlign: "center", color: "#f3a0ad", fontWeight: 800, whiteSpace: "nowrap" }}>{team.category}</td>
                     <td style={{ padding: ".55rem .35rem", fontWeight: 800, textAlign: "left" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: ".5rem", minWidth: 0 }}>
                         {clubLogos.find((club) => normalize(club.name) === normalize(team.name))?.url ? (
