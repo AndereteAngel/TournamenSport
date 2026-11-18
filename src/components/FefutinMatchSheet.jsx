@@ -84,91 +84,140 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
             || "";
         }
 
-        const { data: registrations, error: registrationsError } = await supabase
-          .from("fefutin_club_tournaments")
-          .select("id, category_label, club_id")
-          .eq("tournament_id", tournament.id);
-        if (registrationsError) throw registrationsError;
+        const normalizedMatchId = String(match.id);
+        const isNormalizedMatch = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalizedMatchId);
+        let normalizedRoster = null;
+        let localClub = null;
+        let visitorClub = null;
+        let local = [];
+        let visitor = [];
 
-        const categoryParts = String(category || "").split("·").map((part) => part.trim()).filter(Boolean);
-        const categoryName = categoryParts[categoryParts.length - 1] || "";
-        const matchingRegistrations = (registrations || []).filter((item) => {
-          const registrationCategory = normalize(item.category_label);
-          return registrationCategory === normalize(category) ||
-            registrationCategory === normalize(categoryName) ||
-            registrationCategory === normalize("TODA LA TIRA");
-        });
-        const clubIds = [...new Set(matchingRegistrations.map((item) => item.club_id).filter(Boolean))];
-        const { data: clubs, error: clubsError } = clubIds.length
-          ? await supabase.from("fefutin_clubs").select("id, name, headquarters_address, court_type").in("id", clubIds)
-          : { data: [], error: null };
-        if (clubsError) throw clubsError;
-
-        const localClub = (clubs || []).find((club) => normalize(club.name) === normalize(localName));
-        const visitorClub = (clubs || []).find((club) => normalize(club.name) === normalize(visitorName));
-
-        // La planilla debe existir aunque uno o ambos clubes todavía no estén inscriptos.
-        const localRegistration = localClub
-          ? matchingRegistrations.find((item) => item.club_id === localClub.id)
-          : null;
-        const visitorRegistration = visitorClub
-          ? matchingRegistrations.find((item) => item.club_id === visitorClub.id)
-          : null;
-        const registrationIds = [localRegistration?.id, visitorRegistration?.id].filter(Boolean);
-        const { data: teams, error: teamsError } = registrationIds.length
-          ? await supabase.from("fefutin_teams")
-              .select("id, club_tournament_id, status")
-              .in("club_tournament_id", registrationIds)
-          : { data: [], error: null };
-        if (teamsError) throw teamsError;
-
-        const localTeam = localRegistration
-          ? (teams || []).find((team) => team.club_tournament_id === localRegistration.id)
-          : null;
-        const visitorTeam = visitorRegistration
-          ? (teams || []).find((team) => team.club_tournament_id === visitorRegistration.id)
-          : null;
-        const teamIds = [localTeam?.id, visitorTeam?.id].filter(Boolean);
-        const { data: teamPlayers, error: teamPlayersError } = teamIds.length
-          ? await supabase.from("fefutin_team_players")
-              .select("id, team_id, first_name, last_name, jersey_number, approval_status, registry_player_id")
-              .in("team_id", teamIds)
-              .eq("approval_status", "aprobado")
-          : { data: [], error: null };
-        if (teamPlayersError) throw teamPlayersError;
-
-        const registryIds = [...new Set((teamPlayers || []).map((item) => item.registry_player_id).filter(Boolean))];
-        const { data: officialPlayers, error: officialPlayersError } = registryIds.length
-          ? await supabase.from("fefutin_players")
-              .select("id, first_name, last_name, dni, carnet_number, status, carnet_status")
-              .in("id", registryIds)
-          : { data: [], error: null };
-        if (officialPlayersError) throw officialPlayersError;
-
-        const officialById = new Map((officialPlayers || []).map((player) => [player.id, player]));
-        const buildPlayers = (teamId, clubName) => (teamPlayers || [])
-          .filter((item) => item.team_id === teamId && item.registry_player_id && officialById.has(item.registry_player_id))
-          .map((item) => {
-            const official = officialById.get(item.registry_player_id);
-            return {
-              player_id: official.id,
-              club: clubName,
-              nombre: official.first_name || item.first_name || "",
-              apellido: official.last_name || item.last_name || "",
-              carnet_number: official.carnet_number || "",
-              dni: official.dni || "",
-              numero_camiseta: item.jersey_number === "" || item.jersey_number == null ? "" : Number(item.jersey_number),
-              goles: 0,
-              es_capitan: false,
-              tarjetas_amarillas: 0,
-              tarjetas_rojas: 0,
-              estado_habilitacion: getPlayerStatus(official),
-              observaciones: "",
-            };
+        if (isNormalizedMatch) {
+          const { data: rosterData, error: rosterError } = await supabase.rpc("get_fefutin_match_sheet_roster", {
+            p_match_id: normalizedMatchId,
           });
+          if (rosterError) throw rosterError;
+          if (!rosterData?.local || !rosterData?.visitor) {
+            throw new Error("No se encontraron las inscripciones exactas de ambos clubes para esta categoría y turno.");
+          }
+          normalizedRoster = rosterData;
+          localClub = {
+            id: rosterData.local.club_id,
+            name: rosterData.local.name,
+            headquarters_address: rosterData.local.headquarters_address || "",
+          };
+          visitorClub = {
+            id: rosterData.visitor.club_id,
+            name: rosterData.visitor.name,
+            headquarters_address: rosterData.visitor.headquarters_address || "",
+          };
+          const toSheetPlayers = (players, clubName) => (players || []).map((player) => ({
+            ...player,
+            player_id: player.player_id,
+            club: clubName,
+            nombre: player.nombre || "",
+            apellido: player.apellido || "",
+            carnet_number: player.carnet_number || "",
+            dni: player.dni || "",
+            numero_camiseta: player.numero_camiseta === "" || player.numero_camiseta == null
+              ? ""
+              : Number(player.numero_camiseta),
+            goles: Number(player.goles || 0),
+            es_capitan: Boolean(player.es_capitan),
+            tarjetas_amarillas: Number(player.tarjetas_amarillas || 0),
+            tarjetas_rojas: Number(player.tarjetas_rojas || 0),
+            estado_habilitacion: getPlayerStatus(player),
+            observaciones: player.observaciones || "",
+          }));
+          local = toSheetPlayers(rosterData.local.players, localName);
+          visitor = toSheetPlayers(rosterData.visitor.players, visitorName);
+        } else {
+          // Compatibilidad temporal: los partidos antiguos siguen leyendo sus inscripciones legacy.
+          const { data: registrations, error: registrationsError } = await supabase
+            .from("fefutin_club_tournaments")
+            .select("id, category_label, club_id")
+            .eq("tournament_id", tournament.id);
+          if (registrationsError) throw registrationsError;
 
-        let local = localTeam ? buildPlayers(localTeam.id, localName) : [];
-        let visitor = visitorTeam ? buildPlayers(visitorTeam.id, visitorName) : [];
+          const categoryParts = String(category || "").split("·").map((part) => part.trim()).filter(Boolean);
+          const categoryName = categoryParts[categoryParts.length - 1] || "";
+          const matchingRegistrations = (registrations || []).filter((item) => {
+            const registrationCategory = normalize(item.category_label);
+            return registrationCategory === normalize(category) ||
+              registrationCategory === normalize(categoryName) ||
+              registrationCategory === normalize("TODA LA TIRA");
+          });
+          const clubIds = [...new Set(matchingRegistrations.map((item) => item.club_id).filter(Boolean))];
+          const { data: clubs, error: clubsError } = clubIds.length
+            ? await supabase.from("fefutin_clubs").select("id, name, headquarters_address, court_type").in("id", clubIds)
+            : { data: [], error: null };
+          if (clubsError) throw clubsError;
+
+          localClub = (clubs || []).find((club) => normalize(club.name) === normalize(localName));
+          visitorClub = (clubs || []).find((club) => normalize(club.name) === normalize(visitorName));
+
+          const localRegistration = localClub
+            ? matchingRegistrations.find((item) => item.club_id === localClub.id)
+            : null;
+          const visitorRegistration = visitorClub
+            ? matchingRegistrations.find((item) => item.club_id === visitorClub.id)
+            : null;
+          const registrationIds = [localRegistration?.id, visitorRegistration?.id].filter(Boolean);
+          const { data: teams, error: teamsError } = registrationIds.length
+            ? await supabase.from("fefutin_teams")
+                .select("id, club_tournament_id, status")
+                .in("club_tournament_id", registrationIds)
+            : { data: [], error: null };
+          if (teamsError) throw teamsError;
+
+          const localTeam = localRegistration
+            ? (teams || []).find((team) => team.club_tournament_id === localRegistration.id)
+            : null;
+          const visitorTeam = visitorRegistration
+            ? (teams || []).find((team) => team.club_tournament_id === visitorRegistration.id)
+            : null;
+          const teamIds = [localTeam?.id, visitorTeam?.id].filter(Boolean);
+          const { data: teamPlayers, error: teamPlayersError } = teamIds.length
+            ? await supabase.from("fefutin_team_players")
+                .select("id, team_id, first_name, last_name, jersey_number, approval_status, registry_player_id")
+                .in("team_id", teamIds)
+                .eq("approval_status", "aprobado")
+            : { data: [], error: null };
+          if (teamPlayersError) throw teamPlayersError;
+
+          const registryIds = [...new Set((teamPlayers || []).map((item) => item.registry_player_id).filter(Boolean))];
+          const { data: officialPlayers, error: officialPlayersError } = registryIds.length
+            ? await supabase.from("fefutin_players")
+                .select("id, first_name, last_name, dni, carnet_number, status, carnet_status")
+                .in("id", registryIds)
+            : { data: [], error: null };
+          if (officialPlayersError) throw officialPlayersError;
+
+          const officialById = new Map((officialPlayers || []).map((player) => [player.id, player]));
+          const buildPlayers = (teamId, clubName) => (teamPlayers || [])
+            .filter((item) => item.team_id === teamId && item.registry_player_id && officialById.has(item.registry_player_id))
+            .map((item) => {
+              const official = officialById.get(item.registry_player_id);
+              return {
+                player_id: official.id,
+                club: clubName,
+                nombre: official.first_name || item.first_name || "",
+                apellido: official.last_name || item.last_name || "",
+                carnet_number: official.carnet_number || "",
+                dni: official.dni || "",
+                numero_camiseta: item.jersey_number === "" || item.jersey_number == null ? "" : Number(item.jersey_number),
+                goles: 0,
+                es_capitan: false,
+                tarjetas_amarillas: 0,
+                tarjetas_rojas: 0,
+                estado_habilitacion: getPlayerStatus(official),
+                observaciones: "",
+              };
+            });
+
+          local = localTeam ? buildPlayers(localTeam.id, localName) : [];
+          visitor = visitorTeam ? buildPlayers(visitorTeam.id, visitorName) : [];
+        }
 
         const { data: existingSheets, error: sheetError } = await supabase
           .from("fefutin_match_sheets")
@@ -185,9 +234,9 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
 
         if (metadataSheet) {
           setMetadata({
-            jornada: metadataSheet.jornada || String(match?.round || ""),
-            sede: metadataSheet.sede || localClub?.headquarters_address || "",
-            fecha_partido: metadataSheet.fecha_partido || "",
+            jornada: metadataSheet.jornada || String(normalizedRoster?.round_number || match?.round || ""),
+            sede: metadataSheet.sede || normalizedRoster?.venue_address || localClub?.headquarters_address || "",
+            fecha_partido: metadataSheet.fecha_partido || normalizedRoster?.scheduled_date || "",
             arbitro_designado: assignedRefereeName || metadataSheet.arbitro_designado || "",
             observaciones: metadataSheet.observaciones || "",
           });
@@ -259,6 +308,9 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
       const basePayload = {
         tournament_id: tournament.id,
         match_id: String(match.id),
+        normalized_match_id: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(match.id)) ? String(match.id) : null,
+        turn_id: match.turn_id || null,
+        tournament_category_id: match.tournament_category_id || null,
         jornada: metadata.jornada || null,
         club_local: localName,
         club_visitante: visitorName,
