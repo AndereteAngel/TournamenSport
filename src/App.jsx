@@ -4336,10 +4336,50 @@ export function TournamenSportApp() {
       String(detail.referee_id || "") === String(currentUser?.id || "") &&
       !detail.referee_closed
     ).length, 0);
+  const referenteTournamentFormat = tournaments.find((item) =>
+    String(item.id) === String(referenteParticipations[0]?.tournament_id)
+  )?.format || "";
+
+  const getReferenteGroupMatchRound = (group, match) => {
+    const matches = Array.isArray(group?.matches) ? group.matches : [];
+    const teams = Array.isArray(group?.teams) ? group.teams : [];
+    const isLeague = String(referenteTournamentFormat).trim().toLowerCase() === "league";
+    const roundsAreMissing = isLeague && matches.length > 1 &&
+      matches.every((item) => Number(item.round || 1) === 1);
+    if (!roundsAreMissing) return Number(match.round || 1);
+
+    const rotation = [...teams];
+    if (rotation.length % 2 !== 0) rotation.push(null);
+    const rounds = [];
+    for (let roundIndex = 0; roundIndex < rotation.length - 1; roundIndex++) {
+      const fixtures = [];
+      for (let i = 0; i < rotation.length / 2; i++) {
+        const team1 = rotation[i];
+        const team2 = rotation[rotation.length - 1 - i];
+        if (team1 != null && team2 != null) fixtures.push([team1, team2]);
+      }
+      rounds.push(fixtures);
+      rotation.splice(1, 0, rotation.pop());
+    }
+    const firstTeam = teams[0];
+    rounds.sort((a, b) => {
+      const opponentIndex = (fixtures) => {
+        const fixture = fixtures.find(([one, two]) => one === firstTeam || two === firstTeam);
+        return teams.indexOf(fixture?.[0] === firstTeam ? fixture?.[1] : fixture?.[0]);
+      };
+      return opponentIndex(a) - opponentIndex(b);
+    });
+    const roundByPair = new Map();
+    rounds.forEach((fixtures, index) => fixtures.forEach(([team1, team2]) => {
+      roundByPair.set([team1, team2].sort().join("::"), index + 1);
+    }));
+    return roundByPair.get([match.team1, match.team2].sort().join("::")) || 1;
+  };
+
   const referenteNextMatch = (() => {
     if (!isReferente || !referenteParticipations.length || !tournaments.length) return null;
     const today = new Date();
-    const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const todayKey = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
     const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const candidates = [];
 
@@ -4358,7 +4398,7 @@ export function TournamenSportApp() {
           const clubName = normalize(participation.club_name);
           const isMyClub = normalize(match.team1) === clubName || normalize(match.team2) === clubName;
           if (!isMyClub || !match.team1 || !match.team2) return;
-          const round = Number(match.round || 1);
+          const round = getReferenteGroupMatchRound(group, match);
           const matchDate = match.match_date || getFefutinMatchDate(round);
           if (matchDate < todayKey) return;
           if (match.score1 !== null && match.score1 !== undefined &&
@@ -4371,8 +4411,6 @@ export function TournamenSportApp() {
     return candidates[0] || null;
   })();
 
-  // La jornada se construye con las participaciones de TODAS las categorías
-  // del club dentro del mismo torneo, no solamente con la primera categoría.
   const referenteClubJornadaMatches = (() => {
     if (!referenteNextMatch?.tournament) return [];
     const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -4394,8 +4432,8 @@ export function TournamenSportApp() {
         (group?.matches || []).forEach((match) => {
           const isMyClub = normalize(match.team1) === clubName || normalize(match.team2) === clubName;
           if (!isMyClub || !match.team1 || !match.team2 ||
-              Number(match.round || 1) !== referenteNextMatch.round) return;
-          const key = `${groupIndex}-${match.id || normalize(match.team1) + "::" + normalize(match.team2)}`;
+              getReferenteGroupMatchRound(group, match) !== referenteNextMatch.round) return;
+          const key = String(groupIndex) + "-" + String(match.id || normalize(match.team1) + "::" + normalize(match.team2));
           if (!matchesByKey.has(key)) {
             matchesByKey.set(key, {
               match,
@@ -4412,13 +4450,15 @@ export function TournamenSportApp() {
     );
   })();
 
-  // La planilla general reúne TODOS los partidos de esa fecha en todas las categorías.
   const referenteJornadaMatches = (() => {
     if (!referenteNextMatch?.tournament) return [];
     return (referenteNextMatch.tournament.groups || []).flatMap((group, groupIndex) => {
       if (group?.name === "__INSCRIPCIONES__") return [];
       return (group?.matches || [])
-        .filter((match) => Number(match.round || 1) === referenteNextMatch.round && match.team1 && match.team2)
+        .filter((match) =>
+          getReferenteGroupMatchRound(group, match) === referenteNextMatch.round &&
+          match.team1 && match.team2
+        )
         .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || group?.name || "" }));
     });
   })();
