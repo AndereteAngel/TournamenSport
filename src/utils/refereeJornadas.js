@@ -60,7 +60,7 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
     const categoria = getTournamentCategory(tournament);
     const roundNumberValue = match?.round ?? match?.journey_number ??
       (ubicacion.roundIndex != null ? ubicacion.roundIndex + 1 : null);
-    const roundNumber = roundNumberValue != null && /^\\d+$/.test(String(roundNumberValue))
+    const roundNumber = roundNumberValue != null && /^[0-9]+$/.test(String(roundNumberValue))
       ? Number(roundNumberValue)
       : null;
     const matchDate = String(match?.match_date || match?.scheduled_date || match?.date || "").slice(0, 10);
