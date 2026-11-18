@@ -29,8 +29,12 @@ const obtenerRama = (tournament) => {
 };
 
 const obtenerTurno = (tournament) => {
+  const explicit = String(tournament?.fefutin_turno || "").trim();
+  if (explicit === "Semanal" || explicit === "Fin de semana") return explicit;
   const parts = String(tournament?.game || "").split("·").map((part) => part.trim().toLocaleLowerCase("es"));
-  return parts.some((part) => /fin de semana/.test(part)) ? "Fin de semana" : "Semanal";
+  if (parts.some((part) => /fin de semana/.test(part))) return "Fin de semana";
+  if (parts.some((part) => /^semanal$/.test(part))) return "Semanal";
+  return null;
 };
 
 export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
@@ -46,7 +50,7 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
 
     const rama = obtenerRama(tournament);
     const propietario = String(tournament?.created_by_user_id || tournament?.created_by || "").trim().toLocaleLowerCase("es");
-    const turno = obtenerTurno(tournament);
+    const turno = obtenerTurno(tournament) || "Turno sin identificar";
     const competencia = [
       String(tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
       propietario,
