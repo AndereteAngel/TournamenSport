@@ -74,7 +74,9 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
             { data: refereeCarnets, error: refereeCarnetsError },
           ] = await Promise.all([
             supabase.from("profiles").select("id, username").eq("id", match.referee_id).maybeSingle(),
-            supabase.rpc("get_fefutin_referee_carnets"),
+            isReferee || isAdmin
+              ? supabase.rpc("get_fefutin_referee_carnets")
+              : Promise.resolve({ data: [], error: null }),
           ]);
           if (refereeProfileError) throw refereeProfileError;
           if (refereeCarnetsError) throw refereeCarnetsError;
@@ -304,7 +306,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
     };
     loadSheet();
     return () => { cancelled = true; };
-  }, [tournament?.id, match?.id, category, localName, visitorName]);
+  }, [tournament?.id, match?.id, category, localName, visitorName, isReferee, isAdmin]);
 
   const updatePlayer = (side, playerId, field, value) => {
     const setter = side === "local" ? setLocalPlayers : setVisitorPlayers;
