@@ -163,7 +163,7 @@ function RefereePreJornada({ onBack }) {
   };
 
   // Agrupa cada enfrentamiento entre clubes con todas sus categorías de la rama y turno.
-  const normalizarEquipo = valor => textoSeguro(valor).trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+  const normalizarEquipo = valor => textoSeguro(valor).trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const claveEnfrentamiento = match => [normalizarEquipo(match?.team1), normalizarEquipo(match?.team2)].sort().join("::");
   const partidosDeSeleccion = torneosFiltrados.flatMap(torneo =>
     (Array.isArray(torneo?.groups) ? torneo.groups : []).flatMap((grupo, groupIndex) => {
@@ -4340,7 +4340,7 @@ export function TournamenSportApp() {
     if (!isReferente || !referenteParticipations.length || !tournaments.length) return null;
     const today = new Date();
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const candidates = [];
 
     referenteParticipations.forEach((participation) => {
@@ -4350,7 +4350,7 @@ export function TournamenSportApp() {
       (tournament.groups || []).forEach((group, groupIndex) => {
         if (group?.name === "__INSCRIPCIONES__") return;
         const groupCategory = normalize(group?.categoryLabel || group?.name || "");
-        if (participationCategory && groupCategory &&
+        if (participationCategory && !participationCategory.includes("toda la tira") && groupCategory &&
             groupCategory !== participationCategory &&
             !groupCategory.endsWith(participationCategory) &&
             !participationCategory.endsWith(groupCategory)) return;
@@ -4373,7 +4373,7 @@ export function TournamenSportApp() {
 
   const referenteClubJornadaMatches = (() => {
     if (!referenteNextMatch?.tournament || !referenteNextMatch?.participation) return [];
-    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const clubName = normalize(referenteNextMatch.participation.club_name);
     return (referenteNextMatch.tournament.groups || []).flatMap((group, groupIndex) => {
       if (group?.name === "__INSCRIPCIONES__") return [];
@@ -5198,7 +5198,7 @@ export function TournamenSportApp() {
               <div style={{ color: "#f3a0ad", fontSize: ".78rem", fontWeight: 900, letterSpacing: ".12em", textAlign: "center", marginBottom: ".85rem" }}>PRÓXIMA JORNADA</div>
               {referenteNextMatch ? (() => {
                 const { tournament, round, matchDate } = referenteNextMatch;
-                const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+                const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 const getClub = (name) => referenteMatchClubs.find((club) => normalize(club.club_name) === normalize(name));
                 const formattedDate = new Date(matchDate + "T12:00:00").toLocaleDateString("es-AR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
                 return <>
