@@ -59,7 +59,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const loadParticipations = useCallback(async () => {
     setLoading(true);
     setError("");
-    const rpcName = mode === "torneos" ? "get_fefutin_my_teams" : "get_fefutin_my_permanent_rosters";
+    const rpcName = mode === "torneos" ? "get_fefutin_my_turn_teams" : "get_fefutin_my_permanent_rosters";
     const { data, error: loadError } = await supabase.rpc(rpcName);
     if (loadError) {
       console.error("Error al cargar fichas FEFUTIN:", loadError);
@@ -224,7 +224,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
 
   const saveRoster = async (item, submit) => {
     const players = rowsByParticipation[item.club_tournament_id] || [];
-    if (submit && !window.confirm(`¿Presentar la lista de buena fe de ${item.category_label}? Revisá que todos los datos estén completos.`)) return;
+    if (submit && !window.confirm(`¿Presentar la lista de buena fe de ${getParticipationLabel(item)}? Revisá que todos los datos estén completos.`)) return;
 
     setSavingId(item.club_tournament_id);
     setError("");
@@ -257,7 +257,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
     }
 
     setNotice(mode === "torneos"
-      ? (submit ? `Lista de ${item.category_label} presentada correctamente.` : `Borrador de ${item.category_label} guardado.`)
+      ? (submit ? `Lista de ${getParticipationLabel(item)} presentada correctamente.` : `Borrador de ${getParticipationLabel(item)} guardado.`)
       : `Plantel permanente de ${item.category_label} guardado correctamente.`);
     await loadParticipations();
     setSavingId(null);
@@ -294,12 +294,13 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const visibleParticipations = mode === "equipos" && activeClubId
     ? participations.filter((item) => item.club_id === activeClubId)
     : participations;
-  const categoryOptions = [...new Set(visibleParticipations.map((item) => item.category_label).filter((category) => category && category !== "SIN CATEGORÍAS"))].sort((a, b) => a.localeCompare(b, "es"));
+  const getParticipationLabel = (item) => item.turno ? `${item.category_label} · ${item.turno}` : item.category_label;
+  const categoryOptions = [...new Set(visibleParticipations.map((item) => getParticipationLabel(item)).filter((category) => category && category !== "SIN CATEGORÍAS"))].sort((a, b) => a.localeCompare(b, "es"));
   const filteredParticipations = visibleParticipations.filter((item) => {
     if (mode === "torneos" || selectedSection === "torneos") {
       const query = tournamentSearch.trim().toLocaleLowerCase("es");
-      const matchesSearch = !query || [item.tournament_title, item.category_label, item.club_name].some((value) => String(value || "").toLocaleLowerCase("es").includes(query));
-      const matchesCategory = tournamentCategory === "todas" || item.category_label === tournamentCategory;
+      const matchesSearch = !query || [item.tournament_title, item.category_label, item.turno, item.club_name].some((value) => String(value || "").toLocaleLowerCase("es").includes(query));
+      const matchesCategory = tournamentCategory === "todas" || getParticipationLabel(item) === tournamentCategory;
       const matchesStatus = tournamentStatus === "todos" || (tournamentStatus === "pendiente" ? !["presentada", "borrador"].includes(item.team_status) : item.team_status === tournamentStatus);
       return matchesSearch && matchesCategory && matchesStatus;
     }
@@ -575,7 +576,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                     const players = rowsByParticipation[item.club_tournament_id] || [];
                     return (
                       <section key={item.club_tournament_id} style={{ width: "100%", minWidth: 0 }}>
-                        <h3 style={{ color: "#fff", fontSize: "1rem", margin: "0 0 .65rem" }}>{item.category_label}</h3>
+                        <h3 style={{ color: "#fff", fontSize: "1rem", margin: "0 0 .65rem" }}>{getParticipationLabel(item)}</h3>
                         <div style={{ overflowX: "auto", border: "1px solid #444", borderRadius: "8px" }}>
                           <table style={{ width: "100%", minWidth: "720px", borderCollapse: "collapse", color: "#fff", textAlign: "left", background: "#090909" }}>
                             <thead><tr style={{ background: "#b5122a" }}>
@@ -655,8 +656,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                     <div style={{ margin: ".9rem 0", padding: ".75rem", borderRadius: "8px", background: "#171c27" }}>
                       <strong style={{ color: "#fff", display: "block" }}>{mode === "torneos" ? item.tournament_title : selectedSection === "listas" && currentUser?.role === "referente" ? item.category_label : "PLANTEL PERMANENTE"}</strong>
                       {!(selectedSection === "listas" && currentUser?.role === "referente") && <>
-                        <span style={{ color: "#fca5a5", fontWeight: 800, fontSize: ".9rem" }}>{item.category_label}</span>
-                        <div style={{ color: "#aaa", fontSize: ".78rem", marginTop: ".25rem" }}>Equipo: {item.club_name} · {item.category_label}</div>
+                        <span style={{ color: "#fca5a5", fontWeight: 800, fontSize: ".9rem" }}>{getParticipationLabel(item)}</span>
+                        <div style={{ color: "#aaa", fontSize: ".78rem", marginTop: ".25rem" }}>Equipo: {item.club_name} · {getParticipationLabel(item)}</div>
                       </>}
                     </div>
 
@@ -716,7 +717,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                           </div>
                         ) : (
                           <>
-                            <h3 style={{ color: "#fff", fontSize: ".95rem", margin: "1rem 0 .65rem" }}>LISTA DE BUENA FE · {item.category_label}</h3>
+                            <h3 style={{ color: "#fff", fontSize: ".95rem", margin: "1rem 0 .65rem" }}>LISTA DE BUENA FE · {getParticipationLabel(item)}</h3>
                             <div style={{ display: "grid", gap: ".65rem" }}>
                               {players.map((player, index) => {
                                 const photoUrl = player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : "";
@@ -727,7 +728,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                                     </button>
                                     <div style={{ minWidth: 0, gridColumn: "2", gridRow: "1", alignSelf: "center" }}>
                                       <strong style={{ display: "block", color: "#fff", fontSize: "1rem", lineHeight: 1.3, overflowWrap: "break-word", wordBreak: "normal" }}>{player.last_name || "Apellido pendiente"}, {player.first_name || "Nombre pendiente"}</strong>
-                                      <span style={{ display: "block", color: "#fca5a5", fontSize: ".78rem", marginTop: ".3rem" }}>{item.category_label}</span>
+                                      <span style={{ display: "block", color: "#fca5a5", fontSize: ".78rem", marginTop: ".3rem" }}>{getParticipationLabel(item)}</span>
                                       {player.carnet_number && (
                                         <div style={{ marginTop: ".35rem", display: "flex", flexWrap: "wrap", alignItems: "center", gap: ".4rem" }}>
                                           <span style={{ color: "#ddd", fontSize: ".7rem", fontWeight: 700 }}>{player.carnet_number}</span>
@@ -814,7 +815,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 CATEGORÍA
                 <select value={registrationPlayer.category_roster_id || ""} onChange={(event) => setRegistrationPlayer((previous) => ({ ...previous, category_roster_id: event.target.value }))} style={inputStyle}>
                   <option value="">Seleccioná la categoría</option>
-                  {visibleParticipations.filter((item) => item.category_label && item.category_label !== "SIN CATEGORÍAS").map((item) => <option key={item.club_tournament_id} value={item.club_tournament_id}>{item.category_label}</option>)}
+                  {visibleParticipations.filter((item) => item.category_label && item.category_label !== "SIN CATEGORÍAS").map((item) => <option key={item.club_tournament_id} value={item.club_tournament_id}>{getParticipationLabel(item)}</option>)}
                 </select>
               </label>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))", gap: ".75rem" }}>
