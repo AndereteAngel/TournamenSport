@@ -333,7 +333,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
           <form onSubmit={uploadPhoto} style={{ display: "grid", gap: ".8rem", marginTop: "1rem" }}>
             <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".82rem" }}>
               Jornada asignada
-              <select required value={selectedTournamentId} onChange={(event) => setSelectedTournamentId(event.target.value)} style={{ padding: ".75rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
+              <select required value={selectedTournamentId} onChange={(event) => { const key = event.target.value; setSelectedTournamentId(key); const selected = assignedJourneys.find((item) => item.key === key); if (selected?.scheduledDate) setJornadaDate(selected.scheduledDate); }} style={{ padding: ".75rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
                 {assignedJourneys.map((item) => <option key={item.key} value={item.key}>{item.title} · {item.turno} · Jornada {item.journeyNumber || "—"}</option>)}
               </select>
             </label>
