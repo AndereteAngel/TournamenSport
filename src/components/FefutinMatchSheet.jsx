@@ -43,6 +43,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
   const [activeSide, setActiveSide] = useState(initialSide === "visitante" ? "visitante" : "local");
   const [metadata, setMetadata] = useState({
     jornada: String(match?.journey_number || match?.round || ""),
+    turno: String(match?.turno || ""),
     sede: "",
     fecha_partido: "",
     arbitro_designado: "",
@@ -660,7 +661,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         <div className="fefutin-sheet-title">
           <div className="brand">FEFUTIN · PLANILLA OFICIAL</div>
           <h2>{localName} vs. {visitorName}</h2>
-          <p>{category || "Categoría sin especificar"} · {metadata.jornada ? "Fecha " + metadata.jornada : "Jornada sin asignar"}</p>
+          <p>{category || "Categoría sin especificar"} · {metadata.turno ? "Turno " + metadata.turno + " · " : ""}{metadata.jornada ? "Jornada " + metadata.jornada : "Jornada sin asignar"}</p>
         </div>
         {loading ? <p>Cargando listas oficiales de ambos clubes...</p> : error ? (
           <div style={{padding:12,border:"1px solid #b5122a",color:"#b91c1c"}}>{error}</div>
