@@ -60,6 +60,16 @@ begin
     raise exception 'La rama indicada no existe en el catalogo FEFUTIN';
   end if;
 
+  if exists (
+    select 1
+    from public.tournaments existing
+    where existing.fefutin_branch_id = v_branch.id
+      and existing.id <> p_tournament_id
+      and lower(trim(coalesce(existing.status, ''))) not in ('finalizado', 'finalizada', 'completed')
+  ) then
+    raise exception 'Ya existe un torneo activo para la rama %. Abrilo y agrega el turno que falte en lugar de crear otra rama duplicada.', v_branch.name;
+  end if;
+
   if coalesce(cardinality(p_turnos), 0) = 0 then
     raise exception 'Selecciona al menos un turno';
   end if;
