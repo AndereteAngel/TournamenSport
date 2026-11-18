@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 
 const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es")
-  .normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 const makeStandings = (sheets, selectedCategory, clubEntries) => {
   const standings = new Map();
