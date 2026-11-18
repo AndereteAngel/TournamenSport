@@ -37,7 +37,7 @@ begin
   if not found
      or v_profile.approval_status <> 'aprobado'
      or v_profile.deactivated_at is not null
-     or v_profile.role not in ('arbitro', 'admin', 'directivo') then
+     or v_profile.role not in ('arbitro', 'admin', 'directivo', 'referente') then
     raise exception 'Solo un arbitro aprobado, un directivo o un administrador puede consultar esta planilla';
   end if;
 
@@ -51,6 +51,11 @@ begin
 
   if v_profile.role = 'arbitro' and v_match.referee_id is distinct from auth.uid() then
     raise exception 'Este partido no esta designado a tu usuario';
+  end if;
+
+  if v_profile.role = 'referente'
+     and (v_profile.club_id is null or v_profile.club_id not in (v_match.local_club_id, v_match.visitor_club_id)) then
+    raise exception 'Solo podes consultar planillas de partidos en los que participa tu club';
   end if;
 
   select
