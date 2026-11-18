@@ -891,6 +891,7 @@ export function GroupStageView({
               groupIndex: selectedSheetContext.phase === "groups" ? selectedSheetContext.groupIndex : null,
               roundIndex: selectedSheetContext.phase === "playoffs" ? selectedSheetContext.roundIndex : null,
               matchId: selectedSheetMatch.id,
+              normalizedMatchId: selectedSheetMatch.round_id || selectedSheetMatch.tournament_category_id ? selectedSheetMatch.id : null,
               score1,
               score2,
             });
