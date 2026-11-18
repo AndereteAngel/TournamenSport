@@ -129,4 +129,68 @@ on public.fefutin_tournament_turns
 for each row
 execute function public.sync_fefutin_branch_tournament_status();
 
+-- Reconstruir los estados de categorias y turnos que ya recibieron partidos del backfill.
+update public.fefutin_tournament_categories tc
+set status = case
+  when exists (
+    select 1
+    from public.fefutin_legacy_match_migration_audit audit
+    where audit.source_tournament_id = tc.tournament_id
+      and audit.migration_status = 'requiere_revision'
+  ) then 'en_curso'
+  when exists (
+    select 1
+    from public.fefutin_rounds r
+    join public.fefutin_matches m on m.round_id = r.id
+    where r.tournament_category_id = tc.id
+  ) and not exists (
+    select 1
+    from public.fefutin_rounds r
+    join public.fefutin_matches m on m.round_id = r.id
+    where r.tournament_category_id = tc.id
+      and m.status <> 'finalizado'
+  ) then 'finalizada'
+  else 'en_curso'
+end,
+updated_at = now()
+where exists (
+  select 1
+  from public.fefutin_rounds r
+  join public.fefutin_matches m on m.round_id = r.id
+  where r.tournament_category_id = tc.id
+);
+
+update public.fefutin_tournament_turns tt
+set status = case
+  when exists (
+    select 1
+    from public.fefutin_legacy_match_migration_audit audit
+    where audit.source_tournament_id = tt.tournament_id
+      and audit.migration_status = 'requiere_revision'
+  ) then 'en_curso'
+  when exists (
+    select 1
+    from public.fefutin_rounds r
+    join public.fefutin_tournament_categories tc on tc.id = r.tournament_category_id
+    join public.fefutin_matches m on m.round_id = r.id
+    where tc.turn_id = tt.id
+  ) and not exists (
+    select 1
+    from public.fefutin_rounds r
+    join public.fefutin_tournament_categories tc on tc.id = r.tournament_category_id
+    join public.fefutin_matches m on m.round_id = r.id
+    where tc.turn_id = tt.id
+      and m.status <> 'finalizado'
+  ) then 'finalizada'
+  else 'en_curso'
+end,
+updated_at = now()
+where exists (
+  select 1
+  from public.fefutin_rounds r
+  join public.fefutin_tournament_categories tc on tc.id = r.tournament_category_id
+  join public.fefutin_matches m on m.round_id = r.id
+  where tc.turn_id = tt.id
+);
+
 commit;
