@@ -4335,7 +4335,31 @@ export function TournamenSportApp() {
     });
   });
 
-  const assignedRefereeMatches = isArbitro ? tournaments.flatMap((tournament) => {
+  const normalizedAssignedRefereeMatches = normalizedRefereeJourneyRows.flatMap((journey) =>
+    (journey.matches || [])
+      .filter((match) => String(match.referee_id || "") === String(currentUser?.id || ""))
+      .map((match) => ({
+        tournament: tournaments.find((item) => String(item.id) === String(journey.tournament_id)) || null,
+        tournamentTitle: journey.tournament_title || "Torneo FEFUTIN",
+        turn_id: journey.turn_id,
+        turno: journey.turno,
+        turn_journey_id: journey.turn_journey_id,
+        journey_number: journey.journey_number,
+        scheduled_date: match.match_date || journey.scheduled_date || null,
+        category: match.category || "Sin categoría",
+        groupName: `Jornada ${journey.journey_number || ""}`.trim(),
+        groupIndex: null,
+        roundIndex: null,
+        phase: "normalized",
+        matchId: match.id,
+        normalizedMatchId: match.id,
+        team1: match.team1 || "",
+        team2: match.team2 || "",
+        refereeClosed: Boolean(match.referee_closed),
+        round: journey.journey_number || null,
+      }))
+  );
+  const legacyAssignedRefereeMatches = tournaments.flatMap((tournament) => {
     const groupMatches = (Array.isArray(tournament.groups) ? tournament.groups : []).flatMap((group, groupIndex) =>
       (Array.isArray(group?.matches) ? group.matches : [])
         .filter((match) => match?.id != null && match?.referee_id === currentUser?.id &&
@@ -4379,7 +4403,10 @@ export function TournamenSportApp() {
         }))
     );
     return [...groupMatches, ...playoffMatches];
-  }) : [];
+  });
+  const assignedRefereeMatches = isArbitro
+    ? (normalizedAssignedRefereeMatches.length ? normalizedAssignedRefereeMatches : legacyAssignedRefereeMatches)
+    : [];
   const hasPendingRefereeAssignments = assignedRefereeMatches.some((match) => !match.refereeClosed);
   const normalizedRefereeJornadas = isArbitro ? normalizarJornadasDeTurno(normalizedRefereeJourneyRows, currentUser?.id) : [];
   const refereeJornadas = isArbitro ? (normalizedRefereeJornadas.length ? normalizedRefereeJornadas : obtenerJornadasDeArbitro(tournaments, currentUser?.id)) : [];
