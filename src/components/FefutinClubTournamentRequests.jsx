@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 
 const panelStyle = {
@@ -177,8 +177,8 @@ export function FefutinClubTournamentRequests({ onChanged }) {
     const action = approve ? "approve" : "reject";
     const confirmed = window.confirm(
       approve
-        ? `¿Aprobar la participación de ${request.club_name} en "${request.tournament_title}"?`
-        : `¿Desestimar la solicitud de ${request.club_name} para "${request.tournament_title}"?`
+        ? `¿Aprobar la participación de ${request.club_name} en "${request.tournament_title}" · ${request.turno || "turno sin identificar"}?`
+        : `¿Desestimar la solicitud de ${request.club_name} para "${request.tournament_title}" · ${request.turno || "turno sin identificar"}?`
     );
     if (!confirmed) return;
     setProcessingId(request.id);
