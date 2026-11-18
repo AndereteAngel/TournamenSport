@@ -33,10 +33,6 @@ select
   jornada_key,
   tournament_id,
   tournament_ids,
-  turn_id,
-  turn_journey_id,
-  turno,
-  journey_number,
   rama,
   team_local,
   team_visitante,
@@ -54,7 +50,11 @@ select
   end as detalles,
   puntos_local,
   puntos_visitante,
-  closed_at
+  closed_at,
+  turn_id,
+  turn_journey_id,
+  turno,
+  journey_number
 from public.fefutin_jornada_sheets
 where closed_at is not null;
 
