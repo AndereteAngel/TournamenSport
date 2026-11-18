@@ -3092,6 +3092,17 @@ export function TournamenSportApp() {
     setLoading(false);
   };
 
+  const refreshRefereeJourneyData = async () => {
+    if (!currentUser?.id || !isArbitro) return;
+    const { data, error } = await supabase.rpc("get_fefutin_referee_journeys");
+    if (error) {
+      console.error("No se pudieron actualizar las jornadas normalizadas:", error);
+      showNotice(error.message || "No se pudieron actualizar tus jornadas.");
+      return;
+    }
+    setNormalizedRefereeJourneyRows(data || []);
+  };
+
   // =========================================================
   // ELIMINAR TORNEO - SOLO ADMIN
   // =========================================================
@@ -5020,7 +5031,7 @@ export function TournamenSportApp() {
             <h2 style={{ color: "#fff", margin: "1rem 0 .35rem", letterSpacing: ".06em" }}>MIS DESIGNACIONES</h2>
             <p style={{ color: "#ccc", fontSize: ".82rem", marginTop: 0 }}>Tus jornadas asignadas, todos sus encuentros y las planillas que tenés que completar.</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: ".55rem", margin: ".6rem 0 1rem" }}>
-              <button type="button" onClick={fetchTournaments} style={{ minWidth: 0, padding: ".75rem .45rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#fff", color: "#171c27", fontWeight: 900, fontSize: ".72rem", cursor: "pointer" }}>↻ ACTUALIZAR DESIGNACIONES</button>
+              <button type="button" onClick={async () => { await fetchTournaments(); await refreshRefereeJourneyData(); }} style={{ minWidth: 0, padding: ".75rem .45rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#fff", color: "#171c27", fontWeight: 900, fontSize: ".72rem", cursor: "pointer" }}>↻ ACTUALIZAR DESIGNACIONES</button>
               <button type="button" onClick={() => setActiveView("referee-sheet-photo")} style={{ minWidth: 0, padding: ".75rem .45rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#b5122a", color: "#fff", fontWeight: 900, fontSize: ".72rem", cursor: "pointer" }}>📷 SUBIR FOTO DE PLANILLA GENERAL</button>
             </div>
             <FefutinRefereeJornadaSheets
@@ -5449,7 +5460,7 @@ export function TournamenSportApp() {
           {isArbitro && (
             <button
               type="button"
-              onClick={() => { fetchTournaments(); setActiveView("referee-designations"); }}
+              onClick={async () => { await fetchTournaments(); await refreshRefereeJourneyData(); setActiveView("referee-designations"); }}
               aria-label={refereeJornadas.length
                 ? `Ver ${refereeJornadas.length} jornadas designadas y ${refereePendingMatchCount} partidos pendientes`
                 : "Abrir designaciones: todavía no tenés jornadas asignadas"}
