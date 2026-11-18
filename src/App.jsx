@@ -3442,7 +3442,7 @@ export function TournamenSportApp() {
 
     if (data && data.length > 0) {
       const setupResults = await Promise.all(data.map((tournament, index) => {
-        const branch = branchesToCreate[index];
+        const branch = branchesToCreate.find((item) => tournament.game === `Fútbol · ${item.division}`) || branchesToCreate[index];
         return supabase.rpc("configure_fefutin_branch_tournament", {
           p_tournament_id: tournament.id,
           p_branch_name: branch.division,
