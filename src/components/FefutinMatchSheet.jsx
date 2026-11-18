@@ -24,7 +24,7 @@ const getPlayerStatus = (player) => {
   return "PENDIENTE DE VERIFICACIÓN";
 };
 
-export function FefutinMatchSheet({ tournament, match, categoryLabel = "", onClose, isReferee = false, isAdmin = false, onCloseMatch }) {
+export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initialSide = "local", onClose, isReferee = false, isAdmin = false, onCloseMatch }) {
   const [currentUserId, setCurrentUserId] = useState("");
   useEffect(() => {
     let active = true;
@@ -40,7 +40,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", onClo
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [sheetId, setSheetId] = useState(null);
-  const [activeSide, setActiveSide] = useState("local");
+  const [activeSide, setActiveSide] = useState(initialSide === "visitante" ? "visitante" : "local");
   const [metadata, setMetadata] = useState({
     jornada: String(match?.round || ""),
     sede: "",
