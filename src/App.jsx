@@ -4340,7 +4340,7 @@ export function TournamenSportApp() {
     if (!isReferente || !referenteParticipations.length || !tournaments.length) return null;
     const today = new Date();
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
     const candidates = [];
 
     referenteParticipations.forEach((participation) => {
@@ -4349,9 +4349,9 @@ export function TournamenSportApp() {
       const participationCategory = normalize(participation.category_label);
       (tournament.groups || []).forEach((group, groupIndex) => {
         if (group?.name === "__INSCRIPCIONES__") return;
-        const groupCategory = normalize(group?.categoryLabel || "");
-        if (participationCategory && !participationCategory.includes("toda la tira") && groupCategory &&
-            groupCategory !== participationCategory &&
+        const groupCategory = normalize(group?.categoryLabel || group?.name || "");
+        if (participationCategory && !participationCategory.includes("toda la tira") &&
+            groupCategory && groupCategory !== participationCategory &&
             !groupCategory.endsWith(participationCategory) &&
             !participationCategory.endsWith(groupCategory)) return;
         (group?.matches || []).forEach((match) => {
@@ -4371,29 +4371,55 @@ export function TournamenSportApp() {
     return candidates[0] || null;
   })();
 
+  // La jornada se construye con las participaciones de TODAS las categorías
+  // del club dentro del mismo torneo, no solamente con la primera categoría.
   const referenteClubJornadaMatches = (() => {
-    if (!referenteNextMatch?.tournament || !referenteNextMatch?.participation) return [];
-    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const clubName = normalize(referenteNextMatch.participation.club_name);
-    return (referenteNextMatch.tournament.groups || []).flatMap((group, groupIndex) => {
-      if (group?.name === "__INSCRIPCIONES__") return [];
-      return (group?.matches || [])
-        .filter((match) =>
-          Number(match.round || 1) === referenteNextMatch.round &&
-          (normalize(match.team1) === clubName || normalize(match.team2) === clubName) &&
-          match.team1 && match.team2
-        )
-        .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || "" }));
+    if (!referenteNextMatch?.tournament) return [];
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    const participations = referenteParticipations.filter((item) =>
+      String(item.tournament_id) === String(referenteNextMatch.tournament.id)
+    );
+    const matchesByKey = new Map();
+
+    participations.forEach((participation) => {
+      const clubName = normalize(participation.club_name);
+      const participationCategory = normalize(participation.category_label);
+      (referenteNextMatch.tournament.groups || []).forEach((group, groupIndex) => {
+        if (group?.name === "__INSCRIPCIONES__") return;
+        const groupCategory = normalize(group?.categoryLabel || group?.name || "");
+        if (participationCategory && !participationCategory.includes("toda la tira") &&
+            groupCategory && groupCategory !== participationCategory &&
+            !groupCategory.endsWith(participationCategory) &&
+            !participationCategory.endsWith(groupCategory)) return;
+        (group?.matches || []).forEach((match) => {
+          const isMyClub = normalize(match.team1) === clubName || normalize(match.team2) === clubName;
+          if (!isMyClub || !match.team1 || !match.team2 ||
+              Number(match.round || 1) !== referenteNextMatch.round) return;
+          const key = `${groupIndex}-${match.id || normalize(match.team1) + "::" + normalize(match.team2)}`;
+          if (!matchesByKey.has(key)) {
+            matchesByKey.set(key, {
+              match,
+              groupIndex,
+              categoryLabel: group?.categoryLabel || participation.category_label || group?.name || "",
+            });
+          }
+        });
+      });
     });
+
+    return [...matchesByKey.values()].sort((a, b) =>
+      String(a.categoryLabel).localeCompare(String(b.categoryLabel), "es", { numeric: true })
+    );
   })();
 
+  // La planilla general reúne TODOS los partidos de esa fecha en todas las categorías.
   const referenteJornadaMatches = (() => {
     if (!referenteNextMatch?.tournament) return [];
     return (referenteNextMatch.tournament.groups || []).flatMap((group, groupIndex) => {
       if (group?.name === "__INSCRIPCIONES__") return [];
       return (group?.matches || [])
         .filter((match) => Number(match.round || 1) === referenteNextMatch.round && match.team1 && match.team2)
-        .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || "" }));
+        .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || group?.name || "" }));
     });
   })();
 
