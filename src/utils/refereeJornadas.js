@@ -25,7 +25,14 @@ const obtenerRama = (tournament) => {
   if (/femenin|mujer/.test(source)) return "Femenino";
   if (/s[eé]nior|senior|mayores|adult|primera/.test(source)) return "Sénior";
   if (/baby|infantil|formativ/.test(source)) return "Baby fútbol";
-  return "Baby fútbol";
+  return "Rama sin identificar";
+};
+
+const normalizarRama = (valor) => {
+  const value = normalizarEquipo(valor);
+  if (value === "infantil" || value.includes("baby")) return "baby futbol";
+  if (value === "mayores" || value.includes("senior")) return "senior";
+  return value;
 };
 
 const obtenerTurno = (tournament) => {
@@ -43,8 +50,8 @@ const obtenerCategoriasConfiguradas = (tournament) => {
   const branches = Array.isArray(registration?.category_config) ? registration.category_config : [];
   const branchName = obtenerRama(tournament);
   const branch = branches.find((item) =>
-    normalizarEquipo(item?.division) === normalizarEquipo(branchName)
-  ) || branches[0];
+    normalizarRama(item?.division) === normalizarRama(branchName)
+  ) || (branches.length === 1 ? branches[0] : null);
   return [...new Set((Array.isArray(branch?.categories) ? branch.categories : [])
     .map((category) => String(category || "").trim())
     .filter(Boolean))];
