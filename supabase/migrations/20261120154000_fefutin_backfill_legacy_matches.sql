@@ -312,7 +312,7 @@ begin
             values (
               v_round_id, v_local_id, v_visitor_id, v_match_date,
               case
-                when coalesce(v_match.value->>'scheduled_time', '') ~ '^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?
+                when coalesce(v_match.value->>'scheduled_time', '') ~ '^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$'
                   then (v_match.value->>'scheduled_time')::time
                 else null
               end,
