@@ -1,23 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 
-const getCategory = (tournament) => {
-  const explicit = String(tournament?.category_detail || tournament?.category_type || "").trim();
-  if (explicit) return explicit;
-  const parts = String(tournament?.game || "").split("·").map((part) => part.trim());
-  return parts.length ? parts[parts.length - 1] : "Sin categoría";
-};
-
 const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es")
-  .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  .normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
 
-const getCompetitionName = (tournament) => String(tournament?.title || "").trim() || "Torneo sin nombre";
-
-const makeStandings = (sheets, tournamentIds, selectedCategory, tournaments) => {
+const makeStandings = (sheets, selectedCategory, clubEntries) => {
   const standings = new Map();
   const processed = new Set();
   const ensureTeam = (name) => {
-    const teamName = typeof name === "string" ? name : String(name?.name || name?.team_name || name?.club_name || name?.nombre || "");
+    const teamName = typeof name === "string" ? name : String(name?.name || name?.club_name || name?.team_name || "");
     const key = normalize(teamName);
     if (!key) return null;
     if (!standings.has(key)) standings.set(key, {
@@ -27,34 +18,27 @@ const makeStandings = (sheets, tournamentIds, selectedCategory, tournaments) => 
     return standings.get(key);
   };
 
-  // Los participantes salen de los torneos realmente creados y comienzan con cero puntos.
-  tournaments.forEach((tournament) => {
-    if (selectedCategory && getCategory(tournament) !== selectedCategory) return;
-    (Array.isArray(tournament.groups) ? tournament.groups : []).forEach((group) => {
-      if (group?.name === "__INSCRIPCIONES__") return;
-      (Array.isArray(group?.teams) ? group.teams : []).forEach(ensureTeam);
-    });
+  (clubEntries || []).forEach((entry) => {
+    if (selectedCategory && normalize(entry.category_name) !== normalize(selectedCategory)) return;
+    ensureTeam(entry.club_name);
   });
 
   sheets.forEach((sheet) => {
     (Array.isArray(sheet.detalles) ? sheet.detalles : []).forEach((detail, index) => {
-      const tournamentId = String(detail?.tournament_id || "");
-      if (!tournamentIds.has(tournamentId)) return;
-      if (selectedCategory && String(detail?.categoria || "") !== selectedCategory) return;
+      if (selectedCategory && normalize(String(detail?.categoria || "")) !== normalize(selectedCategory)) return;
       if (detail?.score1 == null || detail?.score2 == null) return;
-      const matchKey = String(sheet.jornada_key || sheet.id) + "::" + String(detail.clave || index);
+      const matchKey = String(sheet.jornada_key || sheet.id) + "::" + String(detail.id || detail.clave || index);
       if (processed.has(matchKey)) return;
       processed.add(matchKey);
 
-      const team1 = ensureTeam(detail.team1 || sheet.team_local);
-      const team2 = ensureTeam(detail.team2 || sheet.team_visitante);
+      const team1 = ensureTeam(detail.team1);
+      const team2 = ensureTeam(detail.team2);
       if (!team1 || !team2) return;
       const score1 = Number(detail.score1);
       const score2 = Number(detail.score2);
       if (!Number.isFinite(score1) || !Number.isFinite(score2)) return;
-      const detailTeam1IsLocal = normalize(detail.team1 || sheet.team_local) === normalize(sheet.team_local);
-      const points1 = Number(detailTeam1IsLocal ? detail.puntosTeam1 : detail.puntosTeam2) || 0;
-      const points2 = Number(detailTeam1IsLocal ? detail.puntosTeam2 : detail.puntosTeam1) || 0;
+      const points1 = Number(detail.puntosTeam1 ?? (score1 > score2 ? 3 : score1 < score2 ? 1 : 2)) || 0;
+      const points2 = Number(detail.puntosTeam2 ?? (score2 > score1 ? 3 : score2 < score1 ? 1 : 2)) || 0;
 
       team1.played += 1;
       team2.played += 1;
@@ -81,18 +65,16 @@ const makeStandings = (sheets, tournamentIds, selectedCategory, tournaments) => 
   );
 };
 
-const getArchivedMatches = (sheets, tournamentIds, selectedCategory) => {
+const getArchivedMatches = (sheets, selectedCategory) => {
   const matches = [];
   const processed = new Set();
   sheets.forEach((sheet) => {
     (Array.isArray(sheet.detalles) ? sheet.detalles : []).forEach((detail, index) => {
-      const tournamentId = String(detail?.tournament_id || "");
-      if (!tournamentIds.has(tournamentId)) return;
-      if (selectedCategory && String(detail?.categoria || "") !== selectedCategory) return;
-      const team1 = String(detail?.team1 || sheet.team_local || "").trim();
-      const team2 = String(detail?.team2 || sheet.team_visitante || "").trim();
+      if (selectedCategory && normalize(String(detail?.categoria || "")) !== normalize(selectedCategory)) return;
+      const team1 = String(detail?.team1 || "").trim();
+      const team2 = String(detail?.team2 || "").trim();
       if (!team1 || !team2 || normalize(team1) === "pasaje directo" || normalize(team2) === "pasaje directo") return;
-      const key = String(sheet.jornada_key || sheet.id) + "::" + String(detail?.clave || index);
+      const key = String(sheet.jornada_key || sheet.id) + "::" + String(detail?.id || detail?.clave || index);
       if (processed.has(key)) return;
       processed.add(key);
       const played = detail?.score1 != null && detail?.score2 != null &&
@@ -119,52 +101,69 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
   const [selectedCompetition, setSelectedCompetition] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedTeam, setSelectedTeam] = useState("");
+  const [turns, setTurns] = useState([]);
   const [sheets, setSheets] = useState([]);
+  const [turnClubs, setTurnClubs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
   const [clubLogos, setClubLogos] = useState([]);
 
-  // La competencia se identifica exclusivamente por RAMA + NOMBRE DEL TORNEO.
-  // El turno es un dato informativo y no participa de esta agrupación.
-  const competitions = useMemo(() => {
-    const grouped = new Map();
-    tournaments.forEach((tournament) => {
-      const name = getCompetitionName(tournament);
-      const key = normalize(name);
-      if (!grouped.has(key)) grouped.set(key, { key, name, tournaments: [] });
-      grouped.get(key).tournaments.push(tournament);
-    });
-    return [...grouped.values()].sort((a, b) => a.name.localeCompare(b.name, "es"));
-  }, [tournaments]);
+  const tournamentIdsKey = tournaments.map((item) => String(item.id)).filter(Boolean).sort().join("|");
+  const tournamentIds = useMemo(
+    () => new Set(tournamentIdsKey ? tournamentIdsKey.split("|") : []),
+    [tournamentIdsKey]
+  );
+
+  useEffect(() => {
+    let active = true;
+    if (!tournamentIds.size) {
+      setTurns([]);
+      return () => { active = false; };
+    }
+    supabase.rpc("get_fefutin_tournament_turns", { p_tournament_id: null })
+      .then(({ data, error: queryError }) => {
+        if (!active) return;
+        if (queryError) {
+          setError("No se pudieron consultar los turnos de esta rama: " + queryError.message);
+          setTurns([]);
+          return;
+        }
+        setTurns((data || []).filter((turn) => tournamentIds.has(String(turn.tournament_id))));
+      });
+    return () => { active = false; };
+  }, [tournamentIdsKey]);
+
+  const competitions = useMemo(() => turns.map((turn) => ({
+    key: String(turn.turn_id),
+    name: `${turn.tournament_title || branch} · ${turn.turno}`,
+    turn,
+  })).sort((a, b) => a.name.localeCompare(b.name, "es")), [turns, branch]);
 
   const activeCompetition = competitions.find((item) => item.key === selectedCompetition);
-  const activeTournaments = activeCompetition?.tournaments || [];
-  const activeTournamentIdsKey = activeTournaments.map((item) => String(item.id)).filter(Boolean).sort().join("|");
-  const activeTournamentIds = useMemo(
-    () => activeTournamentIdsKey ? activeTournamentIdsKey.split("|") : [],
-    [activeTournamentIdsKey]
-  );
-  const tournamentIds = useMemo(() => new Set(activeTournamentIds), [activeTournamentIds]);
+  const activeTurn = activeCompetition?.turn || null;
+  const activeTurnId = activeTurn?.turn_id || "";
 
   useEffect(() => {
     let cancelled = false;
-    const loadCompetitionClubLogos = async () => {
-      if (!activeTournaments.length) {
+    const loadTurnClubs = async () => {
+      if (!activeTurnId) {
+        setTurnClubs([]);
         setClubLogos([]);
         return;
       }
-      const results = await Promise.all(activeTournaments.map((tournament) =>
-        supabase.rpc("get_fefutin_tournament_clubs", { p_tournament_id: tournament.id })
-      ));
-      if (cancelled) return;
-      const clubs = results.flatMap(({ data, error: rpcError }) => {
-        if (rpcError) {
-          console.error("Error al cargar escudos de la tabla general:", rpcError);
-          return [];
-        }
-        return data || [];
+      const { data, error: rpcError } = await supabase.rpc("get_fefutin_tournament_turn_clubs", {
+        p_turn_id: activeTurnId,
       });
+      if (cancelled) return;
+      if (rpcError) {
+        console.error("Error al cargar clubes de la tabla general:", rpcError);
+        setTurnClubs([]);
+        setClubLogos([]);
+        return;
+      }
+      const clubs = data || [];
+      setTurnClubs(clubs);
       const uniqueClubs = [...new Map(clubs.map((club) => [
         normalize(club.club_name),
         {
@@ -176,16 +175,19 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
       ]).filter(([key]) => key)).values()];
       setClubLogos(uniqueClubs);
     };
-    loadCompetitionClubLogos();
+    loadTurnClubs();
     return () => { cancelled = true; };
-  }, [activeTournamentIdsKey]);
-  const categories = useMemo(() => [...new Set(activeTournaments.map(getCategory))]
-    .filter((category) => category && category !== "Sin categoría")
-    .sort((a, b) => a.localeCompare(b, "es", { numeric: true })), [activeTournaments]);
+  }, [activeTurnId]);
+
+  const categories = useMemo(() => (activeTurn?.categories || [])
+    .filter((category) => category.status !== "suspendida")
+    .map((category) => category.name)
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, "es", { numeric: true })), [activeTurn]);
 
   useEffect(() => {
     let active = true;
-    if (!selectedCompetition || !activeTournamentIds.length) {
+    if (!activeTurnId) {
       setSheets([]);
       setLoaded(false);
       setLoading(false);
@@ -195,7 +197,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
     setLoaded(false);
     setError("");
     supabase.from("fefutin_public_jornada_sheets").select("*")
-      .overlaps("tournament_ids", activeTournamentIds)
+      .eq("turn_id", activeTurnId)
       .order("jornada_date", { ascending: true })
       .then(({ data, error: queryError }) => {
         if (!active) return;
@@ -205,7 +207,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
         setLoading(false);
       });
     return () => { active = false; };
-  }, [selectedCompetition, activeTournamentIdsKey]);
+  }, [activeTurnId]);
 
   useEffect(() => {
     setSelectedCategory("");
@@ -213,12 +215,12 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
   }, [selectedCompetition]);
 
   const rows = useMemo(
-    () => makeStandings(sheets, tournamentIds, selectedCategory, activeTournaments),
-    [sheets, tournamentIds, selectedCategory, activeTournaments]
+    () => makeStandings(sheets, selectedCategory, turnClubs),
+    [sheets, selectedCategory, turnClubs]
   );
   const archivedMatches = useMemo(
-    () => getArchivedMatches(sheets, tournamentIds, selectedCategory),
-    [sheets, tournamentIds, selectedCategory]
+    () => getArchivedMatches(sheets, selectedCategory),
+    [sheets, selectedCategory]
   );
   const selectedTeamMatches = selectedTeam
     ? archivedMatches.filter((match) => normalize(match.team1) === normalize(selectedTeam) || normalize(match.team2) === normalize(selectedTeam))
@@ -278,7 +280,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
             style={{ ...cardStyle, cursor: "pointer", textAlign: "center", background: selectedCompetition === competition.key ? "#b5122a" : "#171c27" }}>
             <strong style={{ display: "block", fontSize: ".82rem", letterSpacing: ".04em" }}>TABLA GENERAL · {branch.toLocaleUpperCase("es")}</strong>
             <span style={{ display: "block", marginTop: ".3rem", color: "#f3a0ad", fontWeight: 900 }}>{competition.name.toLocaleUpperCase("es")}</span>
-            <small style={{ display: "block", marginTop: ".25rem", color: "#ddd" }}>{competition.tournaments.length} torneo(s) incluidos</small>
+            <small style={{ display: "block", marginTop: ".25rem", color: "#ddd" }}>{competition.turn.categories?.length || 0} categoría(s) habilitada(s)</small>
           </button>
         ))}
       </div>
@@ -287,8 +289,8 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
         <div style={{ ...cardStyle, marginTop: ".8rem", textAlign: "left" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".6rem", flexWrap: "wrap" }}>
             <div>
-              <strong style={{ display: "block", textAlign: "center" }}>TABLA GENERAL · {branch.toLocaleUpperCase("es")} · {activeCompetition.name.toLocaleUpperCase("es")}</strong>
-              <small style={{ display: "block", color: "#bbb", marginTop: ".25rem" }}>Acumulado de los torneos de esta rama y con este nombre. El turno no modifica la agrupación.</small>
+              <strong style={{ display: "block", textAlign: "center" }}>TABLA GENERAL · {branch.toLocaleUpperCase("es")} · {activeTurn?.turno?.toLocaleUpperCase("es")}</strong>
+              <small style={{ display: "block", color: "#bbb", marginTop: ".25rem" }}>Resultados acumulados exclusivamente de esta rama y este turno. El otro turno mantiene su propia tabla.</small>
             </div>
             <button type="button" onClick={() => setSelectedCompetition("")}
               style={{ background: "#fff", color: "#171c27", border: "1px solid #b5122a", borderRadius: "7px", padding: ".45rem .7rem", fontWeight: 800 }}>Cerrar</button>
