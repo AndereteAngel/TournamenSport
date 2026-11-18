@@ -284,13 +284,13 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
     if (sheetIsVoided) return photoIsVoided;
     if (photoIsVoided) return false;
 
+    if (photo.document_type === "category") return String(photo.match_sheet_id) === String(sheet.id);
+
     if (photo.turn_journey_id || sheet.turn_journey_id) {
       return Boolean(photo.turn_journey_id && sheet.turn_journey_id) &&
         String(photo.turn_journey_id) === String(sheet.turn_journey_id);
     }
     if (photo.turn_id && sheet.turn_id && String(photo.turn_id) !== String(sheet.turn_id)) return false;
-
-    if (photo.document_type === "category") return String(photo.match_sheet_id) === String(sheet.id);
     const photoJornada = String(photo.jornada_label || "").trim().toLocaleLowerCase("es");
     const sheetJornada = String(sheet.jornada || "").trim().toLocaleLowerCase("es");
     const sameJornada = photoJornada && (
