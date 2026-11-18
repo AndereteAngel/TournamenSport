@@ -33,12 +33,21 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState("");
 
-  const assignedTournaments = useMemo(() => {
+  const assignedJourneys = useMemo(() => {
     const unique = new Map();
     assignedMatches.forEach((item) => {
-      if (item?.tournament?.id && !unique.has(item.tournament.id)) {
-        unique.set(item.tournament.id, {
-          id: item.tournament.id,
+      if (!item?.tournament?.id) return;
+      const legacyKey = `${item.tournament.id}::legacy::${item.turno || "Semanal"}::${item.scheduled_date || item.round || ""}`;
+      const key = String(item.turn_journey_id || legacyKey);
+      if (!unique.has(key)) {
+        unique.set(key, {
+          key,
+          tournamentId: item.tournament.id,
+          turnId: item.turn_id || null,
+          turnJourneyId: item.turn_journey_id || null,
+          turno: item.turno || getTournamentTurn(item.tournament),
+          journeyNumber: item.journey_number || item.round || null,
+          scheduledDate: item.scheduled_date || null,
           title: item.tournamentTitle || item.tournament.title || "Torneo FEFUTIN",
         });
       }
@@ -130,10 +139,11 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   }, [mode]);
 
   useEffect(() => {
-    if (assignedTournaments.length && !selectedTournamentId) {
-      setSelectedTournamentId(assignedTournaments[0].id);
+    if (assignedJourneys.length && !assignedJourneys.some((item) => item.key === selectedTournamentId)) {
+      setSelectedTournamentId(assignedJourneys[0].key);
+      if (assignedJourneys[0].scheduledDate) setJornadaDate(assignedJourneys[0].scheduledDate);
     }
-  }, [assignedTournaments, selectedTournamentId]);
+  }, [assignedJourneys, selectedTournamentId]);
 
   const uploadPhoto = async (event) => {
     event.preventDefault();
@@ -156,7 +166,9 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
 
     const extension = photoFile.name.split(".").pop()?.toLowerCase() || "jpg";
     const storagePath = `${currentUser.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${extension}`;
-    const tournament = assignedTournaments.find((item) => item.id === selectedTournamentId);
+    const selectedJourney = assignedJourneys.find((item) => item.key === selectedTournamentId);
+    if (!selectedJourney) { setError("No se pudo identificar el turno y la jornada de la foto."); setUploading(false); return; }
+    const tournament = tournaments.find((item) => item.id === selectedJourney.tournamentId);
 
     try {
       const { error: uploadError } = await supabase.storage
@@ -165,9 +177,13 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
       if (uploadError) throw uploadError;
 
       const { error: insertError } = await supabase.from("fefutin_jornada_photos").insert({
-        tournament_id: selectedTournamentId,
-        jornada_date: jornadaDate,
-        jornada_label: jornadaLabel.trim() || null,
+        tournament_id: selectedJourney.tournamentId,
+        turn_id: selectedJourney.turnId,
+        turn_journey_id: selectedJourney.turnJourneyId,
+        turno: selectedJourney.turno,
+        journey_number: Number(selectedJourney.journeyNumber) || null,
+        jornada_date: selectedJourney.scheduledDate || jornadaDate,
+        jornada_label: jornadaLabel.trim() || (selectedJourney.journeyNumber ? `Jornada ${selectedJourney.journeyNumber}` : null),
         referee_id: currentUser.id,
         referee_name: currentUser.username || null,
         storage_path: storagePath,
@@ -180,7 +196,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
 
       setPhotoFile(null);
       setJornadaLabel("");
-      setNotice(`Foto de la jornada de ${tournament?.title || "la competencia"} guardada correctamente.`);
+      setNotice(`Foto de ${tournament?.title || "la rama"} · ${selectedJourney.turno} · Jornada ${selectedJourney.journeyNumber || "sin número"} guardada correctamente.`);
     } catch (uploadError) {
       console.error("No se pudo guardar la foto de la jornada:", uploadError);
       setError(uploadError.message || "No se pudo guardar la foto. Intentá nuevamente.");
@@ -310,7 +326,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
             <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".82rem" }}>
               Torneo
               <select required value={selectedTournamentId} onChange={(event) => setSelectedTournamentId(event.target.value)} style={{ padding: ".75rem", borderRadius: "8px", background: "#fff", color: "#171c27", border: "1px solid #777" }}>
-                {assignedTournaments.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+                {assignedJourneys.map((item) => <option key={item.key} value={item.key}>{item.title} · {item.turno} · Jornada {item.journeyNumber || "—"}</option>)}
               </select>
             </label>
             <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".82rem" }}>
@@ -328,10 +344,10 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
             </label>
             {error && <p role="alert" style={{ color: "#fca5a5", margin: 0 }}>{error}</p>}
             {notice && <p role="status" style={{ color: "#86efac", margin: 0 }}>{notice}</p>}
-            <button type="submit" disabled={uploading || !assignedTournaments.length} style={{ padding: ".8rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#b5122a", color: "#fff", fontWeight: 900, cursor: "pointer", opacity: uploading ? .65 : 1 }}>
+            <button type="submit" disabled={uploading || !assignedJourneys.length} style={{ padding: ".8rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#b5122a", color: "#fff", fontWeight: 900, cursor: "pointer", opacity: uploading ? .65 : 1 }}>
               {uploading ? "GUARDANDO FOTO..." : "GUARDAR FOTO DE LA JORNADA"}
             </button>
-            {!assignedTournaments.length && <p style={{ color: "#fca5a5", fontSize: ".8rem" }}>No tenés designaciones que permitan asociar la foto a un torneo.</p>}
+            {!assignedJourneys.length && <p style={{ color: "#fca5a5", fontSize: ".8rem" }}>No tenés jornadas designadas que permitan asociar la foto a un turno y una fecha.</p>}
           </form>
         ) : (
           <>
