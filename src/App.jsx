@@ -4546,7 +4546,7 @@ export function TournamenSportApp() {
 
     referenteParticipations.forEach((participation) => {
       const tournament = tournaments.find((item) => String(item.id) === String(participation.tournament_id));
-      if (!tournament) return;
+      if (!tournament || tournament.fefutin_branch_id) return;
       const participationCategory = normalize(participation.category_label);
       (tournament.groups || []).forEach((group, groupIndex) => {
         if (group?.name === "__INSCRIPCIONES__") return;
@@ -5555,14 +5555,15 @@ export function TournamenSportApp() {
                 const getClub = (name) => referenteMatchClubs.find((club) => normalize(club.club_name) === normalize(name));
                 const formattedDate = new Date(matchDate + "T12:00:00").toLocaleDateString("es-AR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
                 return <>
-                                    <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".78rem", fontWeight: 800, marginBottom: ".8rem" }}>JORNADA · {formattedDate}</div>
+                  <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".78rem", fontWeight: 800, marginBottom: ".3rem" }}>{referenteNextMatch.tournament?.game || `Fútbol · ${referenteNormalizedNextJourney?.branch_name || ""}`} · {referenteNextMatch.turno || referenteNormalizedNextJourney?.turno || ""}</div>
+                  <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".78rem", fontWeight: 800, marginBottom: ".8rem" }}>JORNADA {referenteNextMatch.round || ""} · {formattedDate}</div>
                   <div style={{ display: "grid", gap: ".8rem" }}>
                     {referenteClubJornadaMatches.map(({ match, groupIndex, categoryLabel }) => {
                       const homeClub = getClub(match.team1);
                       const awayClub = getClub(match.team2);
                       const homeLogo = homeClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(homeClub.logo_path).data.publicUrl : "";
                       const awayLogo = awayClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(awayClub.logo_path).data.publicUrl : "";
-                                            const address = String(homeClub?.headquarters_address || "").trim();
+                                            const address = String(match.venue_address || homeClub?.headquarters_address || "").trim();
                       return (
                         <div key={`${groupIndex}-${match.id}`} style={{ padding: ".75rem", border: "1px solid #5b2732", borderRadius: "10px", background: "rgba(0,0,0,.25)" }}>
                                                     <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".5rem" }}>
@@ -5594,9 +5595,8 @@ export function TournamenSportApp() {
                         <h3 style={{ margin: "0 0 .35rem", textAlign: "center" }}>PLANILLAS · JORNADA {formattedDate}</h3>
                         <p style={{ margin: "0 0 1rem", color: "#ccc", textAlign: "center", fontSize: ".82rem" }}>{tournament.title || "Torneo FEFUTIN"} · {referenteJornadaMatches.length} partidos de la jornada</p>
                         {(() => {
-  const jornadaCategories = [...new Set((tournament.groups || [])
-    .filter((group) => group?.name !== "__INSCRIPCIONES__")
-    .map((group) => String(group?.categoryLabel || group?.name || "").trim())
+  const jornadaCategories = [...new Set(referenteJornadaMatches
+    .map((item) => String(item.categoryLabel || "").trim())
     .filter(Boolean))]
     .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
   const filteredClubMatches = referenteClubJornadaMatches.filter((item) =>
@@ -5608,6 +5608,18 @@ export function TournamenSportApp() {
   const openCategorySheet = (item, side) => {
     setShowReferenteJornadaSheets(false);
     setActiveTournament(tournament);
+    if (item.match?.round_id && item.match?.turn_id) {
+      setNormalizedMatchReturnView("home");
+      setNormalizedMatchToOpen({
+        ...item.match,
+        turn_journey_id: item.match.turn_journey_id || referenteNormalizedNextJourney?.turn_journey_id,
+        turno: referenteNormalizedNextJourney?.turno || referenteNextMatch?.turno,
+        journey_number: item.match.journey_number || referenteNormalizedNextJourney?.journey_number,
+        initialSide: side,
+      });
+      setActiveView("referee-normalized-match");
+      return;
+    }
     setRefereeMatchToOpen({ phase: "groups", groupIndex: item.groupIndex, matchId: item.match.id, initialSide: side });
     setActiveView("groups");
   };
