@@ -10,19 +10,46 @@ alter table public.fefutin_jornada_photos
   add column if not exists journey_number integer;
 
 -- Asignar el turno a los archivos anteriores cuando su torneo legacy tiene un turno identificable.
+-- Solo inferir el turno cuando hay una unica opcion o cuando el archivo ya
+-- conserva el nombre del turno. Si la rama tiene ambos turnos y el archivo
+-- antiguo no indica cual corresponde, dejarlo sin vincular para no inventar historial.
 update public.fefutin_jornada_sheets archive
-set turn_id = tt.id,
-    turno = tt.turno
-from public.fefutin_tournament_turns tt
-where archive.tournament_id = tt.tournament_id
-  and archive.turn_id is null;
+set turn_id = resolved.id,
+    turno = resolved.turno
+from lateral (
+  select tt.id, tt.turno
+  from public.fefutin_tournament_turns tt
+  where tt.tournament_id = archive.tournament_id
+    and (
+      (archive.turno is not null and tt.turno = archive.turno)
+      or (
+        archive.turno is null
+        and (select count(*) from public.fefutin_tournament_turns all_turns
+             where all_turns.tournament_id = archive.tournament_id) = 1
+      )
+    )
+  limit 1
+) resolved
+where archive.turn_id is null;
 
 update public.fefutin_jornada_photos archive
-set turn_id = tt.id,
-    turno = tt.turno
-from public.fefutin_tournament_turns tt
-where archive.tournament_id = tt.tournament_id
-  and archive.turn_id is null;
+set turn_id = resolved.id,
+    turno = resolved.turno
+from lateral (
+  select tt.id, tt.turno
+  from public.fefutin_tournament_turns tt
+  where tt.tournament_id = archive.tournament_id
+    and (
+      (archive.turno is not null and tt.turno = archive.turno)
+      or (
+        archive.turno is null
+        and (select count(*) from public.fefutin_tournament_turns all_turns
+             where all_turns.tournament_id = archive.tournament_id) = 1
+      )
+    )
+  limit 1
+) resolved
+where archive.turn_id is null;
 
 create index if not exists fefutin_jornada_sheets_turn_journey_idx
   on public.fefutin_jornada_sheets(turn_id, turn_journey_id, jornada_date desc);
