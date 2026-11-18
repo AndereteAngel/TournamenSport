@@ -4340,27 +4340,30 @@ export function TournamenSportApp() {
     if (!isReferente || !referenteParticipations.length || !tournaments.length) return null;
     const today = new Date();
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
     const candidates = [];
+
     referenteParticipations.forEach((participation) => {
-      const tournament = tournaments.find((item) =>
-        normalize(item.title) === normalize(participation.tournament_title)
-      );
+      const tournament = tournaments.find((item) => String(item.id) === String(participation.tournament_id));
       if (!tournament) return;
+      const participationCategory = normalize(participation.category_label);
       (tournament.groups || []).forEach((group, groupIndex) => {
+        if (group?.name === "__INSCRIPCIONES__") return;
         const groupCategory = normalize(group?.categoryLabel || group?.name || "");
-        const participationCategory = normalize(participation.category_label);
-        if (groupCategory && participationCategory &&
-          !groupCategory.endsWith(participationCategory) &&
-          !participationCategory.endsWith(groupCategory)) return;
+        if (participationCategory && groupCategory &&
+            groupCategory !== participationCategory &&
+            !groupCategory.endsWith(participationCategory) &&
+            !participationCategory.endsWith(groupCategory)) return;
         (group?.matches || []).forEach((match) => {
-          const isMyClub = normalize(match.team1) === normalize(participation.club_name) || normalize(match.team2) === normalize(participation.club_name);
+          const clubName = normalize(participation.club_name);
+          const isMyClub = normalize(match.team1) === clubName || normalize(match.team2) === clubName;
           if (!isMyClub || !match.team1 || !match.team2) return;
           const round = Number(match.round || 1);
           const matchDate = match.match_date || getFefutinMatchDate(round);
           if (matchDate < todayKey) return;
-          if (match.score1 !== null && match.score1 !== undefined && match.score2 !== null && match.score2 !== undefined) return;
-          candidates.push({ tournament, participation, match, groupIndex, round, matchDate, categoryLabel: group?.categoryLabel || group?.name || participation.category_label || "Categoría" });
+          if (match.score1 !== null && match.score1 !== undefined &&
+              match.score2 !== null && match.score2 !== undefined) return;
+          candidates.push({ tournament, participation, match, groupIndex, round, matchDate });
         });
       });
     });
@@ -4368,24 +4371,30 @@ export function TournamenSportApp() {
     return candidates[0] || null;
   })();
 
-  const referenteJornadaMatches = (() => {
+  const referenteClubJornadaMatches = (() => {
     if (!referenteNextMatch?.tournament || !referenteNextMatch?.participation) return [];
-    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
     const clubName = normalize(referenteNextMatch.participation.club_name);
-    return (referenteNextMatch.tournament.groups || []).flatMap((group, groupIndex) =>
-      (group?.matches || [])
+    return (referenteNextMatch.tournament.groups || []).flatMap((group, groupIndex) => {
+      if (group?.name === "__INSCRIPCIONES__") return [];
+      return (group?.matches || [])
         .filter((match) =>
           Number(match.round || 1) === referenteNextMatch.round &&
           (normalize(match.team1) === clubName || normalize(match.team2) === clubName) &&
-          match.team1 && match.team2 &&
-          !(match.score1 !== null && match.score1 !== undefined && match.score2 !== null && match.score2 !== undefined)
+          match.team1 && match.team2
         )
-        .map((match) => ({
-          match,
-          groupIndex,
-          categoryLabel: group?.categoryLabel || group?.name || "Categoría",
-        }))
-    );
+        .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || group?.name || "Categoría" }));
+    });
+  })();
+
+  const referenteJornadaMatches = (() => {
+    if (!referenteNextMatch?.tournament) return [];
+    return (referenteNextMatch.tournament.groups || []).flatMap((group, groupIndex) => {
+      if (group?.name === "__INSCRIPCIONES__") return [];
+      return (group?.matches || [])
+        .filter((match) => Number(match.round || 1) === referenteNextMatch.round && match.team1 && match.team2)
+        .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || group?.name || "Categoría" }));
+    });
   })();
 
   useEffect(() => {
@@ -4400,7 +4409,7 @@ export function TournamenSportApp() {
       });
       if (cancelled) return;
       if (error) {
-        console.error("No se pudieron cargar los escudos del próximo encuentro:", error);
+        console.error("No se pudieron cargar los datos de los clubes de la próxima jornada:", error);
         setReferenteMatchClubs([]);
       } else setReferenteMatchClubs(data || []);
     };
@@ -5185,58 +5194,66 @@ export function TournamenSportApp() {
           </div>
           {isPublicVisitor && <FefutinVisitorPromoCarousel />}
           {isReferente && (
-            <section aria-label="Próximo encuentro de mi club" style={{ margin: "1rem 0", padding: "1rem", border: "2px solid #b5122a", borderRadius: "14px", background: "linear-gradient(135deg, #171c27, #090a0e)", color: "#fff", overflow: "hidden" }}>
-              <div style={{ color: "#f3a0ad", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".12em", textAlign: "center", marginBottom: ".8rem" }}>PRÓXIMO ENCUENTRO</div>
+            <section aria-label="Próxima jornada" style={{ margin: "1rem 0", padding: "1rem", border: "2px solid #b5122a", borderRadius: "14px", background: "linear-gradient(135deg, #171c27, #090a0e)", color: "#fff", overflow: "hidden" }}>
+              <div style={{ color: "#f3a0ad", fontSize: ".78rem", fontWeight: 900, letterSpacing: ".12em", textAlign: "center", marginBottom: ".85rem" }}>PRÓXIMA JORNADA</div>
               {referenteNextMatch ? (() => {
-                const { match, participation, tournament, round, matchDate } = referenteNextMatch;
-                const homeIsMine = String(match.team1).trim().toLocaleLowerCase("es") === String(participation.club_name).trim().toLocaleLowerCase("es");
-                const homeName = match.team1;
-                const awayName = match.team2;
-                const homeClub = referenteMatchClubs.find((club) => String(club.club_name).trim().toLocaleLowerCase("es") === String(homeName).trim().toLocaleLowerCase("es"));
-                const awayClub = referenteMatchClubs.find((club) => String(club.club_name).trim().toLocaleLowerCase("es") === String(awayName).trim().toLocaleLowerCase("es"));
-                const homeLogo = homeClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(homeClub.logo_path).data.publicUrl : homeIsMine && participation.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(participation.logo_path).data.publicUrl : "";
-                const awayLogo = awayClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(awayClub.logo_path).data.publicUrl : !homeIsMine && participation.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(participation.logo_path).data.publicUrl : "";
+                const { tournament, round, matchDate } = referenteNextMatch;
+                const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+                const getClub = (name) => referenteMatchClubs.find((club) => normalize(club.club_name) === normalize(name));
                 const formattedDate = new Date(matchDate + "T12:00:00").toLocaleDateString("es-AR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
                 return <>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".6rem" }}>
-                    {[{ name: homeName, logo: homeLogo }, { name: awayName, logo: awayLogo }].map((club, index) => (
-                      <div key={club.name} style={{ minWidth: 0, textAlign: "center", animation: "fefutinNextShield 2.8s ease-in-out infinite", animationDelay: index ? ".25s" : "0s" }}>
-                        <div style={{ height: "76px", display: "grid", placeItems: "center", marginBottom: ".35rem" }}>
-                          {club.logo ? <img src={club.logo} alt={`Escudo de ${club.name}`} style={{ maxWidth: "72px", maxHeight: "72px", objectFit: "contain", filter: "drop-shadow(0 4px 8px rgba(0,0,0,.4))" }} /> : <span style={{ fontSize: "2.5rem" }}>⚽</span>}
+                  <div style={{ textAlign: "center", color: "#fff", fontWeight: 900, fontSize: ".95rem", marginBottom: ".25rem" }}>RAMA: {getTournamentDivision(tournament).toLocaleUpperCase("es")}</div>
+                  <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".78rem", fontWeight: 800, marginBottom: ".8rem" }}>FECHA {round} · {formattedDate}</div>
+                  <div style={{ display: "grid", gap: ".8rem" }}>
+                    {referenteClubJornadaMatches.map(({ match, groupIndex, categoryLabel }) => {
+                      const homeClub = getClub(match.team1);
+                      const awayClub = getClub(match.team2);
+                      const homeLogo = homeClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(homeClub.logo_path).data.publicUrl : "";
+                      const awayLogo = awayClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(awayClub.logo_path).data.publicUrl : "";
+                      const categoryParts = String(categoryLabel || "").split("·").map((part) => part.trim()).filter(Boolean);
+                      const categoryName = categoryParts.length > 1 ? categoryParts.slice(1).join(" · ") : categoryLabel;
+                      const address = String(homeClub?.headquarters_address || "").trim();
+                      return (
+                        <div key={`${groupIndex}-${match.id}`} style={{ padding: ".75rem", border: "1px solid #5b2732", borderRadius: "10px", background: "rgba(0,0,0,.25)" }}>
+                          <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".76rem", fontWeight: 900, marginBottom: ".55rem" }}>CATEGORÍA: {String(categoryName).toLocaleUpperCase("es")}</div>
+                          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".5rem" }}>
+                            {[{ name: match.team1, logo: homeLogo }, { name: match.team2, logo: awayLogo }].map((club, index) => (
+                              <div key={`${club.name}-${index}`} style={{ minWidth: 0, textAlign: "center" }}>
+                                <div style={{ height: "66px", display: "grid", placeItems: "center", marginBottom: ".3rem" }}>
+                                  {club.logo ? <img src={club.logo} alt={`Escudo de ${club.name}`} style={{ maxWidth: "62px", maxHeight: "62px", objectFit: "contain" }} /> : <span style={{ fontSize: "2.1rem" }}>⚽</span>}
+                                </div>
+                                <strong style={{ display: "block", fontSize: ".8rem", lineHeight: 1.25, overflowWrap: "anywhere" }}>{club.name}</strong>
+                              </div>
+                            ))}
+                            <strong style={{ color: "#f3a0ad", fontSize: "1rem", gridColumn: "2", gridRow: "1" }}>VS</strong>
+                          </div>
+                          <div style={{ marginTop: ".65rem", paddingTop: ".55rem", borderTop: "1px solid #493039", textAlign: "center", color: "#fff", fontSize: ".78rem" }}>
+                            <strong style={{ color: "#f3a0ad" }}>DIRECCIÓN DEL ENCUENTRO</strong>
+                            <div style={{ marginTop: ".2rem" }}>{address || "Dirección del club local no disponible"}</div>
+                          </div>
                         </div>
-                        <strong style={{ display: "block", fontSize: ".82rem", lineHeight: 1.25, overflowWrap: "anywhere" }}>{club.name}</strong>
-                      </div>
-                    ))}
-                    <strong style={{ color: "#f3a0ad", fontSize: "1.1rem", gridColumn: "2", gridRow: "1" }}>VS</strong>
+                      );
+                    })}
                   </div>
-                  <div style={{ textAlign: "center", marginTop: ".85rem", color: "#fff", fontSize: ".82rem", fontWeight: 800, textTransform: "capitalize" }}>{formattedDate}</div>
-                  <div style={{ textAlign: "center", marginTop: ".25rem", color: "#f3a0ad", fontSize: ".76rem", fontWeight: 800 }}>{getTournamentCategory(tournament)} · FECHA {round}</div>
-                  <button
-                    type="button"
-                    onClick={() => setShowReferenteJornadaSheets(true)}
-                    disabled={!referenteJornadaMatches.length}
-                    style={{ display: "block", width: "100%", marginTop: ".9rem", padding: ".8rem 1rem", border: "1px solid #f3a0ad", borderRadius: "9px", background: "#b5122a", color: "#fff", fontWeight: 900, letterSpacing: ".03em", cursor: referenteJornadaMatches.length ? "pointer" : "not-allowed", opacity: referenteJornadaMatches.length ? 1 : .6 }}
-                  >
-                    📋 VER TODAS LAS PLANILLAS · FECHA {round} ({referenteJornadaMatches.length})
+                  <button type="button" onClick={() => setShowReferenteJornadaSheets(true)} disabled={!referenteJornadaMatches.length}
+                    style={{ display: "block", width: "100%", marginTop: ".9rem", padding: ".8rem 1rem", border: "1px solid #f3a0ad", borderRadius: "9px", background: "#b5122a", color: "#fff", fontWeight: 900, letterSpacing: ".03em", cursor: referenteJornadaMatches.length ? "pointer" : "not-allowed", opacity: referenteJornadaMatches.length ? 1 : .6 }}>
+                    📋 PLANILLAS
                   </button>
                   {showReferenteJornadaSheets && (
                     <div role="dialog" aria-modal="true" aria-label="Planillas de la próxima jornada" style={{ position: "fixed", inset: 0, zIndex: 10000, display: "grid", placeItems: "center", padding: "1rem", background: "rgba(0,0,0,.82)" }}>
                       <div style={{ width: "100%", maxWidth: "520px", maxHeight: "85vh", overflowY: "auto", padding: "1rem", border: "2px solid #b5122a", borderRadius: "12px", background: "#101010", color: "#fff", boxSizing: "border-box" }}>
                         <h3 style={{ margin: "0 0 .35rem", textAlign: "center" }}>PLANILLAS · FECHA {round}</h3>
-                        <p style={{ margin: "0 0 1rem", color: "#ccc", textAlign: "center", fontSize: ".82rem" }}>{tournament.title || "Torneo FEFUTIN"} · {referenteJornadaMatches.length} partidos de tu club</p>
+                        <p style={{ margin: "0 0 1rem", color: "#ccc", textAlign: "center", fontSize: ".82rem" }}>{tournament.title || "Torneo FEFUTIN"} · {referenteJornadaMatches.length} partidos de la jornada</p>
                         <div style={{ display: "grid", gap: ".6rem" }}>
                           {referenteJornadaMatches.map(({ match: jornadaMatch, groupIndex, categoryLabel }) => (
-                            <button
-                              key={jornadaMatch.id}
-                              type="button"
+                            <button key={`${groupIndex}-${jornadaMatch.id}`} type="button"
                               onClick={() => {
                                 setShowReferenteJornadaSheets(false);
                                 setActiveTournament(tournament);
                                 setRefereeMatchToOpen({ phase: "groups", groupIndex, matchId: jornadaMatch.id });
                                 setActiveView("groups");
                               }}
-                              style={{ display: "grid", gap: ".25rem", width: "100%", padding: ".8rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#171c27", color: "#fff", textAlign: "left", cursor: "pointer" }}
-                            >
+                              style={{ display: "grid", gap: ".25rem", width: "100%", padding: ".8rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#171c27", color: "#fff", textAlign: "left", cursor: "pointer" }}>
                               <strong style={{ color: "#f3a0ad", fontSize: ".72rem" }}>{categoryLabel.toLocaleUpperCase("es")}</strong>
                               <span style={{ fontWeight: 900 }}>{jornadaMatch.team1} vs. {jornadaMatch.team2}</span>
                               <span style={{ color: "#ccc", fontSize: ".72rem" }}>ABRIR PLANILLA →</span>
@@ -5247,12 +5264,10 @@ export function TournamenSportApp() {
                       </div>
                     </div>
                   )}
-                  <style>{`@keyframes fefutinNextShield { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }`}</style>
                 </>;
-              })() : <p style={{ margin: 0, color: "#e5e7eb", fontSize: ".82rem", lineHeight: 1.5, textAlign: "center" }}>Todavía no hay un próximo encuentro programado para tu club. Cuando se cargue el fixture, aparecerá acá.</p>}
+              })() : <p style={{ margin: 0, color: "#e5e7eb", fontSize: ".82rem", lineHeight: 1.5, textAlign: "center" }}>Todavía no hay una próxima jornada programada para tu club. Cuando se cargue el fixture, aparecerá acá.</p>}
             </section>
           )}
-
           <button
             type="button"
             className="tc-home-about-card tc-home-about-card-shine"
