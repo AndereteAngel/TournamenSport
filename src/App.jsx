@@ -4336,14 +4336,10 @@ export function TournamenSportApp() {
       String(detail.referee_id || "") === String(currentUser?.id || "") &&
       !detail.referee_closed
     ).length, 0);
-  const referenteTournamentFormat = tournaments.find((item) =>
-    String(item.id) === String(referenteParticipations[0]?.tournament_id)
-  )?.format || "";
-
-  const getReferenteGroupMatchRound = (group, match) => {
+  const getReferenteGroupMatchRound = (group, match, tournament) => {
     const matches = Array.isArray(group?.matches) ? group.matches : [];
     const teams = Array.isArray(group?.teams) ? group.teams : [];
-    const isLeague = String(referenteTournamentFormat).trim().toLowerCase() === "league";
+    const isLeague = String(tournament?.format || "").trim().toLowerCase() === "league";
     const roundsAreMissing = isLeague && matches.length > 1 &&
       matches.every((item) => Number(item.round || 1) === 1);
     if (!roundsAreMissing) return Number(match.round || 1);
@@ -4398,7 +4394,7 @@ export function TournamenSportApp() {
           const clubName = normalize(participation.club_name);
           const isMyClub = normalize(match.team1) === clubName || normalize(match.team2) === clubName;
           if (!isMyClub || !match.team1 || !match.team2) return;
-          const round = getReferenteGroupMatchRound(group, match);
+          const round = getReferenteGroupMatchRound(group, match, tournament);
           const matchDate = match.match_date || getFefutinMatchDate(round);
           if (matchDate < todayKey) return;
           if (match.score1 !== null && match.score1 !== undefined &&
@@ -4432,7 +4428,7 @@ export function TournamenSportApp() {
         (group?.matches || []).forEach((match) => {
           const isMyClub = normalize(match.team1) === clubName || normalize(match.team2) === clubName;
           if (!isMyClub || !match.team1 || !match.team2 ||
-              getReferenteGroupMatchRound(group, match) !== referenteNextMatch.round) return;
+              getReferenteGroupMatchRound(group, match, referenteNextMatch.tournament) !== referenteNextMatch.round) return;
           const key = String(groupIndex) + "-" + String(match.id || normalize(match.team1) + "::" + normalize(match.team2));
           if (!matchesByKey.has(key)) {
             matchesByKey.set(key, {
@@ -4456,7 +4452,7 @@ export function TournamenSportApp() {
       if (group?.name === "__INSCRIPCIONES__") return [];
       return (group?.matches || [])
         .filter((match) =>
-          getReferenteGroupMatchRound(group, match) === referenteNextMatch.round &&
+          getReferenteGroupMatchRound(group, match, referenteNextMatch.tournament) === referenteNextMatch.round &&
           match.team1 && match.team2
         )
         .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || group?.name || "" }));
