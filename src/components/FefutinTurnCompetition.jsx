@@ -56,6 +56,7 @@ export function FefutinTurnCompetition({
   const [competition, setCompetition] = useState(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedMatch, setSelectedMatch] = useState(null);
+  const [referees, setReferees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
@@ -88,11 +89,46 @@ export function FefutinTurnCompetition({
 
   useEffect(() => { loadCompetition(); }, [loadCompetition]);
 
+  useEffect(() => {
+    let active = true;
+    if (!canManage) {
+      setReferees([]);
+      return () => { active = false; };
+    }
+    supabase.from("profiles")
+      .select("id, username, role, approval_status, deactivated_at")
+      .eq("role", "arbitro")
+      .eq("approval_status", "aprobado")
+      .is("deactivated_at", null)
+      .order("username")
+      .then(({ data, error: queryError }) => {
+        if (!active) return;
+        if (queryError) {
+          console.error("No se pudo cargar el directorio de arbitros:", queryError);
+          setReferees([]);
+          return;
+        }
+        setReferees(data || []);
+      });
+    return () => { active = false; };
+  }, [canManage]);
+
+  const assignReferee = async (matchId, refereeId) => {
+    const { error: assignError } = await supabase.rpc("assign_fefutin_normalized_match_referee", {
+      p_match_id: matchId,
+      p_referee_id: refereeId || null,
+    });
+    if (assignError) {
+      setError(assignError.message || "No se pudo asignar el árbitro.");
+      return;
+    }
+    setNotice(refereeId ? "Árbitro asignado al encuentro." : "Se quitó la designación del encuentro.");
+    await loadCompetition();
+  };
+
   const categories = competition?.categories || [];
   const activeCategory = categories.find((item) => String(item.tournament_category_id) === String(selectedCategoryId)) || categories[0] || null;
   const standings = useMemo(() => buildStandings(activeCategory), [activeCategory]);
-  const matchCount = categories.reduce((total, category) =>
-    total + (category.rounds || []).reduce((roundTotal, round) => roundTotal + (round.matches || []).length, 0), 0);
   const allFormatsSupported = categories.every((category) => category.format === "league");
 
   const startTurn = async () => {
@@ -202,7 +238,21 @@ export function FefutinTurnCompetition({
                     <div key={match.id} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: ".5rem", alignItems: "center", padding: ".65rem", background: "#171c27", borderRadius: "8px" }}>
                       <div style={{ minWidth: 0 }}>
                         <strong style={{ display: "block", overflowWrap: "anywhere" }}>{match.team1} <span style={{ color: "#f3a0ad" }}>{match.score1 == null ? "—" : match.score1} - {match.score2 == null ? "—" : match.score2}</span> {match.team2}</strong>
-                        <small style={{ color: "#aaa" }}>{match.scheduled_time || "Horario a confirmar"} · {match.referee_id ? (assigned ? "Tu designación" : "Árbitro designado") : "Sin árbitro"}</small>
+                        <small style={{ color: "#aaa" }}>{match.scheduled_time || "Horario a confirmar"} · {match.referee_name || (assigned ? "Tu designación" : match.referee_id ? "Árbitro designado" : "Sin árbitro")}</small>
+                        {canManage && (
+                          <label style={{ display: "flex", alignItems: "center", gap: ".4rem", marginTop: ".45rem", color: "#bbb", fontSize: ".68rem" }}>
+                            Árbitro
+                            <select
+                              value={match.referee_id || ""}
+                              disabled={match.referee_closed}
+                              onChange={(event) => assignReferee(match.id, event.target.value)}
+                              style={{ minWidth: 0, maxWidth: "100%", padding: ".35rem", borderRadius: "6px", background: "#fff", color: "#171c27" }}
+                            >
+                              <option value="">Sin designar</option>
+                              {referees.map((referee) => <option key={referee.id} value={referee.id}>{referee.username}</option>)}
+                            </select>
+                          </label>
+                        )}
                       </div>
                       {canOpenSheet && (
                         <button type="button" onClick={() => setSelectedMatch(match)} style={{ padding: ".55rem .65rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#b5122a", color: "#fff", fontSize: ".68rem", fontWeight: 900 }}>
