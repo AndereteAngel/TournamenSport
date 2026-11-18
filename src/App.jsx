@@ -2425,12 +2425,14 @@ export function TournamenSportApp() {
   const [activeTournament, setActiveTournament] = useState(null);
   const [refereeMatchToOpen, setRefereeMatchToOpen] = useState(null);
   const [normalizedMatchToOpen, setNormalizedMatchToOpen] = useState(null);
+  const [normalizedMatchReturnView, setNormalizedMatchReturnView] = useState("referee-designations");
   const [normalizedRefereeJourneyRows, setNormalizedRefereeJourneyRows] = useState([]);
   const [fefutinTurnsForActiveTournament, setFefutinTurnsForActiveTournament] = useState([]);
   const [activeFefutinTurn, setActiveFefutinTurn] = useState(null);
   const [topScorersReturnView, setTopScorersReturnView] = useState("groups");
   const [fefutinTournamentClubs, setFefutinTournamentClubs] = useState([]);
   const [referenteParticipations, setReferenteParticipations] = useState([]);
+  const [referenteNormalizedNextJourney, setReferenteNormalizedNextJourney] = useState(null);
   const [referenteMatchClubs, setReferenteMatchClubs] = useState([]);
   const [showReferenteJornadaSheets, setShowReferenteJornadaSheets] = useState(false);
   const [referenteSheetCategoryFilter, setReferenteSheetCategoryFilter] = useState("Todas");
@@ -3027,7 +3029,7 @@ export function TournamenSportApp() {
         setReferenteMatchClubs([]);
         return;
       }
-      const { data, error } = await supabase.rpc("get_fefutin_my_teams");
+      const { data, error } = await supabase.rpc("get_fefutin_my_turn_teams");
       if (cancelled) return;
       if (error) {
         console.error("Error al cargar las inscripciones del referente:", error);
@@ -3037,6 +3039,26 @@ export function TournamenSportApp() {
       }
     };
     loadReferenteParticipations();
+    return () => { cancelled = true; };
+  }, [isReferente, currentUser?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadReferenteNextJourney = async () => {
+      if (!isReferente || !currentUser?.id) {
+        setReferenteNormalizedNextJourney(null);
+        return;
+      }
+      const { data, error } = await supabase.rpc("get_fefutin_my_next_turn_journey");
+      if (cancelled) return;
+      if (error) {
+        console.error("No se pudo cargar la próxima jornada normalizada del referente:", error);
+        setReferenteNormalizedNextJourney(null);
+      } else {
+        setReferenteNormalizedNextJourney(data || null);
+      }
+    };
+    loadReferenteNextJourney();
     return () => { cancelled = true; };
   }, [isReferente, currentUser?.id]);
 
@@ -4515,7 +4537,7 @@ export function TournamenSportApp() {
     return roundByPair.get([match.team1, match.team2].sort().join("::")) || 1;
   };
 
-  const referenteNextMatch = (() => {
+  const legacyReferenteNextMatch = (() => {
     if (!isReferente || !referenteParticipations.length || !tournaments.length) return null;
     const today = new Date();
     const todayKey = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, "0"), String(today.getDate()).padStart(2, "0")].join("-");
@@ -4550,9 +4572,29 @@ export function TournamenSportApp() {
     return candidates[0] || null;
   })();
 
+  const referenteNextMatch = (() => {
+    if (!referenteNormalizedNextJourney) return legacyReferenteNextMatch;
+    const tournament = tournaments.find((item) =>
+      String(item.id) === String(referenteNormalizedNextJourney.tournament_id)
+    ) || {
+      id: referenteNormalizedNextJourney.tournament_id,
+      title: referenteNormalizedNextJourney.tournament_title || "Torneo FEFUTIN",
+      game: `Fútbol · ${referenteNormalizedNextJourney.branch_name || ""}`,
+    };
+    return {
+      tournament,
+      round: Number(referenteNormalizedNextJourney.journey_number) || 1,
+      matchDate: String(referenteNormalizedNextJourney.scheduled_date || "").slice(0, 10),
+      turn_id: referenteNormalizedNextJourney.turn_id,
+      turno: referenteNormalizedNextJourney.turno,
+      turn_journey_id: referenteNormalizedNextJourney.turn_journey_id,
+      normalized: true,
+    };
+  })();
+
   // La jornada del referente reúne sus partidos de todas las categorías
   // que estén programados para la misma fecha; no se agrupa por número de ronda.
-  const referenteClubJornadaMatches = (() => {
+  const legacyReferenteClubJornadaMatches = (() => {
     if (!referenteNextMatch?.tournament) return [];
     const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const participations = referenteParticipations.filter((item) =>
@@ -4593,6 +4635,17 @@ export function TournamenSportApp() {
     );
   })();
 
+  const referenteClubJornadaMatches = referenteNormalizedNextJourney
+    ? (Array.isArray(referenteNormalizedNextJourney.matches) ? referenteNormalizedNextJourney.matches : [])
+        .map((match, index) => ({
+          match,
+          groupIndex: null,
+          categoryLabel: match.categoria || match.category_name || `Categoría ${index + 1}`,
+          matchDate: match.match_date || referenteNormalizedNextJourney.scheduled_date,
+        }))
+        .sort((a, b) => String(a.categoryLabel).localeCompare(String(b.categoryLabel), "es", { numeric: true }))
+    : legacyReferenteClubJornadaMatches;
+
   // La planilla general contiene todos los partidos del referente en esa fecha,
   // no los encuentros de otros clubes que coincidan con la misma ronda.
   const referenteJornadaMatches = referenteClubJornadaMatches;
@@ -4604,9 +4657,13 @@ export function TournamenSportApp() {
         setReferenteMatchClubs([]);
         return;
       }
-      const { data, error } = await supabase.rpc("get_fefutin_tournament_clubs", {
-        p_tournament_id: referenteNextMatch.tournament.id,
-      });
+      const { data, error } = referenteNormalizedNextJourney?.turn_id
+        ? await supabase.rpc("get_fefutin_tournament_turn_clubs", {
+            p_turn_id: referenteNormalizedNextJourney.turn_id,
+          })
+        : await supabase.rpc("get_fefutin_tournament_clubs", {
+            p_tournament_id: referenteNextMatch.tournament.id,
+          });
       if (cancelled) return;
       if (error) {
         console.error("No se pudieron cargar los datos de los clubes de la próxima jornada:", error);
@@ -4615,7 +4672,7 @@ export function TournamenSportApp() {
     };
     loadMatchClubs();
     return () => { cancelled = true; };
-  }, [isReferente, referenteNextMatch?.tournament?.id]);
+  }, [isReferente, referenteNextMatch?.tournament?.id, referenteNormalizedNextJourney?.turn_id]);
 
   const openTournament = async (tournament) => {
     setActiveTournament(tournament);
