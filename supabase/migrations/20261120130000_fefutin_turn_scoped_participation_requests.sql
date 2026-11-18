@@ -171,7 +171,7 @@ begin
   join public.fefutin_tournament_turns tt on tt.id = r.turn_id
   join public.tournaments t on t.id = r.tournament_id
   left join public.fefutin_tournament_categories tc
-    on tc.turn_id = tt.id and tc.status <> 'suspendida'
+    on tc.turn_id = tt.id and tc.status = 'inscripcion'
   left join public.fefutin_categories c on c.id = tc.category_id
   left join public.fefutin_branches b on b.id = c.branch_id
   where r.club_id = v_profile.club_id
@@ -227,7 +227,7 @@ begin
   join public.fefutin_clubs c on c.id = r.club_id
   join public.profiles p on p.id = c.referente_user_id
   left join public.fefutin_tournament_categories tc
-    on tc.turn_id = tt.id and tc.status <> 'suspendida'
+    on tc.turn_id = tt.id and tc.status = 'inscripcion'
   left join public.fefutin_categories cat on cat.id = tc.category_id
   left join public.fefutin_branches b on b.id = cat.branch_id
   where r.status = 'pendiente'
@@ -285,7 +285,7 @@ begin
   select count(*)::integer into v_expected_count
   from public.fefutin_tournament_categories tc
   where tc.turn_id = v_request.turn_id
-    and tc.status <> 'suspendida';
+    and tc.status = 'inscripcion';
 
   if p_approve then
     update public.fefutin_tournament_category_clubs tcc
@@ -316,7 +316,7 @@ begin
     join public.fefutin_categories cat on cat.id = tc.category_id
     join public.fefutin_branches b on b.id = cat.branch_id
     where tc.turn_id = v_request.turn_id
-      and tc.status <> 'suspendida'
+      and tc.status = 'inscripcion'
     on conflict (club_id, tournament_id, turn_id, category_label)
       where turn_id is not null
       do nothing;
