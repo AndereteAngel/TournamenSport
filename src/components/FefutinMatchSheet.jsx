@@ -42,7 +42,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
   const [sheetId, setSheetId] = useState(null);
   const [activeSide, setActiveSide] = useState(initialSide === "visitante" ? "visitante" : "local");
   const [metadata, setMetadata] = useState({
-    jornada: String(match?.round || ""),
+    jornada: String(match?.journey_number || match?.round || ""),
     sede: "",
     fecha_partido: "",
     arbitro_designado: "",
