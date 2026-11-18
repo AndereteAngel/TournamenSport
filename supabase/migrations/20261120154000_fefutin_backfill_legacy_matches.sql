@@ -71,7 +71,7 @@ begin
           continue;
         end if;
 
-        if jsonb_typeof(v_group.value->'matches') <> 'array' then
+        if coalesce(jsonb_typeof(v_group.value->'matches'), '') <> 'array' then
           continue;
         end if;
 
@@ -187,6 +187,18 @@ begin
             end if;
 
             if v_category_id is null then
+              select count(*)::integer into v_turn_count
+              from public.fefutin_tournament_categories tc
+              where tc.turn_id = v_turn_id;
+              if v_turn_count = 1 then
+                select tc.id, tc.format
+                  into v_category_id, v_category_format
+                from public.fefutin_tournament_categories tc
+                where tc.turn_id = v_turn_id;
+              end if;
+            end if;
+
+            if v_category_id is null then
               v_reason := 'No se pudo asociar el partido a una categoria concreta del turno.';
             elsif v_category_format <> 'league' then
               v_reason := 'El formato de esta categoria requiere una migracion especifica de grupos o eliminatorias.';
@@ -263,26 +275,26 @@ begin
             v_score2 := case when coalesce(v_match.value->>'score2', '') ~ '^\d+$' then (v_match.value->>'score2')::integer else null end;
             v_status := case when v_referee_closed then 'finalizado' else 'programado' end;
 
-            insert into public.fefutin_turn_journeys (
+            insert into public.fefutin_turn_journeys as existing_journey (
               turn_id, journey_number, scheduled_date, status
             )
             values (
-              v_turn_id, v_round_number, v_match_date, case when v_referee_closed then 'finalizada' else 'pendiente' end
+              v_turn_id, v_round_number, v_match_date, 'pendiente'
             )
             on conflict (turn_id, journey_number) do update
-              set scheduled_date = coalesce(public.fefutin_turn_journeys.scheduled_date, excluded.scheduled_date)
+              set scheduled_date = coalesce(existing_journey.scheduled_date, excluded.scheduled_date)
             returning id into v_journey_id;
 
-            insert into public.fefutin_rounds (
+            insert into public.fefutin_rounds as existing_round (
               tournament_category_id, turn_journey_id, round_number, name, scheduled_date, status
             )
             values (
               v_category_id, v_journey_id, v_round_number, 'Jornada ' || v_round_number::text,
-              v_match_date, case when v_referee_closed then 'finalizada' else 'pendiente' end
+              v_match_date, 'pendiente'
             )
             on conflict (tournament_category_id, round_number) do update
-              set turn_journey_id = coalesce(public.fefutin_rounds.turn_journey_id, excluded.turn_journey_id),
-                  scheduled_date = coalesce(public.fefutin_rounds.scheduled_date, excluded.scheduled_date)
+              set turn_journey_id = coalesce(existing_round.turn_journey_id, excluded.turn_journey_id),
+                  scheduled_date = coalesce(existing_round.scheduled_date, excluded.scheduled_date)
             returning id into v_round_id;
 
             insert into public.fefutin_matches (
@@ -361,5 +373,94 @@ begin
   end loop;
 end;
 $migration$;
+
+-- Actualizar el estado de la ronda/jornada solo cuando todos sus partidos quedaron cerrados.
+update public.fefutin_rounds r
+set status = 'finalizada',
+    updated_at = now()
+where exists (
+  select 1 from public.fefutin_matches m
+  where m.round_id = r.id
+)
+and not exists (
+  select 1 from public.fefutin_matches m
+  where m.round_id = r.id
+    and m.status <> 'finalizado'
+);
+
+update public.fefutin_turn_journeys j
+set status = 'finalizada',
+    updated_at = now()
+where exists (
+  select 1
+  from public.fefutin_rounds r
+  join public.fefutin_matches m on m.round_id = r.id
+  where r.turn_journey_id = j.id
+)
+and not exists (
+  select 1
+  from public.fefutin_rounds r
+  join public.fefutin_matches m on m.round_id = r.id
+  where r.turn_journey_id = j.id
+    and m.status <> 'finalizado'
+);
+
+-- Vincular las planillas digitales históricas al UUID nuevo solo cuando el id
+-- legacy identifica un unico partido dentro del torneo. Las filas de jugadores
+-- y las fotos siguen unidas a la misma planilla y no se modifican.
+with unique_legacy_matches as (
+  select
+    m.id as normalized_match_id,
+    m.legacy_tournament_id as tournament_id,
+    m.legacy_match_payload->>'id' as source_match_id,
+    tt.id as turn_id,
+    tc.id as tournament_category_id,
+    count(*) over (
+      partition by m.legacy_tournament_id, m.legacy_match_payload->>'id'
+    ) as duplicate_count
+  from public.fefutin_matches m
+  join public.fefutin_rounds r on r.id = m.round_id
+  join public.fefutin_tournament_categories tc on tc.id = r.tournament_category_id
+  join public.fefutin_tournament_turns tt on tt.id = tc.turn_id
+  where m.legacy_tournament_id is not null
+    and m.legacy_phase = 'groups'
+    and nullif(m.legacy_match_payload->>'id', '') is not null
+)
+update public.fefutin_match_sheets sheet
+set normalized_match_id = legacy.normalized_match_id,
+    turn_id = legacy.turn_id,
+    tournament_category_id = legacy.tournament_category_id
+from unique_legacy_matches legacy
+where legacy.duplicate_count = 1
+  and sheet.tournament_id = legacy.tournament_id
+  and sheet.match_id = legacy.source_match_id
+  and sheet.normalized_match_id is null;
+
+-- Vincular el archivo general por fecha y turno solo cuando la jornada es unica.
+with unique_journeys as (
+  select
+    j.id as turn_journey_id,
+    j.turn_id,
+    tt.tournament_id,
+    j.scheduled_date,
+    count(*) over (
+      partition by tt.tournament_id, j.scheduled_date
+    ) as match_count
+  from public.fefutin_turn_journeys j
+  join public.fefutin_tournament_turns tt on tt.id = j.turn_id
+  where j.scheduled_date is not null
+)
+update public.fefutin_jornada_sheets archive
+set turn_journey_id = journey.turn_journey_id,
+    turn_id = journey.turn_id,
+    turno = tt.turno,
+    journey_number = j.journey_number
+from unique_journeys journey
+join public.fefutin_tournament_turns tt on tt.id = journey.turn_id
+join public.fefutin_turn_journeys j on j.id = journey.turn_journey_id
+where journey.match_count = 1
+  and archive.tournament_id = journey.tournament_id
+  and archive.jornada_date = journey.scheduled_date
+  and archive.turn_journey_id is null;
 
 commit;
