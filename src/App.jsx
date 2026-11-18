@@ -4306,10 +4306,19 @@ export function TournamenSportApp() {
   };
 
   const tournamentCategories = [...new Set(
-    tournaments.map((tournament) =>
-      getTournamentCategory(tournament)
-    ).filter(Boolean)
-  )].sort((a, b) => a.localeCompare(b, "es"));
+    tournaments.flatMap((tournament) => {
+      const registration = (Array.isArray(tournament?.groups) ? tournament.groups : [])
+        .find((group) => group?.name === "__INSCRIPCIONES__");
+      const configured = (Array.isArray(registration?.category_config) ? registration.category_config : [])
+        .flatMap((branch) => Array.isArray(branch?.categories) ? branch.categories : [])
+        .map((category) => String(category || "").trim())
+        .filter(Boolean);
+      if (configured.length) return configured;
+      const identity = (String(tournament?.title || "") + " " + String(tournament?.game || "")).toLocaleLowerCase("es");
+      if (identity.includes("fefutin") && identity.includes("futsal")) return ["U15", "U17", "Primera"];
+      return [getTournamentCategory(tournament)];
+    }).filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
 
   const getTournamentDivision = (tournament) => {
     const registrationGroup = (Array.isArray(tournament?.groups) ? tournament.groups : [])
@@ -4343,51 +4352,47 @@ export function TournamenSportApp() {
         String(branch?.division || "").toLocaleLowerCase("es").includes("futsal")
       );
 
-    // FEFUTIN Futsal es una única inscripción que habilita tres categorías.
-    // No dependemos de que el registro antiguo tenga completa category_config.
-    const isFefutinFutsal = hasFefutinIdentity && hasFutsalIdentity;
-    const categoryEntries = isFefutinFutsal
-      ? ["U15", "U17", "Primera"].map((category) => ({
+    const categoryEntries = configuredBranches.flatMap((branch) => {
+      const division = String(branch?.division || "").trim();
+      const categories = (Array.isArray(branch?.categories) ? branch.categories : [])
+        .map((category) => String(category || "").trim())
+        .filter(Boolean);
+      return categories.map((category) => ({
+        division,
+        categoryType: String(branch?.categoryType || "").trim(),
+        category,
+      }));
+    }).filter((entry) => entry.division && entry.category);
+
+    // Compatibilidad con el torneo FEFUTIN Futsal anterior a category_config.
+    if (!categoryEntries.length && hasFefutinIdentity && hasFutsalIdentity) {
+      categoryEntries.push(
+        ...["U15", "U17", "Primera"].map((category) => ({
           division: "Futsal",
           categoryType: "Categoría",
           category,
         }))
-      : configuredBranches.flatMap((branch) => {
-          const division = String(branch.division || "").trim();
-          const configuredCategories = (Array.isArray(branch.categories) ? branch.categories : [])
-            .map((category) => String(category || "").trim()).filter(Boolean);
-          return configuredCategories.map((category) => ({
-            division,
-            categoryType: String(branch.categoryType || "").trim(),
-            category,
-          }));
-        }).filter((entry) => entry.division && entry.category);
+      );
+    }
 
-    const displayTournaments = categoryEntries.length
-      ? categoryEntries.map((entry) => {
-          const displayGame = `Fútbol · ${entry.division} · ${entry.category}`;
-          const displayGroups = (Array.isArray(tournament.groups) ? tournament.groups : []).map((group) =>
-            group?.name === "__INSCRIPCIONES__"
-              ? { ...group, category_config: [{ division: entry.division, categoryType: entry.categoryType, categories: [entry.category] }] }
-              : group
-          );
-          return {
-            ...tournament,
-            game: displayGame,
-            category_detail: entry.category,
-            groups: displayGroups,
-            displayKey: `${tournament.id}-${entry.division}-${entry.category}`,
-          };
-        })
-      : [{ ...tournament, displayKey: String(tournament.id) }];
+    const divisions = [...new Set(categoryEntries.map((entry) => entry.division))];
+    const division = divisions[0] || getTournamentDivision(tournament);
+    const categoryList = [...new Set(categoryEntries.map((entry) => entry.category))];
+    const displayTournament = {
+      ...tournament,
+      game: `Fútbol · ${division}`,
+      category_detail: categoryList.length ? categoryList.join(" · ") : getTournamentCategory(tournament),
+      category_list: categoryList,
+      displayKey: String(tournament.id),
+    };
 
-    return displayTournaments.filter((displayTournament) => {
-      const matchesCategory = tournamentCategoryFilter === "Todas" ||
-        getTournamentCategory(displayTournament) === tournamentCategoryFilter;
-      const matchesDivision = tournamentDivisionFilter === "Todas" ||
-        getTournamentDivision(displayTournament) === tournamentDivisionFilter;
-      return matchesCategory && matchesDivision;
-    });
+    const matchesCategory = tournamentCategoryFilter === "Todas" ||
+      (displayTournament.category_list || []).some((category) => category === tournamentCategoryFilter) ||
+      (!(displayTournament.category_list || []).length && getTournamentCategory(displayTournament) === tournamentCategoryFilter);
+    const matchesDivision = tournamentDivisionFilter === "Todas" ||
+      getTournamentDivision(displayTournament) === tournamentDivisionFilter;
+
+    return matchesCategory && matchesDivision ? [displayTournament] : [];
   });
 
   const normalizedAssignedRefereeMatches = normalizedRefereeJourneyRows.flatMap((journey) =>
