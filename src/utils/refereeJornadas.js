@@ -58,8 +58,18 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
       turno.toLocaleLowerCase("es"),
     ].join("|");
     const categoria = getTournamentCategory(tournament);
-    const cruce = [normalizarEquipo(team1), normalizarEquipo(team2)].sort().join("::");
-    const key = competencia + "::" + cruce;
+    const roundNumberValue = match?.round ?? match?.journey_number ??
+      (ubicacion.roundIndex != null ? ubicacion.roundIndex + 1 : null);
+    const roundNumber = roundNumberValue != null && /^\\d+$/.test(String(roundNumberValue))
+      ? Number(roundNumberValue)
+      : null;
+    const matchDate = String(match?.match_date || match?.scheduled_date || match?.date || "").slice(0, 10);
+    const journeyIdentity = matchDate
+      ? `fecha:${matchDate}`
+      : roundNumber
+        ? `jornada:${roundNumber}`
+        : `partido:${String(match?.id || instancia)}`;
+    const key = competencia + "::" + journeyIdentity;
     const asignado = String(match?.referee_id || "") === String(refereeId);
 
     if (!jornadas.has(key)) {
@@ -82,6 +92,8 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
           puntosTeam2: 0,
           categoriasSet: new Set(),
           detallesPartidos: [],
+          scheduled_date: matchDate || null,
+          journey_number: roundNumber,
         });
       } else {
         return;
@@ -90,6 +102,8 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
     if (!incluirTodasLasCategorias && !asignado) return;
 
     const jornada = jornadas.get(key);
+    if (!jornada.scheduled_date && matchDate) jornada.scheduled_date = matchDate;
+    if (!jornada.journey_number && roundNumber) jornada.journey_number = roundNumber;
     const score1 = Number(match?.score1);
     const score2 = Number(match?.score2);
     const resultadoCargado = match?.score1 != null && match?.score2 != null &&
@@ -118,7 +132,7 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
       phase: ubicacion.phase,
       groupIndex: ubicacion.groupIndex ?? null,
       roundIndex: ubicacion.roundIndex ?? null,
-      round: match?.round || (ubicacion.roundIndex != null ? ubicacion.roundIndex + 1 : null),
+      round: roundNumber,
       groupName: ubicacion.groupName || instancia,
       categoria,
       team1,
@@ -132,6 +146,8 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
       tournament_id: tournament.id || null,
       referee_id: match?.referee_id || null,
       referee_closed: Boolean(match?.referee_closed),
+      scheduled_date: matchDate || null,
+      scheduled_time: match?.scheduled_time || null,
       fechaOrden: match?.result_loaded_at ? new Date(match.result_loaded_at).getTime() : 0,
     });
   };
@@ -164,7 +180,7 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
 
   // Primero se identifican las jornadas que tienen al menos un partido asignado.
   recorrerPartidos(false);
-  // Luego se agregan los demás partidos de ese mismo cruce y torneo.
+  // Luego se agregan los demás partidos de esa misma jornada, rama y turno.
   recorrerPartidos(true);
 
   // También se incluyen las categorías de la rama aunque el fixture de esa categoría
@@ -175,7 +191,7 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
         String(tournament?.title || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
         String(tournament?.created_by_user_id || tournament?.created_by || "").trim().toLocaleLowerCase("es"),
         obtenerRama(tournament).toLocaleLowerCase("es"),
-        obtenerTurno(tournament).toLocaleLowerCase("es"),
+        (obtenerTurno(tournament) || "Turno sin identificar").toLocaleLowerCase("es"),
       ].join("|");
       const competenciaJornada = [
         String(jornada.torneo || "Torneo sin nombre").trim().toLocaleLowerCase("es"),
@@ -221,7 +237,9 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
       a.instancia.localeCompare(b.instancia, "es")
     ),
   })).sort((a, b) =>
-    a.team1.localeCompare(b.team1, "es") || a.team2.localeCompare(b.team2, "es")
+    String(a.scheduled_date || "").localeCompare(String(b.scheduled_date || "")) ||
+    Number(a.journey_number || 0) - Number(b.journey_number || 0) ||
+    a.turno.localeCompare(b.turno, "es")
   );
 };
 
