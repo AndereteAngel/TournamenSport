@@ -60,6 +60,7 @@ begin
         'score1', m.local_score,
         'score2', m.visitor_score,
         'referee_id', m.referee_id,
+        'referee_name', (select p.username from public.profiles p where p.id = m.referee_id),
         'referee_closed', m.status = 'finalizado' or m.referee_closed_at is not null,
         'referee_closed_at', m.referee_closed_at,
         'round', tj.journey_number,
