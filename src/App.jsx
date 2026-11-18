@@ -3410,7 +3410,7 @@ export function TournamenSportApp() {
 
       return {
         code: randomCode,
-        title: config.title,
+        title: branch.division,
         game: `Fútbol · ${branch.division}`,
         format: config.format,
         qualifiers_per_group: config.qualifiersPerGroup,
