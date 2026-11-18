@@ -45,7 +45,7 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
           tournamentId: item.tournament.id,
           turnId: item.turn_id || null,
           turnJourneyId: item.turn_journey_id || null,
-          turno: item.turno || (String(item.tournament.game || "").toLocaleLowerCase("es").includes("fin de semana") ? "Fin de semana" : "Semanal"),
+          turno: item.turno || (String(item.tournament.game || "").toLocaleLowerCase("es").includes("fin de semana") ? "Fin de semana" : String(item.tournament.game || "").toLocaleLowerCase("es").includes("semanal") ? "Semanal" : "Turno sin identificar"),
           journeyNumber: item.journey_number || item.round || null,
           scheduledDate: item.scheduled_date || null,
           title: item.tournamentTitle || item.tournament.title || "Torneo FEFUTIN",
@@ -239,7 +239,9 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
   };
   const getTournamentTurn = (tournament) => {
     const parts = String(tournament?.game || "").split("·").map((part) => part.trim().toLocaleLowerCase("es"));
-    return parts.includes("fin de semana") ? "Fin de semana" : "Semanal";
+    if (parts.includes("fin de semana")) return "Fin de semana";
+    if (parts.includes("semanal")) return "Semanal";
+    return null;
   };
   const getSheetTurn = (sheet) =>
     sheet?.turno ||
