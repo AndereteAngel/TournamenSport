@@ -5077,6 +5077,36 @@ export function TournamenSportApp() {
             <p style={{ color: "#bbb", margin: 0, fontSize: ".82rem" }}>Elegí el turno. Cada turno tiene sus propias categorías, inscripciones, jornadas y partidos.</p>
           </header>
           <div style={{ display: "grid", gap: ".7rem" }}>
+            {canManageTournaments && ["Semanal", "Fin de semana"]
+              .filter((turno) => !fefutinTurnsForActiveTournament.some((turn) => turn.turno === turno))
+              .map((turno) => (
+                <button
+                  key={turno}
+                  type="button"
+                  onClick={async () => {
+                    const { error: createTurnError } = await supabase.rpc("create_fefutin_tournament_turn", {
+                      p_tournament_id: activeTournament.id,
+                      p_turno: turno,
+                    });
+                    if (createTurnError) {
+                      showNotice(createTurnError.message || "No se pudo crear el turno.");
+                      return;
+                    }
+                    const { data, error: refreshError } = await supabase.rpc("get_fefutin_tournament_turns", {
+                      p_tournament_id: activeTournament.id,
+                    });
+                    if (refreshError) {
+                      showNotice(refreshError.message || "El turno se creó, pero no se pudo actualizar la lista.");
+                      return;
+                    }
+                    setFefutinTurnsForActiveTournament(data || []);
+                    showNotice(`Se creó el turno ${turno} con las categorías de la rama. Las inscripciones comienzan vacías.`);
+                  }}
+                  style={{ padding: ".8rem", border: "1px dashed #b5122a", borderRadius: "9px", background: "#111", color: "#ffb3bf", fontWeight: 900 }}
+                >
+                  + CREAR TURNO {turno.toLocaleUpperCase("es")}
+                </button>
+              ))}
             {fefutinTurnsForActiveTournament.map((turn) => (
               <button key={turn.turn_id} type="button" onClick={() => { setActiveFefutinTurn(turn); setActiveView("fefutin-turn-competition"); }} style={{ display: "grid", gap: ".4rem", padding: "1rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171c27", color: "#fff", textAlign: "left" }}>
                 <strong style={{ color: "#f3a0ad", fontSize: "1rem" }}>{turn.turno}</strong>
