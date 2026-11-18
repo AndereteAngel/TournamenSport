@@ -19,11 +19,13 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
         resultadoCargado: Boolean(detail.resultadoCargado),
         referee_id: detail.referee_id || null,
         referee_closed: Boolean(detail.referee_closed),
+        legacy_pending_review: Boolean(detail.legacy_pending_review),
       }));
     const assignedMatches = details.filter((detail) =>
       String(detail.referee_id || "") === String(currentUser?.id || "")
     );
-    const allClosed = details.length > 0 && details.every((detail) => detail.referee_closed);
+    const legacyPendingReview = details.some((detail) => detail.legacy_pending_review);
+    const allClosed = details.length > 0 && details.every((detail) => detail.referee_closed) && !legacyPendingReview;
     return {
       key: jornada.key,
       jornadaKey: jornada.jornadaKey || jornada.key,
@@ -41,6 +43,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       details,
       assignedMatches,
       allClosed,
+      legacyPendingReview,
       matchCount: details.length,
       partidosJugados: details.filter((detail) => detail.resultadoCargado).length,
     };
@@ -240,8 +243,8 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
               })}
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", flexWrap: "wrap", marginTop: ".75rem" }}>
-              <span style={{ color: archived ? "#86efac" : jornada.allClosed ? "#86efac" : "#fcd34d", fontSize: ".72rem", fontWeight: 800 }}>
-                {archived ? "PLANILLA GENERAL ARCHIVADA" : jornada.allClosed ? "TODOS LOS ENCUENTROS CERRADOS" : `${jornada.assignedMatches.length} PARTIDO(S) ASIGNADO(S) A VOS`}
+              <span style={{ color: archived ? "#86efac" : jornada.legacyPendingReview ? "#fca5a5" : jornada.allClosed ? "#86efac" : "#fcd34d", fontSize: ".72rem", fontWeight: 800 }}>
+                {archived ? "PLANILLA GENERAL ARCHIVADA" : jornada.legacyPendingReview ? "HAY PARTIDOS ANTIGUOS PENDIENTES DE REVISIÓN" : jornada.allClosed ? "TODOS LOS ENCUENTROS CERRADOS" : `${jornada.assignedMatches.length} PARTIDO(S) ASIGNADO(S) A VOS`}
               </span>
               <button type="button" disabled={!jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey === jornada.jornadaKey || Boolean(savingKey)} onClick={() => archiveJornada(jornada)} style={{ padding: ".65rem .8rem", border: "1px solid #b5122a", borderRadius: "8px", background: archived ? "#333" : "#b5122a", color: "#fff", fontWeight: 900, opacity: !jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey ? .55 : 1 }}>
                 {archived ? "GUARDADA EN ARCHIVO" : savingKey === jornada.jornadaKey ? "GUARDANDO..." : "CERRAR Y ARCHIVAR PLANILLA"}
