@@ -108,6 +108,41 @@ begin
       join public.fefutin_clubs away_club on away_club.id = m.visitor_club_id
       where r.turn_journey_id = v_next.turn_journey_id
         and (m.local_club_id = v_profile.club_id or m.visitor_club_id = v_profile.club_id)
+    ), '[]'::jsonb),
+    'all_matches', coalesce((
+      select jsonb_agg(
+        jsonb_build_object(
+          'id', m.id,
+          'round_id', r.id,
+          'turn_id', v_next.turn_id,
+          'turn_journey_id', v_next.turn_journey_id,
+          'journey_number', v_next.journey_number,
+          'match_date', coalesce(m.scheduled_date, v_next.scheduled_date),
+          'scheduled_time', case when m.scheduled_time is null then null else to_char(m.scheduled_time, 'HH24:MI') end,
+          'venue_address', coalesce(nullif(trim(m.venue_address), ''), nullif(trim(home_club.headquarters_address), '')),
+          'categoria', b.name || ' · ' || cat.name,
+          'category_name', cat.name,
+          'team1', home_club.name,
+          'team2', away_club.name,
+          'score1', m.local_score,
+          'score2', m.visitor_score,
+          'local_logo_path', home_club.logo_path,
+          'visitor_logo_path', away_club.logo_path,
+          'local_address', home_club.headquarters_address,
+          'visitor_address', away_club.headquarters_address,
+          'referee_id', m.referee_id,
+          'referee_closed', (m.status = 'finalizado' or m.referee_closed_at is not null),
+          'status', m.status
+        ) order by cat.sort_order, m.scheduled_time nulls last, home_club.name
+      )
+      from public.fefutin_matches m
+      join public.fefutin_rounds r on r.id = m.round_id
+      join public.fefutin_tournament_categories tc on tc.id = r.tournament_category_id
+      join public.fefutin_categories cat on cat.id = tc.category_id
+      join public.fefutin_branches b on b.id = cat.branch_id
+      join public.fefutin_clubs home_club on home_club.id = m.local_club_id
+      join public.fefutin_clubs away_club on away_club.id = m.visitor_club_id
+      where r.turn_journey_id = v_next.turn_journey_id
     ), '[]'::jsonb)
   )
   into v_result;
