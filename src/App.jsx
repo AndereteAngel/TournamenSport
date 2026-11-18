@@ -3994,11 +3994,24 @@ export function TournamenSportApp() {
     }
   };
 
-  const handleCloseMatch = async ({ phase, groupIndex, roundIndex, matchId }) => {
+  const handleCloseMatch = async ({ phase, groupIndex, roundIndex, matchId, normalizedMatchId }) => {
     if ((!isArbitro && !isAdmin && !isDirectivo) || !activeTournament?.id) {
       showNotice("No tenés permisos para cerrar partidos.");
       return false;
     }
+
+    if (normalizedMatchId) {
+      const { error: normalizedCloseError } = await supabase.rpc("referee_close_normalized_match_from_sheet", {
+        p_match_id: normalizedMatchId,
+      });
+      if (normalizedCloseError) {
+        showNotice(normalizedCloseError.message || "No se pudo cerrar el partido normalizado.");
+        return false;
+      }
+      showNotice("Partido cerrado correctamente. La planilla quedó bloqueada.");
+      return true;
+    }
+
     const { data, error } = await supabase.rpc("referee_close_match_from_sheet", {
       p_tournament_id: activeTournament.id,
       p_phase: phase,
