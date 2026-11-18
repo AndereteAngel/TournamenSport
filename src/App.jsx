@@ -5166,10 +5166,11 @@ export function TournamenSportApp() {
         <FefutinSheetArchive mode="upload" currentUser={currentUser} assignedMatches={assignedRefereeMatches} onBack={() => setActiveView("referee-designations")} />
       ) : activeView === "referee-normalized-match" && normalizedMatchToOpen && activeTournament ? (
         <section className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: "1rem", boxSizing: "border-box" }}>
-          <button type="button" className="tc-form-back" onClick={() => { setNormalizedMatchToOpen(null); setActiveView("referee-designations"); }}>← Volver a mis jornadas</button>
+          <button type="button" className="tc-form-back" onClick={() => { setNormalizedMatchToOpen(null); setActiveView(normalizedMatchReturnView); }}>← Volver</button>
           <FefutinMatchSheet
             tournament={activeTournament}
             match={normalizedMatchToOpen}
+            initialSide={normalizedMatchToOpen.initialSide || "local"}
             categoryLabel={normalizedMatchToOpen.categoria || normalizedMatchToOpen.category_label || ""}
             isReferee={isArbitro}
             isAdmin={isAdmin || isDirectivo}
@@ -5179,7 +5180,7 @@ export function TournamenSportApp() {
               score1,
               score2,
             })}
-            onClose={() => { setNormalizedMatchToOpen(null); setActiveView("referee-designations"); }}
+            onClose={() => { setNormalizedMatchToOpen(null); setActiveView(normalizedMatchReturnView); }}
           />
         </section>
       ) : activeView === "fefutin-turns" && activeTournament ? (
@@ -5262,6 +5263,7 @@ export function TournamenSportApp() {
                 }
                 setActiveTournament(tournament);
                 if (detail.phase === "normalized") {
+                  setNormalizedMatchReturnView("referee-designations");
                   setNormalizedMatchToOpen(detail);
                   setActiveView("referee-normalized-match");
                   return;
