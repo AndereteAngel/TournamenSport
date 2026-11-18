@@ -13,43 +13,55 @@ alter table public.fefutin_jornada_photos
 -- Solo inferir el turno cuando hay una unica opcion o cuando el archivo ya
 -- conserva el nombre del turno. Si la rama tiene ambos turnos y el archivo
 -- antiguo no indica cual corresponde, dejarlo sin vincular para no inventar historial.
+with resolved as (
+  select archive.id as archive_id, selected.id as turn_id, selected.turno
+  from public.fefutin_jornada_sheets archive
+  join lateral (
+    select tt.id, tt.turno
+    from public.fefutin_tournament_turns tt
+    where tt.tournament_id = archive.tournament_id
+      and (
+        (archive.turno is not null and tt.turno = archive.turno)
+        or (
+          archive.turno is null
+          and (select count(*) from public.fefutin_tournament_turns all_turns
+               where all_turns.tournament_id = archive.tournament_id) = 1
+        )
+      )
+    limit 1
+  ) selected on true
+  where archive.turn_id is null
+)
 update public.fefutin_jornada_sheets archive
-set turn_id = resolved.id,
+set turn_id = resolved.turn_id,
     turno = resolved.turno
-from lateral (
-  select tt.id, tt.turno
-  from public.fefutin_tournament_turns tt
-  where tt.tournament_id = archive.tournament_id
-    and (
-      (archive.turno is not null and tt.turno = archive.turno)
-      or (
-        archive.turno is null
-        and (select count(*) from public.fefutin_tournament_turns all_turns
-             where all_turns.tournament_id = archive.tournament_id) = 1
-      )
-    )
-  limit 1
-) resolved
-where archive.turn_id is null;
+from resolved
+where resolved.archive_id = archive.id;
 
-update public.fefutin_jornada_photos archive
-set turn_id = resolved.id,
-    turno = resolved.turno
-from lateral (
-  select tt.id, tt.turno
-  from public.fefutin_tournament_turns tt
-  where tt.tournament_id = archive.tournament_id
-    and (
-      (archive.turno is not null and tt.turno = archive.turno)
-      or (
-        archive.turno is null
-        and (select count(*) from public.fefutin_tournament_turns all_turns
-             where all_turns.tournament_id = archive.tournament_id) = 1
+with resolved as (
+  select archive.id as archive_id, selected.id as turn_id, selected.turno
+  from public.fefutin_jornada_photos archive
+  join lateral (
+    select tt.id, tt.turno
+    from public.fefutin_tournament_turns tt
+    where tt.tournament_id = archive.tournament_id
+      and (
+        (archive.turno is not null and tt.turno = archive.turno)
+        or (
+          archive.turno is null
+          and (select count(*) from public.fefutin_tournament_turns all_turns
+               where all_turns.tournament_id = archive.tournament_id) = 1
+        )
       )
-    )
-  limit 1
-) resolved
-where archive.turn_id is null;
+    limit 1
+  ) selected on true
+  where archive.turn_id is null
+)
+update public.fefutin_jornada_photos archive
+set turn_id = resolved.turn_id,
+    turno = resolved.turno
+from resolved
+where resolved.archive_id = archive.id;
 
 create index if not exists fefutin_jornada_sheets_turn_journey_idx
   on public.fefutin_jornada_sheets(turn_id, turn_journey_id, jornada_date desc);
