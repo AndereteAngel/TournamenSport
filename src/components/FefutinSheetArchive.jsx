@@ -276,16 +276,17 @@ export function FefutinSheetArchive({ mode = "archive", currentUser, assignedMat
 
   const isPhotoForSheet = (photo, sheet) => {
     if (String(photo.tournament_id) !== String(sheet.tournament_id)) return false;
-    if (photo.turn_journey_id || sheet.turn_journey_id) {
-      return Boolean(photo.turn_journey_id && sheet.turn_journey_id) &&
-        String(photo.turn_journey_id) === String(sheet.turn_journey_id);
-    }
-    if (photo.turn_id && sheet.turn_id && String(photo.turn_id) !== String(sheet.turn_id)) return false;
 
     const sheetIsVoided = voidedSheetIds.has(String(sheet.id));
     const photoIsVoided = voidedPhotoIds.has(String(photo.id));
     if (sheetIsVoided) return photoIsVoided;
     if (photoIsVoided) return false;
+
+    if (photo.turn_journey_id || sheet.turn_journey_id) {
+      return Boolean(photo.turn_journey_id && sheet.turn_journey_id) &&
+        String(photo.turn_journey_id) === String(sheet.turn_journey_id);
+    }
+    if (photo.turn_id && sheet.turn_id && String(photo.turn_id) !== String(sheet.turn_id)) return false;
 
     if (photo.document_type === "category") return String(photo.match_sheet_id) === String(sheet.id);
     const photoJornada = String(photo.jornada_label || "").trim().toLocaleLowerCase("es");
