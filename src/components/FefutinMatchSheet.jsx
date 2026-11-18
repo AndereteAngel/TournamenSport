@@ -424,6 +424,10 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
       if (authError) throw authError;
       const { error: insertError } = await supabase.from("fefutin_jornada_photos").insert({
         tournament_id: tournament.id,
+        turn_id: match.turn_id || null,
+        turn_journey_id: match.turn_journey_id || null,
+        turno: match.turno || null,
+        journey_number: Number(match.journey_number || match.round) || null,
         jornada_date: metadata.fecha_partido || new Date().toISOString().slice(0, 10),
         jornada_label: metadata.jornada || null,
         referee_id: authData.user.id,
