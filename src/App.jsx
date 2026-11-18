@@ -4340,7 +4340,7 @@ export function TournamenSportApp() {
     if (!isReferente || !referenteParticipations.length || !tournaments.length) return null;
     const today = new Date();
     const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const candidates = [];
 
     referenteParticipations.forEach((participation) => {
@@ -4375,7 +4375,7 @@ export function TournamenSportApp() {
   // del club dentro del mismo torneo, no solamente con la primera categoría.
   const referenteClubJornadaMatches = (() => {
     if (!referenteNextMatch?.tournament) return [];
-    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const participations = referenteParticipations.filter((item) =>
       String(item.tournament_id) === String(referenteNextMatch.tournament.id)
     );
