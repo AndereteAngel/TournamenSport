@@ -878,6 +878,7 @@ export function GroupStageView({
         <FefutinMatchSheet
           tournament={tournament}
           match={selectedSheetMatch}
+          categoryLabel={currentGroup.categoryLabel || currentGroup.name || ""}
           isReferee={isReferee}
           isAdmin={isAdmin}
           readOnly={isReferente}
