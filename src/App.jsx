@@ -4408,9 +4408,11 @@ export function TournamenSportApp() {
     return candidates[0] || null;
   })();
 
+  // La jornada del referente reúne sus partidos de todas las categorías
+  // que estén programados para la misma fecha; no se agrupa por número de ronda.
   const referenteClubJornadaMatches = (() => {
     if (!referenteNextMatch?.tournament) return [];
-    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
     const participations = referenteParticipations.filter((item) =>
       String(item.tournament_id) === String(referenteNextMatch.tournament.id)
     );
@@ -4428,14 +4430,16 @@ export function TournamenSportApp() {
             !participationCategory.endsWith(groupCategory)) return;
         (group?.matches || []).forEach((match) => {
           const isMyClub = normalize(match.team1) === clubName || normalize(match.team2) === clubName;
-          if (!isMyClub || !match.team1 || !match.team2 ||
-              getReferenteGroupMatchRound(group, match, referenteNextMatch.tournament) !== referenteNextMatch.round) return;
+          const round = getReferenteGroupMatchRound(group, match, referenteNextMatch.tournament);
+          const matchDate = String(match.match_date || getFefutinMatchDate(round)).slice(0, 10);
+          if (!isMyClub || !match.team1 || !match.team2 || matchDate !== referenteNextMatch.matchDate) return;
           const key = String(groupIndex) + "-" + String(match.id || normalize(match.team1) + "::" + normalize(match.team2));
           if (!matchesByKey.has(key)) {
             matchesByKey.set(key, {
               match,
               groupIndex,
               categoryLabel: group?.categoryLabel || participation.category_label || group?.name || "",
+              matchDate,
             });
           }
         });
@@ -4447,18 +4451,9 @@ export function TournamenSportApp() {
     );
   })();
 
-  const referenteJornadaMatches = (() => {
-    if (!referenteNextMatch?.tournament) return [];
-    return (referenteNextMatch.tournament.groups || []).flatMap((group, groupIndex) => {
-      if (group?.name === "__INSCRIPCIONES__") return [];
-      return (group?.matches || [])
-        .filter((match) =>
-          getReferenteGroupMatchRound(group, match, referenteNextMatch.tournament) === referenteNextMatch.round &&
-          match.team1 && match.team2
-        )
-        .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || group?.name || "" }));
-    });
-  })();
+  // La planilla general contiene todos los partidos del referente en esa fecha,
+  // no los encuentros de otros clubes que coincidan con la misma ronda.
+  const referenteJornadaMatches = referenteClubJornadaMatches;
 
   useEffect(() => {
     let cancelled = false;
@@ -5265,7 +5260,7 @@ export function TournamenSportApp() {
                 const getClub = (name) => referenteMatchClubs.find((club) => normalize(club.club_name) === normalize(name));
                 const formattedDate = new Date(matchDate + "T12:00:00").toLocaleDateString("es-AR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
                 return <>
-                                    <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".78rem", fontWeight: 800, marginBottom: ".8rem" }}>FECHA {round} · {formattedDate}</div>
+                                    <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".78rem", fontWeight: 800, marginBottom: ".8rem" }}>JORNADA · {formattedDate}</div>
                   <div style={{ display: "grid", gap: ".8rem" }}>
                     {referenteClubJornadaMatches.map(({ match, groupIndex, categoryLabel }) => {
                       const homeClub = getClub(match.team1);
@@ -5301,7 +5296,7 @@ export function TournamenSportApp() {
                   {showReferenteJornadaSheets && (
                     <div role="dialog" aria-modal="true" aria-label="Planillas de la próxima jornada" style={{ position: "fixed", inset: 0, zIndex: 10000, display: "grid", placeItems: "center", padding: "1rem", background: "rgba(0,0,0,.82)" }}>
                       <div style={{ width: "100%", maxWidth: "520px", maxHeight: "85vh", overflowY: "auto", padding: "1rem", border: "2px solid #b5122a", borderRadius: "12px", background: "#101010", color: "#fff", boxSizing: "border-box" }}>
-                        <h3 style={{ margin: "0 0 .35rem", textAlign: "center" }}>PLANILLAS · FECHA {round}</h3>
+                        <h3 style={{ margin: "0 0 .35rem", textAlign: "center" }}>PLANILLAS · JORNADA {formattedDate}</h3>
                         <p style={{ margin: "0 0 1rem", color: "#ccc", textAlign: "center", fontSize: ".82rem" }}>{tournament.title || "Torneo FEFUTIN"} · {referenteJornadaMatches.length} partidos de la jornada</p>
                         {(() => {
   const jornadaCategories = [...new Set((tournament.groups || [])
@@ -5329,7 +5324,7 @@ export function TournamenSportApp() {
       const category = item.categoryLabel || tournament.groups?.[item.groupIndex]?.categoryLabel || "—";
       return "<tr><td>" + escapeHtml(category) + "</td><td>" + escapeHtml(item.match.team1) + "</td><td>" + escapeHtml(item.match.team2) + "</td><td>_____ - _____</td></tr>";
     }).join("");
-    const html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Planilla general FEFUTIN</title><style>@page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}.brand{color:#b5122a;font-weight:900;letter-spacing:3px;font-size:13px}header{border-bottom:4px solid #b5122a;padding-bottom:12px;margin-bottom:16px}h1{font-size:21px;margin:8px 0 5px}.meta{font-size:11px;color:#555}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:11px}th{background:#171c27;color:#fff;text-align:left;padding:8px 6px}td{height:38px;padding:7px 6px;border:1px solid #cfd3da}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><header><div class="brand">FEFUTIN</div><h1>PLANILLA GENERAL · JORNADA ' + escapeHtml(round) + '</h1><div class="meta">' + escapeHtml(tournament.title || "Torneo FEFUTIN") + ' · ' + escapeHtml(referenteJornadaMatches.length) + ' partidos</div></header><table><thead><tr><th>Categoría</th><th>Equipo local</th><th>Equipo visitante</th><th>Resultado</th></tr></thead><tbody>' + rows + '</tbody></table></body></html>';
+    const html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Planilla general FEFUTIN</title><style>@page{size:A4 portrait;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}.brand{color:#b5122a;font-weight:900;letter-spacing:3px;font-size:13px}header{border-bottom:4px solid #b5122a;padding-bottom:12px;margin-bottom:16px}h1{font-size:21px;margin:8px 0 5px}.meta{font-size:11px;color:#555}table{width:100%;border-collapse:collapse;margin-top:16px;font-size:11px}th{background:#171c27;color:#fff;text-align:left;padding:8px 6px}td{height:38px;padding:7px 6px;border:1px solid #cfd3da}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style></head><body><header><div class="brand">FEFUTIN</div><h1>PLANILLA GENERAL · JORNADA ' + escapeHtml(formattedDate) + '</h1><div class="meta">' + escapeHtml(tournament.title || "Torneo FEFUTIN") + ' · ' + escapeHtml(referenteJornadaMatches.length) + ' partidos</div></header><table><thead><tr><th>Categoría</th><th>Equipo local</th><th>Equipo visitante</th><th>Resultado</th></tr></thead><tbody>' + rows + '</tbody></table></body></html>';
     popup.onload = () => { popup.focus(); popup.print(); };
     popup.document.open(); popup.document.write(html); popup.document.close();
   };
