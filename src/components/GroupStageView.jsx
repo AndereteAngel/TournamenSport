@@ -552,9 +552,6 @@ export function GroupStageView({
             <h3 style={{ fontSize: "0.9rem", fontWeight: 900, textTransform: "uppercase", color: "#fff", margin: 0, letterSpacing: "0.5px" }}>
               {isLeague ? "Categorías de la competencia" : "Grupos de la competencia"}
             </h3>
-            <span style={{ display: "block", fontSize: "0.72rem", color: "#b8b8b8", marginTop: "0.25rem" }}>
-              Deslizá para ver las categorías.
-            </span>
           </div>
           <button
             type="button"
@@ -576,78 +573,6 @@ export function GroupStageView({
           </button>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            flexWrap: "nowrap",
-            gap: "0.75rem",
-            width: "100%",
-            overflowX: "auto",
-            overflowY: "hidden",
-            padding: "0.2rem 0.1rem 0.65rem",
-            boxSizing: "border-box",
-            WebkitOverflowScrolling: "touch",
-            scrollSnapType: "x mandatory",
-          }}
-        >
-          {tournament.groups.map((group, idx) => {
-            const selected = idx === activeGroupIndex;
-            const completedMatches = (group.matches || []).filter((match) =>
-              match.score1 !== null && match.score1 !== undefined &&
-              match.score2 !== null && match.score2 !== undefined
-            ).length;
-            return (
-              <button
-                key={group.id || group.categoryLabel || idx}
-                type="button"
-                onClick={() => {
-                  setActiveGroupIndex(idx);
-                  setSelectedRound("all");
-                  setMatchSearch("");
-                }}
-                aria-pressed={selected}
-                style={{
-                  flex: "0 0 165px",
-                  width: "165px",
-                  minWidth: "165px",
-                  minHeight: "112px",
-                  padding: "0.9rem",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
-                  justifyContent: "space-between",
-                  gap: "0.65rem",
-                  textAlign: "left",
-                  background: selected
-                    ? "linear-gradient(145deg, #651321, #241017)"
-                    : "linear-gradient(145deg, #171c27, #0d1017)",
-                  border: selected ? "2px solid #b5122a" : "1px solid #424650",
-                  borderRadius: "12px",
-                  color: "#fff",
-                  cursor: "pointer",
-                  boxShadow: selected ? "0 0 0 2px rgba(181,18,42,0.16)" : "none",
-                  scrollSnapAlign: "start",
-                }}
-              >
-                <span style={{ fontSize: "0.95rem", fontWeight: 900, lineHeight: 1.25, overflowWrap: "anywhere" }}>
-                  {group.categoryLabel || group.name}
-                </span>
-                <span style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", fontSize: "0.7rem", color: "#e5e7eb" }}>
-                  <span style={{ padding: "0.22rem 0.4rem", borderRadius: "5px", background: "rgba(255,255,255,0.1)" }}>
-                    {(group.teams || []).length} clubes
-                  </span>
-                  <span style={{ padding: "0.22rem 0.4rem", borderRadius: "5px", background: "rgba(255,255,255,0.1)" }}>
-                    {completedMatches}/{(group.matches || []).length} partidos
-                  </span>
-                </span>
-                <span style={{ color: selected ? "#ffb3bf" : "#c4c7ce", fontSize: "0.7rem", fontWeight: 800 }}>
-                  {selected ? "SELECCIONADA" : "VER CATEGORÍA →"}
-                </span>
-              </button>
-            );
-          })}
-        </div>
       </section>
 
       {/* TABLA DE POSICIONES */}
