@@ -20,8 +20,9 @@ import { FefutinTopScorers } from "./components/FefutinTopScorers";
 import { FefutinSheetArchive } from "./components/FefutinSheetArchive";
 import { FefutinGeneralStandings } from "./components/FefutinGeneralStandings";
 import { FefutinRefereeJornadaSheets } from "./components/FefutinRefereeJornadaSheets";
+import { FefutinMatchSheet } from "./components/FefutinMatchSheet";
 import { supabase } from "./supabaseClient";
-import { obtenerJornadasDeArbitro } from "./utils/refereeJornadas";
+import { obtenerJornadasDeArbitro, normalizarJornadasDeTurno } from "./utils/refereeJornadas";
 
 // La categoría se guarda dentro de "game" al crear el torneo (ej.: "Fútbol · 2012").
 // También leemos las columnas específicas si existen en torneos anteriores/nuevos.
@@ -2422,6 +2423,8 @@ export function TournamenSportApp() {
   const [showFootballRain, setShowFootballRain] = useState(false);
   const [activeTournament, setActiveTournament] = useState(null);
   const [refereeMatchToOpen, setRefereeMatchToOpen] = useState(null);
+  const [normalizedMatchToOpen, setNormalizedMatchToOpen] = useState(null);
+  const [normalizedRefereeJourneyRows, setNormalizedRefereeJourneyRows] = useState([]);
   const [topScorersReturnView, setTopScorersReturnView] = useState("groups");
   const [fefutinTournamentClubs, setFefutinTournamentClubs] = useState([]);
   const [referenteParticipations, setReferenteParticipations] = useState([]);
@@ -2456,6 +2459,24 @@ export function TournamenSportApp() {
   const canDeleteTournaments = isAdmin || isDirectivo;
   const canManageAccess = isAdmin || isDirectivo;
   const [catalogSeeded, setCatalogSeeded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!isArbitro || !currentUser?.id) {
+      setNormalizedRefereeJourneyRows([]);
+      return () => { active = false; };
+    }
+    supabase.rpc("get_fefutin_referee_journeys").then(({ data, error }) => {
+      if (!active) return;
+      if (error) {
+        console.error("No se pudieron cargar las jornadas normalizadas del árbitro:", error);
+        setNormalizedRefereeJourneyRows([]);
+        return;
+      }
+      setNormalizedRefereeJourneyRows(data || []);
+    });
+    return () => { active = false; };
+  }, [isArbitro, currentUser?.id]);
 
   const saveTeamsToCatalog = async (teams) => {
     const uniqueTeams = [...new Map(
@@ -4340,7 +4361,8 @@ export function TournamenSportApp() {
     return [...groupMatches, ...playoffMatches];
   }) : [];
   const hasPendingRefereeAssignments = assignedRefereeMatches.some((match) => !match.refereeClosed);
-  const refereeJornadas = isArbitro ? obtenerJornadasDeArbitro(tournaments, currentUser?.id) : [];
+  const normalizedRefereeJornadas = isArbitro ? normalizarJornadasDeTurno(normalizedRefereeJourneyRows, currentUser?.id) : [];
+  const refereeJornadas = isArbitro ? (normalizedRefereeJornadas.length ? normalizedRefereeJornadas : obtenerJornadasDeArbitro(tournaments, currentUser?.id)) : [];
   const refereeAssignedMatchCount = refereeJornadas.reduce((total, jornada) =>
     total + jornada.detallesPartidos.filter((detail) => detail.instancia !== "Pendiente de fixture" && detail.matchId).length, 0);
   const refereePendingMatchCount = refereeJornadas.reduce((total, jornada) =>
@@ -4964,6 +4986,24 @@ export function TournamenSportApp() {
         <FefutinSheetArchive mode="archive" currentUser={currentUser} onBack={() => setActiveView("home")} />
       ) : activeView === "referee-sheet-photo" && isArbitro ? (
         <FefutinSheetArchive mode="upload" currentUser={currentUser} assignedMatches={assignedRefereeMatches} onBack={() => setActiveView("referee-designations")} />
+      ) : activeView === "referee-normalized-match" && normalizedMatchToOpen && activeTournament ? (
+        <section className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: "1rem", boxSizing: "border-box" }}>
+          <button type="button" className="tc-form-back" onClick={() => { setNormalizedMatchToOpen(null); setActiveView("referee-designations"); }}>← Volver a mis jornadas</button>
+          <FefutinMatchSheet
+            tournament={activeTournament}
+            match={normalizedMatchToOpen}
+            categoryLabel={normalizedMatchToOpen.categoria || normalizedMatchToOpen.category_label || ""}
+            isReferee={isArbitro}
+            isAdmin={isAdmin || isDirectivo}
+            onCloseMatch={({ score1, score2 }) => handleCloseMatch({
+              normalizedMatchId: normalizedMatchToOpen.id || normalizedMatchToOpen.matchId,
+              matchId: normalizedMatchToOpen.id || normalizedMatchToOpen.matchId,
+              score1,
+              score2,
+            })}
+            onClose={() => { setNormalizedMatchToOpen(null); setActiveView("referee-designations"); }}
+          />
+        </section>
       ) : activeView === "referee-designations" && isArbitro ? (
         <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
           <section style={{ width: "100%", maxWidth: "900px", margin: "auto", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff" }}>
@@ -4984,6 +5024,11 @@ export function TournamenSportApp() {
                   return;
                 }
                 setActiveTournament(tournament);
+                if (detail.phase === "normalized") {
+                  setNormalizedMatchToOpen(detail);
+                  setActiveView("referee-normalized-match");
+                  return;
+                }
                 setRefereeMatchToOpen({
                   phase: detail.phase || "groups",
                   groupIndex: detail.groupIndex,
