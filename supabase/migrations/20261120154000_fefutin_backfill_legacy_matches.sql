@@ -343,7 +343,7 @@ begin
         select value, ordinality
         from jsonb_array_elements(v_tournament.playoffs) with ordinality
       loop
-        if jsonb_typeof(v_playoff_round.value) <> 'array' then
+        if coalesce(jsonb_typeof(v_playoff_round.value), '') <> 'array' then
           continue;
         end if;
         v_round_index := (v_playoff_round.ordinality - 1)::integer;
@@ -437,15 +437,21 @@ where legacy.duplicate_count = 1
   and sheet.normalized_match_id is null;
 
 -- Vincular el archivo general por fecha y turno solo cuando la jornada es unica.
-with unique_journeys as (
+-- Si el archivo no identifica el turno y hay dos opciones, se conserva sin asignacion.
+with journey_candidates as (
   select
     j.id as turn_journey_id,
     j.turn_id,
     tt.tournament_id,
+    tt.turno,
+    j.journey_number,
     j.scheduled_date,
     count(*) over (
+      partition by tt.tournament_id, j.scheduled_date, tt.turno
+    ) as same_turn_count,
+    count(*) over (
       partition by tt.tournament_id, j.scheduled_date
-    ) as match_count
+    ) as all_turns_count
   from public.fefutin_turn_journeys j
   join public.fefutin_tournament_turns tt on tt.id = j.turn_id
   where j.scheduled_date is not null
@@ -453,14 +459,66 @@ with unique_journeys as (
 update public.fefutin_jornada_sheets archive
 set turn_journey_id = journey.turn_journey_id,
     turn_id = journey.turn_id,
-    turno = tt.turno,
-    journey_number = j.journey_number
-from unique_journeys journey
-join public.fefutin_tournament_turns tt on tt.id = journey.turn_id
-join public.fefutin_turn_journeys j on j.id = journey.turn_journey_id
-where journey.match_count = 1
-  and archive.tournament_id = journey.tournament_id
+    turno = journey.turno,
+    journey_number = journey.journey_number
+from journey_candidates journey
+where archive.tournament_id = journey.tournament_id
   and archive.jornada_date = journey.scheduled_date
-  and archive.turn_journey_id is null;
+  and archive.turn_journey_id is null
+  and (
+    (archive.turno = journey.turno and journey.same_turn_count = 1)
+    or (archive.turno is null and journey.all_turns_count = 1)
+  );
+
+-- Las fotos de planilla individual se vinculan a la jornada a traves de la
+-- planilla digital ya asociada al UUID del partido.
+update public.fefutin_jornada_photos photo
+set turn_id = tt.id,
+    turn_journey_id = r.turn_journey_id,
+    turno = tt.turno,
+    journey_number = r.round_number
+from public.fefutin_match_sheets sheet
+join public.fefutin_matches m on m.id = sheet.normalized_match_id
+join public.fefutin_rounds r on r.id = m.round_id
+join public.fefutin_tournament_categories tc on tc.id = r.tournament_category_id
+join public.fefutin_tournament_turns tt on tt.id = tc.turn_id
+where photo.match_sheet_id = sheet.id
+  and photo.document_type = 'category'
+  and photo.turn_journey_id is null
+  and r.turn_journey_id is not null;
+
+-- Las fotos generales se vinculan por fecha/turno solo si la jornada es unica.
+with journey_candidates as (
+  select
+    j.id as turn_journey_id,
+    j.turn_id,
+    tt.tournament_id,
+    tt.turno,
+    j.journey_number,
+    j.scheduled_date,
+    count(*) over (
+      partition by tt.tournament_id, j.scheduled_date, tt.turno
+    ) as same_turn_count,
+    count(*) over (
+      partition by tt.tournament_id, j.scheduled_date
+    ) as all_turns_count
+  from public.fefutin_turn_journeys j
+  join public.fefutin_tournament_turns tt on tt.id = j.turn_id
+  where j.scheduled_date is not null
+)
+update public.fefutin_jornada_photos photo
+set turn_journey_id = journey.turn_journey_id,
+    turn_id = journey.turn_id,
+    turno = journey.turno,
+    journey_number = journey.journey_number
+from journey_candidates journey
+where photo.tournament_id = journey.tournament_id
+  and photo.jornada_date = journey.scheduled_date
+  and photo.document_type is distinct from 'category'
+  and photo.turn_journey_id is null
+  and (
+    (photo.turno = journey.turno and journey.same_turn_count = 1)
+    or (photo.turno is null and journey.all_turns_count = 1)
+  );
 
 commit;
