@@ -127,7 +127,8 @@ join public.fefutin_tournament_categories tc
 join public.fefutin_categories c on c.id = tc.category_id
 join public.fefutin_branches b on b.id = c.branch_id
 where lower(trim(legacy.category_label)) =
-      lower(b.name || ' · ' || c.name)
+        lower(b.name || ' · ' || c.name)
+   or lower(trim(legacy.category_label)) = 'toda la tira'
 on conflict (tournament_category_id, club_id) do nothing;
 
 -- 4) Relacionar las inscripciones de jugadores ya existentes con la nueva
