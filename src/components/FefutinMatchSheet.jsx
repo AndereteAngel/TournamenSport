@@ -90,9 +90,14 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
           .eq("tournament_id", tournament.id);
         if (registrationsError) throw registrationsError;
 
-        const matchingRegistrations = (registrations || []).filter((item) =>
-          normalize(item.category_label) === normalize(category)
-        );
+        const categoryParts = String(category || "").split("·").map((part) => part.trim()).filter(Boolean);
+        const categoryName = categoryParts[categoryParts.length - 1] || "";
+        const matchingRegistrations = (registrations || []).filter((item) => {
+          const registrationCategory = normalize(item.category_label);
+          return registrationCategory === normalize(category) ||
+            registrationCategory === normalize(categoryName) ||
+            registrationCategory === normalize("TODA LA TIRA");
+        });
         const clubIds = [...new Set(matchingRegistrations.map((item) => item.club_id).filter(Boolean))];
         const { data: clubs, error: clubsError } = clubIds.length
           ? await supabase.from("fefutin_clubs").select("id, name, headquarters_address, court_type").in("id", clubIds)
