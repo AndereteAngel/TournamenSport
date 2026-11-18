@@ -85,7 +85,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         }
 
         const normalizedMatchId = String(match.id);
-        const isNormalizedMatch = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalizedMatchId);
+        const isNormalizedMatch = Boolean(match?.round_id || match?.tournament_category_id) && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalizedMatchId);
         let normalizedRoster = null;
         let localClub = null;
         let visitorClub = null;
@@ -308,7 +308,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
       const basePayload = {
         tournament_id: tournament.id,
         match_id: String(match.id),
-        normalized_match_id: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(match.id)) ? String(match.id) : null,
+        normalized_match_id: (match?.round_id || match?.tournament_category_id) && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(match.id)) ? String(match.id) : null,
         turn_id: match.turn_id || null,
         tournament_category_id: match.tournament_category_id || null,
         jornada: metadata.jornada || null,
