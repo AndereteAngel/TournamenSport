@@ -130,6 +130,23 @@ export function FefutinTurnCompetition({
   const activeCategory = categories.find((item) => String(item.tournament_category_id) === String(selectedCategoryId)) || categories[0] || null;
   const standings = useMemo(() => buildStandings(activeCategory), [activeCategory]);
   const allFormatsSupported = categories.every((category) => category.format === "league");
+  const allMatches = categories.flatMap((category) => (category.rounds || []).flatMap((round) => round.matches || []));
+  const allMatchesClosed = allMatches.length > 0 && allMatches.every((match) => match.referee_closed);
+
+  const finishTurn = async () => {
+    if (!canManage || !allMatchesClosed) return;
+    const { data, error: finishError } = await supabase.rpc("finish_fefutin_turn", {
+      p_turn_id: turn.turn_id,
+    });
+    if (finishError) {
+      setError(finishError.message || "No se pudo finalizar el turno.");
+      return;
+    }
+    setNotice(data?.all_turns_finished
+      ? "Turno finalizado. Todas las competencias de esta rama están finalizadas."
+      : "Turno finalizado. El otro turno de la rama permanece independiente.");
+    await loadCompetition();
+  };
 
   const startTurn = async () => {
     if (!canManage || starting || !turn?.turn_id) return;
@@ -194,6 +211,17 @@ export function FefutinTurnCompetition({
           {!allFormatsSupported && <p style={{ color: "#fcd34d", fontSize: ".78rem", margin: 0 }}>Este turno contiene formatos distintos de todos-contra-todos. No se iniciará parcialmente.</p>}
           <button type="button" onClick={startTurn} disabled={starting || !categories.length || !allFormatsSupported} style={{ padding: ".8rem", border: 0, borderRadius: "8px", background: "#b5122a", color: "#fff", fontWeight: 900, opacity: starting || !categories.length || !allFormatsSupported ? .55 : 1 }}>
             {starting ? "GENERANDO FIXTURE..." : "CERRAR INSCRIPCIÓN E INICIAR TURNO"}
+          </button>
+        </section>
+      )}
+
+      {(competition?.turn_status === "en_curso" && canManage) && (
+        <section style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap", padding: ".8rem", background: "#171c27", border: "1px solid #555", borderRadius: "9px" }}>
+          <span style={{ color: allMatchesClosed ? "#86efac" : "#fcd34d", fontSize: ".78rem", fontWeight: 800 }}>
+            {allMatchesClosed ? "TODOS LOS PARTIDOS ESTÁN CERRADOS" : `${allMatches.filter((match) => !match.referee_closed).length} PARTIDO(S) PENDIENTE(S) DE CIERRE`}
+          </span>
+          <button type="button" onClick={finishTurn} disabled={!allMatchesClosed} style={{ padding: ".65rem .85rem", border: "1px solid #b5122a", borderRadius: "8px", background: allMatchesClosed ? "#b5122a" : "#444", color: "#fff", fontWeight: 900, opacity: allMatchesClosed ? 1 : .55 }}>
+            FINALIZAR TURNO
           </button>
         </section>
       )}
