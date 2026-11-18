@@ -30,7 +30,7 @@ with configured_categories as (
       when 'Mayores' then 'Sénior'
       else trim(branch.value->>'division')
     end as branch_name,
-    trim(category.value #>> '{}') as category_name,
+    trim(category.value) as category_name,
     t.format,
     case
       when lower(trim(coalesce(t.status, ''))) in ('finalizado', 'finalizada', 'completed') then 'finalizada'
