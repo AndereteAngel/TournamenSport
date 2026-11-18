@@ -73,23 +73,28 @@ begin
     raise exception 'Tu club ya tiene una solicitud pendiente o una participacion aprobada en ese torneo';
   end if;
 
-  insert into public.fefutin_tournament_category_clubs (
-    tournament_category_id, club_id, status, requested_by, requested_at,
-    reviewed_by, reviewed_at
+  with upserted as (
+    insert into public.fefutin_tournament_category_clubs (
+      tournament_category_id, club_id, status, requested_by, requested_at,
+      reviewed_by, reviewed_at
+    )
+    select
+      tc.id, v_club.id, 'pendiente', v_user_id, now(), null, null
+    from public.fefutin_tournament_categories tc
+    where tc.tournament_id = p_tournament_id
+      and tc.status = 'inscripcion'
+    on conflict (tournament_category_id, club_id) do update
+      set status = 'pendiente',
+          requested_by = excluded.requested_by,
+          requested_at = now(),
+          reviewed_by = null,
+          reviewed_at = null
+      where public.fefutin_tournament_category_clubs.status in ('desestimado', 'retirado')
+    returning id
   )
-  select
-    tc.id, v_club.id, 'pendiente', v_user_id, now(), null, null
-  from public.fefutin_tournament_categories tc
-  where tc.tournament_id = p_tournament_id
-    and tc.status = 'inscripcion'
-  on conflict (tournament_category_id, club_id) do update
-    set status = 'pendiente',
-        requested_by = excluded.requested_by,
-        requested_at = now(),
-        reviewed_by = null,
-        reviewed_at = null
-    where public.fefutin_tournament_category_clubs.status in ('desestimado', 'retirado')
-  returning id into v_request_id;
+  select (array_agg(id order by id))[1]
+  into v_request_id
+  from upserted;
 
   if v_request_id is null then
     raise exception 'No se pudo generar la solicitud. Verifica si el club ya participa en el torneo';
