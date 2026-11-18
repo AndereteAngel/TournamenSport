@@ -15,6 +15,7 @@ declare
   v_tournament_id uuid;
   v_turn_id uuid;
   v_turno text;
+  v_tournament_category_id uuid;
   v_category_id uuid;
   v_category_name text;
   v_journey_number integer;
@@ -52,6 +53,7 @@ begin
     tc.tournament_id,
     tc.turn_id,
     tt.turno,
+    tc.id,
     cat.id,
     cat.name,
     r.round_number,
@@ -60,6 +62,7 @@ begin
     v_tournament_id,
     v_turn_id,
     v_turno,
+    v_tournament_category_id,
     v_category_id,
     v_category_name,
     v_journey_number,
@@ -164,7 +167,7 @@ begin
     'tournament_id', v_tournament_id,
     'turn_id', v_turn_id,
     'turno', v_turno,
-    'tournament_category_id', v_category_id,
+    'tournament_category_id', v_tournament_category_id,
     'category_id', v_category_id,
     'category_name', v_category_name,
     'round_id', v_match.round_id,
