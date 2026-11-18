@@ -4646,9 +4646,18 @@ export function TournamenSportApp() {
         .sort((a, b) => String(a.categoryLabel).localeCompare(String(b.categoryLabel), "es", { numeric: true }))
     : legacyReferenteClubJornadaMatches;
 
-  // La planilla general contiene todos los partidos del referente en esa fecha,
-  // no los encuentros de otros clubes que coincidan con la misma ronda.
-  const referenteJornadaMatches = referenteClubJornadaMatches;
+  // La planilla general incluye todos los partidos de la jornada compartida del turno,
+  // mientras que las planillas individuales del referente se limitan a los partidos de su club.
+  const referenteJornadaMatches = referenteNormalizedNextJourney
+    ? (Array.isArray(referenteNormalizedNextJourney.all_matches) ? referenteNormalizedNextJourney.all_matches : [])
+        .map((match, index) => ({
+          match,
+          groupIndex: null,
+          categoryLabel: match.categoria || match.category_name || `Categoría ${index + 1}`,
+          matchDate: match.match_date || referenteNormalizedNextJourney.scheduled_date,
+        }))
+        .sort((a, b) => String(a.categoryLabel).localeCompare(String(b.categoryLabel), "es", { numeric: true }))
+    : referenteClubJornadaMatches;
 
   useEffect(() => {
     let cancelled = false;
