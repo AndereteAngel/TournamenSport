@@ -4349,7 +4349,7 @@ export function TournamenSportApp() {
       const participationCategory = normalize(participation.category_label);
       (tournament.groups || []).forEach((group, groupIndex) => {
         if (group?.name === "__INSCRIPCIONES__") return;
-        const groupCategory = normalize(group?.categoryLabel || group?.name || "");
+        const groupCategory = normalize(group?.categoryLabel || "");
         if (participationCategory && !participationCategory.includes("toda la tira") && groupCategory &&
             groupCategory !== participationCategory &&
             !groupCategory.endsWith(participationCategory) &&
@@ -4383,7 +4383,7 @@ export function TournamenSportApp() {
           (normalize(match.team1) === clubName || normalize(match.team2) === clubName) &&
           match.team1 && match.team2
         )
-        .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || group?.name || "Categoría" }));
+        .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || "" }));
     });
   })();
 
@@ -4393,7 +4393,7 @@ export function TournamenSportApp() {
       if (group?.name === "__INSCRIPCIONES__") return [];
       return (group?.matches || [])
         .filter((match) => Number(match.round || 1) === referenteNextMatch.round && match.team1 && match.team2)
-        .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || group?.name || "Categoría" }));
+        .map((match) => ({ match, groupIndex, categoryLabel: group?.categoryLabel || "" }));
     });
   })();
 
@@ -5202,21 +5202,17 @@ export function TournamenSportApp() {
                 const getClub = (name) => referenteMatchClubs.find((club) => normalize(club.club_name) === normalize(name));
                 const formattedDate = new Date(matchDate + "T12:00:00").toLocaleDateString("es-AR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
                 return <>
-                  <div style={{ textAlign: "center", color: "#fff", fontWeight: 900, fontSize: ".95rem", marginBottom: ".25rem" }}>RAMA: {getTournamentDivision(tournament).toLocaleUpperCase("es")}</div>
-                  <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".78rem", fontWeight: 800, marginBottom: ".8rem" }}>FECHA {round} · {formattedDate}</div>
+                                    <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".78rem", fontWeight: 800, marginBottom: ".8rem" }}>FECHA {round} · {formattedDate}</div>
                   <div style={{ display: "grid", gap: ".8rem" }}>
                     {referenteClubJornadaMatches.map(({ match, groupIndex, categoryLabel }) => {
                       const homeClub = getClub(match.team1);
                       const awayClub = getClub(match.team2);
                       const homeLogo = homeClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(homeClub.logo_path).data.publicUrl : "";
                       const awayLogo = awayClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(awayClub.logo_path).data.publicUrl : "";
-                      const categoryParts = String(categoryLabel || "").split("·").map((part) => part.trim()).filter(Boolean);
-                      const categoryName = categoryParts.length > 1 ? categoryParts.slice(1).join(" · ") : categoryLabel;
-                      const address = String(homeClub?.headquarters_address || "").trim();
+                                            const address = String(homeClub?.headquarters_address || "").trim();
                       return (
                         <div key={`${groupIndex}-${match.id}`} style={{ padding: ".75rem", border: "1px solid #5b2732", borderRadius: "10px", background: "rgba(0,0,0,.25)" }}>
-                          <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".76rem", fontWeight: 900, marginBottom: ".55rem" }}>CATEGORÍA: {String(categoryName).toLocaleUpperCase("es")}</div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".5rem" }}>
+                                                    <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".5rem" }}>
                             {[{ name: match.team1, logo: homeLogo }, { name: match.team2, logo: awayLogo }].map((club, index) => (
                               <div key={`${club.name}-${index}`} style={{ minWidth: 0, textAlign: "center" }}>
                                 <div style={{ height: "66px", display: "grid", placeItems: "center", marginBottom: ".3rem" }}>
@@ -5254,8 +5250,7 @@ export function TournamenSportApp() {
                                 setActiveView("groups");
                               }}
                               style={{ display: "grid", gap: ".25rem", width: "100%", padding: ".8rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#171c27", color: "#fff", textAlign: "left", cursor: "pointer" }}>
-                              <strong style={{ color: "#f3a0ad", fontSize: ".72rem" }}>{categoryLabel.toLocaleUpperCase("es")}</strong>
-                              <span style={{ fontWeight: 900 }}>{jornadaMatch.team1} vs. {jornadaMatch.team2}</span>
+                                                            <span style={{ fontWeight: 900 }}>{jornadaMatch.team1} vs. {jornadaMatch.team2}</span>
                               <span style={{ color: "#ccc", fontSize: ".72rem" }}>ABRIR PLANILLA →</span>
                             </button>
                           ))}
