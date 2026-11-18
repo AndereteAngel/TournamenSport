@@ -2426,6 +2426,7 @@ export function TournamenSportApp() {
   const [fefutinTournamentClubs, setFefutinTournamentClubs] = useState([]);
   const [referenteParticipations, setReferenteParticipations] = useState([]);
   const [referenteMatchClubs, setReferenteMatchClubs] = useState([]);
+  const [showReferenteJornadaSheets, setShowReferenteJornadaSheets] = useState(false);
   const [loadingFefutinTournamentClubs, setLoadingFefutinTournamentClubs] = useState(false);
   const [showChampionCard, setShowChampionCard] = useState(false);
   const [joinCodeInput, setJoinCodeInput] = useState("");
@@ -4343,12 +4344,15 @@ export function TournamenSportApp() {
     const candidates = [];
     referenteParticipations.forEach((participation) => {
       const tournament = tournaments.find((item) =>
-        normalize(item.title) === normalize(participation.tournament_title) &&
-        (normalize(participation.category_label) === normalize(getTournamentCategory(item)) ||
-          normalize(participation.category_label).endsWith(normalize(getTournamentCategory(item))))
+        normalize(item.title) === normalize(participation.tournament_title)
       );
       if (!tournament) return;
       (tournament.groups || []).forEach((group, groupIndex) => {
+        const groupCategory = normalize(group?.categoryLabel || group?.name || "");
+        const participationCategory = normalize(participation.category_label);
+        if (groupCategory && participationCategory &&
+          !groupCategory.endsWith(participationCategory) &&
+          !participationCategory.endsWith(groupCategory)) return;
         (group?.matches || []).forEach((match) => {
           const isMyClub = normalize(match.team1) === normalize(participation.club_name) || normalize(match.team2) === normalize(participation.club_name);
           if (!isMyClub || !match.team1 || !match.team2) return;
@@ -4356,12 +4360,32 @@ export function TournamenSportApp() {
           const matchDate = match.match_date || getFefutinMatchDate(round);
           if (matchDate < todayKey) return;
           if (match.score1 !== null && match.score1 !== undefined && match.score2 !== null && match.score2 !== undefined) return;
-          candidates.push({ tournament, participation, match, groupIndex, round, matchDate });
+          candidates.push({ tournament, participation, match, groupIndex, round, matchDate, categoryLabel: group?.categoryLabel || group?.name || participation.category_label || "Categoría" });
         });
       });
     });
     candidates.sort((a, b) => a.matchDate.localeCompare(b.matchDate) || a.round - b.round);
     return candidates[0] || null;
+  })();
+
+  const referenteJornadaMatches = (() => {
+    if (!referenteNextMatch?.tournament || !referenteNextMatch?.participation) return [];
+    const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es");
+    const clubName = normalize(referenteNextMatch.participation.club_name);
+    return (referenteNextMatch.tournament.groups || []).flatMap((group, groupIndex) =>
+      (group?.matches || [])
+        .filter((match) =>
+          Number(match.round || 1) === referenteNextMatch.round &&
+          (normalize(match.team1) === clubName || normalize(match.team2) === clubName) &&
+          match.team1 && match.team2 &&
+          !(match.score1 !== null && match.score1 !== undefined && match.score2 !== null && match.score2 !== undefined)
+        )
+        .map((match) => ({
+          match,
+          groupIndex,
+          categoryLabel: group?.categoryLabel || group?.name || "Categoría",
+        }))
+    );
   })();
 
   useEffect(() => {
@@ -5187,6 +5211,42 @@ export function TournamenSportApp() {
                   </div>
                   <div style={{ textAlign: "center", marginTop: ".85rem", color: "#fff", fontSize: ".82rem", fontWeight: 800, textTransform: "capitalize" }}>{formattedDate}</div>
                   <div style={{ textAlign: "center", marginTop: ".25rem", color: "#f3a0ad", fontSize: ".76rem", fontWeight: 800 }}>{getTournamentCategory(tournament)} · FECHA {round}</div>
+                  <button
+                    type="button"
+                    onClick={() => setShowReferenteJornadaSheets(true)}
+                    disabled={!referenteJornadaMatches.length}
+                    style={{ display: "block", width: "100%", marginTop: ".9rem", padding: ".8rem 1rem", border: "1px solid #f3a0ad", borderRadius: "9px", background: "#b5122a", color: "#fff", fontWeight: 900, letterSpacing: ".03em", cursor: referenteJornadaMatches.length ? "pointer" : "not-allowed", opacity: referenteJornadaMatches.length ? 1 : .6 }}
+                  >
+                    📋 VER TODAS LAS PLANILLAS · FECHA {round} ({referenteJornadaMatches.length})
+                  </button>
+                  {showReferenteJornadaSheets && (
+                    <div role="dialog" aria-modal="true" aria-label="Planillas de la próxima jornada" style={{ position: "fixed", inset: 0, zIndex: 10000, display: "grid", placeItems: "center", padding: "1rem", background: "rgba(0,0,0,.82)" }}>
+                      <div style={{ width: "100%", maxWidth: "520px", maxHeight: "85vh", overflowY: "auto", padding: "1rem", border: "2px solid #b5122a", borderRadius: "12px", background: "#101010", color: "#fff", boxSizing: "border-box" }}>
+                        <h3 style={{ margin: "0 0 .35rem", textAlign: "center" }}>PLANILLAS · FECHA {round}</h3>
+                        <p style={{ margin: "0 0 1rem", color: "#ccc", textAlign: "center", fontSize: ".82rem" }}>{tournament.title || "Torneo FEFUTIN"} · {referenteJornadaMatches.length} partidos de tu club</p>
+                        <div style={{ display: "grid", gap: ".6rem" }}>
+                          {referenteJornadaMatches.map(({ match: jornadaMatch, groupIndex, categoryLabel }) => (
+                            <button
+                              key={jornadaMatch.id}
+                              type="button"
+                              onClick={() => {
+                                setShowReferenteJornadaSheets(false);
+                                setActiveTournament(tournament);
+                                setRefereeMatchToOpen({ phase: "groups", groupIndex, matchId: jornadaMatch.id });
+                                setActiveView("groups");
+                              }}
+                              style={{ display: "grid", gap: ".25rem", width: "100%", padding: ".8rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#171c27", color: "#fff", textAlign: "left", cursor: "pointer" }}
+                            >
+                              <strong style={{ color: "#f3a0ad", fontSize: ".72rem" }}>{categoryLabel.toLocaleUpperCase("es")}</strong>
+                              <span style={{ fontWeight: 900 }}>{jornadaMatch.team1} vs. {jornadaMatch.team2}</span>
+                              <span style={{ color: "#ccc", fontSize: ".72rem" }}>ABRIR PLANILLA →</span>
+                            </button>
+                          ))}
+                        </div>
+                        <button type="button" onClick={() => setShowReferenteJornadaSheets(false)} style={{ width: "100%", marginTop: "1rem", padding: ".75rem", border: "1px solid #777", borderRadius: "8px", background: "#fff", color: "#171c27", fontWeight: 900, cursor: "pointer" }}>CERRAR</button>
+                      </div>
+                    </div>
+                  )}
                   <style>{`@keyframes fefutinNextShield { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }`}</style>
                 </>;
               })() : <p style={{ margin: 0, color: "#e5e7eb", fontSize: ".82rem", lineHeight: 1.5, textAlign: "center" }}>Todavía no hay un próximo encuentro programado para tu club. Cuando se cargue el fixture, aparecerá acá.</p>}
