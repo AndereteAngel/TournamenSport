@@ -5,6 +5,11 @@ import { FefutinMatchSheet } from "./FefutinMatchSheet";
 const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es")
   .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
+const getLocalDateValue = () => {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+};
+
 const buildStandings = (category) => {
   const teams = new Map();
   (category?.clubs || []).forEach((club) => {
@@ -61,7 +66,7 @@ export function FefutinTurnCompetition({
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [startDate, setStartDate] = useState(getLocalDateValue);
   const [daysBetween, setDaysBetween] = useState(turn?.turno === "Semanal" ? 7 : 7);
 
   const canManage = isAdmin || isDirectivo;
