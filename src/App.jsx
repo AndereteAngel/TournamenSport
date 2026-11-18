@@ -4396,7 +4396,7 @@ export function TournamenSportApp() {
           const isMyClub = normalize(match.team1) === clubName || normalize(match.team2) === clubName;
           if (!isMyClub || !match.team1 || !match.team2) return;
           const round = getReferenteGroupMatchRound(group, match, tournament);
-          const matchDate = match.match_date || getFefutinMatchDate(round);
+          const matchDate = String(match.match_date || getFefutinMatchDate(round)).slice(0, 10);
           if (matchDate < todayKey) return;
           if (match.score1 !== null && match.score1 !== undefined &&
               match.score2 !== null && match.score2 !== undefined) return;
