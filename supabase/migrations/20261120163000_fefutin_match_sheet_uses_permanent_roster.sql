@@ -155,9 +155,10 @@ begin
     into v_local_players
     from public.fefutin_club_roster_players rp
     join public.fefutin_players fp on fp.id = rp.registry_player_id
-    left join public.fefutin_tournament_category_clubs tcc
+    join public.fefutin_tournament_category_clubs tcc
       on tcc.tournament_category_id = v_tournament_category_id
      and tcc.club_id = v_local.id
+     and tcc.status = 'aprobado'
     left join public.fefutin_category_club_players ccp
       on ccp.tournament_category_club_id = tcc.id
      and ccp.roster_player_id = rp.id
@@ -230,9 +231,10 @@ begin
     into v_visitor_players
     from public.fefutin_club_roster_players rp
     join public.fefutin_players fp on fp.id = rp.registry_player_id
-    left join public.fefutin_tournament_category_clubs tcc
+    join public.fefutin_tournament_category_clubs tcc
       on tcc.tournament_category_id = v_tournament_category_id
      and tcc.club_id = v_visitor.id
+     and tcc.status = 'aprobado'
     left join public.fefutin_category_club_players ccp
       on ccp.tournament_category_club_id = tcc.id
      and ccp.roster_player_id = rp.id
