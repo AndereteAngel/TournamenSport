@@ -106,31 +106,35 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
 
         const localClub = (clubs || []).find((club) => normalize(club.name) === normalize(localName));
         const visitorClub = (clubs || []).find((club) => normalize(club.name) === normalize(visitorName));
-        if (!localClub || !visitorClub) {
-          throw new Error("No encontramos la inscripción de ambos clubes en la categoría " + (category || "del torneo") + ". Revisá que los nombres del fixture coincidan con los nombres institucionales.");
-        }
 
-        const localRegistration = matchingRegistrations.find((item) => item.club_id === localClub.id);
-        const visitorRegistration = matchingRegistrations.find((item) => item.club_id === visitorClub.id);
+        // La planilla debe existir aunque uno o ambos clubes todavía no estén inscriptos.
+        const localRegistration = localClub
+          ? matchingRegistrations.find((item) => item.club_id === localClub.id)
+          : null;
+        const visitorRegistration = visitorClub
+          ? matchingRegistrations.find((item) => item.club_id === visitorClub.id)
+          : null;
         const registrationIds = [localRegistration?.id, visitorRegistration?.id].filter(Boolean);
-        const { data: teams, error: teamsError } = await supabase
-          .from("fefutin_teams")
-          .select("id, club_tournament_id, status")
-          .in("club_tournament_id", registrationIds);
+        const { data: teams, error: teamsError } = registrationIds.length
+          ? await supabase.from("fefutin_teams")
+              .select("id, club_tournament_id, status")
+              .in("club_tournament_id", registrationIds)
+          : { data: [], error: null };
         if (teamsError) throw teamsError;
 
-        const localTeam = (teams || []).find((team) => team.club_tournament_id === localRegistration.id);
-        const visitorTeam = (teams || []).find((team) => team.club_tournament_id === visitorRegistration.id);
-        if (!localTeam || !visitorTeam) {
-          throw new Error("Uno de los clubes todavía no tiene una lista de equipo creada para esta categoría.");
-        }
-
-        const teamIds = [localTeam.id, visitorTeam.id];
-        const { data: teamPlayers, error: teamPlayersError } = await supabase
-          .from("fefutin_team_players")
-          .select("id, team_id, first_name, last_name, jersey_number, approval_status, registry_player_id")
-          .in("team_id", teamIds)
-          .eq("approval_status", "aprobado");
+        const localTeam = localRegistration
+          ? (teams || []).find((team) => team.club_tournament_id === localRegistration.id)
+          : null;
+        const visitorTeam = visitorRegistration
+          ? (teams || []).find((team) => team.club_tournament_id === visitorRegistration.id)
+          : null;
+        const teamIds = [localTeam?.id, visitorTeam?.id].filter(Boolean);
+        const { data: teamPlayers, error: teamPlayersError } = teamIds.length
+          ? await supabase.from("fefutin_team_players")
+              .select("id, team_id, first_name, last_name, jersey_number, approval_status, registry_player_id")
+              .in("team_id", teamIds)
+              .eq("approval_status", "aprobado")
+          : { data: [], error: null };
         if (teamPlayersError) throw teamPlayersError;
 
         const registryIds = [...new Set((teamPlayers || []).map((item) => item.registry_player_id).filter(Boolean))];
@@ -163,11 +167,8 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
             };
           });
 
-        let local = buildPlayers(localTeam.id, localName);
-        let visitor = buildPlayers(visitorTeam.id, visitorName);
-        if (!local.length || !visitor.length) {
-          throw new Error("Las listas oficiales de ambos equipos deben tener jugadores vinculados a sus carnets para generar la planilla.");
-        }
+        let local = localTeam ? buildPlayers(localTeam.id, localName) : [];
+        let visitor = visitorTeam ? buildPlayers(visitorTeam.id, visitorName) : [];
 
         const { data: existingSheets, error: sheetError } = await supabase
           .from("fefutin_match_sheets")
@@ -185,7 +186,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         if (metadataSheet) {
           setMetadata({
             jornada: metadataSheet.jornada || String(match?.round || ""),
-            sede: metadataSheet.sede || localClub.headquarters_address || "",
+            sede: metadataSheet.sede || localClub?.headquarters_address || "",
             fecha_partido: metadataSheet.fecha_partido || "",
             arbitro_designado: assignedRefereeName || metadataSheet.arbitro_designado || "",
             observaciones: metadataSheet.observaciones || "",
@@ -193,7 +194,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         } else {
           setMetadata((current) => ({
             ...current,
-            sede: current.sede || localClub.headquarters_address || "",
+            sede: current.sede || localClub?.headquarters_address || "",
             arbitro_designado: assignedRefereeName || current.arbitro_designado || "",
           }));
         }
@@ -228,7 +229,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
         if (!cancelled) {
           setLocalPlayers(local);
           setVisitorPlayers(visitor);
-          setMetadata((current) => ({ ...current, sede: current.sede || localClub.headquarters_address || "" }));
+          setMetadata((current) => ({ ...current, sede: current.sede || localClub?.headquarters_address || "" }));
         }
       } catch (err) {
         console.error("Error al generar la planilla:", err);
@@ -413,6 +414,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
   };
   const activePlayers = activeSide === "local" ? localPlayers : visitorPlayers;
   const activeClubName = activeSide === "local" ? localName : visitorName;
+  const displayedPlayers = activePlayers.length ? activePlayers : Array.from({ length: 14 }, () => null);
   const finalScoreLocal = localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
   const finalScoreVisitor = visitorPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
 
@@ -618,7 +620,7 @@ export function FefutinMatchSheet({ tournament, match, onClose, isReferee = fals
                 <tr><th className={activeSide==="local"?"team-local":"team-visitor"} colSpan={5}>PLANILLA DEL EQUIPO {activeSide==="local"?"LOCAL":"VISITANTE"} · {activeClubName}</th></tr>
                 <tr><th>N°</th><th>JUGADOR</th><th>EST.</th><th>G</th><th>T A/R</th></tr>
               </thead>
-              <tbody>{activePlayers.map((player)=><tr key={player.player_id}>{renderPlayerCell(player,activeSide)}</tr>)}</tbody>
+              <tbody>{displayedPlayers.map((player,index)=><tr key={player?.player_id || `empty-${activeSide}-${index}`}>{renderPlayerCell(player,activeSide)}</tr>)}</tbody>
             </table>
           </div>
           <div className="fefutin-sheet-result" aria-live="polite">
