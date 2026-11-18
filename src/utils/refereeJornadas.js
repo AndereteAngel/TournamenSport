@@ -222,3 +222,89 @@ export const obtenerJornadasDeArbitro = (torneos, refereeId) => {
 };
 
 export default obtenerJornadasDeArbitro;
+
+
+// Convierte la respuesta normalizada del RPC en el contrato que consumen
+// las tarjetas y planillas generales del árbitro: una fila por jornada completa.
+export const normalizarJornadasDeTurno = (rows, refereeId) => {
+  return (rows || []).map((row) => {
+    const sourceMatches = Array.isArray(row.matches) ? row.matches : [];
+    const details = sourceMatches.map((match) => {
+      const score1 = match.score1 == null ? null : Number(match.score1);
+      const score2 = match.score2 == null ? null : Number(match.score2);
+      const resultadoCargado = score1 !== null && score2 !== null &&
+        Number.isFinite(score1) && Number.isFinite(score2);
+      const puntosTeam1 = resultadoCargado ? (score1 > score2 ? 3 : score1 < score2 ? 1 : 2) : 0;
+      const puntosTeam2 = resultadoCargado ? (score2 > score1 ? 3 : score2 < score1 ? 1 : 2) : 0;
+      return {
+        clave: String(match.id),
+        matchId: String(match.id),
+        normalizedMatchId: String(match.id),
+        phase: "normalized",
+        round_id: match.round_id || null,
+        turn_id: match.turn_id || row.turn_id,
+        tournament_category_id: match.tournament_category_id || null,
+        categoria: match.category || match.categoria || "Sin categoría",
+        category_id: match.category_id || null,
+        team1: match.team1 || "",
+        team2: match.team2 || "",
+        score1: resultadoCargado ? score1 : null,
+        score2: resultadoCargado ? score2 : null,
+        resultadoCargado,
+        referee_id: match.referee_id || null,
+        referee_closed: Boolean(match.referee_closed),
+        referee_closed_at: match.referee_closed_at || null,
+        round: match.round || row.journey_number || null,
+        groupName: match.groupName || `Jornada ${row.journey_number || ""}`.trim(),
+        instancia: "Jornada normalizada",
+        tournament_id: row.tournament_id,
+        venue_address: match.venue_address || "",
+        scheduled_date: match.match_date || row.scheduled_date || null,
+        scheduled_time: match.scheduled_time || null,
+        puntosTeam1,
+        puntosTeam2,
+      };
+    });
+    const assignedMatches = details.filter((detail) => String(detail.referee_id || "") === String(refereeId || ""));
+    const categories = [...new Set(details.map((detail) => detail.categoria))]
+      .filter(Boolean)
+      .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+    const closedMatches = details.filter((detail) => detail.referee_closed).length;
+    const playedMatches = details.filter((detail) => detail.resultadoCargado).length;
+    const goals = details.reduce((total, detail) =>
+      total + (detail.resultadoCargado ? detail.score1 + detail.score2 : 0), 0);
+    return {
+      key: String(row.turn_journey_id),
+      jornadaKey: String(row.turn_journey_id),
+      turn_journey_id: row.turn_journey_id,
+      turn_id: row.turn_id,
+      tournament_id: row.tournament_id,
+      torneo: row.tournament_title || "Torneo FEFUTIN",
+      rama: row.branch_name || "Sin rama",
+      turno: row.turno || "Sin turno",
+      journey_number: row.journey_number,
+      scheduled_date: row.scheduled_date || null,
+      etapa: "Jornada general",
+      team1: "JORNADA COMPLETA",
+      team2: "",
+      team1Normalizado: "jornada completa",
+      team2Normalizado: "",
+      partidos: details.length,
+      partidosJugados: playedMatches,
+      partidosCerrados: closedMatches,
+      partidosAsignados: assignedMatches.length,
+      goles: goals,
+      puntosTeam1: 0,
+      puntosTeam2: 0,
+      categorias,
+      detallesPartidos: details,
+      referee_id: refereeId || assignedMatches[0]?.referee_id || null,
+    };
+  }).filter((journey) =>
+    journey.detallesPartidos.length > 0 &&
+    journey.detallesPartidos.some((detail) => String(detail.referee_id || "") === String(refereeId || ""))
+  ).sort((a, b) =>
+    String(a.scheduled_date || "").localeCompare(String(b.scheduled_date || "")) ||
+    Number(a.journey_number || 0) - Number(b.journey_number || 0)
+  );
+};
