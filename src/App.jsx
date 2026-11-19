@@ -4757,7 +4757,19 @@ export function TournamenSportApp() {
         onClick={() => {
           setTournamentDivisionFilter(division);
           setTournamentCategoryFilter("Todas");
-          setActiveView("division-tournaments");
+          setActiveDivisionTournamentIndex(0);
+
+          // Las ramas nuevas abren directamente su selector de turnos.
+          // Las ramas antiguas conservan la pantalla de torneos anterior.
+          const branchTournament = tournaments.find(
+            (item) => getTournamentDivision(item) === division && item?.fefutin_branch_id
+          );
+
+          if (branchTournament) {
+            openTournament(branchTournament);
+          } else {
+            setActiveView("division-tournaments");
+          }
         }}
       >
         <img src={image} alt="" />
@@ -5238,10 +5250,10 @@ export function TournamenSportApp() {
       ) : activeView === "fefutin-turns" && activeTournament ? (
         <section className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: "1rem", boxSizing: "border-box", color: "#fff" }}>
           <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>← Volver</button>
-          <header style={{ margin: "1rem 0", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", textAlign: "center" }}>
-            <small style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN · RAMA</small>
-            <h2 style={{ color: "#fff", margin: ".35rem 0" }}>{activeTournament.title}</h2>
-            <p style={{ color: "#bbb", margin: 0, fontSize: ".82rem" }}>Elegí el turno. Cada turno tiene sus propias categorías, inscripciones, jornadas y partidos.</p>
+          <header style={{ margin: "1rem 0", padding: "1.1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", textAlign: "center" }}>
+            <small style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN · {getTournamentDivision(activeTournament).toLocaleUpperCase("es")}</small>
+            <h2 style={{ color: "#fff", margin: ".4rem 0", letterSpacing: ".04em" }}>TORNEOS DE {getTournamentDivision(activeTournament).toLocaleUpperCase("es")}</h2>
+            <p style={{ color: "#bbb", margin: 0, fontSize: ".86rem" }}>Seleccioná el turno para continuar.</p>
           </header>
           <div style={{ display: "grid", gap: ".7rem" }}>
             {canManageTournaments && ["Semanal", "Fin de semana"]
