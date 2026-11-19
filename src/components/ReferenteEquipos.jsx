@@ -368,7 +368,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
 
         {loading ? (
           <p style={{ color: "#ddd", textAlign: "center", padding: "2rem" }}>Cargando clubes y categorías...</p>
-        ) : participations.length === 0 && !(mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "inscripcion") ? (
+        ) : participations.length === 0 && !(mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && ["menu", "inscripcion"].includes(rosterView)) ? (
           <div style={{ border: "1px dashed #555", borderRadius: "10px", padding: "1.5rem", textAlign: "center", color: "#ddd", marginTop: "1rem" }}>
             <strong>No hay categorías registradas todavía.</strong>
             <p style={{ color: "#aaa", marginBottom: 0 }}>Podés crear las categorías permanentes desde LISTAS DE BUENA FE. No necesitás estar inscripto en un torneo.</p>
@@ -866,9 +866,21 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
           </>
         )}
         {isRosterMenuScreen && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: ".75rem", width: "100%", margin: 0 }}>
-            <button type="button" onClick={() => { setRosterView("registrados"); setEditingPlayer(null); }} style={{ ...buttonStyle, minHeight: "76px" }}>👥 JUGADORES REGISTRADOS</button>
-            <button type="button" onClick={() => { setRosterView("inscripcion"); setEditingPlayer(null); }} style={{ ...buttonStyle, minHeight: "76px" }}>📝 INSCRIPCIÓN</button>
+          <div style={{ display: "grid", gap: "1rem", width: "100%", margin: 0 }}>
+            {error && <p role="alert" style={{ color: "#fecaca", background: "#450a0a", border: "1px solid #b5122a", borderRadius: "8px", padding: ".75rem", margin: 0 }}>{error}</p>}
+            {notice && <p role="status" style={{ color: "#bbf7d0", background: "#052e16", border: "1px solid #166534", borderRadius: "8px", padding: ".75rem", margin: 0 }}>{notice}</p>}
+            <section style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: ".6rem", alignItems: "end", padding: ".9rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171717" }}>
+              <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".78rem", fontWeight: 800 }}>
+                CREAR CATEGORÍA DEL PLANTEL PERMANENTE
+                <input value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") createPermanentCategory(); }} placeholder="Ej.: Cat. 2018" style={filterInputStyle} maxLength={80} />
+              </label>
+              <button type="button" style={buttonStyle} onClick={createPermanentCategory}>＋ Crear</button>
+            </section>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: ".75rem" }}>
+              <button type="button" onClick={() => { setRosterView("registrados"); setEditingPlayer(null); }} style={{ ...buttonStyle, minHeight: "76px" }}>👥 JUGADORES REGISTRADOS</button>
+              <button type="button" onClick={() => { setRosterView("inscripcion"); setEditingPlayer(null); }} style={{ ...buttonStyle, minHeight: "76px" }}>📝 INSCRIPCIÓN</button>
+            </div>
+            <p style={{ color: "#aaa", fontSize: ".78rem", margin: 0 }}>Las categorías y sus jugadores quedan guardados en el plantel permanente del club, independientemente de los torneos.</p>
           </div>
         )}
         </>}
