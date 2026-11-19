@@ -55,7 +55,7 @@ export function CreateTournament({
         categoryDetail: "",
         categoryConfig: [],
         turno: "Semanal",
-        turnos: ["Semanal", "Fin de semana"],
+        turnos: ["Semanal"],
         format: "league",
         numGroups: 2,
         qualifiersPerGroup: 2,
@@ -391,33 +391,34 @@ export function CreateTournament({
             NOMBRE
             =================================================== */}
 
-        {isEditing ? (
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.75rem",
-                fontWeight: "bold",
-                textTransform: "uppercase",
-                color: "#d1d5db",
-                marginBottom: "4px",
-              }}
-            >
-              Nombre del torneo
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              required
-              className="cr-input"
-            />
-          </div>
-        ) : (
-          <p className="sports-help" style={{ margin: 0 }}>
-            Se creará un torneo por cada rama seleccionada y cada torneo llevará el nombre de su rama: Futsal, Baby fútbol, Femenino o Sénior.
-          </p>
-        )}
+        <div>
+          <label
+            style={{
+              display: "block",
+              fontSize: "0.75rem",
+              fontWeight: "bold",
+              textTransform: "uppercase",
+              color: "#d1d5db",
+              marginBottom: "4px",
+            }}
+          >
+            Nombre del torneo
+          </label>
+          <input
+            type="text"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            required
+            maxLength={100}
+            placeholder="Ej.: Infantiles Fin de Semana 2026"
+            className="cr-input"
+          />
+          {!isEditing && (
+            <span className="sports-help">
+              Si seleccionás más de un turno, se creará un torneo independiente por cada turno con este nombre.
+            </span>
+          )}
+        </div>
 
         {/* RAMAS Y CATEGORÍAS HABILITADAS */}
         <div style={{ padding: "0.9rem", border: "1px solid rgba(181,18,42,0.55)", borderRadius: "10px", background: "rgba(181,18,42,0.08)" }}>
