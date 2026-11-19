@@ -902,7 +902,9 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 <h3 style={{ color: "#fff", margin: 0, fontSize: "1rem" }}>PADRÓN DE JUGADORES</h3>
                 <p style={{ color: "#aaa", fontSize: ".75rem", margin: ".3rem 0 0" }}>Todos los jugadores inscriptos en el plantel permanente, incluidos los que esperan revisión o carnet.</p>
               </div>
-              {visibleParticipations.length === 0 ? (
+              {loading ? (
+                <p style={{ color: "#ddd", textAlign: "center", padding: "1rem", margin: 0 }}>Cargando categorías y jugadores...</p>
+              ) : visibleParticipations.length === 0 ? (
                 <p style={{ color: "#facc15", textAlign: "center", padding: "1rem", border: "1px dashed #555", borderRadius: "8px", margin: 0 }}>
                   Todavía no hay categorías creadas. Creá una categoría arriba para comenzar a inscribir jugadores.
                 </p>
