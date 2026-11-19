@@ -393,7 +393,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
 
         {loading ? (
           <p style={{ color: "#ddd", textAlign: "center", padding: "2rem" }}>Cargando clubes y categorías...</p>
-        ) : participations.length === 0 && !(mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && ["menu", "inscripcion"].includes(rosterView)) ? (
+        ) : participations.length === 0 && !(mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && ["menu", "inscripcion", "registrados"].includes(rosterView)) ? (
           <div style={{ border: "1px dashed #555", borderRadius: "10px", padding: "1.5rem", textAlign: "center", color: "#ddd", marginTop: "1rem" }}>
             <strong>No hay categorías registradas todavía.</strong>
             <p style={{ color: "#aaa", marginBottom: 0 }}>Podés crear las categorías permanentes desde LISTAS DE BUENA FE. No necesitás estar inscripto en un torneo.</p>
