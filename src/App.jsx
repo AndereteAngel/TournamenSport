@@ -5344,208 +5344,57 @@ export function TournamenSportApp() {
           </section>
         </div>
       ) : activeView === "division-tournaments" ? (
-        <div className="tc-form-screen tc-division-tournaments-screen">
-          <section className="cr-card" style={{ width: "100%", maxWidth: "980px", margin: "auto", background: "#080808", backgroundColor: "#080808", color: "#fff", border: "1px solid #b5122a" }}>
+        <main className="tc-form-screen tc-division-tournaments-screen" style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box", padding: "1rem", color: "#fff" }}>
+          <section style={{ width: "100%", maxWidth: "760px", margin: "0 auto", padding: "clamp(1rem, 4vw, 1.5rem)", boxSizing: "border-box", background: "#090909", border: "1px solid #b5122a", borderRadius: "18px" }}>
             <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>
               <span aria-hidden="true">←</span> Volver
             </button>
-            <div className="tc-division-heading-search">
-              <div className="tc-home-panel-art">
-                <div><span>FEFUTIN</span><strong>FÚTBOL · {tournamentDivisionFilter.toLocaleUpperCase("es")}</strong></div>
-              </div>
-              <h2 className="cr-title">TORNEOS DE {tournamentDivisionFilter.toLocaleUpperCase("es")}</h2>
-            </div>
+
+            <header style={{ margin: ".5rem 0 1.4rem", padding: "1.2rem .75rem", textAlign: "center", background: "linear-gradient(120deg, #171c27 0%, #101116 72%, rgba(181,18,42,.34) 100%)", border: "1px solid rgba(181,18,42,.7)", borderRadius: "14px" }}>
+              <small style={{ display: "block", color: "#f3a0ad", fontWeight: 900, letterSpacing: ".14em", fontSize: ".72rem" }}>FEFUTIN · {tournamentDivisionFilter.toLocaleUpperCase("es")}</small>
+              <h1 style={{ margin: ".55rem 0 .4rem", color: "#fff", fontSize: "clamp(1.35rem, 5vw, 2rem)", lineHeight: 1.15, letterSpacing: ".025em" }}>TORNEOS DE {tournamentDivisionFilter.toLocaleUpperCase("es")}</h1>
+              <p style={{ margin: 0, color: "#c8c8ce", fontSize: ".9rem", lineHeight: 1.5 }}>Seleccioná una competencia para continuar.</p>
+            </header>
+
             {(() => {
               const branchTournaments = filteredTournaments.filter((t) => getTournamentDivision(t) === tournamentDivisionFilter);
               if (!branchTournaments.length) {
-                return <p style={{ color: "#fff" }}>Todavía no hay torneos creados en esta rama.</p>;
+                return <p style={{ color: "#ccc", textAlign: "center", padding: "1.5rem .5rem" }}>Todavía no hay competencias disponibles en esta rama.</p>;
               }
 
               return (
-                <>
-                <FefutinGeneralStandings tournaments={branchTournaments} branch={tournamentDivisionFilter} />
-                <div className="tc-division-tournament-carousel-shell" style={{ position: "relative", width: "100%" }}>
-                <div
-                  className="tc-division-tournament-carousel"
-                  aria-label={`Carrusel de torneos de ${tournamentDivisionFilter}`}
-                  onScroll={(event) => {
-                    const container = event.currentTarget;
-                    const center = container.getBoundingClientRect().left + container.clientWidth / 2;
-                    let nearest = 0;
-                    let distance = Infinity;
-                    Array.from(container.children).forEach((card, index) => {
-                      const rect = card.getBoundingClientRect();
-                      const cardCenter = rect.left + rect.width / 2;
-                      const currentDistance = Math.abs(center - cardCenter);
-                      if (currentDistance < distance) { distance = currentDistance; nearest = index; }
-                    });
-                    setActiveDivisionTournamentIndex(nearest);
-                  }}
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    width: "100%",
-                    maxWidth: "100%",
-                    minWidth: 0,
-                    boxSizing: "border-box",
-                    gap: 0,
-                    marginTop: "1rem",
-                    overflowX: "auto",
-                    overflowY: "hidden",
-                    padding: "2rem max(1rem, calc((100% - 300px) / 2)) 1.5rem",
-                    scrollSnapType: "x mandatory",
-                    scrollPaddingInline: "max(1rem, calc((100% - 300px) / 2))",
-                    WebkitOverflowScrolling: "touch",
-                    scrollbarWidth: "thin",
-                    perspective: "900px",
-                  }}
-                >
-                  {branchTournaments.map((t, index) => {
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 245px), 1fr))", gap: ".85rem" }}>
+                  {branchTournaments.map((t) => {
                     const category = getTournamentCategory(t);
                     return (
-                      <div
-                        key={t.displayKey || t.id}
-                        onMouseEnter={() => setActiveDivisionTournamentIndex(index)}
-                        style={{
-                          position: "relative",
-                          flex: "0 0 min(76%, 330px)",
-                          width: "min(76%, 330px)",
-                          maxWidth: "330px",
-                          minWidth: "245px",
-                          boxSizing: "border-box",
-                          alignSelf: "center",
-                          scrollSnapAlign: "center",
-                          zIndex: activeDivisionTournamentIndex === index ? 3 : 1,
-                          marginLeft: index === 0 ? 0 : "-58px",
-                          transform: `translateY(${activeDivisionTournamentIndex === index ? "-3px" : "7px"}) scale(${activeDivisionTournamentIndex === index ? 1.08 : 0.78}) rotateY(${activeDivisionTournamentIndex > index ? "7deg" : activeDivisionTournamentIndex < index ? "-7deg" : "0deg"})`,
-                          opacity: Math.abs(activeDivisionTournamentIndex - index) > 2 ? 0.58 : activeDivisionTournamentIndex === index ? 1 : 0.82,
-                          transition: "transform 260ms cubic-bezier(.2,.8,.2,1), opacity 260ms ease, box-shadow 260ms ease",
-                        }}
-                      >
-                        <button
-                          type="button"
-                          className="tc-home-division-tournament tc-division-tournament-card"
-                          onClick={() => openTournament(t)}
-                          style={{
-                            background: "#171717",
-                            backgroundColor: "#171717",
-                            color: "#fff",
-                            border: "1px solid #b5122a",
-                            width: "100%",
-                            height: "100%",
-                            paddingRight: canDeleteTournaments ? "48px" : undefined,
-                          }}
-                        >
-                          <strong>{t.title || "Torneo sin nombre"}</strong>
-                          <span>Fútbol · {category}</span>
-                          <small>{t.status || "En preparación"}</small>
-                        </button>
+                      <article key={t.displayKey || t.id} style={{ minWidth: 0, position: "relative", padding: "1rem", background: "linear-gradient(145deg, #20212a, #111216)", border: "1px solid rgba(255,255,255,.72)", borderLeft: "4px solid #b5122a", borderRadius: "13px", boxShadow: "0 8px 20px rgba(0,0,0,.24)" }}>
+                        <small style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".08em" }}>COMPETENCIA</small>
+                        <h2 style={{ margin: ".45rem 0", color: "#fff", fontSize: "1.12rem", lineHeight: 1.25, overflowWrap: "anywhere" }}>{t.title || "Torneo sin nombre"}</h2>
+                        <p style={{ margin: "0 0 .85rem", color: "#ddd", fontSize: ".9rem" }}>Categoría: {category}</p>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap" }}>
+                          <small style={{ color: "#c7c7cc", border: "1px solid #777", borderRadius: "999px", padding: ".3rem .6rem" }}>{t.status || "En preparación"}</small>
+                          <button type="button" onClick={() => openTournament(t)} style={{ minHeight: "42px", padding: ".65rem .9rem", border: "1px solid #d44a60", borderRadius: "9px", background: "#b5122a", color: "#fff", fontWeight: 900, cursor: "pointer" }}>INGRESAR →</button>
+                        </div>
                         {canDeleteTournaments && (
                           <button
                             type="button"
                             title="Eliminar torneo"
                             aria-label={`Eliminar torneo ${t.title || "sin nombre"}`}
                             disabled={deletingTournamentId === t.id}
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleDeleteTournament(t);
-                            }}
-                            style={{
-                              position: "absolute",
-                              top: "8px",
-                              right: "8px",
-                              zIndex: 3,
-                              width: "32px",
-                              height: "32px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              padding: 0,
-                              color: "#f87171",
-                              background: deletingTournamentId === t.id ? "#374151" : "rgba(127,29,29,.45)",
-                              border: "1px solid rgba(239,68,68,.75)",
-                              borderRadius: "7px",
-                              cursor: deletingTournamentId === t.id ? "not-allowed" : "pointer",
-                            }}
+                            onClick={() => handleDeleteTournament(t)}
+                            style={{ position: "absolute", top: "9px", right: "9px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, color: "#fca5a5", background: "rgba(127,29,29,.35)", border: "1px solid rgba(239,68,68,.65)", borderRadius: "7px", cursor: deletingTournamentId === t.id ? "not-allowed" : "pointer" }}
                           >
-                            {deletingTournamentId === t.id ? "…" : <TCIcon name="trash" size={17} />}
+                            {deletingTournamentId === t.id ? "…" : <TCIcon name="trash" size={16} />}
                           </button>
                         )}
-                      </div>
+                      </article>
                     );
                   })}
                 </div>
-                <button
-                  type="button"
-                  className="tc-division-carousel-arrow tc-division-carousel-arrow-left"
-                  aria-label="Ver torneos anteriores"
-                  title="Anterior"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    const shell = event.currentTarget.closest(".tc-division-tournament-carousel-shell");
-                    const container = shell?.querySelector(".tc-division-tournament-carousel");
-                    if (!container) return;
-                    const cards = Array.from(container.children);
-                    if (cards.length < 2) return;
-                    const center = container.getBoundingClientRect().left + container.clientWidth / 2;
-                    let nearest = 0;
-                    let distance = Infinity;
-                    cards.forEach((card, index) => {
-                      const rect = card.getBoundingClientRect();
-                      const d = Math.abs(center - (rect.left + rect.width / 2));
-                      if (d < distance) { distance = d; nearest = index; }
-                    });
-                    const target = cards[Math.max(0, nearest - 1)];
-                    if (!target || nearest === 0) return;
-                    const rect = target.getBoundingClientRect();
-                    container.scrollTo({
-                      left: container.scrollLeft + (rect.left + rect.width / 2) - center,
-                      behavior: "smooth",
-                    });
-                  }}
-                >
-                  ‹
-                </button>
-                <button
-                  type="button"
-                  className="tc-division-carousel-arrow tc-division-carousel-arrow-right"
-                  aria-label="Ver torneos siguientes"
-                  title="Siguiente"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    const shell = event.currentTarget.closest(".tc-division-tournament-carousel-shell");
-                    const container = shell?.querySelector(".tc-division-tournament-carousel");
-                    if (!container) return;
-                    const cards = Array.from(container.children);
-                    if (cards.length < 2) return;
-                    const center = container.getBoundingClientRect().left + container.clientWidth / 2;
-                    let nearest = 0;
-                    let distance = Infinity;
-                    cards.forEach((card, index) => {
-                      const rect = card.getBoundingClientRect();
-                      const d = Math.abs(center - (rect.left + rect.width / 2));
-                      if (d < distance) { distance = d; nearest = index; }
-                    });
-                    const target = cards[Math.min(cards.length - 1, nearest + 1)];
-                    if (!target || nearest >= cards.length - 1) return;
-                    const rect = target.getBoundingClientRect();
-                    container.scrollTo({
-                      left: container.scrollLeft + (rect.left + rect.width / 2) - center,
-                      behavior: "smooth",
-                    });
-                  }}
-                >
-                  ›
-                </button>
-                </div>
-                </>
               );
             })()}
           </section>
-        </div>
+        </main>
       ) : activeView === "referente-solicitar-torneo" && isReferente && currentUser?.approvalStatus === "aprobado" && currentUser?.clubId ? (
         <ReferenteTorneoSolicitudes
           tournaments={tournaments}
