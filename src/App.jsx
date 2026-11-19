@@ -4818,11 +4818,7 @@ export function TournamenSportApp() {
 
   const openTournament = async (tournament) => {
     setActiveTournament(tournament);
-    if (tournament?.fefutinNewSchema) {
-      setActiveView("fefutin-new-tournament");
-      return;
-    }
-    if (tournament?.fefutin_branch_id) {
+    if (tournament?.fefutinNewSchema || tournament?.fefutin_branch_id) {
       setActiveFefutinTurn(null);
       const { data, error } = await supabase.rpc("get_fefutin_tournament_turns", {
         p_tournament_id: tournament.id,
@@ -4832,6 +4828,9 @@ export function TournamenSportApp() {
         setFefutinTurnsForActiveTournament([]);
       } else {
         setFefutinTurnsForActiveTournament(data || []);
+        if (!(data || []).length) {
+          showNotice("Esta competencia todavía no tiene turnos y categorías conectados. Aplicá la migración de conexión de torneos FEFUTIN y volvé a ingresar.");
+        }
       }
       setActiveView("fefutin-turns");
       return;
