@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { PlayerCarnets } from "./PlayerCarnets";
+import { FefutinPlayerRegistry } from "./FefutinPlayerRegistry";
 
 const emptyPlayer = () => ({
   id: `nuevo-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -340,6 +341,21 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   };
   const filterInputStyle = { ...inputStyle, background: "#fff", color: "#111", marginTop: 0 };
   const filterLabelStyle = { display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 };
+
+  // La inscripción y el padrón del referente se renderizan en una pantalla nueva e independiente.
+  if (mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente") {
+    return (
+      <FefutinPlayerRegistry
+        currentUser={currentUser}
+        clubId={activeClubId}
+        clubName={club?.club_name}
+        onBack={() => {
+          setSelectedSection(null);
+          setRosterView("inscripcion");
+        }}
+      />
+    );
+  }
 
   return (
     <div className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: 0, minHeight: "70vh", boxSizing: "border-box" }}>
