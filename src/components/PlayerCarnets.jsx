@@ -58,10 +58,10 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
     participations.forEach((item) => {
       if (clubId && item.club_id !== clubId) return;
       item.players.forEach((player) => {
-        // El carnet_number proviene del registro oficial fefutin_players.
-        // Si existe, el jugador ya tiene carnet; no filtramos por el estado de la fila de lista de buena fe.
-        if (!String(player.carnet_number || "").trim()) return;
-        const key = player.carnet_number;
+        // El padrón del referente incluye también las altas pendientes de carnet.
+        // La vista de carnets conserva únicamente jugadores con número asignado.
+        if (!embedded && !String(player.carnet_number || "").trim()) return;
+        const key = player.id || player.carnet_number || `${item.club_id}:${item.category_label}:${player.dni || player.first_name}`;
         if (!unique.has(key)) {
           unique.set(key, {
             ...player,
@@ -84,10 +84,15 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
   const filteredPlayers = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("es");
     return players.filter((player) => {
-      const searchFields = embedded ? [player.first_name, player.last_name] : [player.first_name, player.last_name, player.dni, player.carnet_number, player.club_name];
+      const searchFields = embedded ? [player.first_name, player.last_name, player.dni, player.carnet_number] : [player.first_name, player.last_name, player.dni, player.carnet_number, player.club_name];
       const matchesSearch = !query || searchFields.some((value) => String(value || "").toLocaleLowerCase("es").includes(query));
       const matchesCategory = categoryFilter === "todas" || player.category_label === categoryFilter;
-      const matchesStatus = statusFilter === "todos" || (player.carnet_status || "pendiente") === statusFilter;
+      const playerStatus = player.approval_status === "pendiente"
+        ? "pendiente"
+        : player.approval_status === "rechazado"
+          ? "rechazado"
+          : (player.carnet_status || "pendiente");
+      const matchesStatus = statusFilter === "todos" || playerStatus === statusFilter;
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [players, search, categoryFilter, statusFilter]);
@@ -157,13 +162,13 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
         {!embedded && <button type="button" className="tc-form-back" onClick={onBack}>← Volver</button>}
         <header style={{ textAlign: "center", margin: "1.2rem 0" }}>
           <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".15em", margin: 0 }}>FEFUTIN · IDENTIFICACIÓN OFICIAL</p>
-          <h2 className="cr-title" style={{ margin: ".35rem 0" }}>CARNET DE JUGADOR</h2>
+          <h2 className="cr-title" style={{ margin: ".35rem 0" }}>{embedded ? "JUGADORES REGISTRADOS" : "CARNET DE JUGADOR"}</h2>
         </header>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,180px),1fr))", gap: ".7rem", marginBottom: "1rem", padding: ".85rem", border: "1px solid #444", borderRadius: "10px", background: "#171717" }}>
           <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
             Buscar jugador
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nombre o apellido..." style={fieldStyle} />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={embedded ? "Nombre, apellido o DNI..." : "Nombre o apellido..."} style={fieldStyle} />
           </label>
           <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
             Categoría
@@ -180,12 +185,13 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
               <option value="en_proceso">En proceso</option>
               <option value="habilitado">Habilitado</option>
               <option value="no_habilitado">No habilitado</option>
+              {embedded && <option value="rechazado">Rechazado</option>}
             </select>
           </label>
           <button type="button" onClick={() => { setSearch(""); setCategoryFilter("todas"); setStatusFilter("todos"); }} style={{ alignSelf: "end", border: "1px solid #b5122a", borderRadius: "8px", padding: ".7rem .9rem", background: "#171c27", color: "#fff", fontWeight: 800, cursor: "pointer" }}>Limpiar filtros</button>
         </div>
 
-        {filteredPlayers.length > 0 && (
+        {!embedded && filteredPlayers.length > 0 && (
           <label style={{ display: "block", color: "#ddd", fontSize: ".78rem", fontWeight: 800, marginBottom: "1rem" }}>
             Seleccionar carnet
             <select value={selectedPlayer?.carnet_number || ""} onChange={(event) => setSelectedKey(event.target.value)} style={fieldStyle}>
@@ -204,19 +210,40 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
           <p role="alert" style={{ color: "#fca5a5" }}>{error}</p>
         ) : embedded ? (
           <>
-            <div style={{ display: "grid", gap: ".45rem", marginTop: ".5rem" }}>
-              {filteredPlayers.map((player, index) => (
-                <button key={player.carnet_number} type="button" onClick={() => { setSelectedKey(player.carnet_number); setCarnetAlertOpen(true); }} style={{ display: "grid", gridTemplateColumns: "42px 52px minmax(0,1fr) auto", alignItems: "center", gap: ".7rem", width: "100%", padding: ".65rem", textAlign: "left", border: "1px solid #444", borderRadius: "9px", background: "#101010", color: "#fff", cursor: "pointer" }}>
-                  <span style={{ color: "#fca5a5", fontWeight: 900 }}>{index + 1}</span>
-                  <img src={player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : samplePhotoUrl} alt="" style={{ width: "48px", height: "48px", borderRadius: "6px", objectFit: "cover" }} />
-                  <span style={{ minWidth: 0 }}>
-                    <strong style={{ display: "block", overflowWrap: "anywhere" }}>{[player.last_name, player.first_name].filter(Boolean).join(", ")}</strong>
-                    <span style={{ display: "block", color: "#fca5a5", fontSize: ".75rem", marginTop: ".2rem" }}>{player.category_label || "Sin categoría"}</span>
-                  </span>
-                  <span style={{ color: "#ddd", fontSize: ".75rem", fontWeight: 800 }}>{player.carnet_number}　›</span>
-                </button>
-              ))}
-              {!filteredPlayers.length && <p style={{ color: "#aaa", textAlign: "center", padding: "1rem" }}>{players.length ? "No hay jugadores que coincidan con los filtros." : "Todavía no hay jugadores aprobados con carnet para mostrar."}</p>}
+            <div style={{ overflowX: "auto", border: "1px solid #444", borderRadius: "9px", marginTop: ".5rem" }}>
+              <table style={{ width: "100%", minWidth: "620px", borderCollapse: "collapse", background: "#101010", color: "#fff", textAlign: "left" }}>
+                <thead><tr style={{ background: "#b5122a" }}>
+                  {["N.º", "FOTO", "JUGADOR", "DNI", "CATEGORÍA", "CARNET", "ESTADO"].map((heading) => <th key={heading} style={{ padding: ".65rem .5rem", fontSize: ".68rem", whiteSpace: "nowrap" }}>{heading}</th>)}
+                </tr></thead>
+                <tbody>
+                  {filteredPlayers.map((player, index) => {
+                    const playerStatus = player.approval_status === "pendiente"
+                      ? "PENDIENTE DE APROBACIÓN"
+                      : player.approval_status === "rechazado"
+                        ? "RECHAZADO"
+                        : statusLabel[player.carnet_status || "pendiente"] || "PENDIENTE";
+                    const playerStatusColor = player.approval_status === "rechazado"
+                      ? "#fca5a5"
+                      : player.approval_status === "pendiente"
+                        ? "#facc15"
+                        : statusColor[player.carnet_status || "pendiente"] || "#ddd";
+                    return (
+                      <tr key={player.id || player.carnet_number || index} style={{ borderTop: "1px solid #333" }}>
+                        <td style={{ padding: ".55rem", color: "#fca5a5", fontWeight: 900 }}>{index + 1}</td>
+                        <td style={{ padding: ".4rem" }}><img src={player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : samplePhotoUrl} alt="" style={{ width: "42px", height: "48px", borderRadius: "5px", objectFit: "cover", display: "block" }} /></td>
+                        <td style={{ padding: ".55rem", minWidth: "125px" }}><strong>{[player.last_name, player.first_name].filter(Boolean).join(", ") || "Sin nombre"}</strong></td>
+                        <td style={{ padding: ".55rem", whiteSpace: "nowrap" }}>{player.dni || "—"}</td>
+                        <td style={{ padding: ".55rem" }}>{player.category_label || "—"}</td>
+                        <td style={{ padding: ".55rem", whiteSpace: "nowrap" }}>
+                          {player.carnet_number ? <button type="button" onClick={() => { setSelectedKey(player.carnet_number); setCarnetAlertOpen(true); }} style={{ border: 0, background: "transparent", color: "#fff", textDecoration: "underline", cursor: "pointer", fontWeight: 800 }}>{player.carnet_number}</button> : "Pendiente"}
+                        </td>
+                        <td style={{ padding: ".55rem", color: playerStatusColor, fontSize: ".7rem", fontWeight: 900, whiteSpace: "nowrap" }}>{playerStatus}</td>
+                      </tr>
+                    );
+                  })}
+                  {!filteredPlayers.length && <tr><td colSpan={7} style={{ color: "#aaa", textAlign: "center", padding: "1rem" }}>{players.length ? "No hay jugadores que coincidan con los filtros." : "Todavía no hay jugadores registrados en este club."}</td></tr>}
+                </tbody>
+              </table>
             </div>
             {carnetAlertOpen && selectedPlayer && (
               <div role="dialog" aria-modal="true" aria-label="Carnet del jugador" onClick={(event) => { if (event.target === event.currentTarget) setCarnetAlertOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", background: "rgba(0,0,0,.82)", backdropFilter: "blur(4px)" }}>
