@@ -41,6 +41,11 @@ with configured_categories as (
     t.id as tournament_id,
     t.fefutin_branch_id,
     t.fefutin_turno,
+    case trim(branch.value->>'division')
+      when 'Infantil' then 'Baby fútbol'
+      when 'Mayores' then 'Sénior'
+      else trim(branch.value->>'division')
+    end as branch_name,
     trim(category.value) as category_name,
     t.format,
     case
@@ -91,10 +96,7 @@ select
 from configured_categories cc
 join public.fefutin_branches b
   on b.id = cc.fefutin_branch_id
- and b.name = case
-   when cc.fefutin_branch_id is null then ''
-   else b.name
- end
+ and b.name = cc.branch_name
 join public.fefutin_categories c
   on c.branch_id = b.id
  and c.name = cc.category_name
