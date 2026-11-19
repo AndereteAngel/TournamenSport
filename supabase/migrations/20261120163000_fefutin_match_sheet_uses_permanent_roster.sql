@@ -24,8 +24,6 @@ declare
   v_journey_date date;
   v_local public.fefutin_clubs%rowtype;
   v_visitor public.fefutin_clubs%rowtype;
-  v_local_roster_id uuid;
-  v_visitor_roster_id uuid;
   v_local_players jsonb;
   v_visitor_players jsonb;
   v_result jsonb;
@@ -106,185 +104,75 @@ begin
     raise exception 'No se encontro el club visitante del partido';
   end if;
 
-  -- El plantel permanente se identifica por club y categoria. Se prioriza
-  -- la etiqueta completa "Rama · Categoria"; se admite la etiqueta simple
-  -- de categoria que ya utilizan las fichas permanentes existentes.
-  select cr.id into v_local_roster_id
-  from public.fefutin_club_rosters cr
-  where cr.club_id = v_local.id
-    and lower(trim(cr.category_label)) in (
-      lower(trim(v_branch_name || ' · ' || v_category_name)),
-      lower(trim(v_category_name))
-    )
-  order by case
-    when lower(trim(cr.category_label)) = lower(trim(v_branch_name || ' · ' || v_category_name)) then 0
-    else 1
-  end, cr.id
-  limit 1;
+  -- La ficha permanente aporta los datos del jugador, pero la habilitacion
+  -- para competir depende de la inscripcion aprobada en esta categoria/turno.
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'player_id', fp.id,
+        'club', v_local.name,
+        'nombre', coalesce(fp.first_name, rp.first_name),
+        'apellido', coalesce(fp.last_name, rp.last_name),
+        'carnet_number', fp.carnet_number,
+        'dni', coalesce(fp.dni, rp.dni),
+        'numero_camiseta', ccp.jersey_number,
+        'goles', 0,
+        'es_capitan', false,
+        'tarjetas_amarillas', 0,
+        'tarjetas_rojas', 0,
+        'status', case when fp.status = 'rechazado' then 'rechazado' else ccp.status end,
+        'carnet_status', coalesce(fp.verification_status, fp.carnet_status, 'pendiente'),
+        'observaciones', ''
+      ) order by ccp.sort_order, rp.last_name, rp.first_name
+    ),
+    '[]'::jsonb
+  ) into v_local_players
+  from public.fefutin_tournament_category_clubs tcc
+  join public.fefutin_category_club_players ccp
+    on ccp.tournament_category_club_id = tcc.id
+   and ccp.status = 'aprobado'
+  join public.fefutin_club_roster_players rp
+    on rp.id = ccp.roster_player_id
+   and rp.approval_status = 'aprobado'
+   and rp.removed_at is null
+  join public.fefutin_players fp on fp.id = rp.registry_player_id
+  where tcc.tournament_category_id = v_tournament_category_id
+    and tcc.club_id = v_local.id
+    and tcc.status = 'aprobado';
 
-  select cr.id into v_visitor_roster_id
-  from public.fefutin_club_rosters cr
-  where cr.club_id = v_visitor.id
-    and lower(trim(cr.category_label)) in (
-      lower(trim(v_branch_name || ' · ' || v_category_name)),
-      lower(trim(v_category_name))
-    )
-  order by case
-    when lower(trim(cr.category_label)) = lower(trim(v_branch_name || ' · ' || v_category_name)) then 0
-    else 1
-  end, cr.id
-  limit 1;
-
-  if v_local_roster_id is not null then
-    select coalesce(
-      jsonb_agg(
-        jsonb_build_object(
-          'player_id', fp.id,
-          'club', v_local.name,
-          'nombre', coalesce(fp.first_name, rp.first_name),
-          'apellido', coalesce(fp.last_name, rp.last_name),
-          'carnet_number', fp.carnet_number,
-          'dni', coalesce(fp.dni, rp.dni),
-          'numero_camiseta', coalesce(ccp.jersey_number, ''),
-          'goles', 0,
-          'es_capitan', false,
-          'tarjetas_amarillas', 0,
-          'tarjetas_rojas', 0,
-          'status', case when fp.status = 'rechazado' then 'rechazado' else 'aprobado' end,
-          'carnet_status', coalesce(fp.verification_status, fp.carnet_status, 'pendiente'),
-          'observaciones', ''
-        ) order by coalesce(ccp.sort_order, 0), rp.last_name, rp.first_name
-      ),
-      '[]'::jsonb
-    )
-    into v_local_players
-    from public.fefutin_club_roster_players rp
-    join public.fefutin_players fp on fp.id = rp.registry_player_id
-    join public.fefutin_tournament_category_clubs tcc
-      on tcc.tournament_category_id = v_tournament_category_id
-     and tcc.club_id = v_local.id
-     and tcc.status = 'aprobado'
-    left join public.fefutin_category_club_players ccp
-      on ccp.tournament_category_club_id = tcc.id
-     and ccp.roster_player_id = rp.id
-    where rp.roster_id = v_local_roster_id
-      and rp.approval_status = 'aprobado'
-      and rp.removed_at is null
-      and rp.registry_player_id is not null
-      and coalesce(ccp.status, 'aprobado') <> 'rechazado';
-  else
-    -- Compatibilidad para clubes cuyo plantel todavia solo existe en la
-    -- participacion normalizada importada desde el flujo historico.
-    select coalesce(
-      jsonb_agg(
-        jsonb_build_object(
-          'player_id', fp.id,
-          'club', v_local.name,
-          'nombre', coalesce(fp.first_name, rp.first_name),
-          'apellido', coalesce(fp.last_name, rp.last_name),
-          'carnet_number', fp.carnet_number,
-          'dni', coalesce(fp.dni, rp.dni),
-          'numero_camiseta', ccp.jersey_number,
-          'goles', 0,
-          'es_capitan', false,
-          'tarjetas_amarillas', 0,
-          'tarjetas_rojas', 0,
-          'status', case when fp.status = 'rechazado' then 'rechazado' else ccp.status end,
-          'carnet_status', coalesce(fp.verification_status, fp.carnet_status, 'pendiente'),
-          'observaciones', ''
-        ) order by ccp.sort_order, rp.last_name, rp.first_name
-      ),
-      '[]'::jsonb
-    )
-    into v_local_players
-    from public.fefutin_tournament_category_clubs tcc
-    join public.fefutin_category_club_players ccp
-      on ccp.tournament_category_club_id = tcc.id
-     and ccp.status = 'aprobado'
-    join public.fefutin_club_roster_players rp
-      on rp.id = ccp.roster_player_id
-     and rp.approval_status = 'aprobado'
-     and rp.removed_at is null
-    join public.fefutin_players fp on fp.id = rp.registry_player_id
-    where tcc.tournament_category_id = v_tournament_category_id
-      and tcc.club_id = v_local.id
-      and tcc.status = 'aprobado';
-  end if;
-
-  if v_visitor_roster_id is not null then
-    select coalesce(
-      jsonb_agg(
-        jsonb_build_object(
-          'player_id', fp.id,
-          'club', v_visitor.name,
-          'nombre', coalesce(fp.first_name, rp.first_name),
-          'apellido', coalesce(fp.last_name, rp.last_name),
-          'carnet_number', fp.carnet_number,
-          'dni', coalesce(fp.dni, rp.dni),
-          'numero_camiseta', coalesce(ccp.jersey_number, ''),
-          'goles', 0,
-          'es_capitan', false,
-          'tarjetas_amarillas', 0,
-          'tarjetas_rojas', 0,
-          'status', case when fp.status = 'rechazado' then 'rechazado' else 'aprobado' end,
-          'carnet_status', coalesce(fp.verification_status, fp.carnet_status, 'pendiente'),
-          'observaciones', ''
-        ) order by coalesce(ccp.sort_order, 0), rp.last_name, rp.first_name
-      ),
-      '[]'::jsonb
-    )
-    into v_visitor_players
-    from public.fefutin_club_roster_players rp
-    join public.fefutin_players fp on fp.id = rp.registry_player_id
-    join public.fefutin_tournament_category_clubs tcc
-      on tcc.tournament_category_id = v_tournament_category_id
-     and tcc.club_id = v_visitor.id
-     and tcc.status = 'aprobado'
-    left join public.fefutin_category_club_players ccp
-      on ccp.tournament_category_club_id = tcc.id
-     and ccp.roster_player_id = rp.id
-    where rp.roster_id = v_visitor_roster_id
-      and rp.approval_status = 'aprobado'
-      and rp.removed_at is null
-      and rp.registry_player_id is not null
-      and coalesce(ccp.status, 'aprobado') <> 'rechazado';
-  else
-    select coalesce(
-      jsonb_agg(
-        jsonb_build_object(
-          'player_id', fp.id,
-          'club', v_visitor.name,
-          'nombre', coalesce(fp.first_name, rp.first_name),
-          'apellido', coalesce(fp.last_name, rp.last_name),
-          'carnet_number', fp.carnet_number,
-          'dni', coalesce(fp.dni, rp.dni),
-          'numero_camiseta', ccp.jersey_number,
-          'goles', 0,
-          'es_capitan', false,
-          'tarjetas_amarillas', 0,
-          'tarjetas_rojas', 0,
-          'status', case when fp.status = 'rechazado' then 'rechazado' else ccp.status end,
-          'carnet_status', coalesce(fp.verification_status, fp.carnet_status, 'pendiente'),
-          'observaciones', ''
-        ) order by ccp.sort_order, rp.last_name, rp.first_name
-      ),
-      '[]'::jsonb
-    )
-    into v_visitor_players
-    from public.fefutin_tournament_category_clubs tcc
-    join public.fefutin_category_club_players ccp
-      on ccp.tournament_category_club_id = tcc.id
-     and ccp.status = 'aprobado'
-    join public.fefutin_club_roster_players rp
-      on rp.id = ccp.roster_player_id
-     and rp.approval_status = 'aprobado'
-     and rp.removed_at is null
-    join public.fefutin_players fp on fp.id = rp.registry_player_id
-    where tcc.tournament_category_id = v_tournament_category_id
-      and tcc.club_id = v_visitor.id
-      and tcc.status = 'aprobado';
-  end if;
-
+  select coalesce(
+    jsonb_agg(
+      jsonb_build_object(
+        'player_id', fp.id,
+        'club', v_visitor.name,
+        'nombre', coalesce(fp.first_name, rp.first_name),
+        'apellido', coalesce(fp.last_name, rp.last_name),
+        'carnet_number', fp.carnet_number,
+        'dni', coalesce(fp.dni, rp.dni),
+        'numero_camiseta', ccp.jersey_number,
+        'goles', 0,
+        'es_capitan', false,
+        'tarjetas_amarillas', 0,
+        'tarjetas_rojas', 0,
+        'status', case when fp.status = 'rechazado' then 'rechazado' else ccp.status end,
+        'carnet_status', coalesce(fp.verification_status, fp.carnet_status, 'pendiente'),
+        'observaciones', ''
+      ) order by ccp.sort_order, rp.last_name, rp.first_name
+    ),
+    '[]'::jsonb
+  ) into v_visitor_players
+  from public.fefutin_tournament_category_clubs tcc
+  join public.fefutin_category_club_players ccp
+    on ccp.tournament_category_club_id = tcc.id
+   and ccp.status = 'aprobado'
+  join public.fefutin_club_roster_players rp
+    on rp.id = ccp.roster_player_id
+   and rp.approval_status = 'aprobado'
+   and rp.removed_at is null
+  join public.fefutin_players fp on fp.id = rp.registry_player_id
+  where tcc.tournament_category_id = v_tournament_category_id
+    and tcc.club_id = v_visitor.id
+    and tcc.status = 'aprobado';
   v_result := jsonb_build_object(
     'match_id', v_match.id,
     'tournament_id', v_tournament_id,
