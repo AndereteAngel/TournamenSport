@@ -176,7 +176,5 @@ comment on table public.fefutin_turn_journeys is
   'Jornada general del turno; agrupa las rondas y partidos de todas las categorias de ese turno.';
 comment on column public.fefutin_matches.legacy_match_payload is
   'Copia de respaldo del partido anterior de tournaments.groups/playoffs para auditoria de migracion.';
-comment on column public.fefutin_match_sheets.normalized_match_id is
-  'UUID del partido normalizado; match_id texto se conserva para compatibilidad historica.';
 
 commit;
