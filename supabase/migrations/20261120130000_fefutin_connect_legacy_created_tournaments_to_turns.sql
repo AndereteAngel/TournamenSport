@@ -105,7 +105,6 @@ join public.fefutin_categories c
 join public.fefutin_tournament_turns tt
   on tt.tournament_id = cc.tournament_id
  and tt.turno = cc.fefutin_turno
-on conflict (tournament_id, category_id) do update
-set turn_id = excluded.turn_id;
+on conflict (turn_id, category_id) do nothing;
 
 commit;
