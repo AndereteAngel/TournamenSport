@@ -150,7 +150,7 @@ begin
           'es_capitan', false,
           'tarjetas_amarillas', 0,
           'tarjetas_rojas', 0,
-          'status', 'aprobado',
+          'status', case when fp.status = 'rechazado' then 'rechazado' else 'aprobado' end,
           'carnet_status', coalesce(fp.verification_status, fp.carnet_status, 'pendiente'),
           'observaciones', ''
         ) order by coalesce(ccp.sort_order, 0), rp.last_name, rp.first_name
@@ -226,7 +226,7 @@ begin
           'es_capitan', false,
           'tarjetas_amarillas', 0,
           'tarjetas_rojas', 0,
-          'status', 'aprobado',
+          'status', case when fp.status = 'rechazado' then 'rechazado' else 'aprobado' end,
           'carnet_status', coalesce(fp.verification_status, fp.carnet_status, 'pendiente'),
           'observaciones', ''
         ) order by coalesce(ccp.sort_order, 0), rp.last_name, rp.first_name
