@@ -474,10 +474,10 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
     if (!player) return <><td></td><td></td><td></td><td></td><td></td></>;
     const statusColor = player.estado_habilitacion === "HABILITADO" ? "#166534" : player.estado_habilitacion === "NO HABILITADO" ? "#b91c1c" : "#92400e";
     return <>
-      <td className="fefutin-shirt-number"><input aria-label={"Número de camiseta " + player.nombre} type="text" inputMode="numeric" disabled={Boolean(match?.referee_closed)} /></td>
+      <td className="fefutin-shirt-number"><strong aria-label={"Número de camiseta " + player.nombre}>{player.numero_camiseta || "—"}</strong></td>
       <td className="fefutin-player-name">
         <strong>{player.apellido}, {player.nombre}</strong>
-        <small>{player.carnet_number || "Sin carnet"} · Camiseta {player.numero_camiseta || "—"}</small>
+        <small>{player.carnet_number || "Sin carnet"}</small>
         <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>
       </td>
       <td className="fefutin-status" style={{ color:statusColor }}>{player.estado_habilitacion === "HABILITADO" ? "HABIL." : player.estado_habilitacion === "NO HABILITADO" ? "NO HABIL." : "PEND. VERIF."}</td>
