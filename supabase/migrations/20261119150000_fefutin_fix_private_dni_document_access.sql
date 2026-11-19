@@ -15,8 +15,7 @@ as $function$
   select exists (
     select 1
     from public.profiles p
-    join public.fefutin_club_rosters cr
-      on cr.club_id = p.club_id
+    cross join public.fefutin_club_rosters cr
     join public.fefutin_club_roster_players rp
       on rp.roster_id = cr.id
     join public.fefutin_clubs c
