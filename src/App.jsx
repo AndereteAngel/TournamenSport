@@ -3543,6 +3543,7 @@ export function TournamenSportApp() {
         const registrationGroup = {
           id: 0,
           name: "__INSCRIPCIONES__",
+          fefutin_normalized: true,
           teams: [],
           matches: [],
           capacity: Number(config.maxParticipants) || 16,
