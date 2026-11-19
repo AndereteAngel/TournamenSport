@@ -44,6 +44,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [uploadingPlayerId, setUploadingPlayerId] = useState(null);
   const [editingPlayer, setEditingPlayer] = useState(null);
   const [selectedClubId, setSelectedClubId] = useState(null);
+  const [clubProfile, setClubProfile] = useState(null);
   const [selectedSection, setSelectedSection] = useState(null);
   const [tournamentSearch, setTournamentSearch] = useState("");
   const [tournamentCategory, setTournamentCategory] = useState("todas");
@@ -77,7 +78,25 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
       })),
     }));
     setParticipations(items);
-    if (currentUser?.role === "referente" && items.length > 0) {
+    if (currentUser?.role === "referente" && currentUser?.clubId) {
+      const { data: profileClub, error: clubError } = await supabase
+        .from("fefutin_clubs")
+        .select("id, name, affiliate_number, headquarters_address, logo_path")
+        .eq("id", currentUser.clubId)
+        .maybeSingle();
+      if (clubError) {
+        console.warn("No se pudo cargar la ficha del club referente:", clubError);
+      } else if (profileClub) {
+        setClubProfile({
+          club_id: profileClub.id,
+          club_name: profileClub.name,
+          affiliate_number: profileClub.affiliate_number,
+          headquarters_address: profileClub.headquarters_address,
+          logo_path: profileClub.logo_path,
+        });
+        setSelectedClubId(profileClub.id);
+      }
+    } else if (currentUser?.role === "referente" && items.length > 0) {
       setSelectedClubId(items[0].club_id);
     }
     const nextRows = {};
@@ -89,7 +108,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
     });
     setRowsByParticipation(nextRows);
     setLoading(false);
-  }, [mode, currentUser?.role]);
+  }, [mode, currentUser?.role, currentUser?.clubId]);
 
   useEffect(() => {
     loadParticipations();
@@ -287,10 +306,10 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const isRosterMenuScreen = mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && rosterView === "menu";
   const clubs = [...new Map(participations.map((item) => [item.club_id, item])).values()];
   const activeClubId = currentUser?.role === "referente"
-    ? (selectedClubId || clubs[0]?.club_id || null)
+    ? (selectedClubId || currentUser?.clubId || clubs[0]?.club_id || null)
     : selectedClubId;
-  const selectedClub = clubs.find((item) => item.club_id === activeClubId) || null;
-  const club = selectedClub || participations[0];
+  const selectedClub = clubs.find((item) => item.club_id === activeClubId) || (clubProfile?.club_id === activeClubId ? clubProfile : null);
+  const club = selectedClub || participations[0] || clubProfile;
   const visibleParticipations = mode === "equipos" && activeClubId
     ? participations.filter((item) => item.club_id === activeClubId)
     : participations;
