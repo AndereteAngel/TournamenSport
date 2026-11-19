@@ -30,6 +30,7 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
   const [activeView, setActiveView] = useState("inscribir");
   const [registryCategory, setRegistryCategory] = useState("todas");
   const [registrySearch, setRegistrySearch] = useState("");
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
 
   const loadRegistry = useCallback(async () => {
     setLoading(true);
@@ -249,7 +250,7 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
                 <tbody>{filteredPlayers.map((player, index) => (
                   <tr key={player.id || player.dni || index} style={{ borderTop: "1px solid #333" }}>
                     <td style={{ padding: ".3rem .4rem" }}>{photoUrl(player.photo_path) ? <img src={photoUrl(player.photo_path)} alt="" style={{ width: "32px", height: "38px", objectFit: "cover", borderRadius: "4px" }} /> : "—"}</td>
-                    <td style={{ padding: ".4rem", fontSize: ".74rem", fontWeight: 700 }}>{[player.last_name, player.first_name].filter(Boolean).join(", ") || "Sin nombre"}</td>
+                    <td style={{ padding: ".4rem", fontSize: ".74rem", fontWeight: 700 }}><button type="button" onClick={() => setSelectedPlayer(player)} style={{ border: 0, padding: 0, background: "transparent", color: "#fff", font: "inherit", fontWeight: 800, textAlign: "left", textDecoration: "underline", textDecorationColor: "#b5122a", textUnderlineOffset: "3px", cursor: "pointer" }}>{[player.last_name, player.first_name].filter(Boolean).join(", ") || "Sin nombre"}</button></td>
                     <td style={{ padding: ".4rem", fontSize: ".68rem" }}>{player.categoryLabel}</td>
                     <td style={{ padding: ".4rem", fontSize: ".68rem", whiteSpace: "nowrap" }}>{player.dni || "—"}</td>
                     <td style={{ padding: ".4rem", whiteSpace: "nowrap", color: player.approval_status === "aprobado" ? "#86efac" : player.approval_status === "rechazado" ? "#fca5a5" : "#facc15", fontSize: ".62rem", fontWeight: 900 }}>{player.approval_status === "aprobado" ? "APROBADO" : player.approval_status === "rechazado" ? "RECHAZADO" : "PENDIENTE"}</td>
@@ -259,6 +260,43 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
             </div>
           )}
         </section>
+      )}
+      {selectedPlayer && (
+        <div role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setSelectedPlayer(null); }} style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", background: "rgba(0,0,0,.82)" }}>
+          <section role="dialog" aria-modal="true" aria-label="Carnet del jugador" style={{ width: "100%", maxWidth: "380px", maxHeight: "90vh", overflowY: "auto", boxSizing: "border-box", padding: "1rem", border: "2px solid #b5122a", borderRadius: "14px", background: "#fff", color: "#171c27", boxShadow: "0 18px 60px rgba(0,0,0,.5)" }}>
+            <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", paddingBottom: ".65rem", borderBottom: "3px solid #b5122a" }}>
+              <div>
+                <p style={{ margin: 0, color: "#b5122a", fontSize: ".65rem", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN · BABY FÚTBOL</p>
+                <h2 style={{ margin: ".15rem 0 0", fontSize: "1.15rem", fontWeight: 900 }}>CARNET DEL JUGADOR</h2>
+              </div>
+              <button type="button" onClick={() => setSelectedPlayer(null)} aria-label="Cerrar carnet" style={{ ...secondaryButton, minWidth: "38px", padding: ".45rem", background: "#171c27" }}>✕</button>
+            </header>
+            <div style={{ display: "flex", gap: ".9rem", alignItems: "center", padding: ".9rem 0" }}>
+              {photoUrl(selectedPlayer.photo_path) ? <img src={photoUrl(selectedPlayer.photo_path)} alt={`Foto de ${selectedPlayer.first_name || ""} ${selectedPlayer.last_name || ""}`} style={{ width: "104px", height: "124px", objectFit: "cover", border: "2px solid #b5122a", borderRadius: "8px", flexShrink: 0 }} /> : <div style={{ width: "104px", height: "124px", display: "grid", placeItems: "center", flexShrink: 0, border: "1px dashed #999", borderRadius: "8px", color: "#777", fontSize: ".7rem", textAlign: "center" }}>SIN FOTO</div>}
+              <div style={{ minWidth: 0 }}>
+                <p style={{ margin: 0, color: "#666", fontSize: ".65rem", fontWeight: 800 }}>APELLIDO Y NOMBRE</p>
+                <h3 style={{ margin: ".2rem 0 .65rem", fontSize: "1rem", lineHeight: 1.2, overflowWrap: "anywhere" }}>{[selectedPlayer.last_name, selectedPlayer.first_name].filter(Boolean).join(", ") || "Sin nombre"}</h3>
+                <p style={{ margin: 0, color: "#666", fontSize: ".65rem", fontWeight: 800 }}>NÚMERO DE CARNET</p>
+                <strong style={{ display: "block", marginTop: ".15rem", color: "#b5122a", fontSize: "1.1rem" }}>{selectedPlayer.carnet_number || "Pendiente"}</strong>
+              </div>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".65rem", padding: ".75rem", borderRadius: "8px", background: "#f3f4f6" }}>
+              <div><small style={{ color: "#666", fontWeight: 800 }}>DNI</small><div style={{ fontWeight: 800, overflowWrap: "anywhere" }}>{selectedPlayer.dni || "—"}</div></div>
+              <div><small style={{ color: "#666", fontWeight: 800 }}>NACIMIENTO</small><div style={{ fontWeight: 800 }}>{selectedPlayer.birth_date || "—"}</div></div>
+              <div><small style={{ color: "#666", fontWeight: 800 }}>CLUB</small><div style={{ fontWeight: 800, overflowWrap: "anywhere" }}>{clubName || "—"}</div></div>
+              <div><small style={{ color: "#666", fontWeight: 800 }}>CATEGORÍA</small><div style={{ fontWeight: 800 }}>{selectedPlayer.categoryLabel || "—"}</div></div>
+            </div>
+            <div style={{ marginTop: ".75rem", padding: ".7rem", border: "1px solid #ddd", borderRadius: "8px", textAlign: "center" }}>
+              <strong style={{ display: "block", color: selectedPlayer.approval_status === "aprobado" ? "#166534" : selectedPlayer.approval_status === "rechazado" ? "#b91c1c" : "#92400e", fontSize: ".8rem" }}>
+                {selectedPlayer.approval_status === "aprobado" ? "APROBADO" : selectedPlayer.approval_status === "rechazado" ? "RECHAZADO" : "PENDIENTE DE APROBACIÓN"}
+              </strong>
+              <span style={{ display: "block", marginTop: ".25rem", color: "#555", fontSize: ".72rem" }}>
+                {selectedPlayer.carnet_status ? `Estado del carnet: ${selectedPlayer.carnet_status}` : selectedPlayer.approval_status === "aprobado" ? "Carnet sin estado informado" : "Carnet no habilitado"}
+              </span>
+            </div>
+            <p style={{ margin: ".7rem 0 0", color: "#777", fontSize: ".62rem", textAlign: "center" }}>Este comprobante refleja los datos disponibles en el padrón del club.</p>
+          </section>
+        </div>
       )}
     </main>
   );
