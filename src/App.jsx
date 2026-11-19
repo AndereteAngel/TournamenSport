@@ -3134,6 +3134,7 @@ export function TournamenSportApp() {
       return {
         ...item,
         title: normalized.nombre || item.title,
+        estado: normalized.estado,
         game: `Fútbol · ${branchName} · ${normalized.turno}`,
         status: normalized.estado === "inscripcion" ? "Inscripciones" : item.status,
         fefutinNewSchema: true,
@@ -6239,6 +6240,11 @@ export function TournamenSportApp() {
         <FefutinNormalizedTournament
           tournament={activeTournament}
           canManage={canManageTournaments}
+          onStatusChange={(nextEstado) => {
+            const nextStatus = nextEstado === "inscripcion" ? "Inscripciones" : "Inscripciones cerradas";
+            setActiveTournament((current) => current?.id === activeTournament.id ? { ...current, estado: nextEstado, status: nextStatus } : current);
+            setTournaments((current) => current.map((item) => item.id === activeTournament.id ? { ...item, estado: nextEstado, status: nextStatus } : item));
+          }}
           onBack={() => {
             setActiveTournament(null);
             setActiveView("division-tournaments");
