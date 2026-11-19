@@ -178,7 +178,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
             </select>
           </label>
           <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
-            Estado del carnet
+            {embedded ? "Estado de inscripción / carnet" : "Estado del carnet"}
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} style={fieldStyle}>
               <option value="todos">Todos los estados</option>
               <option value="pendiente">Pendiente</option>
@@ -205,7 +205,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
         )}
 
         {loading ? (
-          <p style={{ color: "#ddd", textAlign: "center" }}>Cargando carnets...</p>
+          <p style={{ color: "#ddd", textAlign: "center" }}>{embedded ? "Cargando jugadores..." : "Cargando carnets..."}</p>
         ) : error ? (
           <p role="alert" style={{ color: "#fca5a5" }}>{error}</p>
         ) : embedded ? (
