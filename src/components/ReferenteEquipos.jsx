@@ -891,8 +891,6 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 NÚMERO DE CARNET FEFUTIN
                 <input value="Se asignará automáticamente cuando Admin o Directivo apruebe el alta" readOnly style={{ ...inputStyle, background: "#e5e7eb", fontSize: ".78rem" }} />
               </label>
-              {error && <p role="alert" style={{ color: "#fecaca", background: "#450a0a", padding: ".7rem", borderRadius: "8px" }}>{error}</p>}
-              {notice && <p role="status" style={{ color: "#bbf7d0", background: "#052e16", padding: ".7rem", borderRadius: "8px" }}>{notice}</p>}
               <button type="button" className="cr-btn-gold" disabled={savingId !== null || Object.values(registrationUploads).some(Boolean) || visibleParticipations.length === 0} onClick={submitIndividualPlayer} style={{ width: "100%", minHeight: "48px" }}>
                 {savingId ? "GUARDANDO INSCRIPCIÓN..." : "GUARDAR INSCRIPCIÓN DEL JUGADOR"}
               </button>
