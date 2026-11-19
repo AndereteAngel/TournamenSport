@@ -2,6 +2,9 @@
 -- La solicitud y la aprobacion se resuelven por (club, torneo de rama, turno).
 begin;
 
+-- Quitar primero la firma antigua, que tenia parametros predeterminados.
+drop function if exists public.submit_fefutin_club_tournament_request(uuid, text);
+
 create or replace function public.submit_fefutin_club_tournament_request(
   p_tournament_id uuid,
   p_turn_id uuid
@@ -113,8 +116,6 @@ end;
 $function$;
 
 -- La firma anterior no podia distinguir turnos: se elimina antes de crear la firma informativa.
-drop function if exists public.submit_fefutin_club_tournament_request(uuid, text);
-
 create or replace function public.submit_fefutin_club_tournament_request(
   p_tournament_id uuid,
   p_category_label text
