@@ -5,6 +5,7 @@ import {
 import { Component, useEffect, useState } from "react";
 
 import { CreateTournament } from "./components/CreateTournament";
+import { FefutinNormalizedTournament } from "./components/FefutinNormalizedTournament";
 import { GroupStageView } from "./components/GroupStageView";
 import { Navbar } from "./components/Navbar";
 import { RefereeCarnets } from "./components/RefereeCarnets";
@@ -3096,22 +3097,57 @@ export function TournamenSportApp() {
   const fetchTournaments = async () => {
     setLoading(true);
 
-    const { data, error } = await supabase
-      .from("tournaments")
-      .select("*")
-      .order("created_at", {
-        ascending: false,
-      });
+    const [
+      { data: legacyRows, error: legacyError },
+      { data: normalizedRows, error: normalizedError },
+      { data: categoryRows, error: categoryError },
+      { data: branchRows, error: branchError },
+    ] = await Promise.all([
+      supabase.from("tournaments").select("*").order("created_at", { ascending: false }),
+      supabase.from("fefutin_torneos").select("id,nombre,rama_id,turno,modo,estado,created_at"),
+      supabase.from("fefutin_torneo_categorias").select("torneo_id,nombre,sort_order,activa"),
+      supabase.from("fefutin_branches").select("id,name"),
+    ]);
 
-    if (error) {
-      console.error("Error al obtener torneos:", error);
-    } else {
-      const freshTournaments = data || [];
-      setTournaments(freshTournaments);
-      if (activeTournament?.id) {
-        const refreshedActiveTournament = freshTournaments.find((item) => item.id === activeTournament.id);
-        if (refreshedActiveTournament) setActiveTournament(refreshedActiveTournament);
-      }
+    if (legacyError) console.error("Error al obtener torneos:", legacyError);
+    if (normalizedError) console.error("Error al obtener torneos FEFUTIN nuevos:", normalizedError);
+    if (categoryError) console.error("Error al obtener categorías FEFUTIN nuevas:", categoryError);
+    if (branchError) console.error("Error al obtener ramas FEFUTIN:", branchError);
+
+    const branchById = new Map((branchRows || []).map((branch) => [String(branch.id), branch.name]));
+    const normalizedById = new Map((normalizedRows || []).map((item) => [String(item.id), item]));
+    const categoriesByTournament = new Map();
+    (categoryRows || []).filter((item) => item.activa !== false).forEach((item) => {
+      const key = String(item.torneo_id);
+      if (!categoriesByTournament.has(key)) categoriesByTournament.set(key, []);
+      categoriesByTournament.get(key).push(item);
+    });
+
+    const freshTournaments = (legacyRows || []).map((item) => {
+      const normalized = normalizedById.get(String(item.id));
+      if (!normalized) return item;
+      const branchName = branchById.get(String(normalized.rama_id)) || "Baby fútbol";
+      const categories = (categoriesByTournament.get(String(item.id)) || [])
+        .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+        .map((category) => String(category.nombre || "").replace(/^Cat\.\s*/i, "").trim())
+        .filter(Boolean);
+      return {
+        ...item,
+        title: normalized.nombre || item.title,
+        game: `Fútbol · ${branchName} · ${normalized.turno}`,
+        status: normalized.estado === "inscripcion" ? "Inscripciones" : item.status,
+        fefutinNewSchema: true,
+        normalizedCategories: categories,
+        normalizedBranchName: branchName,
+        normalizedTurno: normalized.turno,
+        normalizedMode: normalized.modo,
+      };
+    });
+
+    setTournaments(freshTournaments);
+    if (activeTournament?.id) {
+      const refreshedActiveTournament = freshTournaments.find((item) => item.id === activeTournament.id);
+      if (refreshedActiveTournament) setActiveTournament(refreshedActiveTournament);
     }
 
     setLoading(false);
@@ -3156,6 +3192,22 @@ export function TournamenSportApp() {
     setDeletingTournamentId(tournament.id);
 
     try {
+      if (tournament.fefutinNewSchema) {
+        const { error: mirrorError } = await supabase.from("tournaments").delete().eq("id", tournament.id);
+        const { error: normalizedError } = await supabase.from("fefutin_torneos").delete().eq("id", tournament.id);
+        if (mirrorError || normalizedError) {
+          showNotice(mirrorError?.message || normalizedError?.message || "No se pudo eliminar el torneo.");
+          return;
+        }
+        setTournaments((prev) => prev.filter((item) => item.id !== tournament.id));
+        if (activeTournament?.id === tournament.id) {
+          setActiveTournament(null);
+          setActiveView("home");
+        }
+        showNotice("Torneo y sus categorías eliminados correctamente.");
+        return;
+      }
+
       const { data: deletionResult, error } = await supabase.rpc(
         "delete_fefutin_tournament",
         { p_tournament_id: tournament.id }
@@ -3398,121 +3450,151 @@ export function TournamenSportApp() {
         .map((category) => String(category || "").trim()).filter(Boolean))],
     })).filter((branch) => branch.division && branch.categories.length);
 
-    if (!branchesToCreate.length) {
-      showNotice("Seleccioná al menos una combinación de rama y categoría.");
-      return;
-    }
-
-    // Un único torneo por rama. Los turnos y las categorías se crean
-    // como registros normalizados independientes dentro de ese torneo.
     const selectedTurns = [...new Set(
       (Array.isArray(config.turnos) && config.turnos.length ? config.turnos : [config.turno || "Semanal"])
         .filter((turno) => ["Semanal", "Fin de semana"].includes(turno))
     )];
-    if (!selectedTurns.length) {
-      showNotice("Seleccioná al menos un turno para cada rama.");
+
+    if (!branchesToCreate.length || !selectedTurns.length) {
+      showNotice("Seleccioná al menos una rama, una categoría y un turno.");
       return;
     }
 
-    const tournamentsToCreate = branchesToCreate.map((branch) => {
-      const randomCode = "TS-" + Math.floor(1000 + Math.random() * 9000);
-      const registrationGroup = {
-        id: 0,
-        name: "__INSCRIPCIONES__",
-        teams: [],
-        matches: [],
-        capacity: Number(config.maxParticipants),
-        numGroups: ["groups", "groups_playoff"].includes(config.format) ? Number(config.numGroups) : 1,
-        category_config: [{
-          division: branch.division,
-          categoryType: branch.categoryType,
-          categories: branch.categories,
-        }],
-      };
+    const normalizeName = (value) => String(value || "").trim().toLocaleLowerCase("es")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const branchAliases = {
+      "Baby fútbol": ["baby futbol", "infantil", "infantiles"],
+      Femenino: ["femenino", "mujeres"],
+      "Sénior": ["senior", "mayores", "mayor"],
+      Futsal: ["futsal"],
+    };
 
-      return {
-        code: randomCode,
-        title: branch.division,
-        game: `Fútbol · ${branch.division}`,
-        format: config.format,
-        qualifiers_per_group: config.qualifiersPerGroup,
-        is_public: config.isPublic,
-        created_by_user_id: currentUser.id,
-        created_by: currentUser.username,
-        groups: [registrationGroup],
-        playoffs: null,
-        status: "Inscripciones",
-      };
-    });
+    const { data: branchRows, error: branchError } = await supabase
+      .from("fefutin_branches")
+      .select("id,name")
+      .eq("active", true);
 
-    const { data, error } = await supabase
-      .from("tournaments")
-      .insert(tournamentsToCreate)
-      .select();
-
-    if (error) {
-      console.error("Error detallado al guardar los torneos en Supabase:", {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-      });
-      const reason = error.message || error.details || "Error sin descripción";
-      showNotice(`❌ Supabase rechazó la creación: ${reason}`);
+    if (branchError) {
+      showNotice(`No se pudieron consultar las ramas de FEFUTIN: ${branchError.message}`);
       return;
     }
 
-    if (data && data.length > 0) {
-      const setupResults = await Promise.all(data.map((tournament, index) => {
-        const branch = branchesToCreate.find((item) => tournament.game === `Fútbol · ${item.division}`) || branchesToCreate[index];
-        return supabase.rpc("configure_fefutin_branch_tournament", {
-          p_tournament_id: tournament.id,
-          p_branch_name: branch.division,
-          p_turnos: selectedTurns,
-          p_categories: branch.categories,
-          p_format: config.format,
-          p_settings: {
-            num_groups: Number(config.numGroups) || 1,
-            qualifiers_per_group: Number(config.qualifiersPerGroup) || 2,
-            max_participants: Number(config.maxParticipants) || 16,
-          },
-        });
-      }));
-      const failedSetup = setupResults.find((result) => result.error);
-      if (failedSetup) {
-        console.error("Error al configurar turnos y categorías normalizados:", failedSetup.error);
-        const { error: cleanupError } = await supabase
-          .from("tournaments")
-          .delete()
-          .in("id", data.map((item) => item.id));
-        if (cleanupError) {
-          console.error("No se pudieron revertir los torneos creados sin configurar:", cleanupError);
-          showNotice(`Se crearon los torneos, pero falló la configuración de turnos: ${failedSetup.error.message}. No vuelvas a crearlos; hay que revisar estos registros.`);
-        } else {
-          showNotice(`No se guardó la estructura de turnos y categorías. Se revirtieron los torneos incompletos. Motivo: ${failedSetup.error.message}`);
-        }
+    const prepared = [];
+    for (const branch of branchesToCreate) {
+      const aliases = branchAliases[branch.division] || [normalizeName(branch.division)];
+      const branchRecord = (branchRows || []).find((item) =>
+        aliases.includes(normalizeName(item.name))
+      );
+      if (!branchRecord) {
+        showNotice(`No encontré la rama "${branch.division}" en el catálogo FEFUTIN. No se creó ningún torneo.`);
         return;
       }
-
-      const { data: configuredRows, error: refreshCreatedError } = await supabase
-        .from("tournaments")
-        .select("*")
-        .in("id", data.map((item) => item.id));
-      const readyTournaments = !refreshCreatedError && configuredRows?.length === data.length
-        ? configuredRows
-        : data.map((item, index) => ({
-            ...item,
-            fefutin_branch_id: setupResults[index]?.data?.branch_id || item.fefutin_branch_id || null,
-            fefutin_turno: null,
-          }));
-
-      setActiveTournament(null);
-      setTournaments((prev) => [...readyTournaments, ...prev]);
-      setTournamentDivisionFilter("Todas");
-      setTournamentCategoryFilter("Todas");
-      setActiveView("division-tournaments");
-      showNotice(`Se crearon ${readyTournaments.length} torneo(s), uno por cada rama. Cada uno quedó organizado en ${selectedTurns.join(" y ")} con categorías independientes por turno.`);
+      for (const turno of selectedTurns) prepared.push({ branch, branchRecord, turno });
     }
+
+    const createdIds = [];
+    const legacyRows = [];
+    const baseTitle = String(config.title || "").trim();
+
+    try {
+      for (const item of prepared) {
+        const tournamentId = globalThis.crypto?.randomUUID?.();
+        if (!tournamentId) throw new Error("El navegador no pudo generar el identificador del torneo.");
+
+        const displayBranch = item.branch.division;
+        const tournamentName = baseTitle
+          ? (selectedTurns.length > 1 ? `${baseTitle} · ${item.turno}` : baseTitle)
+          : `${displayBranch} · ${item.turno}`;
+
+        const { data: normalizedTournament, error: tournamentError } = await supabase
+          .from("fefutin_torneos")
+          .insert({
+            id: tournamentId,
+            nombre: tournamentName,
+            rama_id: item.branchRecord.id,
+            turno: item.turno,
+            modo: config.format || "league",
+            estado: "inscripcion",
+          })
+          .select("id,nombre,rama_id,turno,modo,estado,created_at")
+          .single();
+
+        if (tournamentError) throw tournamentError;
+        createdIds.push(tournamentId);
+
+        const normalizedCategories = item.branch.categories.map((category, index) => ({
+          torneo_id: tournamentId,
+          nombre: String(category).replace(/^Cat\.\s*/i, "").trim(),
+          sort_order: index + 1,
+          activa: true,
+        }));
+
+        const { error: categoriesError } = await supabase
+          .from("fefutin_torneo_categorias")
+          .insert(normalizedCategories);
+
+        if (categoriesError) throw categoriesError;
+
+        const categoryLabels = item.branch.categories;
+        const registrationGroup = {
+          id: 0,
+          name: "__INSCRIPCIONES__",
+          teams: [],
+          matches: [],
+          capacity: Number(config.maxParticipants) || 16,
+          numGroups: ["groups", "groups_playoff"].includes(config.format) ? Number(config.numGroups) || 1 : 1,
+          category_config: [{
+            division: displayBranch,
+            categoryType: item.branch.categoryType,
+            categories: categoryLabels,
+          }],
+        };
+
+        const { data: mirror, error: mirrorError } = await supabase
+          .from("tournaments")
+          .insert({
+            id: tournamentId,
+            code: "FT-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
+            title: tournamentName,
+            game: `Fútbol · ${displayBranch} · ${item.turno}`,
+            format: config.format || "league",
+            qualifiers_per_group: Number(config.qualifiersPerGroup) || 2,
+            is_public: config.isPublic !== false,
+            created_by_user_id: currentUser.id,
+            created_by: currentUser.username,
+            groups: [registrationGroup],
+            playoffs: null,
+            status: "Inscripciones",
+          })
+          .select("*")
+          .single();
+
+        if (mirrorError) throw mirrorError;
+        legacyRows.push({
+          ...mirror,
+          fefutinNewSchema: true,
+          normalizedCategories: normalizedCategories.map((category) => category.nombre),
+          normalizedBranchName: displayBranch,
+          normalizedTurno: item.turno,
+          normalizedMode: normalizedTournament.modo,
+        });
+      }
+    } catch (error) {
+      console.error("Error al crear el torneo FEFUTIN normalizado:", error);
+      if (createdIds.length) {
+        await supabase.from("tournaments").delete().in("id", createdIds);
+        await supabase.from("fefutin_torneos").delete().in("id", createdIds);
+      }
+      showNotice(`No se pudo completar la creación. Se revirtieron los registros generados. Motivo: ${error.message || "error desconocido"}`);
+      return;
+    }
+
+    setTournaments((prev) => [...legacyRows, ...prev.filter((item) => !createdIds.includes(item.id))]);
+    setActiveTournament(null);
+    setTournamentDivisionFilter("Todas");
+    setTournamentCategoryFilter("Todas");
+    setActiveView("division-tournaments");
+    showNotice(`Se crearon ${legacyRows.length} torneo(s) en la estructura nueva. Cada uno tiene ${branchesToCreate.reduce((total, branch) => total + branch.categories.length, 0)} categoría(s) por rama y turno, con competencias independientes.`);
   };
 
   const handleRegisterForTournament = async (tournament) => {
@@ -4728,6 +4810,10 @@ export function TournamenSportApp() {
 
   const openTournament = async (tournament) => {
     setActiveTournament(tournament);
+    if (tournament?.fefutinNewSchema) {
+      setActiveView("fefutin-new-tournament");
+      return;
+    }
     if (tournament?.fefutin_branch_id) {
       setActiveFefutinTurn(null);
       const { data, error } = await supabase.rpc("get_fefutin_tournament_turns", {
@@ -6144,6 +6230,14 @@ export function TournamenSportApp() {
           </div>
         </div>
         </div>
+      ) : activeView === "fefutin-new-tournament" && activeTournament?.fefutinNewSchema ? (
+        <FefutinNormalizedTournament
+          tournament={activeTournament}
+          onBack={() => {
+            setActiveTournament(null);
+            setActiveView("division-tournaments");
+          }}
+        />
       ) : activeView === "create" && canManageTournaments ? (
         <div className="tc-form-screen tc-create-screen">
         <div className="tc-create-artwork">
