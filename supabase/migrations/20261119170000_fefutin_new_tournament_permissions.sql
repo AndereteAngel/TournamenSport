@@ -97,4 +97,25 @@ grant select, insert, update, delete on public.fefutin_torneo_categorias to auth
 grant select on public.fefutin_torneo_categorias to anon;
 grant select on public.fefutin_competencias to anon, authenticated;
 
+-- El registro en tournaments funciona solo como proyección para las pantallas
+-- actuales. La marca JSON evita habilitar estas escrituras para torneos antiguos.
+drop policy if exists tournaments_insert_fefutin_normalized on public.tournaments;
+create policy tournaments_insert_fefutin_normalized
+  on public.tournaments
+  for insert to authenticated
+  with check (
+    public.fefutin_puede_gestionar_torneos_nuevos()
+    and created_by_user_id = auth.uid()
+    and groups -> 0 ->> 'fefutin_normalized' = 'true'
+  );
+
+drop policy if exists tournaments_delete_fefutin_normalized on public.tournaments;
+create policy tournaments_delete_fefutin_normalized
+  on public.tournaments
+  for delete to authenticated
+  using (
+    public.fefutin_puede_gestionar_torneos_nuevos()
+    and groups -> 0 ->> 'fefutin_normalized' = 'true'
+  );
+
 commit;
