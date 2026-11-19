@@ -31,6 +31,7 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
   const [registryCategory, setRegistryCategory] = useState("todas");
   const [registrySearch, setRegistrySearch] = useState("");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
 
   const loadRegistry = useCallback(async () => {
     setLoading(true);
@@ -65,7 +66,7 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
     () => categories.reduce((total, category) => total + category.players.length, 0),
     [categories]
   );
-  const allPlayers = useMemo(() => categories.flatMap((category) => category.players.map((player) => ({ ...player, categoryId: category.rosterId, categoryLabel: labelFor(category) }))), [categories]);
+  const allPlayers = useMemo(() => categories.flatMap((category) => category.players.map((player) => ({ ...player, categoryId: category.rosterId, categoryLabel: labelFor(category), category_label: labelFor(category), club_name: category.club_name || clubName || "—", logo_path: category.logo_path || "" }))), [categories, clubName]);
   const filteredPlayers = useMemo(() => allPlayers.filter((player) => {
     const categoryMatch = registryCategory === "todas" || player.categoryId === registryCategory;
     const query = registrySearch.trim().toLocaleLowerCase("es");
@@ -261,43 +262,118 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
           )}
         </section>
       )}
-      {selectedPlayer && (
-        <div role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setSelectedPlayer(null); }} style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", background: "rgba(0,0,0,.82)" }}>
-          <section role="dialog" aria-modal="true" aria-label="Carnet del jugador" style={{ width: "100%", maxWidth: "380px", maxHeight: "90vh", overflowY: "auto", boxSizing: "border-box", padding: "1rem", border: "2px solid #b5122a", borderRadius: "14px", background: "#fff", color: "#171c27", boxShadow: "0 18px 60px rgba(0,0,0,.5)" }}>
-            <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", paddingBottom: ".65rem", borderBottom: "3px solid #b5122a" }}>
-              <div>
-                <p style={{ margin: 0, color: "#b5122a", fontSize: ".65rem", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN · BABY FÚTBOL</p>
-                <h2 style={{ margin: ".15rem 0 0", fontSize: "1.15rem", fontWeight: 900 }}>CARNET DEL JUGADOR</h2>
+      {selectedPlayer && (() => {
+        const selectedPhotoUrl = photoUrl(selectedPlayer.photo_path);
+        const selectedLogoUrl = selectedPlayer.logo_path
+          ? supabase.storage.from("fefutin-clubs").getPublicUrl(selectedPlayer.logo_path).data.publicUrl
+          : "";
+        const approvalStatus = selectedPlayer.approval_status || "pendiente";
+        const carnetStatus = selectedPlayer.carnet_status || "pendiente";
+        const approvalLabel = approvalStatus === "aprobado"
+          ? "APROBADO"
+          : approvalStatus === "rechazado" ? "RECHAZADO" : "PENDIENTE DE APROBACIÓN";
+        const effectiveStatus = approvalStatus === "rechazado"
+          ? "no_habilitado"
+          : approvalStatus === "aprobado" ? carnetStatus : "pendiente";
+        const carnetStatusLabel = {
+          pendiente: "PENDIENTE",
+          en_proceso: "EN PROCESO",
+          habilitado: "HABILITADO",
+          no_habilitado: "NO HABILITADO",
+        }[effectiveStatus] || "PENDIENTE";
+        const carnetStatusColor = {
+          pendiente: "#facc15",
+          en_proceso: "#93c5fd",
+          habilitado: "#86efac",
+          no_habilitado: "#fca5a5",
+        }[effectiveStatus] || "#facc15";
+        return (
+          <div role="presentation" onClick={(event) => { if (event.target === event.currentTarget) { setSelectedPlayer(null); setPhotoPreviewOpen(false); } }} style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", background: "rgba(0,0,0,.84)", backdropFilter: "blur(4px)" }}>
+            <section role="dialog" aria-modal="true" aria-label="Carnet del jugador" style={{ width: "min(100%, 820px)", maxHeight: "92vh", overflowY: "auto", boxSizing: "border-box", padding: "clamp(.6rem,2vw,1rem)", border: "1px solid #555", borderRadius: "14px", background: "#171717", color: "#fff", boxShadow: "0 20px 70px rgba(0,0,0,.65)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", marginBottom: ".65rem" }}>
+                <strong style={{ color: "#fff", fontSize: ".85rem", letterSpacing: ".06em" }}>CARNET DEL JUGADOR</strong>
+                <button type="button" onClick={() => { setSelectedPlayer(null); setPhotoPreviewOpen(false); }} style={{ border: "1px solid #b5122a", borderRadius: "8px", background: "#111", color: "#fff", padding: ".5rem .8rem", cursor: "pointer" }}>✕ Cerrar</button>
               </div>
-              <button type="button" onClick={() => setSelectedPlayer(null)} aria-label="Cerrar carnet" style={{ ...secondaryButton, minWidth: "38px", padding: ".45rem", background: "#171c27" }}>✕</button>
-            </header>
-            <div style={{ display: "flex", gap: ".9rem", alignItems: "center", padding: ".9rem 0" }}>
-              {photoUrl(selectedPlayer.photo_path) ? <img src={photoUrl(selectedPlayer.photo_path)} alt={`Foto de ${selectedPlayer.first_name || ""} ${selectedPlayer.last_name || ""}`} style={{ width: "104px", height: "124px", objectFit: "cover", border: "2px solid #b5122a", borderRadius: "8px", flexShrink: 0 }} /> : <div style={{ width: "104px", height: "124px", display: "grid", placeItems: "center", flexShrink: 0, border: "1px dashed #999", borderRadius: "8px", color: "#777", fontSize: ".7rem", textAlign: "center" }}>SIN FOTO</div>}
-              <div style={{ minWidth: 0 }}>
-                <p style={{ margin: 0, color: "#666", fontSize: ".65rem", fontWeight: 800 }}>APELLIDO Y NOMBRE</p>
-                <h3 style={{ margin: ".2rem 0 .65rem", fontSize: "1rem", lineHeight: 1.2, overflowWrap: "anywhere" }}>{[selectedPlayer.last_name, selectedPlayer.first_name].filter(Boolean).join(", ") || "Sin nombre"}</h3>
-                <p style={{ margin: 0, color: "#666", fontSize: ".65rem", fontWeight: 800 }}>NÚMERO DE CARNET</p>
-                <strong style={{ display: "block", marginTop: ".15rem", color: "#b5122a", fontSize: "1.1rem" }}>{selectedPlayer.carnet_number || "Pendiente"}</strong>
+              <article className="fefutin-carnet-motion fefutin-carnet-card" style={{ width: "100%", maxWidth: "760px", aspectRatio: "1.586 / 1", minHeight: "250px", boxSizing: "border-box", margin: "0 auto", border: "2px solid #b5122a", borderRadius: "14px", overflow: "hidden", background: "linear-gradient(135deg,#242424 0%,#101010 58%,#080808 100%)", color: "#fff", boxShadow: "0 12px 30px rgba(0,0,0,.35)", animation: "fefutinCarnetSway 5.5s ease-in-out infinite", transformOrigin: "50% 85%" }}>
+                <div style={{ boxSizing: "border-box", width: "100%", padding: ".8rem 1rem", background: "#b5122a", display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ margin: 0, color: "#fff", fontSize: ".78rem", fontWeight: 900, letterSpacing: ".1em" }}>FEFUTIN</p>
+                    <p style={{ margin: ".15rem 0 0", color: "#fff", fontSize: ".62rem", fontWeight: 700, letterSpacing: ".06em" }}>FEDERACIÓN DE FÚTBOL INFANTIL</p>
+                  </div>
+                  <img src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166" alt="Logo oficial de FEFUTIN" style={{ flex: "0 0 auto", width: "54px", height: "54px", objectFit: "contain", padding: "3px", boxSizing: "border-box", background: "#fff", border: "1px solid rgba(255,255,255,.8)", borderRadius: "8px" }} />
+                </div>
+                <div style={{ boxSizing: "border-box", width: "100%", height: "calc(100% - 108px)", minHeight: 0, padding: "clamp(.45rem,1.5vw,.8rem)", display: "grid", gridTemplateColumns: "clamp(92px,19%,140px) minmax(0,1fr)", gap: "clamp(.5rem,1.5vw,.9rem)", alignItems: "center" }}>
+                  <button type="button" onClick={() => setPhotoPreviewOpen(true)} aria-label="Ampliar fotografía del jugador" style={{ width: "100%", aspectRatio: "3/4", minWidth: 0, boxSizing: "border-box", padding: 0, border: "2px solid #b5122a", borderRadius: "10px", overflow: "hidden", background: "#202020", display: "block", cursor: "zoom-in" }}>
+                    {selectedPhotoUrl ? <img src={selectedPhotoUrl} alt={`Fotografía de ${selectedPlayer.first_name || ""} ${selectedPlayer.last_name || ""}`} style={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ display: "grid", width: "100%", height: "100%", placeItems: "center", color: "#aaa", fontSize: ".7rem", fontWeight: 800 }}>SIN FOTO</span>}
+                  </button>
+                  <div style={{ minWidth: 0, overflowWrap: "anywhere", wordBreak: "break-word" }}>
+                    <p style={{ color: "#e7a0aa", fontSize: ".65rem", fontWeight: 900, letterSpacing: ".1em", margin: "0 0 .35rem" }}>CREDENCIAL OFICIAL</p>
+                    <h3 style={{ color: "#fff", fontSize: "clamp(1rem,4vw,1.35rem)", lineHeight: 1.15, margin: "0 0 .8rem" }}>{[selectedPlayer.first_name, selectedPlayer.last_name].filter(Boolean).join(" ") || "SIN NOMBRE"}</h3>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 180px), 1fr))", gap: ".65rem .9rem" }}>
+                      <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
+                        <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>NÚMERO FEFUTIN</p>
+                        <p style={{ color: "#fff", fontSize: ".95rem", fontWeight: 900, margin: ".15rem 0 0" }}>{selectedPlayer.carnet_number || "PENDIENTE DE ASIGNACIÓN"}</p>
+                      </div>
+                      <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
+                        <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>DNI</p>
+                        <p style={{ color: "#fff", fontSize: ".9rem", fontWeight: 800, margin: ".15rem 0 0" }}>{selectedPlayer.dni || "NO REGISTRADO"}</p>
+                      </div>
+                      <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
+                        <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>CLUB</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: ".45rem", marginTop: ".2rem" }}>
+                          {selectedLogoUrl && <img src={selectedLogoUrl} alt="" style={{ width: "28px", height: "28px", objectFit: "contain", background: "#fff", borderRadius: "5px" }} />}
+                          <p style={{ color: "#fff", fontSize: ".84rem", fontWeight: 800, margin: 0 }}>{selectedPlayer.club_name || clubName || "—"}</p>
+                        </div>
+                      </div>
+                      <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
+                        <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>CATEGORÍA</p>
+                        <p style={{ color: "#fff", fontSize: ".84rem", margin: ".15rem 0 0" }}>{selectedPlayer.categoryLabel || "—"}</p>
+                      </div>
+                      <div>
+                        <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>ESTADO DE HABILITACIÓN</p>
+                        <p style={{ color: carnetStatusColor, fontSize: ".82rem", fontWeight: 900, margin: ".15rem 0 0" }}>{carnetStatusLabel}</p>
+                        <p style={{ color: "#aaa", fontSize: ".65rem", fontWeight: 700, margin: ".2rem 0 0" }}>{approvalLabel}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ boxSizing: "border-box", width: "100%", padding: ".6rem 1rem", borderTop: "1px solid #b5122a", background: "#090909", display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem" }}>
+                  <span style={{ color: "#ddd", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em" }}>JUGADOR FEFUTIN</span>
+                  <span style={{ color: "#e7a0aa", fontSize: ".6rem", fontWeight: 800 }}>CARNET DIGITAL · FEFUTIN</span>
+                </div>
+              </article>
+              <p style={{ color: "#aaa", fontSize: ".68rem", textAlign: "center", margin: ".65rem 0 0" }}>Los datos y el número de carnet reflejan el registro oficial disponible. El número no se genera desde esta pantalla.</p>
+            </section>
+            {photoPreviewOpen && selectedPhotoUrl && (
+              <div role="presentation" onClick={() => setPhotoPreviewOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 10002, display: "grid", placeItems: "center", padding: "1rem", background: "rgba(0,0,0,.92)" }}>
+                <button type="button" onClick={() => setPhotoPreviewOpen(false)} style={{ position: "absolute", top: "1rem", right: "1rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#171717", color: "#fff", padding: ".55rem .8rem" }}>✕ Cerrar</button>
+                <img src={selectedPhotoUrl} alt="Fotografía ampliada del jugador" style={{ maxWidth: "min(92vw,520px)", maxHeight: "82vh", objectFit: "contain", border: "2px solid #b5122a", borderRadius: "10px" }} />
               </div>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".65rem", padding: ".75rem", borderRadius: "8px", background: "#f3f4f6" }}>
-              <div><small style={{ color: "#666", fontWeight: 800 }}>DNI</small><div style={{ fontWeight: 800, overflowWrap: "anywhere" }}>{selectedPlayer.dni || "—"}</div></div>
-              <div><small style={{ color: "#666", fontWeight: 800 }}>NACIMIENTO</small><div style={{ fontWeight: 800 }}>{selectedPlayer.birth_date || "—"}</div></div>
-              <div><small style={{ color: "#666", fontWeight: 800 }}>CLUB</small><div style={{ fontWeight: 800, overflowWrap: "anywhere" }}>{clubName || "—"}</div></div>
-              <div><small style={{ color: "#666", fontWeight: 800 }}>CATEGORÍA</small><div style={{ fontWeight: 800 }}>{selectedPlayer.categoryLabel || "—"}</div></div>
-            </div>
-            <div style={{ marginTop: ".75rem", padding: ".7rem", border: "1px solid #ddd", borderRadius: "8px", textAlign: "center" }}>
-              <strong style={{ display: "block", color: selectedPlayer.approval_status === "aprobado" ? "#166534" : selectedPlayer.approval_status === "rechazado" ? "#b91c1c" : "#92400e", fontSize: ".8rem" }}>
-                {selectedPlayer.approval_status === "aprobado" ? "APROBADO" : selectedPlayer.approval_status === "rechazado" ? "RECHAZADO" : "PENDIENTE DE APROBACIÓN"}
-              </strong>
-              <span style={{ display: "block", marginTop: ".25rem", color: "#555", fontSize: ".72rem" }}>
-                {selectedPlayer.carnet_status ? `Estado del carnet: ${selectedPlayer.carnet_status}` : selectedPlayer.approval_status === "aprobado" ? "Carnet sin estado informado" : "Carnet no habilitado"}
-              </span>
-            </div>
-            <p style={{ margin: ".7rem 0 0", color: "#777", fontSize: ".62rem", textAlign: "center" }}>Este comprobante refleja los datos disponibles en el padrón del club.</p>
-          </section>
-        </div>
-      )}
+            )}
+          </div>
+        );
+      })()}
+      <style>{`
+        @keyframes fefutinCarnetSway {
+          0%, 100% { transform: perspective(900px) rotateX(0deg) rotateZ(0deg) translateY(0); }
+          22% { transform: perspective(900px) rotateX(1.2deg) rotateZ(-0.65deg) translateY(-2px); }
+          48% { transform: perspective(900px) rotateX(-0.6deg) rotateZ(0.55deg) translateY(-4px); }
+          72% { transform: perspective(900px) rotateX(0.8deg) rotateZ(-0.35deg) translateY(-1px); }
+        }
+        @media (max-width: 520px) and (orientation: portrait) {
+          .fefutin-carnet-card { aspect-ratio: auto !important; min-height: 0 !important; height: auto !important; border-radius: 10px !important; animation: none !important; }
+          .fefutin-carnet-card > div:first-child { padding: .45rem .6rem !important; min-height: 48px; }
+          .fefutin-carnet-card > div:first-child img { width: 38px !important; height: 38px !important; }
+          .fefutin-carnet-card > div:nth-child(2) { height: auto !important; min-height: 0 !important; padding: .5rem !important; grid-template-columns: 76px minmax(0, 1fr) !important; gap: .55rem !important; align-items: start !important; }
+          .fefutin-carnet-card > div:nth-child(2) > button { width: 76px !important; max-height: 102px; }
+          .fefutin-carnet-card h3 { font-size: .82rem !important; line-height: 1.12 !important; margin-bottom: .45rem !important; }
+          .fefutin-carnet-card > div:nth-child(2) > div > div { min-width: 0 !important; padding-bottom: .22rem !important; }
+          .fefutin-carnet-card > div:nth-child(2) > div > div p:first-child { font-size: .46rem !important; letter-spacing: .02em !important; line-height: 1.1 !important; }
+          .fefutin-carnet-card > div:nth-child(2) > div > div p:not(:first-child) { font-size: .66rem !important; line-height: 1.15 !important; overflow-wrap: anywhere !important; }
+          .fefutin-carnet-card > div:last-child { padding: .38rem .55rem !important; min-height: 28px; }
+        }
+      `}</style>
+
     </main>
   );
 }
