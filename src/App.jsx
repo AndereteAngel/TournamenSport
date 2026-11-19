@@ -3193,10 +3193,14 @@ export function TournamenSportApp() {
 
     try {
       if (tournament.fefutinNewSchema) {
-        const { error: mirrorError } = await supabase.from("tournaments").delete().eq("id", tournament.id);
         const { error: normalizedError } = await supabase.from("fefutin_torneos").delete().eq("id", tournament.id);
-        if (mirrorError || normalizedError) {
-          showNotice(mirrorError?.message || normalizedError?.message || "No se pudo eliminar el torneo.");
+        if (normalizedError) {
+          showNotice(normalizedError.message || "No se pudo eliminar el torneo nuevo.");
+          return;
+        }
+        const { error: mirrorError } = await supabase.from("tournaments").delete().eq("id", tournament.id);
+        if (mirrorError) {
+          showNotice(`El torneo nuevo se eliminó, pero no se pudo quitar su registro de listado: ${mirrorError.message}`);
           return;
         }
         setTournaments((prev) => prev.filter((item) => item.id !== tournament.id));
