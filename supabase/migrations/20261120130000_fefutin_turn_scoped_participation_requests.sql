@@ -112,7 +112,9 @@ exception
 end;
 $function$;
 
--- La firma anterior no podia distinguir turnos: se conserva solo para informar el cambio.
+-- La firma anterior no podia distinguir turnos: se elimina antes de crear la firma informativa.
+drop function if exists public.submit_fefutin_club_tournament_request(uuid, text);
+
 create or replace function public.submit_fefutin_club_tournament_request(
   p_tournament_id uuid,
   p_category_label text
