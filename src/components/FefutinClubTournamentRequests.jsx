@@ -153,7 +153,11 @@ export function FefutinClubTournamentRequests({ onChanged }) {
     setLoading(false);
   }, []);
 
-  useEffect(() => { loadRequests(); }, [loadRequests]);
+  useEffect(() => {
+    loadRequests();
+    const intervalId = window.setInterval(loadRequests, 30000);
+    return () => window.clearInterval(intervalId);
+  }, [loadRequests]);
 
   const decideRequest = async (request, approve) => {
     if (processingId) return;
@@ -189,6 +193,11 @@ export function FefutinClubTournamentRequests({ onChanged }) {
         <button type="button" className="tc-form-back" onClick={loadRequests} disabled={loading}>↻ Actualizar solicitudes</button>
       </div>
       {error && <p role="alert" style={{ color: "#fecaca", background: "#450a0a", border: "1px solid #b5122a", borderRadius: "8px", padding: ".75rem", whiteSpace: "pre-wrap" }}>{error}</p>}
+      {!loading && requests.length > 0 && (
+        <div role="status" style={{ margin: ".75rem 0", padding: ".85rem", border: "1px solid #b5122a", borderRadius: "9px", background: "#391018", color: "#fff", fontWeight: 800 }}>
+          🔔 Hay {requests.length} solicitud(es) nueva(s) esperando aprobación de Admin o Directivo.
+        </div>
+      )}
       {loading ? <p style={{ color: "#ddd" }}>Cargando solicitudes...</p> : requests.length === 0 ? (
         <p style={{ color: "#aaa", padding: ".5rem 0" }}>No hay solicitudes de participación pendientes.</p>
       ) : (
