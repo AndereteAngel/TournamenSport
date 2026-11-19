@@ -72,6 +72,9 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
 
     const items = (data || []).map((item) => ({
       ...item,
+      // La función SQL devuelve team_id para los planteles permanentes.
+      // El componente usa club_tournament_id como identificador interno.
+      club_tournament_id: item.club_tournament_id || item.team_id || item.roster_id || null,
       players: (Array.isArray(item.players) ? item.players : []).map((player) => ({
         ...player,
         jersey_number: player.jersey_number || "Sin especificar",
@@ -289,7 +292,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
       return;
     }
     setError("");
-    const { error: createError } = await supabase.rpc("create_fefutin_permanent_roster", {
+    const { data: createdRosterId, error: createError } = await supabase.rpc("create_fefutin_permanent_roster", {
       p_category_label: category,
     });
     if (createError) {
@@ -297,8 +300,11 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
       return;
     }
     setNewCategoryName("");
-    setNotice(`Categoría ${category} creada. Ya podés cargar su plantel.`);
+    setNotice(`Categoría ${category} creada. Ya podés inscribir jugadores.`);
     await loadParticipations();
+    if (createdRosterId) {
+      setRegistrationPlayer((previous) => ({ ...previous, category_roster_id: createdRosterId }));
+    }
   };
 
   const isManager = currentUser?.role === "admin" || currentUser?.role === "directivo";
@@ -825,11 +831,20 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
               INSCRIPCIÓN DE JUGADOR
             </h2>
             <p style={{ color: "#ccc", lineHeight: 1.5 }}>Completá una ficha por jugador. Al guardar, quedará pendiente de revisión para la emisión de su carnet FEFUTIN.</p>
+            {error && <p role="alert" style={{ color: "#fecaca", background: "#450a0a", border: "1px solid #b5122a", padding: ".7rem", borderRadius: "8px" }}>{error}</p>}
+            {notice && <p role="status" style={{ color: "#bbf7d0", background: "#052e16", border: "1px solid #166534", padding: ".7rem", borderRadius: "8px" }}>{notice}</p>}
             <div style={{ display: "grid", gap: ".9rem", marginTop: "1rem" }}>
               <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".8rem", fontWeight: 800 }}>
                 CLUB ACTUAL
                 <input value={club?.club_name || participations[0]?.club_name || ""} readOnly style={{ ...inputStyle, background: "#e5e7eb" }} />
               </label>
+              <section style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: ".6rem", alignItems: "end", padding: ".85rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171717" }}>
+                <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".78rem", fontWeight: 800 }}>
+                  ¿NO EXISTE LA CATEGORÍA? CREALA ACÁ
+                  <input value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); createPermanentCategory(); } }} placeholder="Ej.: Cat. 2018" style={filterInputStyle} maxLength={80} />
+                </label>
+                <button type="button" style={buttonStyle} onClick={createPermanentCategory} disabled={!newCategoryName.trim()}>＋ Crear</button>
+              </section>
               <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".8rem", fontWeight: 800 }}>
                 CATEGORÍA
                 <select value={registrationPlayer.category_roster_id || ""} onChange={(event) => setRegistrationPlayer((previous) => ({ ...previous, category_roster_id: event.target.value }))} style={inputStyle}>
