@@ -11,6 +11,7 @@ export function FefutinNormalizedTournament({ tournament, onBack, canManage = fa
   const [clubsByCategory, setClubsByCategory] = useState({});
   const [loadingClubs, setLoadingClubs] = useState(false);
   const [clubsError, setClubsError] = useState("");
+  const [expandedCategoryId, setExpandedCategoryId] = useState(null);
   const categories = categoryRows.length
     ? categoryRows.map((item) => normalizeCategoryName(item.nombre)).filter(Boolean)
     : (Array.isArray(tournament?.normalizedCategories) ? tournament.normalizedCategories : []);
@@ -233,45 +234,73 @@ export function FefutinNormalizedTournament({ tournament, onBack, canManage = fa
         {clubsError && <p role="alert" style={{ color: "#fca5a5", fontSize: ".8rem" }}>No se pudieron mostrar los clubes: {clubsError}</p>}
         {categories.length ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))", gap: ".65rem" }}>
-            {categories.map((category) => (
-              <article
-                key={category}
-                style={{
-                  padding: ".9rem .65rem",
-                  textAlign: "center",
-                  borderRadius: "9px",
-                  border: "1px solid #b5122a",
-                  background: "#171c27",
-                  minWidth: 0,
-                }}
-              >
-                <span style={{ display: "block", color: "#f3a0ad", fontSize: ".68rem", fontWeight: 900, letterSpacing: ".06em", textTransform: "uppercase", marginBottom: ".4rem" }}>
-                  {tournamentTitle}
-                </span>
-                <strong style={{ display: "block", color: "#fff", fontSize: "1rem" }}>
-                  Categoría {category}
-                </strong>
-                <span style={{ display: "block", color: "#d1d5db", fontSize: ".7rem", marginTop: ".35rem" }}>
-                  {branch} · {turno}
-                </span>
-                <div style={{ display: "grid", gap: ".35rem", marginTop: ".55rem" }}>
-                  {loadingClubs ? (
-                    <span style={{ color: "#d1d5db", fontSize: ".72rem" }}>Cargando clubes...</span>
-                  ) : (clubsByCategory[categoryRows.find((item) => normalizeCategoryName(item.nombre) === normalizeCategoryName(category))?.id] || []).length ? (
-                    (clubsByCategory[categoryRows.find((item) => normalizeCategoryName(item.nombre) === normalizeCategoryName(category))?.id] || []).map((club) => (
-                      <div key={club.id} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem", padding: ".4rem", borderRadius: "7px", background: "#0b0b0b", border: "1px solid #555" }}>
-                        {club.logo_path ? (
-                          <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt="" style={{ width: "25px", height: "25px", objectFit: "contain", borderRadius: "4px", background: "#fff", flexShrink: 0 }} />
-                        ) : null}
-                        <strong style={{ color: "#fff", fontSize: ".76rem", overflowWrap: "anywhere" }}>{club.name}</strong>
-                      </div>
-                    ))
-                  ) : (
-                    <span style={{ color: "#f3a0ad", fontSize: ".72rem" }}>Sin clubes inscriptos</span>
+            {categories.map((category) => {
+              const categoryRow = categoryRows.find(
+                (item) => normalizeCategoryName(item.nombre) === normalizeCategoryName(category)
+              );
+              const categoryId = categoryRow?.id;
+              const clubs = categoryId ? (clubsByCategory[categoryId] || []) : [];
+              const isExpanded = expandedCategoryId === categoryId && Boolean(categoryId);
+
+              return (
+                <article
+                  key={categoryId || category}
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isExpanded}
+                  onClick={() => categoryId && setExpandedCategoryId(isExpanded ? null : categoryId)}
+                  onKeyDown={(event) => {
+                    if ((event.key === "Enter" || event.key === " ") && categoryId) {
+                      event.preventDefault();
+                      setExpandedCategoryId(isExpanded ? null : categoryId);
+                    }
+                  }}
+                  style={{
+                    padding: ".9rem .65rem",
+                    textAlign: "center",
+                    borderRadius: "9px",
+                    border: isExpanded ? "2px solid #f3a0ad" : "1px solid #b5122a",
+                    background: "#171c27",
+                    minWidth: 0,
+                    cursor: categoryId ? "pointer" : "default",
+                    outline: "none",
+                  }}
+                >
+                  <span style={{ display: "block", color: "#f3a0ad", fontSize: ".68rem", fontWeight: 900, letterSpacing: ".06em", textTransform: "uppercase", marginBottom: ".4rem" }}>
+                    {tournamentTitle}
+                  </span>
+                  <strong style={{ display: "block", color: "#fff", fontSize: "1rem" }}>
+                    Categoría {category}
+                  </strong>
+                  <span style={{ display: "block", color: "#d1d5db", fontSize: ".7rem", marginTop: ".35rem" }}>
+                    {branch} · {turno}
+                  </span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".35rem", marginTop: ".7rem", paddingTop: ".55rem", borderTop: "1px solid #454b57" }}>
+                    <span style={{ color: "#d1d5db", fontSize: ".72rem" }}>
+                      {loadingClubs ? "Cargando..." : `${clubs.length} clubes inscriptos`}
+                    </span>
+                    <strong style={{ color: "#f3a0ad", fontSize: ".68rem", whiteSpace: "nowrap" }}>
+                      {isExpanded ? "CERRAR ↑" : "VER CLUBES ↓"}
+                    </strong>
+                  </div>
+                  {isExpanded && (
+                    <div style={{ display: "grid", gap: ".4rem", marginTop: ".65rem" }}>
+                      {clubs.length ? clubs.map((club) => (
+                        <div key={club.id} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem", padding: ".45rem", borderRadius: "7px", background: "#0b0b0b", border: "1px solid #555" }}>
+                          {club.logo_path ? (
+                            <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt="" style={{ width: "25px", height: "25px", objectFit: "contain", borderRadius: "4px", background: "#fff", flexShrink: 0 }} />
+                          ) : null}
+                          <strong style={{ color: "#fff", fontSize: ".76rem", overflowWrap: "anywhere" }}>{club.name}</strong>
+                          <span style={{ color: "#86efac", fontSize: ".62rem", fontWeight: 800 }}>HABILITADO</span>
+                        </div>
+                      )) : (
+                        <span style={{ color: "#f3a0ad", fontSize: ".72rem" }}>Sin clubes inscriptos</span>
+                      )}
+                    </div>
                   )}
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         ) : (
           <p style={{ color: "#f3a0ad" }}>
