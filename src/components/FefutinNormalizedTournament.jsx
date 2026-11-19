@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 
-export function FefutinNormalizedTournament({ tournament, onBack, canManage = false }) {
+export function FefutinNormalizedTournament({ tournament, onBack, canManage = false, onStatusChange }) {
   const [estado, setEstado] = useState(tournament?.estado || (tournament?.status === "Inscripciones" ? "inscripcion" : "cerrado"));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -29,6 +29,7 @@ export function FefutinNormalizedTournament({ tournament, onBack, canManage = fa
       setMessage(error.message || "No se pudo actualizar el estado de inscripción.");
     } else {
       setEstado(nextEstado);
+      onStatusChange?.(nextEstado);
       setMessage(nextEstado === "inscripcion"
         ? "Inscripciones habilitadas. Los referentes ya pueden enviar solicitudes."
         : "Inscripciones cerradas. No se aceptarán nuevas solicitudes.");
