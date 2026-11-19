@@ -48,9 +48,9 @@ alter table public.fefutin_tournament_categories
 
 update public.fefutin_tournament_categories tc
 set turn_id = tt.id
-from public.fefutin_tournament_turns tt
-join public.tournaments t on t.id = tc.tournament_id
-where tt.tournament_id = tc.tournament_id
+from public.fefutin_tournament_turns tt, public.tournaments t
+where t.id = tc.tournament_id
+  and tt.tournament_id = tc.tournament_id
   and tt.turno = case
     when coalesce(t.fefutin_turno, '') = 'Fin de semana'
       or coalesce(t.game, '') ilike '%Fin de semana%' then 'Fin de semana'
@@ -172,9 +172,9 @@ alter table public.fefutin_club_tournaments
 
 update public.fefutin_club_tournaments ct
 set turn_id = tt.id
-from public.fefutin_tournament_turns tt
-join public.tournaments t on t.id = ct.tournament_id
-where tt.tournament_id = ct.tournament_id
+from public.fefutin_tournament_turns tt, public.tournaments t
+where t.id = ct.tournament_id
+  and tt.tournament_id = ct.tournament_id
   and tt.turno = case
     when coalesce(t.fefutin_turno, '') = 'Fin de semana'
       or coalesce(t.game, '') ilike '%Fin de semana%' then 'Fin de semana'
@@ -255,9 +255,9 @@ alter table public.fefutin_club_tournament_requests
 
 update public.fefutin_club_tournament_requests r
 set turn_id = tt.id
-from public.fefutin_tournament_turns tt
-join public.tournaments t on t.id = r.tournament_id
-where tt.tournament_id = r.tournament_id
+from public.fefutin_tournament_turns tt, public.tournaments t
+where t.id = r.tournament_id
+  and tt.tournament_id = r.tournament_id
   and tt.turno = case
     when coalesce(t.fefutin_turno, '') = 'Fin de semana'
       or coalesce(t.game, '') ilike '%Fin de semana%' then 'Fin de semana'
