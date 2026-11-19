@@ -18,22 +18,27 @@ create table if not exists public.fefutin_tournament_turns (
 create index if not exists fefutin_tournament_turns_tournament_idx
   on public.fefutin_tournament_turns(tournament_id, turno);
 
--- Migrar los torneos existentes: el turno legacy estaba codificado en tournaments.game.
--- Si no estaba indicado, se conserva el valor historico por defecto de la aplicacion: Semanal.
+-- Cada rama dispone de ambos turnos. El turno que ya existia conserva
+-- el estado historico; el segundo comienza con inscripciones abiertas.
 insert into public.fefutin_tournament_turns (tournament_id, turno, status)
 select
   t.id,
+  v.turno,
   case
-    when coalesce(t.fefutin_turno, '') = 'Fin de semana'
-      or coalesce(t.game, '') ilike '%Fin de semana%' then 'Fin de semana'
-    else 'Semanal'
-  end,
-  case
-    when lower(trim(coalesce(t.status, ''))) in ('finalizado', 'finalizada', 'completed') then 'finalizada'
-    when lower(trim(coalesce(t.status, ''))) in ('en curso', 'en_curso', 'iniciado') then 'en_curso'
+    when v.turno = case
+      when coalesce(t.fefutin_turno, '') = 'Fin de semana'
+        or coalesce(t.game, '') ilike '%Fin de semana%' then 'Fin de semana'
+      else 'Semanal'
+    end then
+      case
+        when lower(trim(coalesce(t.status, ''))) in ('finalizado', 'finalizada', 'completed') then 'finalizada'
+        when lower(trim(coalesce(t.status, ''))) in ('en curso', 'en_curso', 'iniciado') then 'en_curso'
+        else 'inscripcion'
+      end
     else 'inscripcion'
   end
 from public.tournaments t
+cross join (values ('Semanal'::text), ('Fin de semana'::text)) as v(turno)
 where t.fefutin_branch_id is not null
 on conflict (tournament_id, turno) do nothing;
 
@@ -44,7 +49,13 @@ alter table public.fefutin_tournament_categories
 update public.fefutin_tournament_categories tc
 set turn_id = tt.id
 from public.fefutin_tournament_turns tt
+join public.tournaments t on t.id = tc.tournament_id
 where tt.tournament_id = tc.tournament_id
+  and tt.turno = case
+    when coalesce(t.fefutin_turno, '') = 'Fin de semana'
+      or coalesce(t.game, '') ilike '%Fin de semana%' then 'Fin de semana'
+    else 'Semanal'
+  end
   and tc.turn_id is null;
 
 do $migration$
@@ -162,7 +173,13 @@ alter table public.fefutin_club_tournaments
 update public.fefutin_club_tournaments ct
 set turn_id = tt.id
 from public.fefutin_tournament_turns tt
+join public.tournaments t on t.id = ct.tournament_id
 where tt.tournament_id = ct.tournament_id
+  and tt.turno = case
+    when coalesce(t.fefutin_turno, '') = 'Fin de semana'
+      or coalesce(t.game, '') ilike '%Fin de semana%' then 'Fin de semana'
+    else 'Semanal'
+  end
   and ct.turn_id is null;
 
 alter table public.fefutin_club_tournaments
@@ -239,7 +256,13 @@ alter table public.fefutin_club_tournament_requests
 update public.fefutin_club_tournament_requests r
 set turn_id = tt.id
 from public.fefutin_tournament_turns tt
+join public.tournaments t on t.id = r.tournament_id
 where tt.tournament_id = r.tournament_id
+  and tt.turno = case
+    when coalesce(t.fefutin_turno, '') = 'Fin de semana'
+      or coalesce(t.game, '') ilike '%Fin de semana%' then 'Fin de semana'
+    else 'Semanal'
+  end
   and r.turn_id is null;
 
 drop index if exists public.fefutin_club_tournament_requests_one_pending;
