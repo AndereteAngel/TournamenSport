@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 
+const normalizeCategoryName = (value) => String(value || "").replace(/^Cat\.\s*/i, "").trim();
+
 export function FefutinNormalizedTournament({ tournament, onBack, canManage = false, onStatusChange }) {
   const [estado, setEstado] = useState(tournament?.estado || (tournament?.status === "Inscripciones" ? "inscripcion" : "cerrado"));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
-  const categories = Array.isArray(tournament?.normalizedCategories)
-    ? tournament.normalizedCategories
-    : [];
+  const [categoryRows, setCategoryRows] = useState([]);
+  const [clubsByCategory, setClubsByCategory] = useState({});
+  const [loadingClubs, setLoadingClubs] = useState(false);
+  const [clubsError, setClubsError] = useState("");
+  const categories = categoryRows.length
+    ? categoryRows.map((item) => normalizeCategoryName(item.nombre)).filter(Boolean)
+    : (Array.isArray(tournament?.normalizedCategories) ? tournament.normalizedCategories : []);
   const branch = tournament?.normalizedBranchName || "FEFUTIN";
   const turno = tournament?.normalizedTurno || "Turno sin especificar";
   const tournamentTitle = tournament?.title || "Torneo FEFUTIN";
@@ -16,6 +22,116 @@ export function FefutinNormalizedTournament({ tournament, onBack, canManage = fa
     setEstado(tournament?.estado || (tournament?.status === "Inscripciones" ? "inscripcion" : "cerrado"));
     setMessage("");
   }, [tournament?.id, tournament?.estado, tournament?.status]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadCategoryClubs = async () => {
+      if (!tournament?.id) {
+        setCategoryRows([]);
+        setClubsByCategory({});
+        return;
+      }
+
+      setLoadingClubs(true);
+      setClubsError("");
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from("fefutin_torneo_categorias")
+        .select("id,nombre,sort_order,activa")
+        .eq("torneo_id", tournament.id)
+        .eq("activa", true)
+        .order("sort_order", { ascending: true });
+
+      if (cancelled) return;
+      if (categoriesError) {
+        setClubsError(categoriesError.message || "No se pudieron cargar las categorías.");
+        setCategoryRows([]);
+        setClubsByCategory({});
+        setLoadingClubs(false);
+        return;
+      }
+
+      const rows = categoriesData || [];
+      setCategoryRows(rows);
+      const categoryIds = rows.map((item) => item.id);
+      if (!categoryIds.length) {
+        setClubsByCategory({});
+        setLoadingClubs(false);
+        return;
+      }
+
+      const { data: competitions, error: competitionsError } = await supabase
+        .from("fefutin_competencias")
+        .select("id,categoria_id")
+        .in("categoria_id", categoryIds);
+
+      if (cancelled) return;
+      if (competitionsError) {
+        setClubsError(competitionsError.message || "No se pudieron cargar las competencias.");
+        setClubsByCategory({});
+        setLoadingClubs(false);
+        return;
+      }
+
+      const competitionRows = competitions || [];
+      const competitionIds = competitionRows.map((item) => item.id);
+      if (!competitionIds.length) {
+        setClubsByCategory({});
+        setLoadingClubs(false);
+        return;
+      }
+
+      const { data: links, error: linksError } = await supabase
+        .from("fefutin_competencia_clubes")
+        .select("competencia_id,club_id,estado")
+        .in("competencia_id", competitionIds)
+        .eq("estado", "habilitado");
+
+      if (cancelled) return;
+      if (linksError) {
+        setClubsError(linksError.message || "No se pudieron cargar los clubes inscriptos.");
+        setClubsByCategory({});
+        setLoadingClubs(false);
+        return;
+      }
+
+      const linkRows = links || [];
+      const clubIds = [...new Set(linkRows.map((item) => item.club_id).filter(Boolean))];
+      let clubRows = [];
+      if (clubIds.length) {
+        const { data, error } = await supabase
+          .from("fefutin_clubs")
+          .select("id,name,logo_path")
+          .in("id", clubIds);
+        if (cancelled) return;
+        if (error) {
+          setClubsError(error.message || "No se pudieron cargar los nombres de los clubes.");
+          setClubsByCategory({});
+          setLoadingClubs(false);
+          return;
+        }
+        clubRows = data || [];
+      }
+
+      const clubById = new Map(clubRows.map((club) => [String(club.id), club]));
+      const categoryIdByCompetition = new Map(competitionRows.map((item) => [String(item.id), String(item.categoria_id)]));
+      const next = {};
+      linkRows.forEach((link) => {
+        const categoryId = categoryIdByCompetition.get(String(link.competencia_id));
+        const club = clubById.get(String(link.club_id));
+        if (!categoryId || !club) return;
+        if (!next[categoryId]) next[categoryId] = [];
+        if (!next[categoryId].some((item) => item.id === club.id)) next[categoryId].push(club);
+      });
+
+      if (!cancelled) {
+        setClubsByCategory(next);
+        setLoadingClubs(false);
+      }
+    };
+
+    loadCategoryClubs();
+    return () => { cancelled = true; };
+  }, [tournament?.id]);
 
   const toggleRegistration = async () => {
     if (!canManage || saving || !tournament?.id) return;
@@ -114,6 +230,7 @@ export function FefutinNormalizedTournament({ tournament, onBack, canManage = fa
         <h2 style={{ margin: "0 0 .85rem", color: "#fff", fontSize: "1.05rem" }}>
           CATEGORÍAS DEL TORNEO
         </h2>
+        {clubsError && <p role="alert" style={{ color: "#fca5a5", fontSize: ".8rem" }}>No se pudieron mostrar los clubes: {clubsError}</p>}
         {categories.length ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))", gap: ".65rem" }}>
             {categories.map((category) => (
@@ -137,9 +254,22 @@ export function FefutinNormalizedTournament({ tournament, onBack, canManage = fa
                 <span style={{ display: "block", color: "#d1d5db", fontSize: ".7rem", marginTop: ".35rem" }}>
                   {branch} · {turno}
                 </span>
-                <span style={{ display: "block", color: "#f3a0ad", fontSize: ".72rem", marginTop: ".4rem" }}>
-                  Competencia creada
-                </span>
+                <div style={{ display: "grid", gap: ".35rem", marginTop: ".55rem" }}>
+                  {loadingClubs ? (
+                    <span style={{ color: "#d1d5db", fontSize: ".72rem" }}>Cargando clubes...</span>
+                  ) : (clubsByCategory[categoryRows.find((item) => normalizeCategoryName(item.nombre) === normalizeCategoryName(category))?.id] || []).length ? (
+                    (clubsByCategory[categoryRows.find((item) => normalizeCategoryName(item.nombre) === normalizeCategoryName(category))?.id] || []).map((club) => (
+                      <div key={club.id} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: ".4rem", padding: ".4rem", borderRadius: "7px", background: "#0b0b0b", border: "1px solid #555" }}>
+                        {club.logo_path ? (
+                          <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt="" style={{ width: "25px", height: "25px", objectFit: "contain", borderRadius: "4px", background: "#fff", flexShrink: 0 }} />
+                        ) : null}
+                        <strong style={{ color: "#fff", fontSize: ".76rem", overflowWrap: "anywhere" }}>{club.name}</strong>
+                      </div>
+                    ))
+                  ) : (
+                    <span style={{ color: "#f3a0ad", fontSize: ".72rem" }}>Sin clubes inscriptos</span>
+                  )}
+                </div>
               </article>
             ))}
           </div>
