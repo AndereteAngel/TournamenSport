@@ -53,7 +53,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [rosterSearch, setRosterSearch] = useState("");
   const [rosterCategory, setRosterCategory] = useState("todas");
   const [newCategoryName, setNewCategoryName] = useState("");
-  const [rosterView, setRosterView] = useState("menu");
+  const [rosterView, setRosterView] = useState("inscripcion");
   const [registrationPlayer, setRegistrationPlayer] = useState({ first_name: "", last_name: "", dni: "", birth_date: "", category_roster_id: "", photo_path: "", dni_front_path: "", dni_back_path: "" });
   const [registrationUploads, setRegistrationUploads] = useState({ photo: false, front: false, back: false });
 
@@ -821,11 +821,12 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
               type="button"
               className="tc-form-back"
               onClick={() => {
-                setRosterView("menu");
+                setSelectedSection(null);
                 setEditingPlayer(null);
+                setRosterView("inscripcion");
               }}
             >
-              ← Volver
+              ← Volver a MI CLUB
             </button>
             <h2 className="cr-title" style={{ color: "#fff", margin: "1.25rem 0 0" }}>
               INSCRIPCIÓN DE JUGADOR
@@ -895,6 +896,56 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                 {savingId ? "GUARDANDO INSCRIPCIÓN..." : "GUARDAR INSCRIPCIÓN DEL JUGADOR"}
               </button>
             </div>
+
+            <section style={{ display: "grid", gap: ".75rem", marginTop: "1.5rem", paddingTop: "1rem", borderTop: "2px solid #b5122a" }}>
+              <div>
+                <h3 style={{ color: "#fff", margin: 0, fontSize: "1rem" }}>PADRÓN DE JUGADORES</h3>
+                <p style={{ color: "#aaa", fontSize: ".75rem", margin: ".3rem 0 0" }}>Todos los jugadores inscriptos en el plantel permanente, incluidos los que esperan revisión o carnet.</p>
+              </div>
+              {visibleParticipations.length === 0 ? (
+                <p style={{ color: "#facc15", textAlign: "center", padding: "1rem", border: "1px dashed #555", borderRadius: "8px", margin: 0 }}>
+                  Todavía no hay categorías creadas. Creá una categoría arriba para comenzar a inscribir jugadores.
+                </p>
+              ) : visibleParticipations.map((item) => {
+                const players = rowsByParticipation[item.club_tournament_id] || [];
+                return (
+                  <div key={item.club_tournament_id} style={{ minWidth: 0, border: "1px solid #444", borderRadius: "9px", overflow: "hidden" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", padding: ".65rem .75rem", background: "#171c27" }}>
+                      <strong style={{ color: "#fff", fontSize: ".88rem" }}>{getParticipationLabel(item)}</strong>
+                      <span style={{ color: "#fca5a5", fontSize: ".72rem", fontWeight: 800 }}>{players.length} {players.length === 1 ? "jugador" : "jugadores"}</span>
+                    </div>
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", minWidth: "620px", borderCollapse: "collapse", color: "#fff", textAlign: "left", background: "#090909" }}>
+                        <thead><tr style={{ background: "#b5122a" }}>
+                          {["N.º", "FOTO", "JUGADOR", "DNI", "CATEGORÍA", "CARNET / ESTADO"].map((heading) => <th key={heading} style={{ padding: ".55rem .5rem", fontSize: ".65rem", whiteSpace: "nowrap" }}>{heading}</th>)}
+                        </tr></thead>
+                        <tbody>
+                          {players.map((player, index) => {
+                            const photoUrl = player.photo_path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(player.photo_path).data.publicUrl : "";
+                            const approval = player.approval_status === "aprobado" ? "APROBADO" : player.approval_status === "rechazado" ? "RECHAZADO" : "PENDIENTE DE REVISIÓN";
+                            const approvalColor = player.approval_status === "aprobado" ? "#86efac" : player.approval_status === "rechazado" ? "#fca5a5" : "#facc15";
+                            return (
+                              <tr key={player.id || index} style={{ borderTop: "1px solid #333" }}>
+                                <td style={{ padding: ".45rem .5rem", color: "#fca5a5", fontWeight: 900 }}>{index + 1}</td>
+                                <td style={{ padding: ".35rem .5rem" }}>{photoUrl ? <img src={photoUrl} alt="" style={{ width: "38px", height: "44px", objectFit: "cover", borderRadius: "5px", display: "block" }} /> : <span style={{ color: "#888", fontSize: ".65rem" }}>Sin foto</span>}</td>
+                                <td style={{ padding: ".45rem .5rem", minWidth: "145px", fontWeight: 800 }}>{[player.last_name, player.first_name].filter(Boolean).join(", ") || "Sin nombre"}</td>
+                                <td style={{ padding: ".45rem .5rem", whiteSpace: "nowrap" }}>{player.dni || "—"}</td>
+                                <td style={{ padding: ".45rem .5rem" }}>{getParticipationLabel(item)}</td>
+                                <td style={{ padding: ".45rem .5rem", whiteSpace: "nowrap" }}>
+                                  <span style={{ display: "block", color: player.carnet_number ? "#fff" : "#aaa", fontSize: ".72rem", fontWeight: 800 }}>{player.carnet_number || "Sin asignar"}</span>
+                                  <span style={{ display: "block", color: approvalColor, fontSize: ".62rem", fontWeight: 900, marginTop: ".15rem" }}>{approval}</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          {!players.length && <tr><td colSpan={6} style={{ padding: "1rem", color: "#aaa", textAlign: "center" }}>Todavía no hay jugadores inscriptos en esta categoría.</td></tr>}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
           </>
         )}
         {isRosterMenuScreen && (
