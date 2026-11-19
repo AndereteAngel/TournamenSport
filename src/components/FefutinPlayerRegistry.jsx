@@ -58,6 +58,8 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
 
   useEffect(() => { loadRegistry(); }, [loadRegistry]);
 
+  const labelFor = (category) => category.category_label || category.category || "Categoría";
+
   const totalPlayers = useMemo(
     () => categories.reduce((total, category) => total + category.players.length, 0),
     [categories]
@@ -154,7 +156,6 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
     await loadRegistry();
   };
 
-  const labelFor = (category) => category.category_label || category.category || "Categoría";
   const photoUrl = (path) => path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(path).data.publicUrl : "";
 
   return (
