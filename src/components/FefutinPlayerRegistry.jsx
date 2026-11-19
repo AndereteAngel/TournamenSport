@@ -32,6 +32,10 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
   const [registrySearch, setRegistrySearch] = useState("");
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
+  const [dniPreviewOpen, setDniPreviewOpen] = useState(false);
+  const [dniDocuments, setDniDocuments] = useState(null);
+  const [dniLoading, setDniLoading] = useState(false);
+  const [dniError, setDniError] = useState("");
 
   const loadRegistry = useCallback(async () => {
     setLoading(true);
@@ -159,6 +163,53 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
   };
 
   const photoUrl = (path) => path ? supabase.storage.from("fefutin-player-photos").getPublicUrl(path).data.publicUrl : "";
+
+  const openDniDocuments = async (player) => {
+    setDniPreviewOpen(true);
+    setDniLoading(true);
+    setDniError("");
+    setDniDocuments(null);
+
+    if (!player?.id) {
+      setDniError("No se encontró el identificador del jugador para consultar su DNI.");
+      setDniLoading(false);
+      return;
+    }
+
+    const { data, error: rpcError } = await supabase.rpc("get_fefutin_player_dni_documents", {
+      p_player_entry_id: player.id,
+    });
+    if (rpcError) {
+      setDniError(rpcError.message || "No se pudieron consultar los documentos del DNI.");
+      setDniLoading(false);
+      return;
+    }
+
+    const documents = data?.[0];
+    if (!documents?.dni_front_path || !documents?.dni_back_path) {
+      setDniError("Este jugador todavía no tiene cargados el frente y el dorso del DNI.");
+      setDniLoading(false);
+      return;
+    }
+
+    const [front, back] = await Promise.all([
+      supabase.storage.from("fefutin-player-dni").createSignedUrl(documents.dni_front_path, 300),
+      supabase.storage.from("fefutin-player-dni").createSignedUrl(documents.dni_back_path, 300),
+    ]);
+    if (front.error || back.error) {
+      setDniError(front.error?.message || back.error?.message || "No se pudieron abrir las imágenes del DNI.");
+      setDniLoading(false);
+      return;
+    }
+
+    setDniDocuments({
+      frontUrl: front.data.signedUrl,
+      backUrl: back.data.signedUrl,
+      frontPdf: documents.dni_front_path.toLowerCase().endsWith(".pdf"),
+      backPdf: documents.dni_back_path.toLowerCase().endsWith(".pdf"),
+    });
+    setDniLoading(false);
+  };
 
   return (
     <main style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", padding: "clamp(.75rem,3vw,1.25rem)", color: "#fff", background: "#080808", border: "1px solid #b5122a", borderRadius: "12px", display: "grid", gap: "1rem" }}>
@@ -316,7 +367,7 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
                       </div>
                       <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
                         <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>DNI</p>
-                        <p style={{ color: "#fff", fontSize: ".9rem", fontWeight: 800, margin: ".15rem 0 0" }}>{selectedPlayer.dni || "NO REGISTRADO"}</p>
+                        <button type="button" onClick={() => openDniDocuments(selectedPlayer)} style={{ color: "#fff", fontSize: ".9rem", fontWeight: 800, margin: ".15rem 0 0", padding: 0, border: 0, borderBottom: "1px dashed #e7a0aa", background: "transparent", cursor: "pointer", textAlign: "left" }}>{selectedPlayer.dni || "NO REGISTRADO"}　↗</button>
                       </div>
                       <div style={{ borderBottom: "1px solid #454545", paddingBottom: ".4rem" }}>
                         <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>CLUB</p>
@@ -353,6 +404,37 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
           </div>
         );
       })()}
+      {dniPreviewOpen && selectedPlayer && (
+        <div role="dialog" aria-modal="true" aria-label="Documentos del DNI" onClick={(event) => { if (event.target === event.currentTarget) setDniPreviewOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 12000, display: "flex", alignItems: "center", justifyContent: "center", padding: ".75rem", background: "rgba(0,0,0,.96)" }}>
+          <div style={{ width: "min(100%, 960px)", maxHeight: "94vh", overflowY: "auto", padding: "1rem", border: "1px solid #b5122a", borderRadius: "14px", background: "#171717", color: "#fff" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".7rem", marginBottom: "1rem" }}>
+              <div>
+                <strong style={{ display: "block" }}>DOCUMENTO DE IDENTIDAD</strong>
+                <span style={{ color: "#aaa", fontSize: ".8rem" }}>{[selectedPlayer.first_name, selectedPlayer.last_name].filter(Boolean).join(" ")} · DNI {selectedPlayer.dni || "—"}</span>
+              </div>
+              <button type="button" onClick={() => setDniPreviewOpen(false)} style={{ border: "1px solid #b5122a", borderRadius: "8px", background: "#101010", color: "#fff", padding: ".55rem .8rem", cursor: "pointer" }}>✕ Cerrar</button>
+            </div>
+            {dniLoading && <p style={{ textAlign: "center", color: "#ddd" }}>Cargando documentos...</p>}
+            {dniError && <p role="alert" style={{ color: "#fca5a5", overflowWrap: "anywhere" }}>{dniError}</p>}
+            {dniDocuments && (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,300px),1fr))", gap: "1rem" }}>
+                {[
+                  { label: "FRENTE DEL DNI", url: dniDocuments.frontUrl, pdf: dniDocuments.frontPdf },
+                  { label: "DORSO DEL DNI", url: dniDocuments.backUrl, pdf: dniDocuments.backPdf },
+                ].map((document) => (
+                  <div key={document.label} style={{ minWidth: 0, padding: ".65rem", border: "1px solid #444", borderRadius: "10px", background: "#090909" }}>
+                    <strong style={{ display: "block", color: "#e7a0aa", fontSize: ".8rem", marginBottom: ".6rem" }}>{document.label}</strong>
+                    {document.pdf
+                      ? <iframe title={document.label} src={document.url} style={{ width: "100%", height: "min(65vh,520px)", border: 0, background: "#fff", borderRadius: "6px" }} />
+                      : <img src={document.url} alt={document.label} style={{ display: "block", width: "100%", maxHeight: "65vh", objectFit: "contain", background: "#fff", borderRadius: "6px" }} />}
+                  </div>
+                ))}
+              </div>
+            )}
+            <p style={{ color: "#888", fontSize: ".72rem", margin: "1rem 0 0" }}>Documentación privada. Los enlaces de consulta son temporales y se generan sólo después de validar el acceso.</p>
+          </div>
+        </div>
+      )}
       <style>{`
         @keyframes fefutinCarnetSway {
           0%, 100% { transform: perspective(900px) rotateX(0deg) rotateZ(0deg) translateY(0); }
