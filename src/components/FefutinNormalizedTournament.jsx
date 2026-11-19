@@ -1,9 +1,40 @@
-export function FefutinNormalizedTournament({ tournament, onBack }) {
+import { useEffect, useState } from "react";
+import { supabase } from "../supabaseClient";
+
+export function FefutinNormalizedTournament({ tournament, onBack, canManage = false }) {
+  const [estado, setEstado] = useState(tournament?.estado || (tournament?.status === "Inscripciones" ? "inscripcion" : "cerrado"));
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
   const categories = Array.isArray(tournament?.normalizedCategories)
     ? tournament.normalizedCategories
     : [];
   const branch = tournament?.normalizedBranchName || "FEFUTIN";
   const turno = tournament?.normalizedTurno || "Turno sin especificar";
+
+  useEffect(() => {
+    setEstado(tournament?.estado || (tournament?.status === "Inscripciones" ? "inscripcion" : "cerrado"));
+    setMessage("");
+  }, [tournament?.id, tournament?.estado, tournament?.status]);
+
+  const toggleRegistration = async () => {
+    if (!canManage || saving || !tournament?.id) return;
+    const nextEstado = estado === "inscripcion" ? "cerrado" : "inscripcion";
+    setSaving(true);
+    setMessage("");
+    const { error } = await supabase
+      .from("fefutin_torneos")
+      .update({ estado: nextEstado, updated_at: new Date().toISOString() })
+      .eq("id", tournament.id);
+    if (error) {
+      setMessage(error.message || "No se pudo actualizar el estado de inscripción.");
+    } else {
+      setEstado(nextEstado);
+      setMessage(nextEstado === "inscripcion"
+        ? "Inscripciones habilitadas. Los referentes ya pueden enviar solicitudes."
+        : "Inscripciones cerradas. No se aceptarán nuevas solicitudes.");
+    }
+    setSaving(false);
+  };
 
   return (
     <main
@@ -41,6 +72,34 @@ export function FefutinNormalizedTournament({ tournament, onBack }) {
           Cada categoría funciona como una competencia independiente.
         </p>
       </header>
+
+      <section
+        style={{
+          marginBottom: "1rem",
+          padding: "1rem",
+          border: "1px solid #555",
+          borderRadius: "12px",
+          background: "#111",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".75rem", flexWrap: "wrap" }}>
+          <div>
+            <strong style={{ color: estado === "inscripcion" ? "#86efac" : "#fca5a5" }}>
+              {estado === "inscripcion" ? "INSCRIPCIONES ABIERTAS" : "INSCRIPCIONES CERRADAS"}
+            </strong>
+            <p style={{ color: "#ccc", margin: ".3rem 0 0", fontSize: ".82rem" }}>
+              {estado === "inscripcion" ? "Los referentes habilitados pueden solicitar la participación de su club." : "Los referentes no pueden enviar nuevas solicitudes."}
+            </p>
+          </div>
+          {canManage && (
+            <button type="button" onClick={toggleRegistration} disabled={saving}
+              style={{ border: "1px solid #fff", borderRadius: "8px", padding: ".7rem .9rem", background: estado === "inscripcion" ? "#3b1119" : "#166534", color: "#fff", fontWeight: 900, cursor: saving ? "wait" : "pointer" }}>
+              {saving ? "GUARDANDO..." : estado === "inscripcion" ? "CERRAR INSCRIPCIONES" : "HABILITAR INSCRIPCIONES"}
+            </button>
+          )}
+        </div>
+        {message && <p role="status" style={{ color: "#fff", margin: ".75rem 0 0", padding: ".6rem", background: "#171c27", borderRadius: "7px" }}>{message}</p>}
+      </section>
 
       <section
         style={{
