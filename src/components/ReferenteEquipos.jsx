@@ -375,7 +375,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
           </div>
         ) : (
           <>
-            {mode === "equipos" && !activeClubId ? (
+            {mode === "equipos" && !activeClubId && !isRosterMenuScreen ? (
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(112px, 1fr))", gap: ".85rem", marginTop: "1.25rem" }}>
                 {clubs.map((item) => {
                   const logoUrl = item.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(item.logo_path).data.publicUrl : "";
