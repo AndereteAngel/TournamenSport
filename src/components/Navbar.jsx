@@ -132,6 +132,7 @@ export function Navbar({
 
         <div>
           <span
+            className="tc-navbar-title"
             style={{
               fontFamily: "'Montserrat', sans-serif",
               fontWeight: 900,
@@ -524,6 +525,14 @@ export function Navbar({
         }
 
         @media (max-width: 640px) {
+          .tc-navbar-title {
+            font-size: .9rem !important;
+            line-height: 1.15 !important;
+            max-width: min(34vw, 165px) !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+          }
           .desktop-nav-actions { display: none !important; }
           .tc-navbar-user-role { max-width: min(46vw, 190px); font-size: .62rem; }
           .mobile-navbar-alias {
