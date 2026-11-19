@@ -27,6 +27,9 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
   const [uploading, setUploading] = useState({ photo: false, front: false, back: false });
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [activeView, setActiveView] = useState("inscribir");
+  const [registryCategory, setRegistryCategory] = useState("todas");
+  const [registrySearch, setRegistrySearch] = useState("");
 
   const loadRegistry = useCallback(async () => {
     setLoading(true);
@@ -59,6 +62,13 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
     () => categories.reduce((total, category) => total + category.players.length, 0),
     [categories]
   );
+  const allPlayers = useMemo(() => categories.flatMap((category) => category.players.map((player) => ({ ...player, categoryId: category.rosterId, categoryLabel: labelFor(category) }))), [categories]);
+  const filteredPlayers = useMemo(() => allPlayers.filter((player) => {
+    const categoryMatch = registryCategory === "todas" || player.categoryId === registryCategory;
+    const query = registrySearch.trim().toLocaleLowerCase("es");
+    const searchMatch = !query || [player.first_name, player.last_name, player.dni].some((value) => String(value || "").toLocaleLowerCase("es").includes(query));
+    return categoryMatch && searchMatch;
+  }), [allPlayers, registryCategory, registrySearch]);
 
   const createCategory = async () => {
     const label = newCategory.trim();
@@ -163,95 +173,92 @@ export function FefutinPlayerRegistry({ currentUser, clubId, clubName, onBack })
       {error && <p role="alert" style={{ margin: 0, padding: ".8rem", border: "1px solid #b5122a", borderRadius: "8px", color: "#fecaca", background: "#450a0a", overflowWrap: "anywhere" }}>{error}</p>}
       {notice && <p role="status" style={{ margin: 0, padding: ".8rem", border: "1px solid #166534", borderRadius: "8px", color: "#bbf7d0", background: "#052e16" }}>{notice}</p>}
 
-      <section style={{ display: "grid", gap: ".65rem", padding: ".9rem", border: "1px solid #444", borderRadius: "10px", background: "#121212" }}>
-        <h2 style={{ margin: 0, fontSize: "1rem", color: "#fff" }}>1. CATEGORÍAS DEL PLANTEL</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: ".5rem" }}>
-          <input value={newCategory} onChange={(event) => setNewCategory(event.target.value)} placeholder="Ej.: Cat. 2018" maxLength={80} style={inputStyle} />
-          <button type="button" onClick={createCategory} style={secondaryButton}>＋ Crear</button>
-        </div>
-        <p style={{ margin: 0, color: "#aaa", fontSize: ".75rem" }}>{categories.length} categorías · {totalPlayers} jugadores registrados</p>
-      </section>
-
-      <form onSubmit={submitPlayer} style={{ display: "grid", gap: ".8rem", padding: ".9rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171717" }}>
-        <h2 style={{ margin: 0, fontSize: "1rem", color: "#fff" }}>2. INSCRIBIR JUGADOR</h2>
-        <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".78rem", fontWeight: 800 }}>CATEGORÍA
-          <select required value={form.categoryId} onChange={(event) => setForm((previous) => ({ ...previous, categoryId: event.target.value }))} style={inputStyle}>
-            <option value="">Seleccionar categoría</option>
-            {categories.map((category) => <option key={category.rosterId} value={category.rosterId}>{labelFor(category)}</option>)}
-          </select>
-        </label>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: ".65rem" }}>
-          <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".78rem", fontWeight: 800 }}>APELLIDO
-            <input required value={form.last_name} onChange={(event) => setForm((p) => ({ ...p, last_name: event.target.value }))} style={inputStyle} />
-          </label>
-          <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".78rem", fontWeight: 800 }}>NOMBRE
-            <input required value={form.first_name} onChange={(event) => setForm((p) => ({ ...p, first_name: event.target.value }))} style={inputStyle} />
-          </label>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: ".65rem" }}>
-          <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".78rem", fontWeight: 800 }}>FECHA DE NACIMIENTO
-            <input required type="date" value={form.birth_date} onChange={(event) => setForm((p) => ({ ...p, birth_date: event.target.value }))} style={inputStyle} />
-          </label>
-          <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".78rem", fontWeight: 800 }}>DNI
-            <input required inputMode="numeric" value={form.dni} onChange={(event) => setForm((p) => ({ ...p, dni: event.target.value }))} style={inputStyle} />
-          </label>
-        </div>
-        <div style={{ display: "grid", gap: ".65rem" }}>
-          {[
-            { key: "photo", title: "FOTO DEL JUGADOR", path: form.photo_path, accept: "image/jpeg,image/png,image/webp" },
-            { key: "front", title: "FRENTE DEL DNI", path: form.dni_front_path, accept: "image/jpeg,image/png,image/webp,application/pdf" },
-            { key: "back", title: "DORSO DEL DNI", path: form.dni_back_path, accept: "image/jpeg,image/png,image/webp,application/pdf" },
-          ].map((file) => (
-            <label key={file.key} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", alignItems: "center", gap: ".6rem", padding: ".65rem", border: "1px solid #444", borderRadius: "8px", color: "#fff", fontSize: ".75rem", fontWeight: 800 }}>
-              <span>{file.title}<small style={{ display: "block", marginTop: ".25rem", color: file.path ? "#86efac" : "#aaa", fontWeight: 600 }}>{file.path ? "ARCHIVO CARGADO" : "Obligatorio · Máximo 5 MB"}</small></span>
-              <span style={{ ...secondaryButton, fontSize: ".7rem", textAlign: "center" }}>{uploading[file.key] ? "Subiendo..." : file.path ? "Cambiar" : "Cargar"}
-                <input type="file" accept={file.accept} disabled={uploading[file.key]} onChange={(event) => uploadFile(file.key, event.target.files?.[0])} style={{ display: "none" }} />
-              </span>
+      <nav aria-label="Secciones de jugadores" style={{ display: "grid", gridTemplateColumns: "repeat(2,minmax(0,1fr))", gap: ".5rem" }}>
+        <button type="button" onClick={() => { setActiveView("inscribir"); setError(""); setNotice(""); }} style={{ ...primaryButton, minHeight: "42px", padding: ".5rem", fontSize: ".8rem", background: activeView === "inscribir" ? "#b5122a" : "#171c27" }}>＋ Inscribir</button>
+        <button type="button" onClick={() => { setActiveView("padron"); setError(""); setNotice(""); }} style={{ ...primaryButton, minHeight: "42px", padding: ".5rem", fontSize: ".8rem", background: activeView === "padron" ? "#b5122a" : "#171c27" }}>☷ Padrón ({totalPlayers})</button>
+      </nav>
+      {activeView === "inscribir" ? (
+        <section style={{ display: "grid", gap: ".7rem", minWidth: 0 }}>
+          <div style={{ display: "grid", gap: ".5rem", padding: ".7rem", border: "1px solid #444", borderRadius: "9px", background: "#121212" }}>
+            <h2 style={{ margin: 0, fontSize: ".86rem" }}>CATEGORÍA DEL JUGADOR</h2>
+            <select required value={form.categoryId} onChange={(event) => setForm((p) => ({ ...p, categoryId: event.target.value }))} style={{ ...inputStyle, fontSize: ".82rem", padding: ".62rem" }}>
+              <option value="">Seleccionar categoría</option>
+              {categories.map((category) => <option key={category.rosterId} value={category.rosterId}>{labelFor(category)}</option>)}
+            </select>
+            <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: ".45rem", alignItems: "end" }}>
+              <label style={{ display: "grid", gap: ".25rem", color: "#aaa", fontSize: ".68rem" }}>Crear categoría si no existe
+                <input value={newCategory} onChange={(event) => setNewCategory(event.target.value)} placeholder="Ej.: Cat. 2018" maxLength={80} style={{ ...inputStyle, fontSize: ".8rem", padding: ".6rem" }} />
+              </label>
+              <button type="button" onClick={createCategory} style={{ ...secondaryButton, padding: ".55rem .65rem", fontSize: ".72rem" }}>＋ Crear</button>
+            </div>
+          </div>
+          <form onSubmit={submitPlayer} style={{ display: "grid", gap: ".65rem", padding: ".7rem", border: "1px solid #b5122a", borderRadius: "9px", background: "#121212", minWidth: 0 }}>
+            <h2 style={{ margin: 0, fontSize: ".86rem" }}>DATOS DEL JUGADOR</h2>
+            <label style={{ display: "grid", gap: ".25rem", color: "#eee", fontSize: ".7rem", fontWeight: 800 }}>APELLIDO
+              <input required value={form.last_name} onChange={(event) => setForm((p) => ({ ...p, last_name: event.target.value }))} style={{ ...inputStyle, fontSize: ".82rem", padding: ".62rem" }} />
             </label>
-          ))}
-        </div>
-        <button type="submit" disabled={saving || loading || categories.length === 0 || Object.values(uploading).some(Boolean)} style={{ ...primaryButton, opacity: saving || loading || categories.length === 0 || Object.values(uploading).some(Boolean) ? .55 : 1 }}>
-          {saving ? "GUARDANDO INSCRIPCIÓN..." : "GUARDAR JUGADOR EN EL PADRÓN"}
-        </button>
-        {categories.length === 0 && !loading && <p style={{ margin: 0, color: "#facc15", textAlign: "center", fontSize: ".8rem" }}>Creá una categoría para habilitar la inscripción.</p>}
-      </form>
-
-      <section style={{ display: "grid", gap: ".75rem" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".5rem", flexWrap: "wrap" }}>
-          <h2 style={{ margin: 0, fontSize: "1rem", color: "#fff" }}>3. PADRÓN PERMANENTE</h2>
-          <span style={{ color: "#fca5a5", fontSize: ".75rem", fontWeight: 900 }}>{totalPlayers} JUGADORES</span>
-        </div>
-        {loading ? <p style={{ color: "#ddd", textAlign: "center", padding: "1rem" }}>Cargando categorías y jugadores...</p> : categories.length === 0 ? (
-          <p style={{ color: "#aaa", textAlign: "center", padding: "1.2rem", border: "1px dashed #555", borderRadius: "8px" }}>Todavía no hay categorías ni jugadores. Creá la primera categoría arriba.</p>
-        ) : categories.map((category) => (
-          <article key={category.rosterId} style={{ border: "1px solid #444", borderRadius: "9px", overflow: "hidden", background: "#090909" }}>
-            <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", padding: ".7rem .8rem", background: "#171c27" }}>
-              <strong style={{ color: "#fff" }}>{labelFor(category)}</strong>
-              <span style={{ color: "#fca5a5", fontSize: ".75rem", fontWeight: 900 }}>{category.players.length} jugadores</span>
-            </header>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", minWidth: "590px", borderCollapse: "collapse", color: "#fff", textAlign: "left" }}>
-                <thead><tr style={{ background: "#b5122a" }}>{["N.º", "FOTO", "JUGADOR", "DNI", "CARNET", "ESTADO"].map((title) => <th key={title} style={{ padding: ".55rem", fontSize: ".65rem", whiteSpace: "nowrap" }}>{title}</th>)}</tr></thead>
-                <tbody>
-                  {category.players.map((player, index) => (
-                    <tr key={player.id || player.dni || index} style={{ borderTop: "1px solid #333" }}>
-                      <td style={{ padding: ".5rem", color: "#fca5a5", fontWeight: 900 }}>{index + 1}</td>
-                      <td style={{ padding: ".35rem .5rem" }}>{photoUrl(player.photo_path) ? <img src={photoUrl(player.photo_path)} alt="" style={{ width: "38px", height: "44px", objectFit: "cover", borderRadius: "5px" }} /> : "—"}</td>
-                      <td style={{ padding: ".5rem", fontWeight: 800 }}>{[player.last_name, player.first_name].filter(Boolean).join(", ") || "Sin nombre"}</td>
-                      <td style={{ padding: ".5rem", whiteSpace: "nowrap" }}>{player.dni || "—"}</td>
-                      <td style={{ padding: ".5rem", whiteSpace: "nowrap" }}>{player.carnet_number || "Sin asignar"}</td>
-                      <td style={{ padding: ".5rem", whiteSpace: "nowrap", color: player.approval_status === "aprobado" ? "#86efac" : player.approval_status === "rechazado" ? "#fca5a5" : "#facc15", fontSize: ".68rem", fontWeight: 900 }}>
-                        {player.approval_status === "aprobado" ? "APROBADO" : player.approval_status === "rechazado" ? "RECHAZADO" : "PENDIENTE"}
-                      </td>
-                    </tr>
-                  ))}
-                  {category.players.length === 0 && <tr><td colSpan={6} style={{ padding: "1rem", color: "#aaa", textAlign: "center" }}>Todavía no hay jugadores inscriptos en esta categoría.</td></tr>}
-                </tbody>
+            <label style={{ display: "grid", gap: ".25rem", color: "#eee", fontSize: ".7rem", fontWeight: 800 }}>NOMBRE
+              <input required value={form.first_name} onChange={(event) => setForm((p) => ({ ...p, first_name: event.target.value }))} style={{ ...inputStyle, fontSize: ".82rem", padding: ".62rem" }} />
+            </label>
+            <label style={{ display: "grid", gap: ".25rem", color: "#eee", fontSize: ".7rem", fontWeight: 800 }}>FECHA DE NACIMIENTO
+              <input required type="date" value={form.birth_date} onChange={(event) => setForm((p) => ({ ...p, birth_date: event.target.value }))} style={{ ...inputStyle, fontSize: ".82rem", padding: ".62rem" }} />
+            </label>
+            <label style={{ display: "grid", gap: ".25rem", color: "#eee", fontSize: ".7rem", fontWeight: 800 }}>DNI
+              <input required inputMode="numeric" value={form.dni} onChange={(event) => setForm((p) => ({ ...p, dni: event.target.value }))} style={{ ...inputStyle, fontSize: ".82rem", padding: ".62rem" }} />
+            </label>
+            <div style={{ display: "grid", gap: ".45rem" }}>
+              {[
+                { key: "photo", title: "Foto del jugador", path: form.photo_path, accept: "image/jpeg,image/png,image/webp" },
+                { key: "front", title: "DNI · Frente", path: form.dni_front_path, accept: "image/jpeg,image/png,image/webp,application/pdf" },
+                { key: "back", title: "DNI · Dorso", path: form.dni_back_path, accept: "image/jpeg,image/png,image/webp,application/pdf" },
+              ].map((file) => (
+                <label key={file.key} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", alignItems: "center", gap: ".45rem", padding: ".5rem", border: "1px solid #444", borderRadius: "7px", color: "#eee", fontSize: ".72rem", fontWeight: 700, minWidth: 0 }}>
+                  <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>{file.title}<small style={{ display: "block", marginTop: ".15rem", color: file.path ? "#86efac" : "#aaa", fontSize: ".65rem", fontWeight: 500 }}>{file.path ? "Archivo cargado" : "Obligatorio · Máx. 5 MB"}</small></span>
+                  <span style={{ ...secondaryButton, fontSize: ".68rem", padding: ".45rem .6rem", whiteSpace: "nowrap" }}>{uploading[file.key] ? "Subiendo…" : file.path ? "Cambiar" : "Cargar"}
+                    <input type="file" accept={file.accept} disabled={uploading[file.key]} onChange={(event) => uploadFile(file.key, event.target.files?.[0])} style={{ display: "none" }} />
+                  </span>
+                </label>
+              ))}
+            </div>
+            <button type="submit" disabled={saving || loading || categories.length === 0 || Object.values(uploading).some(Boolean)} style={{ ...primaryButton, minHeight: "43px", padding: ".6rem", fontSize: ".78rem", opacity: saving || loading || categories.length === 0 || Object.values(uploading).some(Boolean) ? .55 : 1 }}>{saving ? "GUARDANDO…" : "INSCRIBIR JUGADOR"}</button>
+            {categories.length === 0 && !loading && <p style={{ margin: 0, color: "#facc15", fontSize: ".74rem" }}>Creá una categoría para habilitar la inscripción.</p>}
+          </form>
+        </section>
+      ) : (
+        <section style={{ display: "grid", gap: ".65rem", minWidth: 0 }}>
+          <div style={{ display: "grid", gap: ".5rem", padding: ".7rem", border: "1px solid #444", borderRadius: "9px", background: "#121212" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem" }}>
+              <h2 style={{ margin: 0, fontSize: ".86rem" }}>PADRÓN DE JUGADORES</h2>
+              <strong style={{ color: "#fca5a5", fontSize: ".76rem" }}>{filteredPlayers.length} / {totalPlayers}</strong>
+            </div>
+            <label style={{ display: "grid", gap: ".25rem", color: "#eee", fontSize: ".7rem", fontWeight: 800 }}>FILTRAR POR CATEGORÍA
+              <select value={registryCategory} onChange={(event) => setRegistryCategory(event.target.value)} style={{ ...inputStyle, fontSize: ".8rem", padding: ".6rem" }}>
+                <option value="todas">Todas las categorías</option>
+                {categories.map((category) => <option key={category.rosterId} value={category.rosterId}>{labelFor(category)}</option>)}
+              </select>
+            </label>
+            <input value={registrySearch} onChange={(event) => setRegistrySearch(event.target.value)} placeholder="Buscar apellido, nombre o DNI" style={{ ...inputStyle, fontSize: ".8rem", padding: ".6rem" }} />
+          </div>
+          {loading ? <p style={{ color: "#ddd", textAlign: "center", padding: "1rem" }}>Cargando padrón…</p> : filteredPlayers.length === 0 ? (
+            <p style={{ color: "#aaa", textAlign: "center", padding: "1rem", border: "1px dashed #555", borderRadius: "8px" }}>{totalPlayers === 0 ? "Todavía no hay jugadores inscriptos." : "No hay jugadores para esos filtros."}</p>
+          ) : (
+            <div style={{ overflowX: "auto", border: "1px solid #333", borderRadius: "8px" }}>
+              <table style={{ width: "100%", minWidth: "520px", borderCollapse: "collapse", color: "#fff", textAlign: "left" }}>
+                <thead><tr style={{ background: "#b5122a" }}>{["FOTO", "JUGADOR", "CATEGORÍA", "DNI", "ESTADO"].map((title) => <th key={title} style={{ padding: ".45rem", fontSize: ".62rem", whiteSpace: "nowrap" }}>{title}</th>)}</tr></thead>
+                <tbody>{filteredPlayers.map((player, index) => (
+                  <tr key={player.id || player.dni || index} style={{ borderTop: "1px solid #333" }}>
+                    <td style={{ padding: ".3rem .4rem" }}>{photoUrl(player.photo_path) ? <img src={photoUrl(player.photo_path)} alt="" style={{ width: "32px", height: "38px", objectFit: "cover", borderRadius: "4px" }} /> : "—"}</td>
+                    <td style={{ padding: ".4rem", fontSize: ".74rem", fontWeight: 700 }}>{[player.last_name, player.first_name].filter(Boolean).join(", ") || "Sin nombre"}</td>
+                    <td style={{ padding: ".4rem", fontSize: ".68rem" }}>{player.categoryLabel}</td>
+                    <td style={{ padding: ".4rem", fontSize: ".68rem", whiteSpace: "nowrap" }}>{player.dni || "—"}</td>
+                    <td style={{ padding: ".4rem", whiteSpace: "nowrap", color: player.approval_status === "aprobado" ? "#86efac" : player.approval_status === "rechazado" ? "#fca5a5" : "#facc15", fontSize: ".62rem", fontWeight: 900 }}>{player.approval_status === "aprobado" ? "APROBADO" : player.approval_status === "rechazado" ? "RECHAZADO" : "PENDIENTE"}</td>
+                  </tr>
+                ))}</tbody>
               </table>
             </div>
-          </article>
-        ))}
-      </section>
+          )}
+        </section>
+      )}
     </main>
   );
 }
