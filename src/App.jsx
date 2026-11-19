@@ -2742,7 +2742,7 @@ export function TournamenSportApp() {
     ] = await Promise.all([
       supabase.rpc("get_fefutin_pending_requests"),
       supabase.rpc("get_fefutin_pending_players"),
-      supabase.rpc("get_fefutin_pending_club_tournament_requests"),
+      supabase.rpc("fefutin_nuevas_solicitudes_pendientes"),
     ]);
 
     if (accessError) {
@@ -6238,6 +6238,7 @@ export function TournamenSportApp() {
       ) : activeView === "fefutin-new-tournament" && activeTournament?.fefutinNewSchema ? (
         <FefutinNormalizedTournament
           tournament={activeTournament}
+          canManage={canManageTournaments}
           onBack={() => {
             setActiveTournament(null);
             setActiveView("division-tournaments");
