@@ -3137,7 +3137,7 @@ export function TournamenSportApp() {
         title: normalized.nombre || item.title,
         estado: normalized.estado,
         game: `Fútbol · ${branchName} · ${normalized.turno}`,
-        status: normalized.estado === "inscripcion" ? "Inscripciones" : item.status,
+        status: normalized.estado === "inscripcion" ? "Inscripciones" : "Inscripciones cerradas",
         fefutinNewSchema: true,
         normalizedCategories: categories,
         normalizedBranchName: branchName,
@@ -3579,6 +3579,7 @@ export function TournamenSportApp() {
         if (mirrorError) throw mirrorError;
         legacyRows.push({
           ...mirror,
+          estado: normalizedTournament.estado || "inscripcion",
           fefutinNewSchema: true,
           normalizedCategories: normalizedCategories.map((category) => category.nombre),
           normalizedBranchName: displayBranch,
