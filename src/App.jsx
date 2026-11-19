@@ -3067,7 +3067,8 @@ export function TournamenSportApp() {
     let cancelled = false;
     const loadFefutinTournamentClubs = async () => {
       const tournamentId = activeTournament?.id;
-      if (!tournamentId) {
+      if (!tournamentId || activeTournament?.fefutinNewSchema) {
+        // Los torneos normalizados no usan las consultas heredadas de turnos/clubes.
         setFefutinTournamentClubs([]);
         setLoadingFefutinTournamentClubs(false);
         return;
@@ -3092,7 +3093,7 @@ export function TournamenSportApp() {
     return () => {
       cancelled = true;
     };
-  }, [activeTournament?.id, activeTournament?.status]);
+  }, [activeTournament?.id, activeTournament?.status, activeTournament?.fefutinNewSchema]);
 
   const fetchTournaments = async () => {
     setLoading(true);
