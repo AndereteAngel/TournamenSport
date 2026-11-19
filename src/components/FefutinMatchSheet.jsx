@@ -342,6 +342,20 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         updated_by: userId,
       };
 
+      const validatePlayerStats = (players, clubName) => {
+        for (const player of players) {
+          for (const field of ["goles", "tarjetas_amarillas", "tarjetas_rojas"]) {
+            const value = Number(player[field] ?? 0);
+            if (!Number.isInteger(value) || value < 0) {
+              throw new Error("Revisá los datos de " + clubName + ": goles y tarjetas deben ser números enteros iguales o mayores a cero.");
+            }
+          }
+        }
+      };
+
+      validatePlayerStats(localPlayers, localName);
+      validatePlayerStats(visitorPlayers, visitorName);
+
       const saveSide = async (lado, players) => {
         const { data: sheet, error: saveSheetError } = await supabase
           .from("fefutin_match_sheets")
@@ -481,10 +495,10 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>
       </td>
       <td className="fefutin-status" style={{ color:statusColor }}>{player.estado_habilitacion === "HABILITADO" ? "HABIL." : player.estado_habilitacion === "NO HABILITADO" ? "NO HABIL." : "PEND. VERIF."}</td>
-      <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" value={player.goles ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
+      <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" step="1" value={player.goles ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
       <td className="fefutin-cards">
-        <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" value={player.tarjetas_amarillas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
-        <label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" value={player.tarjetas_rojas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label>
+        <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" step="1" value={player.tarjetas_amarillas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
+        <label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" step="1" value={player.tarjetas_rojas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label>
       </td>
     </>;
   };
