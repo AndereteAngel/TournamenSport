@@ -291,7 +291,6 @@ export function FefutinNormalizedTournament({ tournament, onBack, canManage = fa
                             <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt="" style={{ width: "25px", height: "25px", objectFit: "contain", borderRadius: "4px", background: "#fff", flexShrink: 0 }} />
                           ) : null}
                           <strong style={{ color: "#fff", fontSize: ".76rem", overflowWrap: "anywhere" }}>{club.name}</strong>
-                          <span style={{ color: "#86efac", fontSize: ".62rem", fontWeight: 800 }}>HABILITADO</span>
                         </div>
                       )) : (
                         <span style={{ color: "#f3a0ad", fontSize: ".72rem" }}>Sin clubes inscriptos</span>
