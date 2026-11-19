@@ -10,6 +10,7 @@ export function FefutinNormalizedTournament({ tournament, onBack, canManage = fa
     : [];
   const branch = tournament?.normalizedBranchName || "FEFUTIN";
   const turno = tournament?.normalizedTurno || "Turno sin especificar";
+  const tournamentTitle = tournament?.title || "Torneo FEFUTIN";
 
   useEffect(() => {
     setEstado(tournament?.estado || (tournament?.status === "Inscripciones" ? "inscripcion" : "cerrado"));
@@ -67,7 +68,7 @@ export function FefutinNormalizedTournament({ tournament, onBack, canManage = fa
           FEFUTIN · {branch.toLocaleUpperCase("es")} · {turno.toLocaleUpperCase("es")}
         </small>
         <h1 style={{ color: "#fff", margin: ".65rem 0 .35rem", fontSize: "clamp(1.35rem, 5vw, 2rem)" }}>
-          {tournament?.title || "Torneo FEFUTIN"}
+          {tournamentTitle}
         </h1>
         <p style={{ color: "#d1d5db", margin: 0 }}>
           Cada categoría funciona como una competencia independiente.
@@ -114,7 +115,7 @@ export function FefutinNormalizedTournament({ tournament, onBack, canManage = fa
           CATEGORÍAS DEL TORNEO
         </h2>
         {categories.length ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(125px, 1fr))", gap: ".65rem" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))", gap: ".65rem" }}>
             {categories.map((category) => (
               <article
                 key={category}
@@ -124,12 +125,19 @@ export function FefutinNormalizedTournament({ tournament, onBack, canManage = fa
                   borderRadius: "9px",
                   border: "1px solid #b5122a",
                   background: "#171c27",
+                  minWidth: 0,
                 }}
               >
+                <span style={{ display: "block", color: "#f3a0ad", fontSize: ".68rem", fontWeight: 900, letterSpacing: ".06em", textTransform: "uppercase", marginBottom: ".4rem" }}>
+                  {tournamentTitle}
+                </span>
                 <strong style={{ display: "block", color: "#fff", fontSize: "1rem" }}>
                   Categoría {category}
                 </strong>
-                <span style={{ display: "block", color: "#f3a0ad", fontSize: ".72rem", marginTop: ".35rem" }}>
+                <span style={{ display: "block", color: "#d1d5db", fontSize: ".7rem", marginTop: ".35rem" }}>
+                  {branch} · {turno}
+                </span>
+                <span style={{ display: "block", color: "#f3a0ad", fontSize: ".72rem", marginTop: ".4rem" }}>
                   Competencia creada
                 </span>
               </article>
