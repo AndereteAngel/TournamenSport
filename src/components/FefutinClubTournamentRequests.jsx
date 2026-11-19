@@ -107,7 +107,7 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
                         SOLICITUD PENDIENTE DE APROBACIÓN
                       </span>
                     ) : request?.estado === "desestimado" ? (
-                      <span style={{ color: "#fca5a5", fontSize: ".82rem" }}>Solicitud anterior desestimada. Podés volver a solicitar.</span>
+                      <span style={{ color: "#fca5a5", fontSize: ".82rem" }}>SOLICITUD DESESTIMADA · Contactá a FEFUTIN si necesitás revisar la decisión.</span>
                     ) : (
                       <button
                         type="button"
