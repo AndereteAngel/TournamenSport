@@ -2869,7 +2869,7 @@ body, body[data-tc-theme="clash"], body[data-tc-theme="arena"] {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: radial-gradient(circle at 50% 25%, #343b49 0%, #171c27 58%, #10141c 100%);
+  background: #ffffff;
 }
 .fefutin-football-rain {
   position: fixed;
