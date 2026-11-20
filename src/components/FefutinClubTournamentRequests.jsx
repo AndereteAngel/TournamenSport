@@ -29,11 +29,8 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
   const loadData = useCallback(async () => {
     setLoading(true);
     setError("");
-    const [requestsResult, participationsResult] = await Promise.all([
-      supabase.rpc("fefutin_nuevas_mis_solicitudes"),
-      supabase.rpc("fefutin_nuevas_mis_competencias"),
-    ]);
-    const failed = [requestsResult, participationsResult].find((result) => result.error);
+    const requestsResult = await supabase.rpc("get_fefutin_my_tournament_requests");
+    const failed = requestsResult.error ? requestsResult : null;
     if (failed) {
       console.error("Error al consultar inscripciones del nuevo esquema:", failed.error);
       setError(failed.error.message || "No se pudieron cargar las inscripciones.");
@@ -41,25 +38,27 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
       return;
     }
     setRequests(requestsResult.data || []);
-    setParticipations(participationsResult.data || []);
+    setParticipations([]);
     setLoading(false);
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const requestTournament = async (tournament) => {
-    if (sendingId || !tournament?.id) return;
-    setSendingId(tournament.id);
+  const requestTournament = async (tournament, turn) => {
+    if (sendingId || !tournament?.id || !turn?.id) return;
+    const requestKey = `${tournament.id}-${turn.id}`;
+    setSendingId(requestKey);
     setError("");
     setNotice("");
-    const { error: requestError } = await supabase.rpc("fefutin_nueva_solicitud_participacion", {
-      p_torneo_id: tournament.id,
+    const { error: requestError } = await supabase.rpc("submit_fefutin_club_tournament_request", {
+      p_tournament_id: tournament.id,
+      p_turn_id: turn.id,
     });
     if (requestError) {
       console.error("Error al solicitar participación en el nuevo torneo:", requestError);
       setError(requestError.message || "No se pudo enviar la solicitud.");
     } else {
-      setNotice(`Solicitud enviada para ${tournament.title || tournament.nombre || "el torneo"}. Incluye todas las categorías activas de esta rama y turno y quedó pendiente de aprobación.`);
+      setNotice(`Solicitud enviada para ${tournament.title || tournament.nombre || "el torneo"} · ${turn.turno}. Incluye las categorías activas de ese turno y quedó pendiente de aprobación.`);
       await loadData();
       onSubmitted?.();
     }
@@ -87,40 +86,47 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
           </p>
           {loading ? <p style={{ color: "#ccc" }}>Cargando torneos e inscripciones...</p> : (
             <div style={{ display: "grid", gap: ".85rem", width: "100%", marginTop: "1rem" }}>
-              {normalizedTournaments.map((tournament) => {
-                const request = requests.find((item) => String(item.torneo_id) === String(tournament.id));
-                const linked = participations.filter((item) => String(item.torneo_id) === String(tournament.id));
-                const isApproved = request?.estado === "aprobado" || linked.length > 0;
-                const isPending = request?.estado === "pendiente";
-                const categories = (tournament.normalizedCategories || []).map((category) => typeof category === "string" ? category : category.nombre).filter(Boolean);
-                return (
-                  <article key={tournament.id} style={{ display: "grid", gap: ".65rem", padding: ".9rem", border: "1px solid #444", borderRadius: "9px", background: "#111", minWidth: 0 }}>
-                    <strong style={{ color: "#fff", display: "block", overflowWrap: "anywhere" }}>{tournament.title || tournament.nombre || "Torneo FEFUTIN"}</strong>
-                    <span style={{ color: "#ffb3bf", fontSize: ".82rem" }}>{[tournament.normalizedBranchName, tournament.normalizedTurno].filter(Boolean).join(" · ")}</span>
-                    <span style={{ color: "#ddd", fontSize: ".82rem" }}>{categories.length ? categories.join(" · ") : "Categorías activas del torneo"}</span>
-                    {isApproved ? (
-                      <span style={{ display: "inline-flex", width: "100%", boxSizing: "border-box", justifyContent: "center", color: "#86efac", background: "#052e16", border: "1px solid #166534", borderRadius: "7px", padding: ".7rem", fontWeight: 900, fontSize: ".8rem" }}>
-                        ✓ CLUB HABILITADO · {linked.length || categories.length} COMPETENCIA(S)
-                      </span>
-                    ) : isPending ? (
-                      <span style={{ display: "inline-flex", width: "100%", boxSizing: "border-box", justifyContent: "center", color: "#fde68a", background: "#422006", border: "1px solid #a16207", borderRadius: "7px", padding: ".7rem", fontWeight: 900, fontSize: ".8rem", textAlign: "center" }}>
-                        SOLICITUD PENDIENTE DE APROBACIÓN
-                      </span>
-                    ) : request?.estado === "desestimado" ? (
-                      <span style={{ color: "#fca5a5", fontSize: ".82rem" }}>SOLICITUD DESESTIMADA · Contactá a FEFUTIN si necesitás revisar la decisión.</span>
-                    ) : (
-                      <button
-                        type="button"
-                        style={{ ...buttonStyle, display: "block", width: "100%", minHeight: "44px", boxSizing: "border-box", fontSize: ".86rem" }}
-                        disabled={Boolean(sendingId)}
-                        onClick={() => requestTournament(tournament)}
-                      >
-                        {sendingId === tournament.id ? "ENVIANDO..." : "SOLICITAR INSCRIPCIÓN · TODA LA TIRA"}
-                      </button>
-                    )}
-                  </article>
-                );
-              })}
+              {normalizedTournaments.flatMap((tournament) =>
+                (tournament.normalizedTurnos || []).map((turn) => {
+                  const request = requests.find((item) =>
+                    String(item.tournament_id) === String(tournament.id) &&
+                    String(item.turn_id) === String(turn.id)
+                  );
+                  const isApproved = request?.status === "aprobado";
+                  const isPending = request?.status === "pendiente";
+                  const categories = (turn.categories || [])
+                    .map((category) => typeof category === "string" ? category : category.name)
+                    .filter(Boolean);
+                  const requestKey = `${tournament.id}-${turn.id}`;
+                  return (
+                    <article key={requestKey} style={{ display: "grid", gap: ".65rem", padding: ".9rem", border: "1px solid #444", borderRadius: "9px", background: "#111", minWidth: 0 }}>
+                      <strong style={{ color: "#fff", display: "block", overflowWrap: "anywhere" }}>{tournament.title || tournament.nombre || "Torneo FEFUTIN"}</strong>
+                      <span style={{ color: "#ffb3bf", fontSize: ".82rem" }}>{tournament.normalizedBranchName} · {turn.turno}</span>
+                      <span style={{ color: "#ddd", fontSize: ".82rem" }}>{categories.length ? categories.join(" · ") : "Sin categorías disponibles"}</span>
+                      {isApproved ? (
+                        <span style={{ display: "inline-flex", width: "100%", boxSizing: "border-box", justifyContent: "center", color: "#86efac", background: "#052e16", border: "1px solid #166534", borderRadius: "7px", padding: ".7rem", fontWeight: 900, fontSize: ".8rem" }}>
+                          ✓ CLUB HABILITADO · {categories.length} CATEGORÍA(S)
+                        </span>
+                      ) : isPending ? (
+                        <span style={{ display: "inline-flex", width: "100%", boxSizing: "border-box", justifyContent: "center", color: "#fde68a", background: "#422006", border: "1px solid #a16207", borderRadius: "7px", padding: ".7rem", fontWeight: 900, fontSize: ".8rem", textAlign: "center" }}>
+                          SOLICITUD PENDIENTE DE APROBACIÓN
+                        </span>
+                      ) : request?.status === "desestimado" ? (
+                        <span style={{ color: "#fca5a5", fontSize: ".82rem" }}>SOLICITUD DESESTIMADA · Contactá a FEFUTIN si necesitás revisar la decisión.</span>
+                      ) : (
+                        <button
+                          type="button"
+                          style={{ ...buttonStyle, display: "block", width: "100%", minHeight: "44px", boxSizing: "border-box", fontSize: ".86rem" }}
+                          disabled={Boolean(sendingId)}
+                          onClick={() => requestTournament(tournament, turn)}
+                        >
+                          {sendingId === requestKey ? "ENVIANDO..." : "SOLICITAR INSCRIPCIÓN · TODA LA TIRA"}
+                        </button>
+                      )}
+                    </article>
+                  );
+                })
+              )}
               {!normalizedTournaments.length && (
                 <p style={{ color: "#aaa", marginBottom: 0 }}>Todavía no hay torneos nuevos disponibles para inscripción.</p>
               )}
@@ -144,7 +150,7 @@ export function FefutinClubTournamentRequests({ onChanged }) {
   const loadRequests = useCallback(async () => {
     setLoading(true);
     setError("");
-    const { data, error: loadError } = await supabase.rpc("fefutin_nuevas_solicitudes_pendientes");
+    const { data, error: loadError } = await supabase.rpc("get_fefutin_pending_club_tournament_requests");
     if (loadError) {
       console.error("Error al cargar solicitudes del nuevo esquema:", loadError);
       setError(loadError.message || "No se pudieron cargar las solicitudes.");
@@ -169,9 +175,9 @@ export function FefutinClubTournamentRequests({ onChanged }) {
     if (!confirmed) return;
     setProcessingId(request.id);
     setError("");
-    const { error: decisionError } = await supabase.rpc("fefutin_resolver_nueva_solicitud", {
-      p_solicitud_id: request.id,
-      p_aprobar: approve,
+    const { error: decisionError } = await supabase.rpc("decide_fefutin_club_tournament_request", {
+      p_request_id: request.id,
+      p_approve: approve,
     });
     if (decisionError) {
       console.error("Error al resolver solicitud del nuevo esquema:", decisionError);
