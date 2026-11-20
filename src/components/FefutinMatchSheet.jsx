@@ -471,7 +471,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
   };
 
   const closeMatch = async () => {
-    if ((!isReferee && !isAdmin) || match?.referee_closed || closingMatch || saving) return;
+    if (!isReferee || match?.referee_closed || closingMatch || saving) return;
     const saved = await save();
     if (!saved) return;
     const score1 = localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
@@ -768,11 +768,11 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
           {notice&&<p className="fefutin-no-print" style={{color:"#166534",fontWeight:700}}>{notice}</p>}
           {error&&<p className="fefutin-no-print" style={{color:"#b91c1c"}}>{error}</p>}
           <div className="fefutin-sheet-actions fefutin-no-print">
-            <button type="button" onClick={onClose}>Cerrar</button>
+            <button type="button" onClick={onClose} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>CERRAR</button>
             {!match?.referee_closed && <button type="button" onClick={save} disabled={saving || closingMatch} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>{saving?"Guardando...":"GUARDAR PLANILLA"}</button>}
-            {(isReferee || isAdmin) && !match?.referee_closed && <button type="button" onClick={closeMatch} disabled={saving || closingMatch} style={{background:"#166534",color:"#fff",borderColor:"#166534"}}>{closingMatch?"CERRANDO...":"CERRAR PARTIDO"}</button>}
+            {isReferee && !match?.referee_closed && <button type="button" onClick={closeMatch} disabled={saving || closingMatch} style={{background:"#166534",color:"#fff",borderColor:"#166534"}}>{closingMatch?"CERRANDO...":"CERRAR PARTIDO"}</button>}
             {match?.referee_closed && <strong style={{color:"#166534",alignSelf:"center"}}>✓ PARTIDO CERRADO · SOLO LECTURA</strong>}
-            <button type="button" onClick={()=>window.print()} style={{background:"#222",color:"#fff"}}>IMPRIMIR / GUARDAR PDF</button>
+            <button type="button" onClick={()=>window.print()} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>IMPRIMIR / GUARDAR PDF</button>
           </div>
           {match?.referee_closed && isReferee && (
             <section className="fefutin-no-print" style={{ marginTop: 16, padding: 14, border: "1px solid #b5122a", borderRadius: 8, background: "#fff7f8" }}>
