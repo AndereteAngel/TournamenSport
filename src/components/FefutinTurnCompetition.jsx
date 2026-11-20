@@ -57,6 +57,8 @@ export function FefutinTurnCompetition({
 }) {
   const [competition, setCompetition] = useState(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [selectedTeamName, setSelectedTeamName] = useState("");
+  const [teamMatchesView, setTeamMatchesView] = useState("pending");
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
@@ -92,6 +94,23 @@ export function FefutinTurnCompetition({
   const categories = competition?.categories || [];
   const activeCategory = categories.find((item) => String(item.tournament_category_id) === String(selectedCategoryId)) || categories[0] || null;
   const standings = useMemo(() => buildStandings(activeCategory), [activeCategory]);
+  const categoryMatches = (activeCategory?.rounds || []).flatMap((round) =>
+    (round.matches || []).map((match) => ({ ...match, roundNumber: round.round_number, scheduledDate: round.scheduled_date }))
+  );
+  const selectedTeamMatches = selectedTeamName
+    ? categoryMatches.filter((match) => normalize(match.team1) === normalize(selectedTeamName) || normalize(match.team2) === normalize(selectedTeamName))
+    : [];
+  const playedTeamMatches = selectedTeamMatches.filter((match) => match.score1 != null && match.score2 != null);
+  const pendingTeamMatches = selectedTeamMatches.filter((match) => match.score1 == null || match.score2 == null);
+  const filteredRounds = (activeCategory?.rounds || []).map((round) => ({
+    ...round,
+    matches: (round.matches || []).filter((match) => {
+      if (!selectedTeamName) return true;
+      const belongsToTeam = normalize(match.team1) === normalize(selectedTeamName) || normalize(match.team2) === normalize(selectedTeamName);
+      const hasResult = match.score1 != null && match.score2 != null;
+      return belongsToTeam && (teamMatchesView === "played" ? hasResult : !hasResult);
+    }),
+  })).filter((round) => !selectedTeamName || round.matches.length > 0);
   const allFormatsSupported = categories.every((category) => category.format === "league");
   const allMatches = categories.flatMap((category) => (category.rounds || []).flatMap((round) => round.matches || []));
   const allMatchesClosed = allMatches.length > 0 && allMatches.every((match) => match.referee_closed);
@@ -220,7 +239,9 @@ export function FefutinTurnCompetition({
                             whiteSpace: "nowrap",
                             textAlign: name === "CLUB" ? "left" : "center",
                             ...(name === "POS" ? { position: "sticky", left: 0, zIndex: 3, minWidth: "42px", background: "#b5122a" } : {}),
-                            ...(name === "CLUB" ? { position: "sticky", left: "42px", zIndex: 3, minWidth: "125px", background: "#b5122a" } : {}),
+                            ...(name === "CLUB" ? { position: "sticky", left: "42px", zIndex: 3, minWidth: "150px", background: "#b5122a" } : {}),
+                            ...(name === "PTS" ? { position: "sticky", left: "192px", zIndex: 3, minWidth: "52px", background: "#b5122a", color: "#fff", fontWeight: 900 } : {}),
+                            ...(name === "PJ" ? { position: "sticky", left: "244px", zIndex: 3, minWidth: "48px", background: "#b5122a", color: "#fff", fontWeight: 900 } : {}),
                           }}
                         >
                           {name}
@@ -250,7 +271,7 @@ export function FefutinTurnCompetition({
                           </span>
                         </td>
                         {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, i) => (
-                          <td key={i} style={{ padding: ".55rem .5rem", textAlign: "center", whiteSpace: "nowrap" }}>{value}</td>
+                          <td key={i} style={{ padding: ".55rem .5rem", textAlign: "center", whiteSpace: "nowrap", ...(i === 0 ? { position: "sticky", left: "192px", zIndex: 2, minWidth: "52px", background: "#171c27", color: "#f3a0ad", fontWeight: 900, fontSize: ".86rem" } : {}), ...(i === 1 ? { position: "sticky", left: "244px", zIndex: 2, minWidth: "48px", background: "#171c27", color: "#fff", fontWeight: 900 } : {}) }}>{value}</td>
                         ))}
                       </tr>
                     ))}
@@ -264,7 +285,25 @@ export function FefutinTurnCompetition({
             )}
           </section>
 
-          {(activeCategory.rounds || []).map((round) => (
+          <section style={{ display: "grid", gap: ".65rem", padding: ".85rem", background: "#101010", border: "1px solid #444", borderRadius: "10px" }}>
+            <strong style={{ color: "#f3a0ad", fontSize: ".82rem" }}>CONSULTAR PARTIDOS POR EQUIPO</strong>
+            <select value={selectedTeamName} onChange={(event) => setSelectedTeamName(event.target.value)} aria-label="Elegir equipo para filtrar sus partidos" style={{ width: "100%", boxSizing: "border-box", padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", fontWeight: 700 }}>
+              <option value="">Todos los equipos · ver fixture completo</option>
+              {(activeCategory.clubs || []).map((club) => <option key={club.club_id || club.club_name} value={club.club_name}>{club.club_name}</option>)}
+            </select>
+            {selectedTeamName ? (
+              <>
+                <div style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
+                  <button type="button" onClick={() => setTeamMatchesView("pending")} aria-pressed={teamMatchesView === "pending"} style={{ flex: "1 1 120px", padding: ".6rem .7rem", borderRadius: "7px", border: teamMatchesView === "pending" ? "1px solid #fbbf24" : "1px solid #765d20", background: teamMatchesView === "pending" ? "#49380d" : "#241d0b", color: "#fbbf24", fontWeight: 900 }}>⏳ {pendingTeamMatches.length} pendientes</button>
+                  <button type="button" onClick={() => setTeamMatchesView("played")} aria-pressed={teamMatchesView === "played"} style={{ flex: "1 1 120px", padding: ".6rem .7rem", borderRadius: "7px", border: teamMatchesView === "played" ? "1px solid #4ade80" : "1px solid #245b38", background: teamMatchesView === "played" ? "#12351f" : "#0c2115", color: "#4ade80", fontWeight: 900 }}>✓ {playedTeamMatches.length} disputados</button>
+                </div>
+                <small style={{ color: "#aaa" }}>Mostrando los partidos {teamMatchesView === "pending" ? "pendientes" : "disputados"} de {selectedTeamName}.</small>
+              </>
+            ) : <small style={{ color: "#aaa" }}>Elegí un equipo para consultar sus partidos pendientes o disputados.</small>}
+          </section>
+
+          {selectedTeamName && filteredRounds.length === 0 && <p style={{ color: "#bbb", textAlign: "center" }}>{teamMatchesView === "pending" ? "Este equipo no tiene partidos pendientes." : "Este equipo todavía no tiene partidos disputados."}</p>}
+          {filteredRounds.map((round) => (
             <section key={round.round_id} style={{ padding: ".85rem", background: "#101010", border: "1px solid #444", borderRadius: "10px" }}>
               <strong style={{ color: "#f3a0ad" }}>JORNADA {round.round_number} · {round.scheduled_date ? new Date(`${round.scheduled_date}T12:00:00`).toLocaleDateString("es-AR") : "Fecha a confirmar"}</strong>
               <div style={{ display: "grid", gap: ".5rem", marginTop: ".6rem" }}>
