@@ -223,10 +223,12 @@ export function FefutinTurnCompetition({
                   .fefutin-standings--expanded table { width: max-content !important; min-width: 620px !important; }
                 }
               `}</style>
-              <button type="button" onClick={() => setStandingsExpanded((expanded) => !expanded)} aria-expanded={standingsExpanded} style={{ display: "inline-flex", alignItems: "center", gap: ".45rem", marginTop: ".55rem", padding: ".35rem .55rem", border: "1px solid #71303b", borderRadius: "6px", background: "transparent", color: "#f3a0ad", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".035em", textAlign: "left", cursor: "pointer" }}>
-                <span>{standingsExpanded ? "OCULTAR ESTADÍSTICAS" : "VER TABLA COMPLETA"}</span>
-                <span aria-hidden="true">{standingsExpanded ? "▲" : "▼"}</span>
-              </button>
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: ".35rem" }}>
+                <button type="button" onClick={() => setStandingsExpanded((expanded) => !expanded)} aria-expanded={standingsExpanded} style={{ display: "inline-flex", alignItems: "center", gap: ".25rem", padding: ".2rem .35rem", border: "1px solid #71303b", borderRadius: "5px", background: "transparent", color: "#f3a0ad", fontSize: ".58rem", fontWeight: 800, letterSpacing: ".025em", textAlign: "right", cursor: "pointer" }}>
+                  <span>{standingsExpanded ? "OCULTAR ESTADÍSTICAS" : "VER TABLA COMPLETA"}</span>
+                  <span aria-hidden="true">{standingsExpanded ? "▲" : "▼"}</span>
+                </button>
+              </div>
               <div
                 role="region"
                 className={`fefutin-standings ${standingsExpanded ? "fefutin-standings--expanded" : "fefutin-standings--compact"}`}
