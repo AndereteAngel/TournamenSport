@@ -212,7 +212,7 @@ export function FefutinTurnCompetition({
         <div style={{ display: "grid", gap: ".85rem" }}>
           <section style={{ padding: ".9rem", minWidth: 0, width: "100%", boxSizing: "border-box", overflow: "hidden", background: "#171c27", border: "1px solid #444", borderRadius: "10px" }}>
             <strong style={{ display: "block", color: "#fff" }}>{activeCategory.name} · {activeCategory.format === "league" ? "TODOS CONTRA TODOS" : activeCategory.format}</strong>
-            <small style={{ color: "#bbb" }}>{activeCategory.clubs?.length || 0} clubes inscriptos · {activeCategory.status}</small>
+            <small style={{ color: "#bbb" }}>{activeCategory.clubs?.length || 0} clubes inscriptos</small>
             {standings.length > 0 && (
               <>
               <style>{`
@@ -296,9 +296,6 @@ export function FefutinTurnCompetition({
                   </tbody>
                 </table>
               </div>
-              <small style={{ display: "block", marginTop: ".35rem", color: "#aaa", fontSize: ".68rem" }}>
-                En celular, tocá “TABLA DE POSICIONES” para desplegar u ocultar las estadísticas.
-              </small>
               </>
             )}
           </section>
