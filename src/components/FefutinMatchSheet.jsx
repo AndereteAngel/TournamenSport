@@ -257,7 +257,9 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
           setMetadata({
             jornada: metadataSheet.jornada || String(normalizedRoster?.round_number || match?.round || ""),
             sede: metadataSheet.sede || normalizedRoster?.venue_address || localClub?.headquarters_address || "",
-            fecha_partido: metadataSheet.fecha_partido || normalizedRoster?.scheduled_date || "",
+            // La fecha oficial siempre proviene del fixture normalizado; el dato guardado
+            // en una planilla anterior solo funciona como respaldo para partidos legacy.
+            fecha_partido: normalizedRoster?.scheduled_date || match?.scheduled_date || match?.match_date || metadataSheet.fecha_partido || "",
             arbitro_designado: assignedRefereeName || metadataSheet.arbitro_designado || "",
             observaciones: metadataSheet.observaciones || "",
           });
@@ -266,6 +268,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
             ...current,
             sede: current.sede || localClub?.headquarters_address || "",
             arbitro_designado: assignedRefereeName || current.arbitro_designado || "",
+            fecha_partido: normalizedRoster?.scheduled_date || match?.scheduled_date || match?.match_date || current.fecha_partido || "",
           }));
         }
 
@@ -729,7 +732,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
             {[
               ["jornada","Jornada"],["sede","Sede / cancha"],["fecha_partido","Fecha del partido"],["arbitro_designado","Árbitro designado"],
             ].map(([field,label]) => <label key={field}>{label}
-              <input type={field==="fecha_partido"?"date":"text"} value={metadata[field]} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,[field]:event.target.value}))}/>
+              <input type={field==="fecha_partido"?"date":"text"} value={metadata[field]} disabled={field==="fecha_partido" || Boolean(match?.referee_closed)} readOnly={field==="fecha_partido"} onChange={(event)=>setMetadata((current)=>({...current,[field]:event.target.value}))}/>
             </label>)}
           </div>
           <div className="fefutin-sheet-signatures">
