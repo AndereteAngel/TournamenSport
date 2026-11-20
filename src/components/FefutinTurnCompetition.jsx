@@ -196,7 +196,7 @@ export function FefutinTurnCompetition({
       {!!categories.length && (
         <nav style={{ display: "flex", gap: ".5rem", overflowX: "auto", padding: ".7rem 0" }}>
           {categories.map((category) => (
-            <button key={category.tournament_category_id} type="button" onClick={() => setSelectedCategoryId(category.tournament_category_id)} style={{ flex: "0 0 auto", padding: ".65rem .9rem", border: "1px solid #b5122a", borderRadius: "8px", background: activeCategory?.tournament_category_id === category.tournament_category_id ? "#b5122a" : "#171c27", color: "#fff", fontWeight: 900 }}>
+            <button key={category.tournament_category_id} type="button" onClick={() => { setSelectedCategoryId(category.tournament_category_id); setSelectedTeamName(""); setTeamMatchesView("pending"); }} style={{ flex: "0 0 auto", padding: ".65rem .9rem", border: "1px solid #b5122a", borderRadius: "8px", background: activeCategory?.tournament_category_id === category.tournament_category_id ? "#b5122a" : "#171c27", color: "#fff", fontWeight: 900 }}>
               {category.name}
             </button>
           ))}
