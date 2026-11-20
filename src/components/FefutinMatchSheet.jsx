@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "../supabaseClient";
 
 const normalize = (value) => String(value || "")
@@ -508,7 +509,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
   const finalScoreLocal = localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
   const finalScoreVisitor = visitorPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
 
-  return (
+  return createPortal((
     <div role="dialog" aria-modal="true" aria-label="Planilla oficial de partido" className="fefutin-sheet-overlay">
       <style>{`
         .fefutin-sheet-overlay{position:fixed!important;inset:0!important;z-index:2147483000!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;overflow-x:hidden!important;overflow-y:auto!important;display:block!important;padding:0!important;background:rgba(0,0,0,.92)!important;-webkit-overflow-scrolling:touch}
@@ -743,5 +744,5 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         </>}
       </div>
     </div>
-  );
+  ), document.body);
 }
