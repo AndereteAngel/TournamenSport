@@ -543,17 +543,17 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         @media print{
           .fefutin-print-sheet > :not(.fefutin-print-both){display:none!important}
           .fefutin-print-both{display:block!important}
-          .fefutin-print-team-page{display:block!important;break-after:page;page-break-after:always;break-inside:avoid!important;page-break-inside:avoid!important}
+          .fefutin-print-team-page{display:flex!important;flex-direction:column!important;width:100%!important;height:204mm!important;min-height:204mm!important;max-height:204mm!important;box-sizing:border-box!important;break-after:page;page-break-after:always;break-inside:avoid!important;page-break-inside:avoid!important}
           .fefutin-print-team-page:last-child{break-after:auto;page-break-after:auto}
-          .fefutin-print-team-page .fefutin-sheet-title{margin-bottom:6px!important}
-          .fefutin-print-brand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px}
-          .fefutin-print-brand img{display:block;width:42px;height:42px;object-fit:contain}
-          .fefutin-print-brand .league-logo{width:48px;height:42px}
-          .fefutin-print-brand .club-logo{width:42px;height:42px}
-          .fefutin-print-brand .club-logo-placeholder{width:42px;height:42px;border:1px dashed #999;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:800;text-align:center;color:#555}
-          .fefutin-print-brand-spacer{width:42px;height:1px}
-          .fefutin-print-team-page .fefutin-sheet-table{width:100%!important;min-width:0!important}
-          .fefutin-print-team-page .fefutin-sheet-signatures{display:grid!important}
+          .fefutin-print-team-page .fefutin-sheet-title{margin-bottom:8px!important;padding-bottom:6px!important}
+          .fefutin-print-brand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2mm 0 3mm!important;min-height:17mm!important}
+          .fefutin-print-brand img{display:block;width:17mm!important;height:17mm!important;object-fit:contain}
+          .fefutin-print-brand .league-logo{width:20mm!important;height:17mm!important}
+          .fefutin-print-brand .club-logo{width:17mm!important;height:17mm!important}
+          .fefutin-print-brand .club-logo-placeholder{width:17mm!important;height:17mm!important;border:1px dashed #999;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;text-align:center;color:#555}
+          .fefutin-print-brand-spacer{width:17mm;height:1px}
+          .fefutin-print-team-page .fefutin-sheet-table{width:100%!important;min-width:0!important;flex:1 1 auto!important;height:auto!important}
+          .fefutin-print-team-page .fefutin-sheet-signatures{display:grid!important;margin-top:auto!important;padding-top:5mm!important;min-height:18mm!important}
         }
         .fefutin-sheet-title{text-align:center;border-bottom:3px solid #b5122a;padding-bottom:12px;margin-bottom:14px}
         .fefutin-sheet-title .brand{color:#b5122a!important;font-size:13px;font-weight:900;letter-spacing:2px}
@@ -692,7 +692,11 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
           .fefutin-print-sheet .fefutin-sheet-table input[type="checkbox"]{display:none!important}
           .fefutin-print-sheet .fefutin-sheet-table th,.fefutin-print-sheet .fefutin-sheet-table td{padding:1px 2px!important}
           .fefutin-print-sheet .fefutin-sheet-table thead th{font-size:7px!important;line-height:1.1!important}
-          .fefutin-print-sheet .fefutin-sheet-table tbody tr{height:18px!important;break-inside:avoid!important}
+          .fefutin-print-sheet .fefutin-sheet-table tbody tr{height:6.5mm!important;min-height:6.5mm!important;break-inside:avoid!important}
+          .fefutin-print-sheet .fefutin-sheet-table tbody td{height:6.5mm!important;padding:2mm 2px!important}
+          .fefutin-print-sheet .fefutin-sheet-table thead th{padding:2.2mm 2px!important}
+          .fefutin-print-sheet .fefutin-sheet-signature .line{height:12mm!important}
+          .fefutin-print-sheet .fefutin-sheet-signature{font-size:8px!important}
           .fefutin-print-sheet .fefutin-sheet-table .fefutin-player-name,
           .fefutin-print-sheet .fefutin-sheet-table .fefutin-player-name strong{font-size:7px!important;line-height:1.05!important}
           .fefutin-print-sheet .fefutin-sheet-table .fefutin-player-name small{font-size:6px!important;margin-top:1px!important}
