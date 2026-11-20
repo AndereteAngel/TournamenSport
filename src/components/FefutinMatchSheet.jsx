@@ -496,11 +496,13 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         <label className="fefutin-captain"><input type="checkbox" checked={Boolean(player.es_capitan)} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "es_capitan", event.target.checked)} /> Capitán</label>
       </td>
       <td className="fefutin-status" style={{ color:statusColor }}>{player.estado_habilitacion === "HABILITADO" ? "HABIL." : player.estado_habilitacion === "NO HABILITADO" ? "NO HABIL." : "PEND. VERIF."}</td>
-      <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" step="1" value={player.goles ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
-      <td className="fefutin-cards">
-        <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" step="1" value={player.tarjetas_amarillas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
-        <label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" step="1" value={player.tarjetas_rojas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label>
-      </td>
+      {isReferee ? <>
+        <td className="fefutin-goals"><input aria-label={"Goles " + player.nombre} type="number" min="0" step="1" value={player.goles ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "goles", event.target.value)} /></td>
+        <td className="fefutin-cards">
+          <label>A <input aria-label={"Tarjetas amarillas " + player.nombre} type="number" min="0" step="1" value={player.tarjetas_amarillas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_amarillas", event.target.value)} /></label>
+          <label>R <input aria-label={"Tarjetas rojas " + player.nombre} type="number" min="0" step="1" value={player.tarjetas_rojas ?? 0} disabled={Boolean(match?.referee_closed)} onChange={(event) => updatePlayer(side, player.player_id, "tarjetas_rojas", event.target.value)} /></label>
+        </td>
+      </> : <><td className="fefutin-goals"></td><td className="fefutin-cards"></td></>}
     </>;
   };
   const activePlayers = activeSide === "local" ? localPlayers : visitorPlayers;
@@ -756,12 +758,12 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
               <tbody>{displayedPlayers.map((player,index)=><tr key={player?.player_id || `empty-${activeSide}-${index}`}>{renderPlayerCell(player,activeSide)}</tr>)}</tbody>
             </table>
           </div>
-          <div className="fefutin-sheet-result" aria-live="polite">
+          {isReferee && <div className="fefutin-sheet-result" aria-live="polite">
             <span>RESULTADO FINAL</span>
             <span>{localName}</span>
             <span className="score">{finalScoreLocal} – {finalScoreVisitor}</span>
             <span>{visitorName}</span>
-          </div>
+          </div>}
           <label className="fefutin-observations">OBSERVACIONES
             <textarea value={metadata.observaciones} disabled={Boolean(match?.referee_closed)} onChange={(event)=>setMetadata((current)=>({...current,observaciones:event.target.value}))}/>
           </label>
