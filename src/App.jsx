@@ -116,7 +116,7 @@ function RefereePreJornada({ onBack }) {
           { data: turnRows, error: turnError },
           { data: profiles, error: profileError },
         ] = await Promise.all([
-          supabase.from("fefutin_tournament_turns").select("id"),
+          supabase.rpc("get_fefutin_tournament_turn_ids"),
           supabase.from("profiles")
             .select("id, username, role, approval_status, deactivated_at")
             .eq("role", "arbitro")
