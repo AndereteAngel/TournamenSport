@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
-import { FefutinMatchSheet } from "./FefutinMatchSheet";
 
 const normalize = (value) => String(value || "").trim().toLocaleLowerCase("es")
   .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -52,16 +51,12 @@ const buildStandings = (category) => {
 export function FefutinTurnCompetition({
   tournament,
   turn,
-  currentUser,
   isAdmin = false,
   isDirectivo = false,
-  isReferee = false,
   onBack,
 }) {
   const [competition, setCompetition] = useState(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [selectedMatch, setSelectedMatch] = useState(null);
-  const [referees, setReferees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
@@ -93,43 +88,6 @@ export function FefutinTurnCompetition({
   }, [turn?.turn_id]);
 
   useEffect(() => { loadCompetition(); }, [loadCompetition]);
-
-  useEffect(() => {
-    let active = true;
-    if (!canManage) {
-      setReferees([]);
-      return () => { active = false; };
-    }
-    supabase.from("profiles")
-      .select("id, username, role, approval_status, deactivated_at")
-      .eq("role", "arbitro")
-      .eq("approval_status", "aprobado")
-      .is("deactivated_at", null)
-      .order("username")
-      .then(({ data, error: queryError }) => {
-        if (!active) return;
-        if (queryError) {
-          console.error("No se pudo cargar el directorio de arbitros:", queryError);
-          setReferees([]);
-          return;
-        }
-        setReferees(data || []);
-      });
-    return () => { active = false; };
-  }, [canManage]);
-
-  const assignReferee = async (matchId, refereeId) => {
-    const { error: assignError } = await supabase.rpc("assign_fefutin_normalized_match_referee", {
-      p_match_id: matchId,
-      p_referee_id: refereeId || null,
-    });
-    if (assignError) {
-      setError(assignError.message || "No se pudo asignar el árbitro.");
-      return;
-    }
-    setNotice(refereeId ? "Árbitro asignado al encuentro." : "Se quitó la designación del encuentro.");
-    await loadCompetition();
-  };
 
   const categories = competition?.categories || [];
   const activeCategory = categories.find((item) => String(item.tournament_category_id) === String(selectedCategoryId)) || categories[0] || null;
@@ -170,21 +128,6 @@ export function FefutinTurnCompetition({
       await loadCompetition();
     }
     setStarting(false);
-  };
-
-  const closeNormalizedMatch = async ({ score1, score2 }) => {
-    if (!selectedMatch?.id) return false;
-    const { error: closeError } = await supabase.rpc("referee_close_normalized_match_from_sheet", {
-      p_match_id: selectedMatch.id,
-    });
-    if (closeError) {
-      setError(closeError.message || "No se pudo cerrar el partido.");
-      return false;
-    }
-    setNotice(`Partido cerrado: ${selectedMatch.team1} ${score1} - ${score2} ${selectedMatch.team2}.`);
-    setSelectedMatch(null);
-    await loadCompetition();
-    return true;
   };
 
   if (loading && !competition) {
@@ -324,35 +267,24 @@ export function FefutinTurnCompetition({
           {(activeCategory.rounds || []).map((round) => (
             <section key={round.round_id} style={{ padding: ".85rem", background: "#101010", border: "1px solid #444", borderRadius: "10px" }}>
               <strong style={{ color: "#f3a0ad" }}>JORNADA {round.round_number} · {round.scheduled_date ? new Date(`${round.scheduled_date}T12:00:00`).toLocaleDateString("es-AR") : "Fecha a confirmar"}</strong>
-              <div style={{ display: "grid", gap: ".45rem", marginTop: ".6rem" }}>
+              <div style={{ display: "grid", gap: ".5rem", marginTop: ".6rem" }}>
                 {(round.matches || []).map((match) => {
-                  const assigned = String(match.referee_id || "") === String(currentUser?.id || "");
-                  const canOpenSheet = canManage || (isReferee && assigned);
+                  const homeClub = (activeCategory.clubs || []).find((club) => normalize(club.club_name) === normalize(match.team1));
+                  const awayClub = (activeCategory.clubs || []).find((club) => normalize(club.club_name) === normalize(match.team2));
+                  const homeLogo = homeClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(homeClub.logo_path).data.publicUrl : null;
+                  const awayLogo = awayClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(awayClub.logo_path).data.publicUrl : null;
+                  const hasResult = match.score1 != null && match.score2 != null;
                   return (
-                    <div key={match.id} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: ".5rem", alignItems: "center", padding: ".65rem", background: "#171c27", borderRadius: "8px" }}>
-                      <div style={{ minWidth: 0 }}>
-                        <strong style={{ display: "block", overflowWrap: "anywhere" }}>{match.team1} <span style={{ color: "#f3a0ad" }}>{match.score1 == null ? "—" : match.score1} - {match.score2 == null ? "—" : match.score2}</span> {match.team2}</strong>
-                        <small style={{ color: "#aaa" }}>{match.scheduled_time || "Horario a confirmar"} · {match.referee_name || (assigned ? "Tu designación" : match.referee_id ? "Árbitro designado" : "Sin árbitro")}</small>
-                        {canManage && (
-                          <label style={{ display: "flex", alignItems: "center", gap: ".4rem", marginTop: ".45rem", color: "#bbb", fontSize: ".68rem" }}>
-                            Árbitro
-                            <select
-                              value={match.referee_id || ""}
-                              disabled={match.referee_closed}
-                              onChange={(event) => assignReferee(match.id, event.target.value)}
-                              style={{ minWidth: 0, maxWidth: "100%", padding: ".35rem", borderRadius: "6px", background: "#fff", color: "#171c27" }}
-                            >
-                              <option value="">Sin designar</option>
-                              {referees.map((referee) => <option key={referee.id} value={referee.id}>{referee.username}</option>)}
-                            </select>
-                          </label>
-                        )}
+                    <div key={match.id} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)", gap: ".55rem", alignItems: "center", padding: ".75rem .6rem", background: "#171c27", border: "1px solid #333", borderRadius: "9px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: ".4rem", minWidth: 0 }}>
+                        {homeLogo ? <img src={homeLogo} alt={`Escudo de ${match.team1}`} loading="lazy" style={{ width: "30px", height: "30px", objectFit: "contain", flexShrink: 0 }} /> : <span aria-hidden="true" style={{ width: "30px", textAlign: "center", flexShrink: 0 }}>⚽</span>}
+                        <strong style={{ fontSize: ".78rem", lineHeight: 1.2, overflowWrap: "anywhere" }}>{match.team1}</strong>
                       </div>
-                      {canOpenSheet && (
-                        <button type="button" onClick={() => setSelectedMatch({ ...match, turn_journey_id: round.turn_journey_id, turno: competition?.turno || turn?.turno, journey_number: round.round_number })} style={{ padding: ".55rem .65rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#b5122a", color: "#fff", fontSize: ".68rem", fontWeight: 900 }}>
-                          {match.referee_closed ? "VER PLANILLA" : "PLANILLA"}
-                        </button>
-                      )}
+                      <strong style={{ minWidth: "54px", textAlign: "center", color: hasResult ? "#fff" : "#f3a0ad", fontSize: "1rem", fontWeight: 900, whiteSpace: "nowrap" }}>{hasResult ? `${match.score1} - ${match.score2}` : "VS"}</strong>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: ".4rem", minWidth: 0 }}>
+                        <strong style={{ fontSize: ".78rem", lineHeight: 1.2, textAlign: "right", overflowWrap: "anywhere" }}>{match.team2}</strong>
+                        {awayLogo ? <img src={awayLogo} alt={`Escudo de ${match.team2}`} loading="lazy" style={{ width: "30px", height: "30px", objectFit: "contain", flexShrink: 0 }} /> : <span aria-hidden="true" style={{ width: "30px", textAlign: "center", flexShrink: 0 }}>⚽</span>}
+                      </div>
                     </div>
                   );
                 })}
@@ -365,19 +297,6 @@ export function FefutinTurnCompetition({
       )}
 
       {!categories.length && <p style={{ color: "#bbb", textAlign: "center" }}>Este turno todavía no tiene categorías configuradas.</p>}
-      {selectedMatch && (
-        <div style={{ marginTop: "1rem" }}>
-          <FefutinMatchSheet
-            tournament={tournament}
-            match={selectedMatch}
-            categoryLabel={activeCategory ? `${competition?.branch_name || ""} · ${activeCategory.name}` : ""}
-            isReferee={isReferee}
-            isAdmin={canManage}
-            onCloseMatch={closeNormalizedMatch}
-            onClose={() => setSelectedMatch(null)}
-          />
-        </div>
-      )}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
         <button type="button" onClick={loadCompetition} disabled={loading} className="tc-form-back">↻ Actualizar turno</button>
       </div>
