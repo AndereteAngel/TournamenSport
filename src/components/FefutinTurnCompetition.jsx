@@ -247,6 +247,7 @@ export function FefutinTurnCompetition({
             <strong style={{ display: "block", color: "#fff" }}>{activeCategory.name} · {activeCategory.format === "league" ? "TODOS CONTRA TODOS" : activeCategory.format}</strong>
             <small style={{ color: "#bbb" }}>{activeCategory.clubs?.length || 0} clubes inscriptos · {activeCategory.status}</small>
             {standings.length > 0 && (
+              <>
               <div
                 role="region"
                 aria-label={`Tabla de posiciones de ${activeCategory.name}`}
@@ -303,6 +304,7 @@ export function FefutinTurnCompetition({
               <small style={{ display: "block", marginTop: ".35rem", color: "#aaa", fontSize: ".68rem" }}>
                 Deslizá la tabla hacia los costados para ver todas las estadísticas.
               </small>
+              </>
             )}
           </section>
 
