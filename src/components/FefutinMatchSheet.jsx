@@ -56,6 +56,8 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
   });
   const [localPlayers, setLocalPlayers] = useState([]);
   const [visitorPlayers, setVisitorPlayers] = useState([]);
+  const [localClubLogoPath, setLocalClubLogoPath] = useState("");
+  const [visitorClubLogoPath, setVisitorClubLogoPath] = useState("");
 
   const category = useMemo(() => String(categoryLabel || getCategory(tournament)).trim(), [categoryLabel, tournament]);
   const localName = String(match?.team1 || "").trim();
@@ -111,15 +113,22 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
             throw new Error("No se encontraron las inscripciones exactas de ambos clubes para esta categoría y turno.");
           }
           normalizedRoster = rosterData;
+          const rosterClubIds = [rosterData.local.club_id, rosterData.visitor.club_id].filter(Boolean);
+          const { data: rosterClubs, error: rosterClubsError } = rosterClubIds.length
+            ? await supabase.from("fefutin_clubs").select("id, name, headquarters_address, logo_path").in("id", rosterClubIds)
+            : { data: [], error: null };
+          if (rosterClubsError) throw rosterClubsError;
           localClub = {
             id: rosterData.local.club_id,
             name: rosterData.local.name,
             headquarters_address: rosterData.local.headquarters_address || "",
+            logo_path: (rosterClubs || []).find((club) => club.id === rosterData.local.club_id)?.logo_path || "",
           };
           visitorClub = {
             id: rosterData.visitor.club_id,
             name: rosterData.visitor.name,
             headquarters_address: rosterData.visitor.headquarters_address || "",
+            logo_path: (rosterClubs || []).find((club) => club.id === rosterData.visitor.club_id)?.logo_path || "",
           };
           const toSheetPlayers = (players, clubName) => (players || []).map((player) => ({
             ...player,
@@ -171,7 +180,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
           });
           const clubIds = [...new Set(matchingRegistrations.map((item) => item.club_id).filter(Boolean))];
           const { data: clubs, error: clubsError } = clubIds.length
-            ? await supabase.from("fefutin_clubs").select("id, name, headquarters_address, court_type").in("id", clubIds)
+            ? await supabase.from("fefutin_clubs").select("id, name, headquarters_address, court_type, logo_path").in("id", clubIds)
             : { data: [], error: null };
           if (clubsError) throw clubsError;
 
@@ -306,6 +315,8 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         if (!cancelled) {
           setLocalPlayers(local);
           setVisitorPlayers(visitor);
+          setLocalClubLogoPath(localClub?.logo_path || "");
+          setVisitorClubLogoPath(visitorClub?.logo_path || "");
           setMetadata((current) => ({ ...current, sede: current.sede || localClub?.headquarters_address || "" }));
         }
       } catch (err) {
@@ -515,6 +526,10 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
   const activePlayers = activeSide === "local" ? localPlayers : visitorPlayers;
   const activeClubName = activeSide === "local" ? localName : visitorName;
   const displayedPlayers = activePlayers.length ? activePlayers : Array.from({ length: 14 }, () => null);
+  const fefutinLogoUrl = "https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166";
+  const getClubLogoUrl = (logoPath) => logoPath
+    ? supabase.storage.from("fefutin-clubs").getPublicUrl(logoPath).data.publicUrl
+    : "";
   const finalScoreLocal = localPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
   const finalScoreVisitor = visitorPlayers.reduce((total, player) => total + Number(player.goles || 0), 0);
 
@@ -528,9 +543,15 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         @media print{
           .fefutin-print-sheet > :not(.fefutin-print-both){display:none!important}
           .fefutin-print-both{display:block!important}
-          .fefutin-print-team-page{display:block!important;break-after:page;page-break-after:always}
+          .fefutin-print-team-page{display:block!important;break-after:page;page-break-after:always;break-inside:avoid!important;page-break-inside:avoid!important}
           .fefutin-print-team-page:last-child{break-after:auto;page-break-after:auto}
           .fefutin-print-team-page .fefutin-sheet-title{margin-bottom:6px!important}
+          .fefutin-print-brand{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px}
+          .fefutin-print-brand img{display:block;width:42px;height:42px;object-fit:contain}
+          .fefutin-print-brand .league-logo{width:48px;height:42px}
+          .fefutin-print-brand .club-logo{width:42px;height:42px}
+          .fefutin-print-brand .club-logo-placeholder{width:42px;height:42px;border:1px dashed #999;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:800;text-align:center;color:#555}
+          .fefutin-print-brand-spacer{width:42px;height:1px}
           .fefutin-print-team-page .fefutin-sheet-table{width:100%!important;min-width:0!important}
           .fefutin-print-team-page .fefutin-sheet-signatures{display:grid!important}
         }
@@ -694,12 +715,19 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
       <div className="fefutin-print-sheet">
         <div className="fefutin-print-both">
           {[
-            { side: "local", name: localName, players: localPlayers, className: "team-local" },
-            { side: "visitante", name: visitorName, players: visitorPlayers, className: "team-visitor" },
+            { side: "local", name: localName, players: localPlayers, logoPath: localClubLogoPath, className: "team-local" },
+            { side: "visitante", name: visitorName, players: visitorPlayers, logoPath: visitorClubLogoPath, className: "team-visitor" },
           ].map((team) => {
-            const rows = team.players.length ? team.players : Array.from({ length: 14 }, () => null);
+            const rows = [...team.players, ...Array.from({ length: 5 }, () => null)];
+            const clubLogoUrl = getClubLogoUrl(team.logoPath);
             return (
               <section className="fefutin-print-team-page" key={team.side}>
+                <div className="fefutin-print-brand">
+                  <img className="league-logo" src={fefutinLogoUrl} alt="Logo oficial de FEFUTIN" />
+                  {clubLogoUrl
+                    ? <img className="club-logo" src={clubLogoUrl} alt={"Escudo de " + team.name} />
+                    : <div className="club-logo-placeholder">ESCUDO<br />DEL CLUB</div>}
+                </div>
                 <div className="fefutin-sheet-title">
                   <div className="brand">FEFUTIN · PLANILLA OFICIAL</div>
                   <h2>{localName} vs. {visitorName}</h2>
