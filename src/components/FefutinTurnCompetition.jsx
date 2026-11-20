@@ -160,7 +160,7 @@ export function FefutinTurnCompetition({
       <header style={{ margin: "1rem 0", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", textAlign: "center" }}>
         <small style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN · {competition?.branch_name || turn?.branch_name || ""}</small>
         <h2 style={{ margin: ".35rem 0", color: "#fff" }}>{competition?.tournament_title || tournament?.title || "Torneo"} · {competition?.turno || turn?.turno}</h2>
-        <span style={{ color: "#bbb", fontSize: ".8rem" }}>Estado: {competition?.turn_status || turn?.turn_status || "inscripcion"}</span>
+        {(competition?.turn_status || turn?.turn_status) === "en_curso" ? (\n          <span style={{ display: "inline-block", marginTop: ".25rem", padding: ".3rem .7rem", border: "1px solid #166534", borderRadius: "999px", background: "#12351f", color: "#4ade80", fontSize: ".72rem", fontWeight: 900, letterSpacing: ".06em" }}>EN COMPETENCIA</span>\n        ) : (\n          <span style={{ color: "#bbb", fontSize: ".8rem" }}>Estado: {competition?.turn_status || turn?.turn_status || "inscripcion"}</span>\n        )}
       </header>
 
       {error && <p role="alert" style={{ color: "#fecaca", background: "#450a0a", border: "1px solid #b5122a", borderRadius: "8px", padding: ".75rem" }}>{error}</p>}
