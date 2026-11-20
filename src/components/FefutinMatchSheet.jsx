@@ -19,9 +19,13 @@ const getCategory = (tournament) => {
 const getPlayerStatus = (player) => {
   const approval = normalize(player?.status);
   const carnet = normalize(player?.carnet_status);
+
+  // La aprobacion del padron permanente habilita al jugador para integrar
+  // la planilla. Solo un rechazo o una inhabilitacion explicita lo impiden;
+  // un carnet pendiente no genera una segunda aprobacion.
   if (["rechazado", "no_aprobado", "inactivo"].includes(approval) ||
       ["rechazado", "no_habilitado"].includes(carnet)) return "NO HABILITADO";
-  if (approval === "aprobado" && ["verificado", "habilitado", "activo"].includes(carnet)) return "HABILITADO";
+  if (approval === "aprobado") return "HABILITADO";
   return "PENDIENTE DE VERIFICACIÓN";
 };
 
