@@ -20,7 +20,6 @@ const buttonStyle = {
 
 export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBack, onSubmitted }) {
   const [requests, setRequests] = useState([]);
-  const [participations, setParticipations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState(null);
   const [error, setError] = useState("");
@@ -38,7 +37,6 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
       return;
     }
     setRequests(requestsResult.data || []);
-    setParticipations([]);
     setLoading(false);
   }, []);
 
@@ -74,7 +72,7 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
         <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".72rem", margin: "1.25rem 0 .35rem" }}>ÁREA DEL REFERENTE</p>
         <h2 className="cr-title" style={{ color: "#fff", margin: "0 0 .5rem" }}>SOLICITAR PARTICIPACIÓN</h2>
         <p style={{ color: "#d1d5db", lineHeight: 1.55, marginTop: 0 }}>
-          Elegí el torneo, la rama y el turno. Una sola solicitud incluye todas sus categorías activas; cada categoría tendrá su competencia y plantel independiente.
+          Elegí el torneo y el turno. Una sola solicitud incluye todas las categorías activas de ese turno; cada categoría tendrá su competencia y plantel independiente.
         </p>
         {error && <p role="alert" style={{ color: "#fecaca", background: "#450a0a", border: "1px solid #b5122a", borderRadius: "8px", padding: ".75rem", whiteSpace: "pre-wrap" }}>{error}</p>}
         {notice && <p role="status" style={{ color: "#bbf7d0", background: "#052e16", border: "1px solid #166534", borderRadius: "8px", padding: ".75rem" }}>{notice}</p>}
@@ -82,7 +80,7 @@ export function ReferenteTorneoSolicitudes({ tournaments = [], currentUser, onBa
         <section style={{ ...panelStyle, borderColor: "#444", marginTop: "1rem" }}>
           <h3 style={{ color: "#fff", margin: 0 }}>TORNEOS DISPONIBLES</h3>
           <p style={{ color: "#aaa", fontSize: ".82rem", margin: ".3rem 0 0" }}>
-            La inscripción se solicita por torneo (rama y turno), no categoría por categoría.
+            La inscripción se solicita por turno, no categoría por categoría.
           </p>
           {loading ? <p style={{ color: "#ccc" }}>Cargando torneos e inscripciones...</p> : (
             <div style={{ display: "grid", gap: ".85rem", width: "100%", marginTop: "1rem" }}>
@@ -169,7 +167,7 @@ export function FefutinClubTournamentRequests({ onChanged }) {
     if (processingId) return;
     const confirmed = window.confirm(
       approve
-        ? `¿Aprobar la participación de ${request.club_name} en "${request.tournament_title}"? Se habilitará en todas las categorías activas.`
+        ? `¿Aprobar la participación de ${request.club_name} en "${request.tournament_title}"? Se habilitará en todas las categorías activas de ese turno.`
         : `¿Desestimar la solicitud de ${request.club_name} para "${request.tournament_title}"?`
     );
     if (!confirmed) return;
