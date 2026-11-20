@@ -511,8 +511,8 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
   return (
     <div role="dialog" aria-modal="true" aria-label="Planilla oficial de partido" className="fefutin-sheet-overlay">
       <style>{`
-        .fefutin-sheet-overlay{position:fixed;inset:0;z-index:10000;width:100vw;height:100dvh;min-height:100dvh;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:0;background:rgba(0,0,0,.86)}
-        .fefutin-print-sheet{width:100%;max-width:none;min-height:100%;margin:0 auto;padding:clamp(12px,2vw,28px);box-sizing:border-box;background:#fff!important;color:#111!important;border-radius:0;box-shadow:0 8px 35px #0008;font-family:Arial,sans-serif}
+        .fefutin-sheet-overlay{position:fixed!important;inset:0!important;z-index:2147483000!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;overflow-x:hidden!important;overflow-y:auto!important;display:block!important;padding:0!important;background:rgba(0,0,0,.92)!important;-webkit-overflow-scrolling:touch}
+        .fefutin-print-sheet{display:block!important;width:100%!important;max-width:none!important;height:auto!important;min-height:100dvh!important;margin:0!important;padding:16px 12px 28px!important;box-sizing:border-box;background:#fff!important;color:#111!important;border-radius:0!important;box-shadow:none!important;font-family:Arial,sans-serif}
         .fefutin-print-sheet *{box-sizing:border-box;color:#111}
         .fefutin-sheet-title{text-align:center;border-bottom:3px solid #b5122a;padding-bottom:12px;margin-bottom:14px}
         .fefutin-sheet-title .brand{color:#b5122a!important;font-size:13px;font-weight:900;letter-spacing:2px}
