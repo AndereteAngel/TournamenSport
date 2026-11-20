@@ -247,16 +247,62 @@ export function FefutinTurnCompetition({
             <strong style={{ display: "block", color: "#fff" }}>{activeCategory.name} · {activeCategory.format === "league" ? "TODOS CONTRA TODOS" : activeCategory.format}</strong>
             <small style={{ color: "#bbb" }}>{activeCategory.clubs?.length || 0} clubes inscriptos · {activeCategory.status}</small>
             {standings.length > 0 && (
-              <div style={{ overflowX: "auto", marginTop: ".7rem" }}>
-                <table style={{ width: "100%", minWidth: "500px", borderCollapse: "collapse", fontSize: ".74rem" }}>
-                  <thead><tr style={{ background: "#b5122a" }}>{["POS", "CLUB", "PTS", "PJ", "PG", "PE", "PP", "GF", "GC", "DIF"].map((name) => <th key={name} style={{ padding: ".45rem .3rem" }}>{name}</th>)}</tr></thead>
-                  <tbody>{standings.map((team, index) => <tr key={normalize(team.name)} style={{ borderBottom: "1px solid #444" }}>
-                    <td style={{ padding: ".45rem", textAlign: "center" }}>{index + 1}</td>
-                    <td style={{ padding: ".45rem", fontWeight: 800 }}>{team.name}</td>
-                    {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, i) => <td key={i} style={{ padding: ".45rem", textAlign: "center" }}>{value}</td>)}
-                  </tr>)}</tbody>
+              <div
+                role="region"
+                aria-label={`Tabla de posiciones de ${activeCategory.name}`}
+                tabIndex={0}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  overflowX: "auto",
+                  overflowY: "hidden",
+                  marginTop: ".7rem",
+                  WebkitOverflowScrolling: "touch",
+                  overscrollBehaviorX: "contain",
+                  touchAction: "pan-x",
+                }}
+              >
+                <table style={{ width: "100%", minWidth: "620px", borderCollapse: "separate", borderSpacing: 0, tableLayout: "auto", fontSize: ".74rem" }}>
+                  <thead>
+                    <tr style={{ background: "#b5122a" }}>
+                      {["POS", "CLUB", "PTS", "PJ", "PG", "PE", "PP", "GF", "GC", "DIF"].map((name) => (
+                        <th
+                          key={name}
+                          style={{
+                            padding: ".55rem .45rem",
+                            whiteSpace: "nowrap",
+                            textAlign: name === "CLUB" ? "left" : "center",
+                            ...(name === "POS" ? { position: "sticky", left: 0, zIndex: 3, minWidth: "42px", background: "#b5122a" } : {}),
+                            ...(name === "CLUB" ? { position: "sticky", left: "42px", zIndex: 3, minWidth: "125px", background: "#b5122a" } : {}),
+                          }}
+                        >
+                          {name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {standings.map((team, index) => (
+                      <tr key={normalize(team.name)} style={{ borderBottom: "1px solid #444" }}>
+                        <td style={{ padding: ".55rem .45rem", textAlign: "center", whiteSpace: "nowrap", position: "sticky", left: 0, zIndex: 2, minWidth: "42px", background: "#171c27" }}>
+                          {index + 1}
+                        </td>
+                        <td style={{ padding: ".55rem .45rem", fontWeight: 800, whiteSpace: "nowrap", position: "sticky", left: "42px", zIndex: 2, minWidth: "125px", background: "#171c27" }}>
+                          {team.name}
+                        </td>
+                        {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, i) => (
+                          <td key={i} style={{ padding: ".55rem .5rem", textAlign: "center", whiteSpace: "nowrap" }}>{value}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
                 </table>
               </div>
+              <small style={{ display: "block", marginTop: ".35rem", color: "#aaa", fontSize: ".68rem" }}>
+                Deslizá la tabla hacia los costados para ver todas las estadísticas.
+              </small>
             )}
           </section>
 
