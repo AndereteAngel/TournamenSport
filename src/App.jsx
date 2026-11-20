@@ -5663,34 +5663,51 @@ export function TournamenSportApp() {
                 return <>
                   <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".78rem", fontWeight: 800, marginBottom: ".3rem" }}>{referenteNextMatch.tournament?.game || `Fútbol · ${referenteNormalizedNextJourney?.branch_name || ""}`} · {referenteNextMatch.turno || referenteNormalizedNextJourney?.turno || ""}</div>
                   <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".78rem", fontWeight: 800, marginBottom: ".8rem" }}>JORNADA {referenteNextMatch.round || ""} · {formattedDate}</div>
-                  <div style={{ display: "grid", gap: ".8rem" }}>
-                    {referenteClubJornadaMatches.map(({ match, groupIndex, categoryLabel }) => {
-                      const homeClub = getClub(match.team1);
-                      const awayClub = getClub(match.team2);
-                      const homeLogo = homeClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(homeClub.logo_path).data.publicUrl : "";
-                      const awayLogo = awayClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(awayClub.logo_path).data.publicUrl : "";
-                                            const address = String(match.venue_address || homeClub?.headquarters_address || "").trim();
-                      return (
-                        <div key={`${groupIndex}-${match.id}`} style={{ padding: ".75rem", border: "1px solid #5b2732", borderRadius: "10px", background: "rgba(0,0,0,.25)" }}>
-                          <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".72rem", fontWeight: 900, marginBottom: ".55rem" }}>{categoryLabel}</div>
-                          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".5rem" }}>
-                            {[{ name: match.team1, logo: homeLogo }, { name: match.team2, logo: awayLogo }].map((club, index) => (
-                              <div key={`${club.name}-${index}`} style={{ minWidth: 0, textAlign: "center" }}>
-                                <div style={{ height: "66px", display: "grid", placeItems: "center", marginBottom: ".3rem" }}>
-                                  {club.logo ? <img src={club.logo} alt={`Escudo de ${club.name}`} style={{ maxWidth: "62px", maxHeight: "62px", objectFit: "contain" }} /> : <span style={{ fontSize: "2.1rem" }}>⚽</span>}
+                  <div style={{ margin: "0 0 .65rem", textAlign: "center", color: "#fff", fontSize: ".76rem" }}>
+                    {referenteClubJornadaMatches.length} partidos · {[...new Set(referenteClubJornadaMatches.map((item) => item.categoryLabel).filter(Boolean))].length} categorías
+                  </div>
+                  <div style={{ display: "grid", gap: ".65rem" }}>
+                    {(() => {
+                      const groupedMatchups = new Map();
+                      referenteClubJornadaMatches.forEach(({ match, categoryLabel }) => {
+                        const matchupKey = [normalize(match.team1), normalize(match.team2)].sort().join("::");
+                        if (!groupedMatchups.has(matchupKey)) {
+                          groupedMatchups.set(matchupKey, { match, categories: [], address: "" });
+                        }
+                        const group = groupedMatchups.get(matchupKey);
+                        if (categoryLabel && !group.categories.includes(categoryLabel)) group.categories.push(categoryLabel);
+                        if (!group.address) {
+                          const homeClub = getClub(match.team1);
+                          group.address = String(match.venue_address || homeClub?.headquarters_address || "").trim();
+                        }
+                      });
+                      return [...groupedMatchups.values()].map(({ match, categories, address }, index) => {
+                        const homeClub = getClub(match.team1);
+                        const awayClub = getClub(match.team2);
+                        const homeLogo = homeClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(homeClub.logo_path).data.publicUrl : "";
+                        const awayLogo = awayClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(awayClub.logo_path).data.publicUrl : "";
+                        return (
+                          <div key={`jornada-cruce-${index}`} style={{ padding: ".45rem 0", borderBottom: index < groupedMatchups.size - 1 ? "1px solid #493039" : "none" }}>
+                            <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".72rem", fontWeight: 900, marginBottom: ".45rem" }}>{categories.sort((a, b) => a.localeCompare(b, "es", { numeric: true })).join(" · ")}</div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".5rem" }}>
+                              {[{ name: match.team1, logo: homeLogo }, { name: match.team2, logo: awayLogo }].map((club, clubIndex) => (
+                                <div key={`${club.name}-${clubIndex}`} style={{ minWidth: 0, textAlign: "center" }}>
+                                  <div style={{ height: "66px", display: "grid", placeItems: "center", marginBottom: ".3rem" }}>
+                                    {club.logo ? <img src={club.logo} alt={`Escudo de ${club.name}`} style={{ maxWidth: "62px", maxHeight: "62px", objectFit: "contain" }} /> : <span style={{ fontSize: "2.1rem" }}>⚽</span>}
+                                  </div>
+                                  <strong style={{ display: "block", fontSize: ".8rem", lineHeight: 1.25, overflowWrap: "anywhere" }}>{club.name}</strong>
                                 </div>
-                                <strong style={{ display: "block", fontSize: ".8rem", lineHeight: 1.25, overflowWrap: "anywhere" }}>{club.name}</strong>
-                              </div>
-                            ))}
-                            <strong style={{ color: "#f3a0ad", fontSize: "1rem", gridColumn: "2", gridRow: "1" }}>VS</strong>
+                              ))}
+                              <strong style={{ color: "#f3a0ad", fontSize: "1rem", gridColumn: "2", gridRow: "1" }}>VS</strong>
+                            </div>
+                            <div style={{ marginTop: ".55rem", textAlign: "center", color: "#fff", fontSize: ".76rem" }}>
+                              <strong style={{ color: "#f3a0ad" }}>DIRECCIÓN DEL ENCUENTRO</strong>
+                              <div style={{ marginTop: ".2rem" }}>{address || "Dirección del club local no disponible"}</div>
+                            </div>
                           </div>
-                          <div style={{ marginTop: ".65rem", paddingTop: ".55rem", borderTop: "1px solid #493039", textAlign: "center", color: "#fff", fontSize: ".78rem" }}>
-                            <strong style={{ color: "#f3a0ad" }}>DIRECCIÓN DEL ENCUENTRO</strong>
-                            <div style={{ marginTop: ".2rem" }}>{address || "Dirección del club local no disponible"}</div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                   </div>
                   <button type="button" onClick={() => setShowReferenteJornadaSheets(true)} disabled={!referenteJornadaMatches.length}
                     style={{ display: "block", width: "100%", marginTop: ".9rem", padding: ".8rem 1rem", border: "1px solid #f3a0ad", borderRadius: "9px", background: "#b5122a", color: "#fff", fontWeight: 900, letterSpacing: ".03em", cursor: referenteJornadaMatches.length ? "pointer" : "not-allowed", opacity: referenteJornadaMatches.length ? 1 : .6 }}>
