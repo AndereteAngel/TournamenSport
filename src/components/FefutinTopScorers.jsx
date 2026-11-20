@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 
 export function FefutinTopScorers({ tournament, onBack }) {
@@ -30,6 +30,16 @@ export function FefutinTopScorers({ tournament, onBack }) {
     return () => { cancelled = true; };
   }, [tournament?.id]);
 
+  const scorersByCategory = useMemo(() => {
+    const groups = new Map();
+    scorers.forEach((item) => {
+      const category = (item.categoria || "Sin categoría").trim() || "Sin categoría";
+      if (!groups.has(category)) groups.set(category, []);
+      groups.get(category).push(item);
+    });
+    return Array.from(groups.entries());
+  }, [scorers]);
+
   return (
     <section style={{ width: "100%", maxWidth: "900px", margin: "0 auto", padding: "1rem", boxSizing: "border-box", color: "#fff" }}>
       <div style={{ background: "#080808", border: "1px solid #b5122a", borderRadius: "12px", padding: "1rem", boxSizing: "border-box" }}>
@@ -47,19 +57,28 @@ export function FefutinTopScorers({ tournament, onBack }) {
         ) : scorers.length === 0 ? (
           <p style={{ color: "#d1d5db", textAlign: "center", padding: "1rem .25rem" }}>Todavía no hay goles registrados en planillas cerradas de este torneo.</p>
         ) : (
-          <div style={{ display: "grid", gap: ".45rem" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "34px minmax(0,1fr) 58px", gap: ".55rem", padding: ".45rem .6rem", color: "#9ca3af", fontSize: ".7rem", fontWeight: 900, letterSpacing: ".06em" }}>
-              <span>#</span><span>JUGADOR · CLUB</span><span style={{ textAlign: "center" }}>GOLES</span>
-            </div>
-            {scorers.map((item, index) => (
-              <div key={item.player_id + "-" + item.club} style={{ display: "grid", gridTemplateColumns: "34px minmax(0,1fr) 58px", alignItems: "center", gap: ".55rem", padding: ".7rem .6rem", background: "#171c27", border: "1px solid rgba(181,18,42,.55)", borderRadius: "8px" }}>
-                <strong style={{ color: "#fff", textAlign: "center" }}>{index + 1}</strong>
-                <div style={{ minWidth: 0 }}>
-                  <strong style={{ display: "block", color: "#fff", fontSize: ".9rem", overflowWrap: "anywhere" }}>{item.jugador || "Jugador"}</strong>
-                  <span style={{ display: "block", color: "#d1d5db", fontSize: ".78rem", marginTop: ".15rem", overflowWrap: "anywhere" }}>{item.club || "Sin club"}</span>
+          <div style={{ display: "grid", gap: "1.1rem" }}>
+            {scorersByCategory.map(([category, categoryScorers]) => (
+              <section key={category} style={{ minWidth: 0 }}>
+                <h3 style={{ margin: "0 0 .55rem", padding: ".65rem .75rem", color: "#fff", background: "#b5122a", borderRadius: "7px", fontSize: ".95rem", fontWeight: 900, letterSpacing: ".04em" }}>
+                  {category.toUpperCase()}
+                </h3>
+                <div style={{ display: "grid", gap: ".45rem" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "34px minmax(0,1fr) 58px", gap: ".55rem", padding: ".45rem .6rem", color: "#9ca3af", fontSize: ".7rem", fontWeight: 900, letterSpacing: ".06em" }}>
+                    <span>#</span><span>JUGADOR · CLUB</span><span style={{ textAlign: "center" }}>GOLES</span>
+                  </div>
+                  {categoryScorers.map((item, index) => (
+                    <div key={item.player_id + "-" + (item.club || "")} style={{ display: "grid", gridTemplateColumns: "34px minmax(0,1fr) 58px", alignItems: "center", gap: ".55rem", padding: ".7rem .6rem", background: "#171c27", border: "1px solid rgba(181,18,42,.55)", borderRadius: "8px" }}>
+                      <strong style={{ color: "#fff", textAlign: "center" }}>{index + 1}</strong>
+                      <div style={{ minWidth: 0 }}>
+                        <strong style={{ display: "block", color: "#fff", fontSize: ".9rem", overflowWrap: "anywhere" }}>{item.jugador || "Jugador"}</strong>
+                        <span style={{ display: "block", color: "#d1d5db", fontSize: ".78rem", marginTop: ".15rem", overflowWrap: "anywhere" }}>{item.club || "Sin club"}</span>
+                      </div>
+                      <strong style={{ color: "#fff", textAlign: "center", fontSize: "1.1rem" }}>{item.goles}</strong>
+                    </div>
+                  ))}
                 </div>
-                <strong style={{ color: "#fff", textAlign: "center", fontSize: "1.1rem" }}>{item.goles}</strong>
-              </div>
+              </section>
             ))}
           </div>
         )}
