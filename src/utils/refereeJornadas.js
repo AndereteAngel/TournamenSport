@@ -372,7 +372,7 @@ export const normalizarJornadasDeTurno = (rows, refereeId) => {
       goles: goals,
       puntosTeam1: 0,
       puntosTeam2: 0,
-      categorias,
+      categorias: categories,
       detallesPartidos: details,
       referee_id: refereeId || assignedMatches[0]?.referee_id || null,
     };
