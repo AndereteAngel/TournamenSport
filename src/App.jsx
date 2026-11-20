@@ -5773,9 +5773,8 @@ export function TournamenSportApp() {
           <div key={item.groupIndex + "-" + item.match.id} style={{ display: "grid", gap: ".4rem", padding: ".65rem", border: "1px solid #493039", borderRadius: "8px", background: "#171c27" }}>
             <strong style={{ color: "#f3a0ad", fontSize: ".88rem" }}>{category.toLocaleUpperCase("es")}</strong>
             <div style={{ color: "#fff", fontSize: ".78rem" }}>{item.match.team1} vs. {item.match.team2}</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".45rem" }}>
-              <button type="button" onClick={() => openCategorySheet(item, "local")} style={{ padding: ".7rem .4rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#241015", color: "#fff", fontWeight: 900, cursor: "pointer" }}>PLANILLA LOCAL</button>
-              <button type="button" onClick={() => openCategorySheet(item, "visitante")} style={{ padding: ".7rem .4rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#241015", color: "#fff", fontWeight: 900, cursor: "pointer" }}>PLANILLA VISITANTE</button>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: ".45rem" }}>
+              <button type="button" onClick={() => openCategorySheet(item, "local")} style={{ width: "100%", padding: ".7rem .4rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#241015", color: "#fff", fontWeight: 900, cursor: "pointer" }}>ABRIR PLANILLA</button>
             </div>
           </div>
         );
