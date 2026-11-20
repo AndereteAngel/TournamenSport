@@ -5688,7 +5688,6 @@ export function TournamenSportApp() {
                         const awayLogo = awayClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(awayClub.logo_path).data.publicUrl : "";
                         return (
                           <div key={`jornada-cruce-${index}`} style={{ padding: ".45rem 0", borderBottom: index < groupedMatchups.size - 1 ? "1px solid #493039" : "none" }}>
-                            <div style={{ textAlign: "center", color: "#f3a0ad", fontSize: ".72rem", fontWeight: 900, marginBottom: ".45rem" }}>{categories.sort((a, b) => a.localeCompare(b, "es", { numeric: true })).join(" · ")}</div>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".5rem" }}>
                               {[{ name: match.team1, logo: homeLogo }, { name: match.team2, logo: awayLogo }].map((club, clubIndex) => (
                                 <div key={`${club.name}-${clubIndex}`} style={{ minWidth: 0, textAlign: "center" }}>
