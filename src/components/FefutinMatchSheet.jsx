@@ -731,6 +731,46 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
           .fefutin-sheet-table td.fefutin-cards label{display:inline-flex!important;gap:1px!important;margin:0!important;font-size:6px!important}
           .fefutin-sheet-table td.fefutin-cards input{display:inline-block!important;flex:0 1 13px!important;width:13px!important;min-width:0!important;max-width:13px!important;height:12px!important;min-height:12px!important;margin:0!important;padding:0!important;font-size:7px!important}
         }
+
+        /* Impresión oficial: ancho completo y 15 filas de idéntica altura */
+        @media print {
+          @page { size: A4 landscape; margin: 2mm; }
+          html, body { width:100%!important; margin:0!important; padding:0!important; }
+          .fefutin-sheet-overlay { position:absolute!important; inset:0!important; width:100%!important; padding:0!important; margin:0!important; overflow:visible!important; }
+          .fefutin-print-sheet { width:100%!important; max-width:none!important; margin:0!important; padding:0!important; }
+          .fefutin-print-sheet .fefutin-print-both { width:100%!important; margin:0!important; padding:0!important; }
+          .fefutin-print-sheet .fefutin-print-team-page {
+            display:flex!important; flex-direction:column!important; width:100%!important;
+            height:204mm!important; min-height:204mm!important; max-height:204mm!important;
+            margin:0!important; padding:0!important; box-sizing:border-box!important;
+          }
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table {
+            display:table!important; width:100%!important; min-width:0!important; max-width:none!important;
+            margin:0!important; padding:0!important; table-layout:fixed!important;
+            border-collapse:collapse!important; box-sizing:border-box!important;
+          }
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table col:nth-child(1){width:8%!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table col:nth-child(2){width:46%!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table col:nth-child(3){width:14%!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table col:nth-child(4){width:10%!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table col:nth-child(5){width:22%!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table tbody tr {
+            height:8mm!important; min-height:8mm!important; max-height:8mm!important;
+            break-inside:avoid!important; page-break-inside:avoid!important;
+          }
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table tbody td {
+            height:8mm!important; min-height:8mm!important; max-height:8mm!important;
+            padding:1mm 2px!important; box-sizing:border-box!important; vertical-align:middle!important;
+          }
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table thead tr { height:auto!important; }
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table thead th {
+            box-sizing:border-box!important; padding:2mm 2px!important;
+          }
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-signatures {
+            display:grid!important; width:100%!important; margin-top:auto!important;
+            padding-top:4mm!important; min-height:18mm!important; box-sizing:border-box!important;
+          }
+        }
       `}</style>
       <div className="fefutin-print-sheet">
         <div className="fefutin-print-both">
