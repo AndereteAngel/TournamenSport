@@ -96,187 +96,220 @@ class RefereePreJornadaErrorBoundary extends Component {
 }
 
 function RefereePreJornada({ onBack }) {
-  const [torneos, setTorneos] = useState([]);
+  const [turnos, setTurnos] = useState([]);
+  const [jornadas, setJornadas] = useState([]);
   const [arbitros, setArbitros] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [ramaSeleccionada, setRamaSeleccionada] = useState("");
-  const [turnoSeleccionado, setTurnoSeleccionado] = useState("Semanal");
-  const [partidoKey, setPartidoKey] = useState("");
-  const [paginaPartidos, setPaginaPartidos] = useState(0);
+  const [turnoSeleccionado, setTurnoSeleccionado] = useState("Fin de semana");
+  const [jornadaKey, setJornadaKey] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     let activo = true;
-    (async () => {
+    const cargar = async () => {
+      setCargando(true);
+      setMensaje("");
       try {
-        const [{ data: ts, error: te }, { data: ps, error: pe }] = await Promise.all([
-          supabase.from("tournaments").select("*").order("title"),
-          supabase.from("profiles").select("id, username, role, approval_status, deactivated_at").eq("role", "arbitro").order("username")
+        const [
+          { data: turnRows, error: turnError },
+          { data: profiles, error: profileError },
+        ] = await Promise.all([
+          supabase.from("fefutin_tournament_turns").select("id"),
+          supabase.from("profiles")
+            .select("id, username, role, approval_status, deactivated_at")
+            .eq("role", "arbitro")
+            .order("username"),
         ]);
+        if (turnError) throw turnError;
+        if (profileError) throw profileError;
+
+        const activeReferees = (profiles || []).filter(
+          (profile) => profile.approval_status === "aprobado" && !profile.deactivated_at
+        );
+        const competitions = await Promise.all(
+          (turnRows || []).map(async (turn) => {
+            const { data, error } = await supabase.rpc("get_fefutin_turn_competition", {
+              p_turn_id: turn.id,
+            });
+            if (error) {
+              console.warn("No se pudo leer el turno FEFUTIN", turn.id, error.message);
+              return null;
+            }
+            return data;
+          })
+        );
         if (!activo) return;
-        if (te || pe) setMensaje(te?.message || pe?.message || "No se pudieron cargar los datos.");
-        setTorneos(ts || []);
-        setArbitros((ps || []).filter(p => p.approval_status === "aprobado" && !p.deactivated_at));
+
+        const jornadasMap = new Map();
+        (competitions || []).filter(Boolean).forEach((competition) => {
+          const categories = Array.isArray(competition.categories) ? competition.categories : [];
+          categories.forEach((category) => {
+            (Array.isArray(category.rounds) ? category.rounds : []).forEach((round) => {
+              const turnJourneyId = round.turn_journey_id;
+              if (!turnJourneyId) return;
+              const key = String(turnJourneyId);
+              if (!jornadasMap.has(key)) {
+                jornadasMap.set(key, {
+                  key,
+                  turn_journey_id: turnJourneyId,
+                  turn_id: competition.turn_id,
+                  tournament_id: competition.tournament_id,
+                  torneo: competition.tournament_title || "Torneo FEFUTIN",
+                  rama: competition.branch_name || "Rama sin identificar",
+                  turno: competition.turno || "Turno sin identificar",
+                  journey_number: round.round_number ?? null,
+                  scheduled_date: round.scheduled_date || null,
+                  partidos: [],
+                  categoriasSet: new Set(),
+                });
+              }
+              const journey = jornadasMap.get(key);
+              if (!journey.scheduled_date && round.scheduled_date) {
+                journey.scheduled_date = round.scheduled_date;
+              }
+              if (journey.journey_number == null && round.round_number != null) {
+                journey.journey_number = round.round_number;
+              }
+              (Array.isArray(round.matches) ? round.matches : []).forEach((match) => {
+                if (!match?.id || !match.team1 || !match.team2) return;
+                if (journey.partidos.some((item) => String(item.id) === String(match.id))) return;
+                journey.partidos.push({
+                  ...match,
+                  categoria: match.category || match.categoria || category.name || "Sin categoría",
+                });
+                journey.categoriasSet.add(
+                  match.category || match.categoria || category.name || "Sin categoría"
+                );
+              });
+            });
+          });
+        });
+
+        const normalizedJourneys = [...jornadasMap.values()]
+          .filter((journey) => journey.partidos.length > 0)
+          .map((journey) => ({
+            ...journey,
+            categorias: [...journey.categoriasSet].sort((a, b) =>
+              a.localeCompare(b, "es", { numeric: true })
+            ),
+          }))
+          .sort((a, b) =>
+            String(a.scheduled_date || "").localeCompare(String(b.scheduled_date || "")) ||
+            Number(a.journey_number || 0) - Number(b.journey_number || 0)
+          );
+
+        setTurnos(competitions.filter(Boolean));
+        setJornadas(normalizedJourneys);
+        setArbitros(activeReferees);
       } catch (error) {
         if (!activo) return;
-        setMensaje("Error al cargar Pre-jornada: " + String(error?.message || error));
+        setMensaje("No se pudieron cargar las jornadas y árbitros: " + String(error?.message || error));
       } finally {
         if (activo) setCargando(false);
       }
-    })();
+    };
+    cargar();
     return () => { activo = false; };
   }, []);
 
-  const textoSeguro = valor => {
-    if (valor == null) return "";
-    if (typeof valor === "string" || typeof valor === "number") return String(valor);
-    if (typeof valor === "object") {
-      return String(valor.name || valor.nombre || valor.team_name || valor.teamName || valor.club_name || valor.club || valor.label || valor.title || "");
+  const ramas = [...new Set(turnos.map((turn) => turn.branch_name).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, "es"));
+  const jornadasFiltradas = jornadas.filter((journey) =>
+    journey.rama === ramaSeleccionada && journey.turno === turnoSeleccionado
+  );
+  const jornada = jornadasFiltradas.find((item) => item.key === jornadaKey) || null;
+
+  const obtenerEstadoDesignacion = (item) => {
+    const ids = [...new Set(item.partidos.map((match) => String(match.referee_id || "").trim()))];
+    if (ids.length === 1 && ids[0]) {
+      return {
+        refereeId: ids[0],
+        referee: arbitros.find((profile) => String(profile.id) === ids[0]) || null,
+        parcial: false,
+      };
     }
-    return "";
-  };
-  // Resolver la rama dentro de este componente: getTournamentDivision pertenece
-  // al componente principal y no está disponible en este ámbito.
-  const obtenerRama = torneo => {
-    const partes = String(torneo?.game || "").split("·").map(p => p.trim());
-    const explicita = partes.find(p => ["Infantil", "Femenino", "Mayores", "Baby fútbol", "Sénior", "Futsal"].includes(p));
-    if (explicita === "Infantil") return "Baby fútbol";
-    if (explicita === "Mayores") return "Sénior";
-    if (explicita) return explicita;
-    const referencia = (textoSeguro(getTournamentCategory(torneo)) + " " + String(torneo?.game || "")).toLocaleLowerCase("es");
-    if (/futsal/.test(referencia)) return "Futsal";
-    if (/femenin|mujer/.test(referencia)) return "Femenino";
-    if (/senior|sénior|mayor|adult/.test(referencia)) return "Sénior";
-    return "Baby fútbol";
-  };
-  const obtenerTurno = torneo => {
-    const partes = String(torneo?.game || "").split("·").map(p => p.trim().toLocaleLowerCase("es"));
-    return partes.includes("fin de semana") ? "Fin de semana" : "Semanal";
-  };
-  const ramas = ["Baby fútbol", "Femenino", "Sénior", "Futsal"];
-  const torneosFiltrados = torneos.filter(t => obtenerRama(t) === ramaSeleccionada && obtenerTurno(t) === turnoSeleccionado);
-
-  const esPartidoValido = match => {
-    const equipo1 = textoSeguro(match?.team1).trim();
-    const equipo2 = textoSeguro(match?.team2).trim();
-    return Boolean(equipo1 && equipo2) &&
-      equipo1.toLocaleLowerCase("es") !== "pasaje directo" &&
-      equipo2.toLocaleLowerCase("es") !== "pasaje directo";
+    return { refereeId: "", referee: null, parcial: ids.some(Boolean) };
   };
 
-  // Agrupa cada enfrentamiento entre clubes con todas sus categorías de la rama y turno.
-  const normalizarEquipo = valor => textoSeguro(valor).trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const claveEnfrentamiento = match => [normalizarEquipo(match?.team1), normalizarEquipo(match?.team2)].sort().join("::");
-  const partidosDeSeleccion = torneosFiltrados.flatMap(torneo =>
-    (Array.isArray(torneo?.groups) ? torneo.groups : []).flatMap((grupo, groupIndex) => {
-      if (grupo?.name === "__INSCRIPCIONES__") return [];
-      return (Array.isArray(grupo?.matches) ? grupo.matches : []).map((match, matchIndex) => ({
-        torneoId: torneo.id, grupoIndex: groupIndex, matchIndex, match, categoria: getTournamentCategory(torneo),
-      })).filter(item => esPartidoValido(item.match));
-    })
-  );
-  const partidosPorEnfrentamiento = new Map();
-  partidosDeSeleccion.forEach(item => {
-    const key = claveEnfrentamiento(item.match);
-    if (!partidosPorEnfrentamiento.has(key)) partidosPorEnfrentamiento.set(key, []);
-    partidosPorEnfrentamiento.get(key).push(item);
-  });
-  const jornadasMap = new Map();
-  partidosDeSeleccion.forEach(item => {
-    const key = claveEnfrentamiento(item.match);
-    if (!key || jornadasMap.has(key)) return;
-    const partidosJornada = partidosPorEnfrentamiento.get(key) || [];
-    jornadasMap.set(key, {
-      key, match: item.match, team1: textoSeguro(item.match.team1), team2: textoSeguro(item.match.team2),
-      partidos: partidosJornada,
-      categorias: [...new Set(partidosJornada.map(partido => partido.categoria))].sort((a,b) => a.localeCompare(b,"es",{numeric:true})),
-    });
-  });
-  const jornadas = [...jornadasMap.values()].sort((a, b) =>
-    (a.team1 + " " + a.team2).localeCompare(b.team1 + " " + b.team2, "es")
-  );
-  const partidosPorPagina = 30;
-  const inicio = paginaPartidos * partidosPorPagina;
-  const partidosPagina = jornadas.slice(inicio, inicio + partidosPorPagina);
-  const hayMasPartidos = jornadas.length > inicio + partidosPorPagina;
-  const partido = partidosPagina.find(item => item.key === partidoKey);
-  const idsArbitrosJornada = partido
-    ? [...new Set(partido.partidos.map(item => item.match?.referee_id || ""))]
-    : [];
-  const refereeIdJornada = idsArbitrosJornada.length === 1 ? idsArbitrosJornada[0] : "";
-  const designacionParcial = Boolean(partido && idsArbitrosJornada.length > 1);
-  const arbitroAsignado = refereeIdJornada
-    ? arbitros.find(a => a.id === refereeIdJornada)
-    : null;
-
-  const designarPartido = async refereeId => {
-    if (!partido || guardando) return;
+  const designarJornada = async (refereeId) => {
+    if (!jornada || guardando) return;
     setGuardando(true);
     setMensaje("");
+    try {
+      const { data, error } = await supabase.rpc("assign_fefutin_referee_to_turn_journey", {
+        p_turn_journey_id: jornada.turn_journey_id,
+        p_referee_id: refereeId,
+      });
+      if (error) throw error;
 
-    const actualizaciones = new Map();
-    partido.partidos.forEach(item => {
-      const torneo = torneos.find(t => t.id === item.torneoId);
-      if (!torneo) return;
-      if (!actualizaciones.has(torneo.id)) {
-        actualizaciones.set(torneo.id, {
-          torneo,
-          grupos: (torneo.groups || []).map(grupo => ({
-            ...grupo,
-            matches: Array.isArray(grupo?.matches) ? [...grupo.matches] : [],
-          })),
-        });
-      }
-      const actualizacion = actualizaciones.get(torneo.id);
-      const grupo = actualizacion.grupos[item.grupoIndex];
-      if (!grupo?.matches?.[item.matchIndex]) return;
-      grupo.matches[item.matchIndex] = {
-        ...grupo.matches[item.matchIndex],
-        referee_id: refereeId,
-      };
-    });
-
-    if (!actualizaciones.size) {
+      setJornadas((current) => current.map((item) =>
+        item.key === jornada.key
+          ? {
+              ...item,
+              partidos: item.partidos.map((match) => ({ ...match, referee_id: refereeId })),
+            }
+          : item
+      ));
+      const referee = arbitros.find((profile) => profile.id === refereeId);
+      setMensaje(
+        "Árbitro " + (referee?.username || "asignado") +
+        " designado para toda la jornada: " + Number(data || jornada.partidos.length) +
+        " partido(s) en " + jornada.categorias.length + " categoría(s)."
+      );
+    } catch (error) {
+      setMensaje("No se pudo completar la designación de la jornada: " + String(error?.message || error));
+    } finally {
       setGuardando(false);
-      setMensaje("No se encontraron partidos para esta jornada.");
-      return;
     }
-
-    const resultados = await Promise.all([...actualizaciones.values()].map(({ torneo, grupos }) =>
-      supabase.from("tournaments").update({ groups: grupos }).eq("id", torneo.id)
-    ));
-    const error = resultados.find(resultado => resultado.error)?.error;
-    setGuardando(false);
-    if (error) {
-      setMensaje("No se pudo completar la designación de toda la jornada: " + error.message);
-      return;
-    }
-
-    const gruposPorTorneo = new Map([...actualizaciones.entries()].map(([id, item]) => [id, item.grupos]));
-    setTorneos(prev => prev.map(t => gruposPorTorneo.has(t.id)
-      ? { ...t, groups: gruposPorTorneo.get(t.id) }
-      : t
-    ));
-    setMensaje("Árbitro asignado a toda la jornada: " + partido.partidos.length +
-      " partido(s) en " + partido.categorias.length + " categoría(s).");
   };
 
-  const estilo = { background:"#171c27", color:"#fff", border:"1px solid #b5122a", borderRadius:"12px", padding:"1rem", width:"100%" };
-  const selector = { background:"#fff", color:"#171c27", border:"1px solid #b5122a", borderRadius:"9px", padding:".7rem", width:"100%", marginTop:".5rem" };
-  if (cargando) return <section style={{...estilo, textAlign:"center"}}><h2>PRE-JORNADA</h2><p>Cargando torneos y árbitros…</p></section>;
+  const estilo = {
+    background: "#171c27",
+    color: "#fff",
+    border: "1px solid #b5122a",
+    borderRadius: "12px",
+    padding: "1rem",
+    width: "100%",
+    boxSizing: "border-box",
+  };
+  const selector = {
+    background: "#fff",
+    color: "#171c27",
+    border: "1px solid #b5122a",
+    borderRadius: "9px",
+    padding: ".7rem",
+    width: "100%",
+    marginTop: ".5rem",
+  };
 
-  return <main style={{maxWidth:"1000px", margin:"0 auto", paddingBottom:"2rem", color:"#fff"}}>
-    <section style={{...estilo, marginBottom:"1rem"}}>
-      <h2 style={{textAlign:"center", marginTop:0}}>PRE-JORNADA · DESIGNACIONES</h2>
-      <label style={{display:"block", marginTop:".8rem"}}>1. Rama
-        <select value={ramaSeleccionada} onChange={e=>{setRamaSeleccionada(e.target.value);setPartidoKey("");setPaginaPartidos(0);setMensaje("");}} style={selector}>
+  if (cargando) {
+    return <section style={{ ...estilo, textAlign: "center" }}>
+      <h2>PRE-JORNADA</h2>
+      <p>Cargando jornadas normalizadas y árbitros…</p>
+    </section>;
+  }
+
+  return <main style={{ maxWidth: "1000px", margin: "0 auto", paddingBottom: "2rem", color: "#fff" }}>
+    <section style={{ ...estilo, marginBottom: "1rem" }}>
+      <h2 style={{ textAlign: "center", marginTop: 0 }}>PRE-JORNADA · DESIGNACIONES</h2>
+      <label style={{ display: "block", marginTop: ".8rem" }}>1. Rama
+        <select value={ramaSeleccionada} onChange={(event) => {
+          setRamaSeleccionada(event.target.value);
+          setJornadaKey("");
+          setMensaje("");
+        }} style={selector}>
           <option value="">Elegí la rama</option>
-          {ramas.map(r=><option key={r} value={r}>{r}</option>)}
+          {ramas.map((rama) => <option key={rama} value={rama}>{rama}</option>)}
         </select>
       </label>
-      {ramaSeleccionada && <label style={{display:"block", marginTop:".8rem"}}>2. Turno
-        <select value={turnoSeleccionado} onChange={e=>{setTurnoSeleccionado(e.target.value);setPartidoKey("");setPaginaPartidos(0);setMensaje("");}} style={selector}>
+      {ramaSeleccionada && <label style={{ display: "block", marginTop: ".8rem" }}>2. Turno
+        <select value={turnoSeleccionado} onChange={(event) => {
+          setTurnoSeleccionado(event.target.value);
+          setJornadaKey("");
+          setMensaje("");
+        }} style={selector}>
           <option value="Semanal">Semanal</option>
           <option value="Fin de semana">Fin de semana</option>
         </select>
@@ -284,42 +317,108 @@ function RefereePreJornada({ onBack }) {
     </section>
 
     {ramaSeleccionada && <>
-      <h3 style={{margin:".5rem 0 1rem",textAlign:"center"}}>{ramaSeleccionada} · {turnoSeleccionado} · Todas las categorías</h3>
-      {!partidosPagina.length && paginaPartidos === 0 ? <p style={{...estilo,textAlign:"center"}}>Todavía no hay jornadas para esta selección.</p> :
-        !partido ? <>
-          <p style={{textAlign:"center",color:"#fff"}}>Jornadas desde la {paginaPartidos * partidosPorPagina + 1} · Página {paginaPartidos + 1} · Mostrando {partidosPagina.length} jornadas</p>
-          <section style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:".8rem"}}>
-          {partidosPagina.map(item=><button key={item.key} type="button" onClick={()=>{setPartidoKey(item.key);setMensaje("");}} style={{...estilo,textAlign:"center",cursor:"pointer"}}>
-            <span style={{display:"block",fontSize:".75rem",color:"#fca5a5",fontWeight:700,marginBottom:".45rem"}}>{item.categorias.join(" · ")}</span>
-            <strong style={{fontSize:"1rem"}}>{item.team1} <span style={{color:"#fca5a5"}}>VS</span> {item.team2}</strong>
-            <span style={{display:"block",fontSize:".82rem",marginTop:".55rem",color:"#d1d5db"}}>{item.partidos.length} partido(s) en esta jornada · Árbitro: {(() => { const ids = [...new Set(item.partidos.map(p => p.match?.referee_id || ""))]; return ids.length > 1 ? "Designación parcial" : (arbitros.find(a => a.id === ids[0])?.username || "Sin designar"); })()}</span>
-            <span style={{display:"block",fontWeight:800,marginTop:".65rem",color:"#fff"}}>{(() => { const ids = [...new Set(item.partidos.map(p => String(p.match?.referee_id || "").trim()))]; const designada = ids.length === 1 && Boolean(ids[0]) && item.partidos.length > 0 && item.partidos.every(p => String(p.match?.referee_id || "").trim() === ids[0]); return designada ? "🔒 Jornada designada" : "Designar jornada completa →"; })()}</span>
-          </button>)}
-          </section>
-          {(paginaPartidos > 0 || hayMasPartidos) && <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:".8rem",flexWrap:"wrap",marginTop:"1rem"}}>
-            <button type="button" disabled={paginaPartidos===0} onClick={()=>setPaginaPartidos(p=>Math.max(0,p-1))} style={{background:"#fff",color:"#171c27",border:"1px solid #b5122a",borderRadius:"8px",padding:".7rem 1rem",fontWeight:700,opacity:paginaPartidos===0?.5:1}}>← Anterior</button>
-            <span style={{color:"#fff"}}>Página {paginaPartidos+1}</span>
-            <button type="button" disabled={!hayMasPartidos} onClick={()=>setPaginaPartidos(p=>p+1)} style={{background:"#fff",color:"#171c27",border:"1px solid #b5122a",borderRadius:"8px",padding:".7rem 1rem",fontWeight:700,opacity:!hayMasPartidos?.5:1}}>Siguiente →</button>
-          </div>}
-        </> :
-        <section style={{display:"grid",gap:".85rem"}}>
-          <button type="button" onClick={()=>{setPartidoKey("");setMensaje("");}} style={{justifySelf:"start",background:"transparent",color:"#fff",border:"1px solid #b5122a",borderRadius:"8px",padding:".55rem .8rem"}}>← Volver a los enfrentamientos</button>
-          <section style={{...estilo,textAlign:"center"}}>
-            <div style={{fontSize:".8rem",color:"#fca5a5",fontWeight:700,marginBottom:".5rem"}}>{ramaSeleccionada + ' · ' + turnoSeleccionado} · {partido.categorias.join(" · ")}</div>
-            <h3 style={{margin:".2rem 0 1rem"}}>{partido.team1} <span style={{color:"#fca5a5"}}>VS</span> {partido.team2}</h3>
-            <h4 style={{margin:"0 0 .5rem"}}>DESIGNAR ÁRBITRO PARA TODA LA JORNADA</h4>
-            <p style={{fontSize:".85rem",color:"#d1d5db"}}>{arbitroAsignado ? "🔒 Jornada designada. La asignación queda bloqueada para directivos y administración: " + arbitroAsignado.username : (designacionParcial ? "La jornada tiene designaciones diferentes o incompletas. Elegí un árbitro para unificar todos sus partidos." : "Elegí un árbitro. Se asignará a todos los partidos de este cruce en las categorías de la competencia.")}</p>
-            {arbitros.length ? <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(135px,1fr))",gap:".6rem"}}>
-              {arbitros.map(arbitro=><button key={arbitro.id} type="button" disabled={guardando || Boolean(refereeIdJornada && !designacionParcial)} onClick={()=>designarPartido(arbitro.id)} style={{background:refereeIdJornada===arbitro.id && !designacionParcial?"#b5122a":"#fff",color:refereeIdJornada===arbitro.id && !designacionParcial?"#fff":"#171c27",border:"1px solid #b5122a",borderRadius:"9px",padding:".85rem",fontWeight:800,cursor:guardando || Boolean(refereeIdJornada && !designacionParcial)?"not-allowed":"pointer",opacity:guardando || Boolean(refereeIdJornada && !designacionParcial)?0.65:1}}>
-                {guardando ? "Guardando…" : (refereeIdJornada && !designacionParcial ? (refereeIdJornada === arbitro.id ? "🔒 Jornada designada · " + arbitro.username : arbitro.username) : arbitro.username)}
-              </button>)}
-            </div> : <p>No hay árbitros aprobados y activos para designar.</p>}
+      <h3 style={{ margin: ".5rem 0 1rem", textAlign: "center" }}>
+        {ramaSeleccionada} · {turnoSeleccionado} · Todas las categorías
+      </h3>
+      {!jornadasFiltradas.length ? (
+        <p style={{ ...estilo, textAlign: "center" }}>Todavía no hay jornadas generadas para esta selección.</p>
+      ) : !jornada ? (
+        <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: ".8rem" }}>
+          {jornadasFiltradas.map((item) => {
+            const assignment = obtenerEstadoDesignacion(item);
+            const dateLabel = item.scheduled_date
+              ? new Date(item.scheduled_date + "T12:00:00").toLocaleDateString("es-AR")
+              : "Fecha pendiente";
+            return <button key={item.key} type="button" onClick={() => {
+              setJornadaKey(item.key);
+              setMensaje("");
+            }} style={{ ...estilo, textAlign: "center", cursor: "pointer" }}>
+              <span style={{ display: "block", color: "#fca5a5", fontWeight: 800, marginBottom: ".4rem" }}>
+                JORNADA {item.journey_number ?? "—"} · {dateLabel}
+              </span>
+              <strong style={{ display: "block", fontSize: ".95rem" }}>{item.torneo}</strong>
+              <span style={{ display: "block", fontSize: ".8rem", color: "#d1d5db", marginTop: ".45rem" }}>
+                {item.categorias.join(" · ")}
+              </span>
+              <span style={{ display: "block", fontSize: ".82rem", color: "#d1d5db", marginTop: ".55rem" }}>
+                {item.partidos.length} partido(s) · Árbitro: {assignment.referee?.username || (assignment.parcial ? "Designación parcial" : "Sin designar")}
+              </span>
+              <span style={{ display: "block", fontWeight: 800, marginTop: ".65rem", color: "#fff" }}>
+                {assignment.refereeId ? "🔒 Jornada designada" : "Designar jornada completa →"}
+              </span>
+            </button>;
+          })}
+        </section>
+      ) : (
+        <section style={{ display: "grid", gap: ".85rem" }}>
+          <button type="button" onClick={() => {
+            setJornadaKey("");
+            setMensaje("");
+          }} style={{ justifySelf: "start", background: "transparent", color: "#fff", border: "1px solid #b5122a", borderRadius: "8px", padding: ".55rem .8rem" }}>
+            ← Volver a las jornadas
+          </button>
+          <section style={{ ...estilo, textAlign: "center" }}>
+            <div style={{ fontSize: ".8rem", color: "#fca5a5", fontWeight: 800, marginBottom: ".5rem" }}>
+              {ramaSeleccionada} · {turnoSeleccionado} · {jornada.categorias.join(" · ")}
+            </div>
+            <h3 style={{ margin: ".2rem 0 .5rem" }}>
+              JORNADA {jornada.journey_number ?? "—"}
+            </h3>
+            <p style={{ color: "#d1d5db", marginTop: 0 }}>
+              {jornada.scheduled_date
+                ? new Date(jornada.scheduled_date + "T12:00:00").toLocaleDateString("es-AR")
+                : "Fecha pendiente"} · {jornada.partidos.length} partidos
+            </p>
+            <h4 style={{ margin: "0 0 .5rem" }}>DESIGNAR ÁRBITRO PARA TODA LA JORNADA</h4>
+            {(() => {
+              const assignment = obtenerEstadoDesignacion(jornada);
+              return <>
+                <p style={{ fontSize: ".85rem", color: "#d1d5db" }}>
+                  {assignment.referee
+                    ? "🔒 Jornada designada. Árbitro: " + assignment.referee.username
+                    : assignment.parcial
+                      ? "La jornada tiene asignaciones incompletas. Elegí un árbitro para unificar todos los partidos."
+                      : "La asignación se aplicará a todos los partidos de todas las categorías de esta jornada."}
+                </p>
+                {arbitros.length ? (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(135px,1fr))", gap: ".6rem" }}>
+                    {arbitros.map((referee) => <button key={referee.id} type="button"
+                      disabled={guardando || Boolean(assignment.refereeId)}
+                      onClick={() => designarJornada(referee.id)}
+                      style={{
+                        background: assignment.refereeId === referee.id ? "#b5122a" : "#fff",
+                        color: assignment.refereeId === referee.id ? "#fff" : "#171c27",
+                        border: "1px solid #b5122a",
+                        borderRadius: "9px",
+                        padding: ".85rem",
+                        fontWeight: 800,
+                        cursor: guardando || assignment.refereeId ? "not-allowed" : "pointer",
+                        opacity: guardando || assignment.refereeId ? .65 : 1,
+                      }}>
+                      {guardando ? "Guardando…" : assignment.refereeId === referee.id
+                        ? "🔒 Jornada designada · " + referee.username
+                        : referee.username}
+                    </button>)}
+                  </div>
+                ) : <p>No hay árbitros aprobados y activos para designar.</p>}
+              </>;
+            })()}
+            <div style={{ marginTop: "1rem", textAlign: "left" }}>
+              <strong>Partidos incluidos:</strong>
+              <ul style={{ paddingLeft: "1.2rem", color: "#d1d5db" }}>
+                {jornada.partidos.map((match) => (
+                  <li key={match.id}>
+                    {match.categoria}: {match.team1} vs. {match.team2}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </section>
         </section>
-      }
+      )}
     </>}
-    {mensaje && <p role="status" style={{color:"#fff",background:"#b5122a",padding:".75rem",borderRadius:"8px",marginTop:"1rem"}}>{mensaje}</p>}
-    <button type="button" className="tc-form-back" onClick={onBack} style={{marginTop:"1.2rem"}}>← Volver</button>
+    {mensaje && <p role="status" style={{ color: "#fff", background: "#b5122a", padding: ".75rem", borderRadius: "8px", marginTop: "1rem" }}>{mensaje}</p>}
+    <button type="button" className="tc-form-back" onClick={onBack} style={{ marginTop: "1.2rem" }}>← Volver</button>
   </main>;
 }
 
