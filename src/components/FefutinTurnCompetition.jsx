@@ -303,7 +303,7 @@ export function FefutinTurnCompetition({
                             ) : (
                               <span aria-hidden="true" style={{ width: "30px", height: "30px", display: "grid", placeItems: "center", borderRadius: "5px", background: "#2a1117", color: "#fff", fontSize: "1rem", flexShrink: 0 }}>⚽</span>
                             )}
-                            <span>{team.name}</span>
+                            <span style={{ fontSize: ".68rem", fontWeight: 700, letterSpacing: ".01em" }}>{team.name}</span>
                           </span>
                         </td>
                         {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, i) => (
