@@ -515,6 +515,16 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         .fefutin-sheet-overlay{position:fixed!important;inset:0!important;z-index:2147483000!important;width:100vw!important;height:100dvh!important;min-height:100dvh!important;overflow-x:hidden!important;overflow-y:auto!important;display:block!important;padding:0!important;background:rgba(0,0,0,.92)!important;-webkit-overflow-scrolling:touch}
         .fefutin-print-sheet{display:block!important;width:100%!important;max-width:none!important;height:auto!important;min-height:100dvh!important;margin:0!important;padding:16px 12px 28px!important;box-sizing:border-box;background:#fff!important;color:#111!important;border-radius:0!important;box-shadow:none!important;font-family:Arial,sans-serif}
         .fefutin-print-sheet *{box-sizing:border-box;color:#111}
+        .fefutin-print-both{display:none}
+        @media print{
+          .fefutin-print-sheet > :not(.fefutin-print-both){display:none!important}
+          .fefutin-print-both{display:block!important}
+          .fefutin-print-team-page{display:block!important;break-after:page;page-break-after:always}
+          .fefutin-print-team-page:last-child{break-after:auto;page-break-after:auto}
+          .fefutin-print-team-page .fefutin-sheet-title{margin-bottom:6px!important}
+          .fefutin-print-team-page .fefutin-sheet-table{width:100%!important;min-width:0!important}
+          .fefutin-print-team-page .fefutin-sheet-signatures{display:grid!important}
+        }
         .fefutin-sheet-title{text-align:center;border-bottom:3px solid #b5122a;padding-bottom:12px;margin-bottom:14px}
         .fefutin-sheet-title .brand{color:#b5122a!important;font-size:13px;font-weight:900;letter-spacing:2px}
         .fefutin-sheet-title h2{margin:5px 0;font-size:23px;color:#111!important;text-transform:uppercase}
@@ -673,6 +683,38 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         }
       `}</style>
       <div className="fefutin-print-sheet">
+        <div className="fefutin-print-both">
+          {[
+            { side: "local", name: localName, players: localPlayers, className: "team-local" },
+            { side: "visitante", name: visitorName, players: visitorPlayers, className: "team-visitor" },
+          ].map((team) => {
+            const rows = team.players.length ? team.players : Array.from({ length: 14 }, () => null);
+            return (
+              <section className="fefutin-print-team-page" key={team.side}>
+                <div className="fefutin-sheet-title">
+                  <div className="brand">FEFUTIN · PLANILLA OFICIAL</div>
+                  <h2>{localName} vs. {visitorName}</h2>
+                  <p>{category || "Categoría sin especificar"} · {metadata.turno ? "Turno " + metadata.turno + " · " : ""}{metadata.jornada ? "Jornada " + metadata.jornada : "Jornada sin asignar"}</p>
+                  <p>{metadata.fecha_partido ? "Fecha: " + metadata.fecha_partido + " · " : ""}{metadata.sede ? "Sede: " + metadata.sede : ""}</p>
+                </div>
+                <table className="fefutin-sheet-table">
+                  <colgroup>
+                    <col style={{width:"7%"}} /><col style={{width:"42%"}} /><col style={{width:"15%"}} /><col style={{width:"12%"}} /><col style={{width:"24%"}} />
+                  </colgroup>
+                  <thead>
+                    <tr><th className={team.className} colSpan={5}>PLANILLA DEL EQUIPO {team.side==="local"?"LOCAL":"VISITANTE"} · {team.name}</th></tr>
+                    <tr><th>N°</th><th>JUGADOR</th><th>EST.</th><th>G</th><th>T A/R</th></tr>
+                  </thead>
+                  <tbody>{rows.map((player,index)=><tr key={player?.player_id || `print-${team.side}-${index}`}>{renderPlayerCell(player,team.side)}</tr>)}</tbody>
+                </table>
+                <div className="fefutin-sheet-signatures">
+                  <div className="fefutin-sheet-signature"><div className="line"></div><span>Firma del referente {team.side==="local"?"local":"visitante"}</span></div>
+                  <div className="fefutin-sheet-signature"><div className="line"></div><span>Firma del árbitro</span></div>
+                </div>
+              </section>
+            );
+          })}
+        </div>
         <div className="fefutin-sheet-title">
           <div className="brand">FEFUTIN · PLANILLA OFICIAL</div>
           <h2>{localName} vs. {visitorName}</h2>
