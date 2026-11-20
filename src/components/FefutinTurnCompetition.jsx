@@ -59,6 +59,7 @@ export function FefutinTurnCompetition({
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedTeamName, setSelectedTeamName] = useState("");
   const [teamMatchesView, setTeamMatchesView] = useState("pending");
+  const [standingsExpanded, setStandingsExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState("");
@@ -210,14 +211,27 @@ export function FefutinTurnCompetition({
             <small style={{ color: "#bbb" }}>{activeCategory.clubs?.length || 0} clubes inscriptos · {activeCategory.status}</small>
             {standings.length > 0 && (
               <>
+              <style>{`
+                @media (max-width: 700px) {
+                  .fefutin-standings--compact th:nth-child(n+5),
+                  .fefutin-standings--compact td:nth-child(n+5) { display: none; }
+                  .fefutin-standings--compact table { width: 100% !important; min-width: 0 !important; }
+                  .fefutin-standings--expanded table { width: max-content !important; min-width: 620px !important; }
+                }
+              `}</style>
+              <button type="button" onClick={() => setStandingsExpanded((expanded) => !expanded)} aria-expanded={standingsExpanded} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginTop: ".7rem", padding: ".65rem .7rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#101010", color: "#fff", fontWeight: 900, textAlign: "left", cursor: "pointer" }}>
+                <span>TABLA DE POSICIONES</span>
+                <span style={{ color: "#f3a0ad", fontSize: ".75rem" }}>{standingsExpanded ? "▲ OCULTAR ESTADÍSTICAS" : "▼ VER TABLA COMPLETA"}</span>
+              </button>
               <div
                 role="region"
+                className={`fefutin-standings ${standingsExpanded ? "fefutin-standings--expanded" : "fefutin-standings--compact"}`}
                 aria-label={`Tabla de posiciones de ${activeCategory.name}`}
                 tabIndex={0}
                 style={{
                   display: "block",
-                  width: "calc(100vw - 3.8rem)",
-                  maxWidth: "calc(100vw - 3.8rem)",
+                  width: standingsExpanded ? "calc(100vw - 3.8rem)" : "100%",
+                  maxWidth: standingsExpanded ? "calc(100vw - 3.8rem)" : "100%",
                   minWidth: 0,
                   boxSizing: "border-box",
                   overflowX: "scroll",
@@ -238,10 +252,10 @@ export function FefutinTurnCompetition({
                             padding: ".55rem .45rem",
                             whiteSpace: "nowrap",
                             textAlign: name === "CLUB" ? "left" : "center",
-                            ...(name === "POS" ? { position: "sticky", left: 0, zIndex: 4, width: "42px", minWidth: "42px", boxSizing: "border-box", background: "#b5122a" } : {}),
-                            ...(name === "CLUB" ? { position: "sticky", left: "42px", zIndex: 4, width: "150px", minWidth: "150px", boxSizing: "border-box", background: "#b5122a" } : {}),
-                            ...(name === "PTS" ? { position: "sticky", left: "192px", zIndex: 3, width: "52px", minWidth: "52px", boxSizing: "border-box", background: "#b5122a", color: "#fff", fontWeight: 900 } : {}),
-                            ...(name === "PJ" ? { position: "sticky", left: "244px", zIndex: 3, width: "48px", minWidth: "48px", boxSizing: "border-box", background: "#b5122a", color: "#fff", fontWeight: 900 } : {}),
+                            ...(name === "POS" ? { position: "sticky", left: 0, zIndex: 4, width: "34px", minWidth: "34px", boxSizing: "border-box", background: "#b5122a" } : {}),
+                            ...(name === "CLUB" ? { position: "sticky", left: "34px", zIndex: 4, width: "140px", minWidth: "140px", boxSizing: "border-box", background: "#b5122a" } : {}),
+                            ...(name === "PTS" ? { position: "sticky", left: "174px", zIndex: 3, width: "52px", minWidth: "52px", boxSizing: "border-box", background: "#b5122a", color: "#fff", fontWeight: 900 } : {}),
+                            ...(name === "PJ" ? { position: "sticky", left: "226px", zIndex: 3, width: "48px", minWidth: "48px", boxSizing: "border-box", background: "#b5122a", color: "#fff", fontWeight: 900 } : {}),
                           }}
                         >
                           {name}
@@ -252,10 +266,10 @@ export function FefutinTurnCompetition({
                   <tbody>
                     {standings.map((team, index) => (
                       <tr key={normalize(team.name)} style={{ borderBottom: "1px solid #444" }}>
-                        <td style={{ padding: ".55rem .45rem", textAlign: "center", whiteSpace: "nowrap", position: "sticky", left: 0, zIndex: 4, width: "42px", minWidth: "42px", boxSizing: "border-box", background: "#171c27" }}>
+                        <td style={{ padding: ".55rem .45rem", textAlign: "center", whiteSpace: "nowrap", position: "sticky", left: 0, zIndex: 4, width: "34px", minWidth: "34px", boxSizing: "border-box", background: "#171c27" }}>
                           {index + 1}
                         </td>
-                        <td style={{ padding: ".45rem", fontWeight: 800, whiteSpace: "nowrap", position: "sticky", left: "42px", zIndex: 4, width: "150px", minWidth: "150px", boxSizing: "border-box", background: "#171c27" }}>
+                        <td style={{ padding: ".45rem", fontWeight: 800, whiteSpace: "nowrap", position: "sticky", left: "34px", zIndex: 4, width: "140px", minWidth: "140px", boxSizing: "border-box", background: "#171c27" }}>
                           <span style={{ display: "flex", alignItems: "center", gap: ".45rem", minWidth: 0 }}>
                             {team.logo_path ? (
                               <img
@@ -271,7 +285,7 @@ export function FefutinTurnCompetition({
                           </span>
                         </td>
                         {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, i) => (
-                          <td key={i} style={{ padding: ".55rem .5rem", textAlign: "center", whiteSpace: "nowrap", ...(i === 0 ? { position: "sticky", left: "192px", zIndex: 3, width: "52px", minWidth: "52px", boxSizing: "border-box", background: "#171c27", color: "#f3a0ad", fontWeight: 900, fontSize: ".86rem" } : {}), ...(i === 1 ? { position: "sticky", left: "244px", zIndex: 3, width: "48px", minWidth: "48px", boxSizing: "border-box", background: "#171c27", color: "#fff", fontWeight: 900 } : {}) }}>{value}</td>
+                          <td key={i} style={{ padding: ".55rem .5rem", textAlign: "center", whiteSpace: "nowrap", ...(i === 0 ? { position: "sticky", left: "174px", zIndex: 3, width: "52px", minWidth: "52px", boxSizing: "border-box", background: "#171c27", color: "#f3a0ad", fontWeight: 900, fontSize: ".86rem" } : {}), ...(i === 1 ? { position: "sticky", left: "226px", zIndex: 3, width: "48px", minWidth: "48px", boxSizing: "border-box", background: "#171c27", color: "#fff", fontWeight: 900 } : {}) }}>{value}</td>
                         ))}
                       </tr>
                     ))}
@@ -279,7 +293,7 @@ export function FefutinTurnCompetition({
                 </table>
               </div>
               <small style={{ display: "block", marginTop: ".35rem", color: "#aaa", fontSize: ".68rem" }}>
-                Deslizá la tabla hacia los costados para ver todas las estadísticas.
+                En celular, tocá “TABLA DE POSICIONES” para desplegar u ocultar las estadísticas.
               </small>
               </>
             )}
