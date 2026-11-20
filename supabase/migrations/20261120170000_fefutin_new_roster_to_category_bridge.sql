@@ -104,7 +104,7 @@ begin
          lower(trim(
            case
              when b.name = 'Baby fútbol'
-               then 'Infantil · ' || regexp_replace(cat.name, '^Cat\\.\\s*', '')
+               then 'Infantil · ' || replace(cat.name, 'Cat. ', '')
              else b.name || ' · ' || cat.name
            end
          ))
@@ -178,7 +178,7 @@ join public.fefutin_club_rosters cr
      lower(trim(
        case
          when b.name = 'Baby fútbol'
-           then 'Infantil · ' || regexp_replace(cat.name, '^Cat\\.\\s*', '')
+               then 'Infantil · ' || replace(cat.name, 'Cat. ', '')
          else b.name || ' · ' || cat.name
        end
      ))
