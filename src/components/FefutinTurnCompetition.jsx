@@ -298,7 +298,7 @@ export function FefutinTurnCompetition({
                                 src={supabase.storage.from("fefutin-clubs").getPublicUrl(team.logo_path).data.publicUrl}
                                 alt={`Escudo de ${team.name}`}
                                 loading="lazy"
-                                style={{ width: "30px", height: "30px", objectFit: "contain", borderRadius: "5px", background: "#fff", flexShrink: 0 }}
+                                style={{ width: "30px", height: "30px", objectFit: "contain", borderRadius: "5px", background: "transparent", flexShrink: 0 }}
                               />
                             ) : (
                               <span aria-hidden="true" style={{ width: "30px", height: "30px", display: "grid", placeItems: "center", borderRadius: "5px", background: "#2a1117", color: "#fff", fontSize: "1rem", flexShrink: 0 }}>⚽</span>
