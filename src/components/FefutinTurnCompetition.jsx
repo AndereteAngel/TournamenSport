@@ -291,8 +291,20 @@ export function FefutinTurnCompetition({
                         <td style={{ padding: ".55rem .45rem", textAlign: "center", whiteSpace: "nowrap", position: "sticky", left: 0, zIndex: 2, minWidth: "42px", background: "#171c27" }}>
                           {index + 1}
                         </td>
-                        <td style={{ padding: ".55rem .45rem", fontWeight: 800, whiteSpace: "nowrap", position: "sticky", left: "42px", zIndex: 2, minWidth: "125px", background: "#171c27" }}>
-                          {team.name}
+                        <td style={{ padding: ".45rem", fontWeight: 800, whiteSpace: "nowrap", position: "sticky", left: "42px", zIndex: 2, minWidth: "150px", background: "#171c27" }}>
+                          <span style={{ display: "flex", alignItems: "center", gap: ".45rem", minWidth: 0 }}>
+                            {team.logo_path ? (
+                              <img
+                                src={supabase.storage.from("fefutin-clubs").getPublicUrl(team.logo_path).data.publicUrl}
+                                alt={`Escudo de ${team.name}`}
+                                loading="lazy"
+                                style={{ width: "30px", height: "30px", objectFit: "contain", borderRadius: "5px", background: "#fff", flexShrink: 0 }}
+                              />
+                            ) : (
+                              <span aria-hidden="true" style={{ width: "30px", height: "30px", display: "grid", placeItems: "center", borderRadius: "5px", background: "#2a1117", color: "#fff", fontSize: "1rem", flexShrink: 0 }}>⚽</span>
+                            )}
+                            <span>{team.name}</span>
+                          </span>
                         </td>
                         {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, i) => (
                           <td key={i} style={{ padding: ".55rem .5rem", textAlign: "center", whiteSpace: "nowrap" }}>{value}</td>
