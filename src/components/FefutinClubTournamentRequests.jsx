@@ -192,7 +192,7 @@ export function FefutinClubTournamentRequests({ onChanged }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".75rem", flexWrap: "wrap", marginBottom: ".9rem" }}>
         <div>
           <h3 style={{ color: "#fff", margin: 0 }}>SOLICITUDES DE PARTICIPACIÓN EN TORNEOS</h3>
-          <p style={{ color: "#aaa", fontSize: ".82rem", margin: ".3rem 0 0" }}>Las aprobaciones habilitan al club en cada competencia activa de la tira.</p>
+          <p style={{ color: "#aaa", fontSize: ".82rem", margin: ".3rem 0 0" }}>Las aprobaciones habilitan al club en cada competencia activa del turno solicitado.</p>
         </div>
         <button type="button" className="tc-form-back" onClick={loadRequests} disabled={loading}>↻ Actualizar solicitudes</button>
       </div>
