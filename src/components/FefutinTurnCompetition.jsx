@@ -243,7 +243,7 @@ export function FefutinTurnCompetition({
 
       {activeCategory && (
         <div style={{ display: "grid", gap: ".85rem" }}>
-          <section style={{ padding: ".9rem", background: "#171c27", border: "1px solid #444", borderRadius: "10px" }}>
+          <section style={{ padding: ".9rem", minWidth: 0, width: "100%", boxSizing: "border-box", overflow: "hidden", background: "#171c27", border: "1px solid #444", borderRadius: "10px" }}>
             <strong style={{ display: "block", color: "#fff" }}>{activeCategory.name} · {activeCategory.format === "league" ? "TODOS CONTRA TODOS" : activeCategory.format}</strong>
             <small style={{ color: "#bbb" }}>{activeCategory.clubs?.length || 0} clubes inscriptos · {activeCategory.status}</small>
             {standings.length > 0 && (
@@ -254,10 +254,11 @@ export function FefutinTurnCompetition({
                 tabIndex={0}
                 style={{
                   display: "block",
-                  width: "100%",
-                  maxWidth: "100%",
+                  width: "calc(100vw - 3.8rem)",
+                  maxWidth: "calc(100vw - 3.8rem)",
                   minWidth: 0,
-                  overflowX: "auto",
+                  boxSizing: "border-box",
+                  overflowX: "scroll",
                   overflowY: "hidden",
                   marginTop: ".7rem",
                   WebkitOverflowScrolling: "touch",
@@ -265,7 +266,7 @@ export function FefutinTurnCompetition({
                   touchAction: "pan-x",
                 }}
               >
-                <table style={{ width: "100%", minWidth: "620px", borderCollapse: "separate", borderSpacing: 0, tableLayout: "auto", fontSize: ".74rem" }}>
+                <table style={{ width: "max-content", minWidth: "620px", borderCollapse: "separate", borderSpacing: 0, tableLayout: "auto", fontSize: ".74rem" }}>
                   <thead>
                     <tr style={{ background: "#b5122a" }}>
                       {["POS", "CLUB", "PTS", "PJ", "PG", "PE", "PP", "GF", "GC", "DIF"].map((name) => (
