@@ -155,7 +155,7 @@ export function FefutinTurnCompetition({
   }
 
   return (
-    <section className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: "1rem", boxSizing: "border-box", color: "#fff" }}>
+    <section className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: 0, boxSizing: "border-box", color: "#fff" }}>
       <button type="button" className="tc-form-back" onClick={onBack}>← Volver a los turnos</button>
       <header style={{ margin: "1rem 0", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", textAlign: "center" }}>
         <small style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN · {competition?.branch_name || turn?.branch_name || ""}</small>
