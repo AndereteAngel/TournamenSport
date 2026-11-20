@@ -219,9 +219,9 @@ export function FefutinTurnCompetition({
                   .fefutin-standings--expanded table { width: max-content !important; min-width: 620px !important; }
                 }
               `}</style>
-              <button type="button" onClick={() => setStandingsExpanded((expanded) => !expanded)} aria-expanded={standingsExpanded} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginTop: ".7rem", padding: ".65rem .7rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#101010", color: "#fff", fontWeight: 900, textAlign: "left", cursor: "pointer" }}>
-                <span>TABLA DE POSICIONES</span>
-                <span style={{ color: "#f3a0ad", fontSize: ".75rem" }}>{standingsExpanded ? "▲ OCULTAR ESTADÍSTICAS" : "▼ VER TABLA COMPLETA"}</span>
+              <button type="button" onClick={() => setStandingsExpanded((expanded) => !expanded)} aria-expanded={standingsExpanded} style={{ display: "inline-flex", alignItems: "center", gap: ".45rem", marginTop: ".55rem", padding: ".35rem .55rem", border: "1px solid #71303b", borderRadius: "6px", background: "transparent", color: "#f3a0ad", fontSize: ".68rem", fontWeight: 800, letterSpacing: ".035em", textAlign: "left", cursor: "pointer" }}>
+                <span>{standingsExpanded ? "OCULTAR ESTADÍSTICAS" : "VER TABLA COMPLETA"}</span>
+                <span aria-hidden="true">{standingsExpanded ? "▲" : "▼"}</span>
               </button>
               <div
                 role="region"
@@ -281,7 +281,7 @@ export function FefutinTurnCompetition({
                             ) : (
                               <span aria-hidden="true" style={{ width: "24px", height: "24px", display: "grid", placeItems: "center", borderRadius: "5px", background: "#2a1117", color: "#fff", fontSize: ".85rem", flexShrink: 0 }}>⚽</span>
                             )}
-                            <span style={{ fontSize: ".82rem", fontWeight: 800, letterSpacing: ".01em" }}>{team.name}</span>
+                            <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: team.name.length > 18 ? ".62rem" : team.name.length > 14 ? ".68rem" : ".76rem", fontWeight: 800, letterSpacing: ".005em" }}>{team.name}</span>
                           </span>
                         </td>
                         {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, i) => (
