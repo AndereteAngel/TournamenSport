@@ -552,7 +552,13 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
           .fefutin-print-brand .club-logo{width:17mm!important;height:17mm!important}
           .fefutin-print-brand .club-logo-placeholder{width:17mm!important;height:17mm!important;border:1px dashed #999;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:800;text-align:center;color:#555}
           .fefutin-print-brand-spacer{width:17mm;height:1px}
-          .fefutin-print-team-page .fefutin-sheet-table{width:100%!important;min-width:0!important;flex:1 1 auto!important;height:auto!important}
+          .fefutin-print-team-page{width:100%!important;margin:0 auto!important;padding:0 1mm!important;box-sizing:border-box!important}
+          .fefutin-print-team-page .fefutin-sheet-table{width:100%!important;min-width:0!important;max-width:none!important;margin:0 auto!important;table-layout:fixed!important;flex:1 1 auto!important;height:auto!important}
+          .fefutin-print-team-page .fefutin-sheet-table col:nth-child(1){width:8%!important}
+          .fefutin-print-team-page .fefutin-sheet-table col:nth-child(2){width:46%!important}
+          .fefutin-print-team-page .fefutin-sheet-table col:nth-child(3){width:14%!important}
+          .fefutin-print-team-page .fefutin-sheet-table col:nth-child(4){width:10%!important}
+          .fefutin-print-team-page .fefutin-sheet-table col:nth-child(5){width:22%!important}
           .fefutin-print-team-page .fefutin-sheet-signatures{display:grid!important;margin-top:auto!important;padding-top:5mm!important;min-height:18mm!important}
         }
         .fefutin-sheet-title{text-align:center;border-bottom:3px solid #b5122a;padding-bottom:12px;margin-bottom:14px}
@@ -692,8 +698,8 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
           .fefutin-print-sheet .fefutin-sheet-table input[type="checkbox"]{display:none!important}
           .fefutin-print-sheet .fefutin-sheet-table th,.fefutin-print-sheet .fefutin-sheet-table td{padding:1px 2px!important}
           .fefutin-print-sheet .fefutin-sheet-table thead th{font-size:7px!important;line-height:1.1!important}
-          .fefutin-print-sheet .fefutin-sheet-table tbody tr{height:6.5mm!important;min-height:6.5mm!important;break-inside:avoid!important}
-          .fefutin-print-sheet .fefutin-sheet-table tbody td{height:6.5mm!important;padding:2mm 2px!important}
+          .fefutin-print-sheet .fefutin-sheet-table tbody tr{height:8mm!important;min-height:8mm!important;break-inside:avoid!important}
+          .fefutin-print-sheet .fefutin-sheet-table tbody td{height:8mm!important;padding:2.5mm 3px!important}
           .fefutin-print-sheet .fefutin-sheet-table thead th{padding:2.2mm 2px!important}
           .fefutin-print-sheet .fefutin-sheet-signature .line{height:12mm!important}
           .fefutin-print-sheet .fefutin-sheet-signature{font-size:8px!important}
@@ -722,7 +728,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
             { side: "local", name: localName, players: localPlayers, logoPath: localClubLogoPath, className: "team-local" },
             { side: "visitante", name: visitorName, players: visitorPlayers, logoPath: visitorClubLogoPath, className: "team-visitor" },
           ].map((team) => {
-            const rows = [...team.players, ...Array.from({ length: 5 }, () => null)];
+            const rows = [...team.players, ...Array.from({ length: Math.max(0, 15 - team.players.length) }, () => null)];
             const clubLogoUrl = getClubLogoUrl(team.logoPath);
             return (
               <section className="fefutin-print-team-page" key={team.side}>
