@@ -298,12 +298,12 @@ export function FefutinTurnCompetition({
                                 src={supabase.storage.from("fefutin-clubs").getPublicUrl(team.logo_path).data.publicUrl}
                                 alt={`Escudo de ${team.name}`}
                                 loading="lazy"
-                                style={{ width: "30px", height: "30px", objectFit: "contain", borderRadius: "5px", background: "transparent", flexShrink: 0 }}
+                                style={{ width: "24px", height: "24px", objectFit: "contain", borderRadius: "5px", background: "transparent", flexShrink: 0 }}
                               />
                             ) : (
-                              <span aria-hidden="true" style={{ width: "30px", height: "30px", display: "grid", placeItems: "center", borderRadius: "5px", background: "#2a1117", color: "#fff", fontSize: "1rem", flexShrink: 0 }}>⚽</span>
+                              <span aria-hidden="true" style={{ width: "24px", height: "24px", display: "grid", placeItems: "center", borderRadius: "5px", background: "#2a1117", color: "#fff", fontSize: ".85rem", flexShrink: 0 }}>⚽</span>
                             )}
-                            <span style={{ fontSize: ".68rem", fontWeight: 700, letterSpacing: ".01em" }}>{team.name}</span>
+                            <span style={{ fontSize: ".82rem", fontWeight: 800, letterSpacing: ".01em" }}>{team.name}</span>
                           </span>
                         </td>
                         {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, i) => (
