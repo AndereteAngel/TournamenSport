@@ -594,7 +594,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         .fefutin-sheet-result{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin:10px 0 4px;padding:9px 12px;border:2px solid #b5122a;border-radius:4px;text-align:center;font-size:13px;font-weight:900;text-transform:uppercase}.fefutin-sheet-result .score{font-size:20px;white-space:nowrap}.fefutin-sheet-result input{width:42px!important;height:32px!important;min-height:32px!important;padding:3px!important;text-align:center!important;border:1px solid #777!important;border-radius:3px!important;background:#fff!important;color:#111!important;font-size:18px!important;font-weight:900!important}.fefutin-sheet-result input:disabled{opacity:1!important;background:#f3f3f3!important}.fefutin-sheet-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:16px;min-width:0}
         .fefutin-sheet-actions button{display:flex;align-items:center;justify-content:center;flex:1 1 145px;min-width:0;max-width:100%;min-height:42px;padding:9px 10px;border-radius:5px;border:1px solid #333;cursor:pointer;font-weight:800;line-height:1.2;text-align:center;white-space:normal;overflow-wrap:anywhere;word-break:normal}
         @media(max-width:700px){.fefutin-sheet-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.fefutin-sheet-actions button{width:100%;min-width:0;padding:9px 6px;font-size:12px}.fefutin-sheet-actions strong{grid-column:1/-1;text-align:center}}
-        @page{size:A4 landscape;margin:4mm 6mm}
+        @page{size:A4 landscape;margin:2.5mm 3mm}
         @media(max-width:700px){.fefutin-print-sheet{padding:12px}.fefutin-sheet-meta{grid-template-columns:76px minmax(0,1fr);gap:8px}.fefutin-sheet-meta label{grid-column:auto!important}.fefutin-sheet-meta label:nth-child(3),.fefutin-sheet-meta label:nth-child(4){grid-column:1 / -1!important}.fefutin-sheet-title h2{font-size:17px}.fefutin-sheet-table{min-width:680px}}
         @media print{
           html,body{background:#fff!important;margin:0!important;padding:0!important}
@@ -669,7 +669,6 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
 
         /* Reglas finales: prioridad exclusiva para la hoja impresa */
         @media print{
-          @page{size:A4 landscape;margin:3mm 5mm}
           .fefutin-sheet-overlay{padding:0!important;margin:0!important}
           .fefutin-print-sheet{padding:0!important;margin:0!important}
           .fefutin-sheet-title{padding-bottom:3px!important;margin-bottom:4px!important}
@@ -711,6 +710,17 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
           .fefutin-print-sheet .fefutin-observations{margin-top:4px!important;gap:2px!important;font-size:8px!important}
           .fefutin-print-sheet .fefutin-observations textarea{height:20px!important;min-height:20px!important;padding:0!important}
           .fefutin-print-sheet .fefutin-sheet-table,.fefutin-print-sheet .fefutin-sheet-table-wrap,.fefutin-print-sheet .fefutin-observations{break-inside:avoid!important;page-break-inside:avoid!important}
+          /* Distribución final: dos hojas A4 apaisadas, tabla centrada y 15 renglones amplios */
+          .fefutin-print-sheet .fefutin-print-team-page{display:flex!important;flex-direction:column!important;width:100%!important;height:204mm!important;min-height:204mm!important;max-height:204mm!important;margin:0 auto!important;padding:0!important;box-sizing:border-box!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table{display:table!important;width:100%!important;min-width:0!important;max-width:none!important;height:100%!important;margin:0 auto!important;table-layout:fixed!important;flex:1 1 auto!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table col:nth-child(1){width:8%!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table col:nth-child(2){width:46%!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table col:nth-child(3){width:14%!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table col:nth-child(4){width:10%!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table col:nth-child(5){width:22%!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table tbody tr{height:8mm!important;min-height:8mm!important;break-inside:avoid!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-table tbody td{height:8mm!important;padding:2.5mm 3px!important}
+          .fefutin-print-sheet .fefutin-print-team-page .fefutin-sheet-signatures{display:grid!important;margin-top:auto!important;padding-top:4mm!important;min-height:18mm!important}
         }
         /* Ajuste compacto de tarjetas: A y R comparten la columna sin desbordarse */
         .fefutin-sheet-table td.fefutin-cards{padding-left:1px!important;padding-right:1px!important;white-space:nowrap!important;overflow:hidden!important}
