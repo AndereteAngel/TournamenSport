@@ -209,7 +209,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
     const pendingTargets = photoBatch.targets.filter((target) => !target.uploaded);
     const usedFiles = Object.values(photoBatch.assignments);
     if (pendingTargets.length !== usedFiles.length ||
-        pendingTargets.some((target) => photoBatch.assignments[target.key] == null) ||
+        pendingTargets.some((target) => photoBatch.assignments[target.key] == null || photoBatch.assignments[target.key] === "") ||
         new Set(usedFiles).size !== usedFiles.length) {
       setError("Asigná una foto distinta a cada planilla pendiente, incluida la planilla general.");
       return;
@@ -492,7 +492,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
                           </>
                         )}
                         <button type="button"
-                          disabled={Boolean(uploadingPhotoKey || savingKey) || (photoBatch.targets.some((target) => !target.uploaded) && photoBatch.targets.filter((target) => !target.uploaded).some((target) => photoBatch.assignments[target.key] == null))}
+                          disabled={Boolean(uploadingPhotoKey || savingKey) || (photoBatch.targets.some((target) => !target.uploaded) && photoBatch.targets.filter((target) => !target.uploaded).some((target) => photoBatch.assignments[target.key] == null || photoBatch.assignments[target.key] === ""))}
                           onClick={() => photoBatch.targets.some((target) => !target.uploaded)
                             ? uploadPhotoBatchAndClose(jornada)
                             : archiveJornada(jornada)}
