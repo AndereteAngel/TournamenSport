@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 
 export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpenMatch }) {
@@ -8,7 +8,6 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
   const [error, setError] = useState("");
   const [archiveLoaded, setArchiveLoaded] = useState(false);
   const [expandedKey, setExpandedKey] = useState("");
-  const archivingKeysRef = useRef(new Set());
 
   const planillas = useMemo(() => (jornadas || []).map((jornada) => {
     const details = (jornada.detallesPartidos || [])
@@ -186,49 +185,6 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
     setMessage("Planilla general de la jornada cerrada y guardada en el archivo institucional.");
   };
 
-  useEffect(() => {
-    if (!archiveLoaded || !currentUser?.id) return;
-    const saveCompleted = async () => {
-      for (const jornada of planillas) {
-        if (!jornada.allClosed || !jornada.assignedMatches.length ||
-            savedKeys.has(jornada.jornadaKey) ||
-            archivingKeysRef.current.has(jornada.jornadaKey) ||
-            !jornada.tournamentId) continue;
-        archivingKeysRef.current.add(jornada.jornadaKey);
-        const payload = {
-          jornada_key: jornada.jornadaKey,
-          tournament_id: jornada.tournamentId,
-          tournament_ids: jornada.tournamentIds,
-          turn_id: jornada.turnId,
-          turn_journey_id: jornada.turnJourneyId,
-          tournament_title: jornada.tournamentTitle,
-          rama: jornada.branch,
-          turno: jornada.turno,
-          journey_number: Number(jornada.journeyNumber) || null,
-          team_local: "TODOS LOS CLUBES",
-          team_visitante: "TODOS LOS CLUBES",
-          referee_id: currentUser.id,
-          referee_name: currentUser.username || null,
-          jornada_date: jornada.scheduledDate || new Date().toISOString().slice(0, 10),
-          categorias: jornada.categories,
-          detalles: jornada.details,
-          puntos_local: jornada.totalPointsTeam1,
-          puntos_visitante: jornada.totalPointsTeam2,
-          closed_at: new Date().toISOString(),
-        };
-        const { error: insertError } = await supabase.from("fefutin_jornada_sheets").insert(payload);
-        if (insertError && insertError.code !== "23505") {
-          setError("No se pudo guardar automáticamente la planilla general: " + insertError.message);
-          archivingKeysRef.current.delete(jornada.jornadaKey);
-          continue;
-        }
-        setSavedKeys((previous) => new Set([...previous, jornada.jornadaKey]));
-        setMessage("Planilla general guardada automáticamente en el archivo institucional.");
-      }
-    };
-    saveCompleted();
-  }, [archiveLoaded, currentUser?.id, currentUser?.username, planillas, savedKeys]);
-
   if (!planillas.length) {
     return <section style={{ margin: "1rem 0", padding: "1rem", border: "1px solid #555", borderRadius: "10px", color: "#ddd" }}>
       <strong>PLANILLAS GENERALES POR JORNADA</strong>
@@ -315,7 +271,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
                   </div>
                 </section>
                 <button type="button" disabled={!jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey === jornada.jornadaKey || Boolean(savingKey)} onClick={() => archiveJornada(jornada)} style={{ width: "100%", padding: ".7rem", border: "1px solid #b5122a", borderRadius: "8px", background: archived ? "#333" : "#b5122a", color: "#fff", fontWeight: 900, opacity: !jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey ? .55 : 1 }}>
-                  {archived ? "GUARDADA EN ARCHIVO" : savingKey === jornada.jornadaKey ? "GUARDANDO..." : "CERRAR Y ARCHIVAR PLANILLA"}
+                  {archived ? "GUARDADA EN ARCHIVO" : savingKey === jornada.jornadaKey ? "GUARDANDO..." : "CERRAR JORNADA Y ARCHIVAR PLANILLA"}
                 </button>
               </div>
             )}
