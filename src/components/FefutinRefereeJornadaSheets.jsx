@@ -1,5 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
+const normalizeTeamName = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+const buildTurnStandings = (competition) => {
+  const teams = new Map();
+  const getTeam = (name) => { const key = normalizeTeamName(name); if (!key) return null; if (!teams.has(key)) teams.set(key, { equipo: String(name).trim(), puntos: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0, golesFavor: 0, golesContra: 0 }); return teams.get(key); };
+  (competition?.categories || []).forEach((category) => (category.rounds || []).forEach((round) => (round.matches || []).forEach((match) => {
+    if (match.score1 == null || match.score2 == null) return;
+    const a = Number(match.score1), b = Number(match.score2); if (!Number.isFinite(a) || !Number.isFinite(b)) return;
+    const local = getTeam(match.team1), visitor = getTeam(match.team2); if (!local || !visitor) return;
+    local.partidos++; visitor.partidos++; local.golesFavor += a; local.golesContra += b; visitor.golesFavor += b; visitor.golesContra += a;
+    if (a > b) { local.puntos += 3; local.ganados++; visitor.puntos += 1; visitor.perdidos++; }
+    else if (a < b) { visitor.puntos += 3; visitor.ganados++; local.puntos += 1; local.perdidos++; }
+    else { local.puntos += 2; visitor.puntos += 2; local.empatados++; visitor.empatados++; }
+  })));
+  return [...teams.values()].sort((a,b) => b.puntos-a.puntos || (b.golesFavor-b.golesContra)-(a.golesFavor-a.golesContra) || b.golesFavor-a.golesFavor || a.equipo.localeCompare(b.equipo,"es"));
+};
 
 export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpenMatch }) {
   const [savedKeys, setSavedKeys] = useState(() => new Set());
@@ -11,6 +26,8 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
   const [photoBatch, setPhotoBatch] = useState({ jornadaKey: "", targets: [], files: [], assignments: {} });
   const [preparingPhotoKey, setPreparingPhotoKey] = useState("");
   const [uploadingPhotoKey, setUploadingPhotoKey] = useState("");
+  const [turnStandingsById, setTurnStandingsById] = useState({});
+  const [turnStandingsErrors, setTurnStandingsErrors] = useState({});
 
   const planillas = useMemo(() => (jornadas || []).map((jornada) => {
     const details = (jornada.detallesPartidos || [])
@@ -52,7 +69,15 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
     const teamTotals = [...teamTotalsMap.values()].sort((a, b) =>
       b.puntos - a.puntos || a.equipo.localeCompare(b.equipo, "es")
     );
-    const totalPointsTeam1 = details.reduce((sum, detail) => sum + (detail.resultadoCargado ? Number(detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)) : 0), 0);
+    const totalPointsTeam1 = details.reduce((sum, detail) => sum + (detail.resultadoCargado ? Number(deta  useEffect(() => {
+    let active = true;
+    const ids = [...new Set(planillas.map((j) => j.turnId).filter(Boolean).map(String))];
+    if (!ids.length) { setTurnStandingsById({}); setTurnStandingsErrors({}); return () => { active = false; }; }
+    Promise.all(ids.map(async (turnId) => { const { data, error } = await supabase.rpc("get_fefutin_turn_competition", { p_turn_id: turnId }); return { turnId, data, error }; }))
+      .then((results) => { if (!active) return; const next = {}, errors = {}; results.forEach(({turnId,data,error}) => { if (error) errors[turnId] = error.message || "No se pudo cargar la tabla acumulada."; else next[turnId] = buildTurnStandings(data); }); setTurnStandingsById(next); setTurnStandingsErrors(errors); });
+    return () => { active = false; };
+  }, [planillas.map((j) => j.turnId || "").filter(Boolean).sort().join("|")]);
+il.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)) : 0), 0);
     const totalPointsTeam2 = details.reduce((sum, detail) => sum + (detail.resultadoCargado ? Number(detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)) : 0), 0);
     const legacyPendingReview = details.some((detail) => detail.legacy_pending_review);
     const allClosed = details.length > 0 && details.every((detail) => detail.referee_closed) && !legacyPendingReview;
