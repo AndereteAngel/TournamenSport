@@ -4402,12 +4402,10 @@ export function TournamenSportApp() {
         showNotice(normalizedCloseError.message || "No se pudo cerrar el partido normalizado.");
         return false;
       }
-      setNormalizedRefereeJourneyRows((previous) => previous.map((journey) => ({
-        ...journey,
-        matches: (journey.matches || []).map((item) => String(item.id) === String(normalizedMatchId)
-          ? { ...item, ...closedMatch, score1: closedMatch?.score1, score2: closedMatch?.score2, referee_closed: true }
-          : item),
-      })));
+      // Volver a consultar la jornada completa desde Supabase para que la
+      // planilla general reciba todos los marcadores y recalcule puntos entre
+      // categorias, en lugar de depender de una actualizacion parcial en memoria.
+      await refreshRefereeJourneyData();
       setNormalizedMatchToOpen((previous) => previous
         ? { ...previous, ...closedMatch, score1: closedMatch?.score1, score2: closedMatch?.score2, referee_closed: true }
         : previous);
