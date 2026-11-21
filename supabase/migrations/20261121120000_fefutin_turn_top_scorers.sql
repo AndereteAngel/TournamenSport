@@ -22,7 +22,7 @@ as $function$
     p.player_id,
     max(trim(concat_ws(' ', nullif(trim(p.nombre), ''), nullif(trim(p.apellido), ''))))::text as jugador,
     max(trim(p.club))::text as club,
-    max(coalesce(nullif(trim(s.categoria), ''), cat.name))::text as categoria,
+    max(cat.name)::text as categoria,
     sum(greatest(coalesce(p.goles, 0), 0))::bigint as goles
   from public.fefutin_match_sheet_players p
   join public.fefutin_match_sheets s on s.id = p.match_sheet_id
@@ -47,7 +47,7 @@ as $function$
   group by
     p.player_id,
     lower(trim(coalesce(p.club, ''))),
-    lower(trim(coalesce(s.categoria, cat.name)))
+    lower(trim(cat.name))
   having sum(greatest(coalesce(p.goles, 0), 0)) > 0
   order by goles desc, jugador asc, club asc;
 $function$;
