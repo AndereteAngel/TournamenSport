@@ -2631,8 +2631,7 @@ export function TournamenSportApp() {
         (!canAccessClubManagement && ["referente-inscripcion", "referente-equipos", "referente-torneos", "referente-solicitar-torneo"].includes(activeView)) ||
         (!isArbitro && activeView === "referee-carnets") ||
         (!canManageAccess && activeView === "referee-carnet-directory") ||
-        (!canManageAccess && activeView === "sheet-archive") ||
-        (!isArbitro && activeView === "referee-sheet-photo")) {
+        (!canManageAccess && activeView === "sheet-archive")) {
       setActiveView("home");
       setActiveTournament(null);
     }
@@ -5515,8 +5514,6 @@ export function TournamenSportApp() {
         </div>
       ) : activeView === "sheet-archive" && canManageAccess ? (
         <FefutinSheetArchive mode="archive" currentUser={currentUser} onBack={() => setActiveView("home")} />
-      ) : activeView === "referee-sheet-photo" && isArbitro ? (
-        <FefutinSheetArchive mode="upload" currentUser={currentUser} assignedMatches={assignedRefereeMatches} onBack={() => setActiveView("referee-designations")} />
       ) : activeView === "referee-normalized-match" && normalizedMatchToOpen && activeTournament ? (
         <section className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: "1rem", boxSizing: "border-box" }}>
           <button type="button" className="tc-form-back" onClick={() => { setNormalizedMatchToOpen(null); setActiveView(normalizedMatchReturnView); }}>← Volver</button>
@@ -5603,7 +5600,6 @@ export function TournamenSportApp() {
             <p style={{ color: "#ccc", fontSize: ".82rem", marginTop: 0 }}>Tus jornadas asignadas, todos sus encuentros y las planillas que tenés que completar.</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: ".55rem", margin: ".6rem 0 1rem" }}>
               <button type="button" onClick={async () => { await fetchTournaments(); await refreshRefereeJourneyData(); }} style={{ minWidth: 0, padding: ".75rem .45rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#fff", color: "#171c27", fontWeight: 900, fontSize: ".72rem", cursor: "pointer" }}>↻ ACTUALIZAR DESIGNACIONES</button>
-              <button type="button" onClick={() => setActiveView("referee-sheet-photo")} style={{ minWidth: 0, padding: ".75rem .45rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#b5122a", color: "#fff", fontWeight: 900, fontSize: ".72rem", cursor: "pointer" }}>📷 SUBIR FOTO DE PLANILLA GENERAL</button>
             </div>
             <FefutinRefereeJornadaSheets
               jornadas={refereeJornadas}
