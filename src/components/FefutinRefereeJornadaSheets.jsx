@@ -8,6 +8,9 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
   const [error, setError] = useState("");
   const [archiveLoaded, setArchiveLoaded] = useState(false);
   const [expandedKey, setExpandedKey] = useState("");
+  const [photoBatch, setPhotoBatch] = useState({ jornadaKey: "", targets: [], files: [], assignments: {} });
+  const [preparingPhotoKey, setPreparingPhotoKey] = useState("");
+  const [uploadingPhotoKey, setUploadingPhotoKey] = useState("");
 
   const planillas = useMemo(() => (jornadas || []).map((jornada) => {
     const details = (jornada.detallesPartidos || [])
@@ -95,6 +98,178 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       });
     return () => { active = false; };
   }, [currentUser?.id]);
+
+  const preparePhotoBatch = async (jornada) => {
+    if (!currentUser?.id || !jornada?.allClosed || !jornada.turnJourneyId || preparingPhotoKey) return;
+    setPreparingPhotoKey(jornada.jornadaKey);
+    setError("");
+    setMessage("");
+    try {
+      const matchIds = [...new Set(jornada.details.map((detail) => detail.normalizedMatchId).filter(Boolean))];
+      if (!matchIds.length || matchIds.length !== jornada.details.length) {
+        throw new Error("Esta jornada contiene partidos antiguos o sin vínculo normalizado. No se mezclarán con las planillas nuevas; requiere revisión antes de cerrar.");
+      }
+      const { data: sheets, error: sheetsError } = await supabase
+        .from("fefutin_match_sheets")
+        .select("id,tournament_id,normalized_match_id,lado,categoria,estado")
+        .in("normalized_match_id", matchIds)
+        .in("tournament_id", jornada.tournamentIds)
+        .in("estado", ["cerrada", "cerrado"]);
+      if (sheetsError) throw sheetsError;
+
+      const targets = [{
+        key: "general",
+        label: "PLANILLA GENERAL DE LA JORNADA",
+        document_type: "general",
+        match_sheet_id: null,
+        tournament_id: jornada.tournamentId,
+        categoria: null,
+        turn_id: jornada.turnId,
+        turn_journey_id: jornada.turnJourneyId,
+        turno: jornada.turno,
+        journey_number: Number(jornada.journeyNumber) || null,
+        jornada_date: jornada.scheduledDate || new Date().toISOString().slice(0, 10),
+        jornada_label: String(jornada.journeyNumber || ""),
+        uploaded: false,
+      }];
+
+      for (const detail of jornada.details) {
+        for (const side of ["local", "visitante"]) {
+          const matches = (sheets || []).filter((sheet) =>
+            sheet.normalized_match_id === detail.normalizedMatchId &&
+            sheet.lado === side
+          );
+          if (matches.length !== 1) {
+            throw new Error("No se encontró exactamente una planilla digital cerrada para " +
+              detail.categoria + " · " + detail.team1 + " vs. " + detail.team2 +
+              " (" + side + "). No se archivó ninguna foto.");
+          }
+          const sheet = matches[0];
+          targets.push({
+            key: sheet.id,
+            label: detail.categoria + " · " + detail.team1 + " vs. " + detail.team2 +
+              " · PLANILLA " + side.toUpperCase(),
+            document_type: "category",
+            match_sheet_id: sheet.id,
+            tournament_id: sheet.tournament_id,
+            categoria: sheet.categoria || detail.categoria || null,
+            turn_id: jornada.turnId,
+            turn_journey_id: jornada.turnJourneyId,
+            turno: jornada.turno,
+            journey_number: Number(jornada.journeyNumber) || null,
+            jornada_date: jornada.scheduledDate || new Date().toISOString().slice(0, 10),
+            jornada_label: String(jornada.journeyNumber || ""),
+            uploaded: false,
+          });
+        }
+      }
+
+      const { data: existingPhotos, error: photosError } = await supabase
+        .from("fefutin_jornada_photos")
+        .select("match_sheet_id,document_type")
+        .eq("referee_id", currentUser.id)
+        .eq("turn_journey_id", jornada.turnJourneyId);
+      if (photosError) throw photosError;
+      const uploadedKeys = new Set((existingPhotos || []).map((photo) =>
+        photo.document_type === "general" ? "general" : photo.match_sheet_id
+      ));
+      const checkedTargets = targets.map((target) => ({
+        ...target,
+        uploaded: uploadedKeys.has(target.key),
+      }));
+      setPhotoBatch({
+        jornadaKey: jornada.jornadaKey,
+        targets: checkedTargets,
+        files: [],
+        assignments: {},
+      });
+      const pending = checkedTargets.filter((target) => !target.uploaded).length;
+      setMessage(pending
+        ? "Se identificaron " + checkedTargets.length + " documentos. Seleccioná las fotos que faltan."
+        : "Todas las fotos ya están archivadas. Podés cerrar la jornada.");
+    } catch (err) {
+      setError(err.message || "No se pudieron preparar las fotos de la jornada.");
+    } finally {
+      setPreparingPhotoKey("");
+    }
+  };
+
+  const updatePhotoFiles = (fileList) => {
+    const files = Array.from(fileList || []);
+    const pendingTargets = photoBatch.targets.filter((target) => !target.uploaded);
+    const assignments = {};
+    if (files.length === pendingTargets.length) {
+      pendingTargets.forEach((target, index) => { assignments[target.key] = String(index); });
+    }
+    setPhotoBatch((current) => ({ ...current, files, assignments }));
+  };
+
+  const uploadPhotoBatchAndClose = async (jornada) => {
+    if (!currentUser?.id || uploadingPhotoKey || photoBatch.jornadaKey !== jornada.jornadaKey) return;
+    const pendingTargets = photoBatch.targets.filter((target) => !target.uploaded);
+    const usedFiles = Object.values(photoBatch.assignments);
+    if (pendingTargets.length !== usedFiles.length ||
+        pendingTargets.some((target) => photoBatch.assignments[target.key] == null) ||
+        new Set(usedFiles).size !== usedFiles.length) {
+      setError("Asigná una foto distinta a cada planilla pendiente, incluida la planilla general.");
+      return;
+    }
+    setUploadingPhotoKey(jornada.jornadaKey);
+    setError("");
+    setMessage("");
+    try {
+      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+      for (let index = 0; index < pendingTargets.length; index += 1) {
+        const target = pendingTargets[index];
+        const file = photoBatch.files[Number(photoBatch.assignments[target.key])];
+        if (!file || !allowedTypes.includes(file.type)) {
+          throw new Error("Todas las fotos deben estar en formato JPG, PNG o WEBP.");
+        }
+        if (file.size > 12 * 1024 * 1024) {
+          throw new Error("La foto " + file.name + " supera el límite de 12 MB.");
+        }
+        const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const storagePath = currentUser.id + "/jornada-" + jornada.jornadaKey + "-" +
+          target.key + "-" + Date.now() + "-" + index + "." + extension;
+        const { error: uploadError } = await supabase.storage
+          .from("fefutin-jornada-photos")
+          .upload(storagePath, file, { contentType: file.type, upsert: false });
+        if (uploadError) throw uploadError;
+        const { error: insertError } = await supabase.from("fefutin_jornada_photos").insert({
+          tournament_id: target.tournament_id,
+          turn_id: target.turn_id,
+          turn_journey_id: target.turn_journey_id,
+          turno: target.turno,
+          journey_number: target.journey_number,
+          jornada_date: target.jornada_date,
+          jornada_label: target.jornada_label,
+          referee_id: currentUser.id,
+          referee_name: currentUser.username || null,
+          storage_path: storagePath,
+          original_filename: file.name,
+          document_type: target.document_type,
+          match_sheet_id: target.match_sheet_id,
+          categoria: target.categoria,
+        });
+        if (insertError) throw insertError;
+      }
+
+      setPhotoBatch((current) => ({
+        ...current,
+        targets: current.targets.map((target) => ({ ...target, uploaded: true })),
+        files: [],
+        assignments: {},
+      }));
+      setMessage("Todas las fotos quedaron archivadas. Cerrando la jornada...");
+      await archiveJornada(jornada);
+    } catch (err) {
+      setError("La carga se detuvo para evitar cerrar una jornada incompleta: " +
+        (err.message || "Error al guardar una foto.") +
+        " Si algunas fotos ya se guardaron, volvé a preparar la carga: el sistema las reconocerá y pedirá solo las faltantes.");
+    } finally {
+      setUploadingPhotoKey("");
+    }
+  };
 
   const printJornada = (jornada, withResults) => {
     const popup = window.open("", "_blank", "width=1000,height=750");
@@ -270,9 +445,66 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
                     <button type="button" onClick={() => printJornada(jornada, false)} style={{ padding: ".6rem .7rem", border: "1px solid #777", borderRadius: "7px", background: "#242a32", color: "#fff", fontWeight: 800, fontSize: ".68rem" }}>PLANILLA GENERAL</button>
                   </div>
                 </section>
-                <button type="button" disabled={!jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey === jornada.jornadaKey || Boolean(savingKey)} onClick={() => archiveJornada(jornada)} style={{ width: "100%", padding: ".7rem", border: "1px solid #b5122a", borderRadius: "8px", background: archived ? "#333" : "#b5122a", color: "#fff", fontWeight: 900, opacity: !jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey ? .55 : 1 }}>
-                  {archived ? "GUARDADA EN ARCHIVO" : savingKey === jornada.jornadaKey ? "GUARDANDO..." : "CERRAR JORNADA Y ARCHIVAR PLANILLA"}
-                </button>
+                {!archived && (
+                  <section style={{ display: "grid", gap: ".6rem", padding: ".8rem", background: "#080b10", border: "1px solid #b5122a", borderRadius: "9px" }}>
+                    <strong style={{ color: "#f3a0ad", textAlign: "center", fontSize: ".78rem" }}>CIERRE INSTITUCIONAL · FOTOS DE LA JORNADA</strong>
+                    <p style={{ margin: 0, color: "#ccc", fontSize: ".72rem", textAlign: "center" }}>
+                      Seleccioná juntas las fotos de cada planilla local y visitante, más la planilla general. Cada foto se vincula con su documento digital.
+                    </p>
+                    {photoBatch.jornadaKey !== jornada.jornadaKey ? (
+                      <button type="button" disabled={!jornada.allClosed || !jornada.assignedMatches.length || preparingPhotoKey === jornada.jornadaKey}
+                        onClick={() => preparePhotoBatch(jornada)}
+                        style={{ width: "100%", padding: ".7rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#b5122a", color: "#fff", fontWeight: 900 }}>
+                        {preparingPhotoKey === jornada.jornadaKey ? "VERIFICANDO PLANILLAS..." : "PREPARAR CARGA DE TODAS LAS FOTOS"}
+                      </button>
+                    ) : (
+                      <>
+                        <div style={{ color: "#ddd", fontSize: ".72rem" }}>
+                          {photoBatch.targets.filter((target) => target.uploaded).length} de {photoBatch.targets.length} fotos ya archivadas.
+                        </div>
+                        {photoBatch.targets.filter((target) => !target.uploaded).length > 0 && (
+                          <>
+                            <label style={{ display: "grid", gap: ".35rem", color: "#fff", fontSize: ".72rem", fontWeight: 800 }}>
+                              SELECCIONAR TODAS LAS FOTOS
+                              <input type="file" accept="image/jpeg,image/png,image/webp" multiple
+                                onChange={(event) => updatePhotoFiles(event.target.files)}
+                                style={{ width: "100%", color: "#fff", fontSize: ".72rem" }} />
+                            </label>
+                            {photoBatch.targets.filter((target) => !target.uploaded).map((target) => (
+                              <label key={target.key} style={{ display: "grid", gap: ".3rem", color: "#ddd", fontSize: ".7rem" }}>
+                                {target.label}
+                                <select value={photoBatch.assignments[target.key] ?? ""}
+                                  onChange={(event) => setPhotoBatch((current) => ({
+                                    ...current,
+                                    assignments: { ...current.assignments, [target.key]: event.target.value },
+                                  }))}
+                                  style={{ width: "100%", padding: ".55rem", borderRadius: "7px", background: "#fff", color: "#171c27" }}>
+                                  <option value="">Elegir foto...</option>
+                                  {photoBatch.files.map((file, index) => (
+                                    <option key={index} value={String(index)}
+                                      disabled={Object.entries(photoBatch.assignments).some(([key, value]) => key !== target.key && value === String(index))}>
+                                      {file.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                            ))}
+                          </>
+                        )}
+                        <button type="button"
+                          disabled={Boolean(uploadingPhotoKey || savingKey) || (photoBatch.targets.some((target) => !target.uploaded) && photoBatch.targets.filter((target) => !target.uploaded).some((target) => photoBatch.assignments[target.key] == null))}
+                          onClick={() => photoBatch.targets.some((target) => !target.uploaded)
+                            ? uploadPhotoBatchAndClose(jornada)
+                            : archiveJornada(jornada)}
+                          style={{ width: "100%", padding: ".7rem", border: "1px solid #b5122a", borderRadius: "8px", background: "#b5122a", color: "#fff", fontWeight: 900 }}>
+                          {uploadingPhotoKey === jornada.jornadaKey ? "SUBIENDO FOTOS..." :
+                            photoBatch.targets.some((target) => !target.uploaded) ? "SUBIR FOTOS Y CERRAR JORNADA" : "CERRAR JORNADA Y ARCHIVAR PLANILLA"}
+                        </button>
+                      </>
+                    )}
+                  </section>
+                )}
+                {archived && <div style={{ padding: ".7rem", textAlign: "center", color: "#86efac", fontWeight: 900 }}>JORNADA CERRADA · FOTOS ARCHIVADAS</div>}
               </div>
             )}
           </article>
