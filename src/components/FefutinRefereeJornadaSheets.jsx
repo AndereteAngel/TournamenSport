@@ -295,8 +295,10 @@ il.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.sc
     }
   };
 
-  const printJornada = (jornada, withResults) => {
-    const popup = window.open("", "_blank", "width=1000,height=750");
+  const printJornada = (jornada, mode) => {
+    const isGeneral = mode === "general";
+    const standings = turnStandingsById[String(jornada.turnId)] || [];
+    const popup = window.open("", "_blank", "width=1100,height=800");
     if (!popup) {
       setError("El navegador bloqueó la impresión. Permití las ventanas emergentes para imprimir la planilla.");
       return;
@@ -305,42 +307,39 @@ il.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.sc
       "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
     })[character]);
     const rows = jornada.details.map((detail) => {
-      // Mostrar siempre los marcadores ya cargados, incluso en la planilla oficial.
-      // Los espacios quedan reservados únicamente para partidos pendientes.
       const hasResult = Boolean(detail.resultadoCargado);
-      const result = hasResult
-        ? `${detail.score1} - ${detail.score2}`
-        : withResults ? "— - —" : "_____ - _____";
+      const result = hasResult ? String(detail.score1) + " - " + String(detail.score2) : "Pendiente";
       const referee = detail.referee_name || (detail.referee_id ? "Árbitro designado" : "Sin designar");
       const winner = !hasResult ? "—" : detail.score1 > detail.score2 ? detail.team1 : detail.score2 > detail.score1 ? detail.team2 : "Empate";
       const points = hasResult
-        ? `${detail.team1 || "Local"}: ${detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)} pts · ${detail.team2 || "Visitante"}: ${detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)} pts`
+        ? (detail.team1 || "Local") + ": " + (detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)) + " pts · " + (detail.team2 || "Visitante") + ": " + (detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)) + " pts"
         : "—";
-      return `<tr><td>${escapeHtml(detail.categoria)}</td><td>${escapeHtml(detail.team1 || "—")}</td><td class="score">${result}</td><td>${escapeHtml(detail.team2 || "—")}</td><td>${escapeHtml(winner)}</td><td class="score">${escapeHtml(points)}</td><td>${escapeHtml(referee)}</td></tr>`;
+      return "<tr><td>" + escapeHtml(detail.categoria) + "</td><td>" + escapeHtml(detail.team1 || "—") + "</td><td class=\"score\">" + escapeHtml(result) + "</td><td>" + escapeHtml(detail.team2 || "—") + "</td><td>" + escapeHtml(winner) + "</td><td>" + escapeHtml(points) + "</td><td>" + escapeHtml(referee) + "</td></tr>";
     }).join("");
+    const standingsRows = standings.map((team, index) =>
+      "<tr><td>" + (index + 1) + "</td><td>" + escapeHtml(team.equipo) + "</td><td>" + team.puntos + "</td><td>" + team.partidos + "</td><td>" + team.ganados + "</td><td>" + team.empatados + "</td><td>" + team.perdidos + "</td><td>" + team.golesFavor + "</td><td>" + team.golesContra + "</td><td>" + (team.golesFavor - team.golesContra) + "</td></tr>"
+    ).join("");
     const dateLabel = jornada.scheduledDate
-      ? new Date(`${jornada.scheduledDate}T12:00:00`).toLocaleDateString("es-AR")
+      ? new Date(jornada.scheduledDate + "T12:00:00").toLocaleDateString("es-AR")
       : "Fecha a confirmar";
-    const signatures = withResults ? "" : `<div class="signatures"><div>Firma de árbitro/s<br><br>____________________________</div><div>Firma de responsable de jornada<br><br>____________________________</div></div>`;
+    const signatures = isGeneral ? "<div class=\"signatures\"><div>Firma de árbitro/s<br><br>____________________________</div><div>Firma de responsable de jornada<br><br>____________________________</div></div>" : "";
+    const generalBlock = isGeneral
+      ? "<h2>TABLA GENERAL ACUMULADA · " + escapeHtml(jornada.branch) + " · " + escapeHtml(jornada.turno) + "</h2><div class=\"meta\">Acumulado de todos los partidos finalizados de todas las categorías y jornadas de este turno.</div><table><thead><tr><th>Pos.</th><th>Club</th><th>PTS</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th><th>GF</th><th>GC</th><th>DIF</th></tr></thead><tbody>" + (standingsRows || "<tr><td colspan=\"10\">Todavía no hay resultados acumulados.</td></tr>") + "</tbody></table>" + (turnStandingsErrors[String(jornada.turnId)] ? "<p>" + escapeHtml(turnStandingsErrors[String(jornada.turnId)]) + "</p>" : "") + signatures
+      : "";
     popup.document.open();
-    popup.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Planilla general FEFUTIN</title><style>
-      @page{size:A4 portrait;margin:13mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}
-      header{border-bottom:4px solid #b5122a;padding-bottom:12px;margin-bottom:16px}.brand{color:#b5122a;font-weight:900;letter-spacing:3px;font-size:13px}
-      h1{font-size:20px;margin:8px 0 5px}.meta{font-size:11px;color:#555}.journey{font-size:16px;font-weight:900;margin-top:10px}
-      table{width:100%;border-collapse:collapse;margin-top:16px;font-size:8px}th{background:#171c27;color:#fff;text-align:left;padding:8px 6px}
-      td{height:34px;padding:6px;border-bottom:1px solid #cfd3da}.score{text-align:center;font-weight:900;white-space:nowrap}
-      .signatures{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:42px;text-align:center;font-size:11px;page-break-inside:avoid}
-      @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-      </style></head><body><header><div class="brand">FEFUTIN</div><h1>PLANILLA OFICIAL GENERAL DE JORNADA</h1>
-      <div class="meta">${escapeHtml(jornada.tournamentTitle)} · Rama ${escapeHtml(jornada.branch)} · Turno ${escapeHtml(jornada.turno)}</div>
-      <div class="journey">JORNADA ${escapeHtml(jornada.journeyNumber)} · ${escapeHtml(dateLabel)}</div>
-      <div class="meta">${jornada.matchCount} encuentros · ${escapeHtml(jornada.categories.join(" · "))}</div></header>
-      <table><thead><tr><th>Categoría</th><th>Local</th><th>Resultado</th><th>Visitante</th><th>Ganador</th><th>Puntos por equipo</th><th>Árbitro</th></tr></thead><tbody>${rows}</tbody></table>
-      ${signatures}</body></html>`);
+    popup.document.write("<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><title>" + (isGeneral ? "Planilla general digital" : "Resumen de jornada") + " FEFUTIN</title><style>" +
+      "@page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}" +
+      "header{border-bottom:4px solid #b5122a;padding-bottom:10px;margin-bottom:14px}.brand{color:#b5122a;font-weight:900;letter-spacing:3px;font-size:13px}" +
+      "h1{font-size:19px;margin:7px 0 5px}.meta{font-size:10px;color:#555}.journey{font-size:14px;font-weight:900;margin-top:8px}h2{font-size:13px;margin:18px 0 7px;color:#b5122a}" +
+      "table{width:100%;border-collapse:collapse;margin-top:8px;font-size:8px}th{background:#171c27;color:#fff;text-align:left;padding:7px 5px}td{padding:6px 5px;border-bottom:1px solid #cfd3da}.score{text-align:center;font-weight:900;white-space:nowrap}" +
+      ".signatures{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;text-align:center;font-size:10px;page-break-inside:avoid}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}" +
+      "</style></head><body><header><div class=\"brand\">FEFUTIN</div><h1>" + (isGeneral ? "PLANILLA DIGITAL GENERAL DE JORNADA" : "RESUMEN DE JORNADA") + "</h1>" +
+      "<div class=\"meta\">" + escapeHtml(jornada.tournamentTitle) + " · Rama " + escapeHtml(jornada.branch) + " · Turno " + escapeHtml(jornada.turno) + "</div>" +
+      "<div class=\"journey\">JORNADA " + escapeHtml(jornada.journeyNumber) + " · " + escapeHtml(dateLabel) + "</div><div class=\"meta\">" + jornada.matchCount + " encuentros · " + escapeHtml(jornada.categories.join(" · ")) + " · " + jornada.partidosJugados + " partidos con resultado</div></header>" +
+      "<h2>ENCUENTROS DE LA JORNADA</h2><table><thead><tr><th>Categoría</th><th>Local</th><th>Resultado</th><th>Visitante</th><th>Ganador</th><th>Puntos por equipo</th><th>Árbitro</th></tr></thead><tbody>" + rows + "</tbody></table>" + generalBlock + "</body></html>");
     popup.document.close();
     window.setTimeout(() => { popup.focus(); popup.print(); }, 300);
   };
-
   const archiveJornada = async (jornada) => {
     if (!currentUser?.id || !jornada?.allClosed || !jornada.assignedMatches.length ||
         savedKeys.has(jornada.jornadaKey) || savingKey) return;
@@ -475,8 +474,8 @@ il.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.sc
                       : <p style={{ color: "#aaa", fontSize: ".7rem", textAlign: "center", margin: 0 }}>Todavía no hay puntos acumulados.</p>}
                   </section>
                   <div style={{ marginTop: ".65rem", display: "flex", justifyContent: "center", gap: ".5rem", flexWrap: "wrap" }}>
-                    <button type="button" onClick={() => printJornada(jornada, true)} style={{ padding: ".6rem .7rem", border: "1px solid #777", borderRadius: "7px", background: "#242a32", color: "#fff", fontWeight: 800, fontSize: ".68rem" }}>IMPRIMIR RESUMEN</button>
-                    <button type="button" onClick={() => printJornada(jornada, false)} style={{ padding: ".6rem .7rem", border: "1px solid #777", borderRadius: "7px", background: "#242a32", color: "#fff", fontWeight: 800, fontSize: ".68rem" }}>PLANILLA GENERAL</button>
+                    <button type="button" onClick={() => printJornada(jornada, "summary")} style={{ padding: ".6rem .7rem", border: "1px solid #777", borderRadius: "7px", background: "#242a32", color: "#fff", fontWeight: 800, fontSize: ".68rem" }}>IMPRIMIR RESUMEN</button>
+                    <button type="button" onClick={() => printJornada(jornada, "general")} style={{ padding: ".6rem .7rem", border: "1px solid #777", borderRadius: "7px", background: "#242a32", color: "#fff", fontWeight: 800, fontSize: ".68rem" }}>PLANILLA GENERAL</button>
                   </div>
                 </section>
                 {!archived && (
