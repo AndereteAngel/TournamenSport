@@ -29,8 +29,8 @@ const buildStandings = (category, archivedJourneys) => {
     if (normalize(detail.categoria) !== normalize(category.name)) return;
     const matchKey = detail.normalizedMatchId || detail.matchId || detail.id;
     if (matchKey && seenMatches.has(String(matchKey))) return;
-    if (matchKey) seenMatches.add(String(matchKey));
     if (detail.score1 == null || detail.score2 == null) return;
+    if (matchKey) seenMatches.add(String(matchKey));
     const local = teams.get(normalize(detail.team1));
     const visitor = teams.get(normalize(detail.team2));
     if (!local || !visitor) return;
