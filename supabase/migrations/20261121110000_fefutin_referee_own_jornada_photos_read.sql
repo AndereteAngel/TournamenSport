@@ -1,6 +1,15 @@
--- FEFUTIN: permitir que el árbitro consulte únicamente sus propias fotos
--- para validar cargas múltiples y evitar duplicar documentos al reintentar.
+-- FEFUTIN: vincular fotos nuevas a la jornada normalizada y permitir que
+-- el árbitro consulte únicamente sus propias fotos para reintentos seguros.
+-- Los registros históricos quedan con turn_journey_id NULL y no se mezclan.
 begin;
+
+alter table public.fefutin_jornada_photos
+  add column if not exists turn_journey_id uuid
+    references public.fefutin_turn_journeys(id) on delete set null;
+
+create index if not exists fefutin_jornada_photos_turn_journey_idx
+  on public.fefutin_jornada_photos (turn_journey_id, referee_id)
+  where turn_journey_id is not null;
 
 drop policy if exists fefutin_jornada_photos_referee_own_select
   on public.fefutin_jornada_photos;
