@@ -7,6 +7,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [archiveLoaded, setArchiveLoaded] = useState(false);
+  const [expandedKey, setExpandedKey] = useState("");
   const archivingKeysRef = useRef(new Set());
 
   const planillas = useMemo(() => (jornadas || []).map((jornada) => {
@@ -24,6 +25,33 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
     const assignedMatches = details.filter((detail) =>
       String(detail.referee_id || "") === String(currentUser?.id || "")
     );
+    const teamTotalsMap = new Map();
+    details.forEach((detail) => {
+      if (!detail.resultadoCargado) return;
+      const addTeamPoints = (name, points) => {
+        const teamName = String(name || "").trim();
+        if (!teamName) return;
+        const normalized = teamName.toLocaleLowerCase("es");
+        const current = teamTotalsMap.get(normalized) || { equipo: teamName, puntos: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0 };
+        current.puntos += Number(points) || 0;
+        current.partidos += 1;
+        teamTotalsMap.set(normalized, current);
+      };
+      addTeamPoints(detail.team1, detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2));
+      addTeamPoints(detail.team2, detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2));
+      const local = teamTotalsMap.get(String(detail.team1 || "").trim().toLocaleLowerCase("es"));
+      const visitante = teamTotalsMap.get(String(detail.team2 || "").trim().toLocaleLowerCase("es"));
+      if (local && visitante) {
+        if (detail.score1 > detail.score2) { local.ganados += 1; visitante.perdidos += 1; }
+        else if (detail.score1 < detail.score2) { visitante.ganados += 1; local.perdidos += 1; }
+        else { local.empatados += 1; visitante.empatados += 1; }
+      }
+    });
+    const teamTotals = [...teamTotalsMap.values()].sort((a, b) =>
+      b.puntos - a.puntos || a.equipo.localeCompare(b.equipo, "es")
+    );
+    const totalPointsTeam1 = details.reduce((sum, detail) => sum + (detail.resultadoCargado ? Number(detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)) : 0), 0);
+    const totalPointsTeam2 = details.reduce((sum, detail) => sum + (detail.resultadoCargado ? Number(detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)) : 0), 0);
     const legacyPendingReview = details.some((detail) => detail.legacy_pending_review);
     const allClosed = details.length > 0 && details.every((detail) => detail.referee_closed) && !legacyPendingReview;
     return {
@@ -46,6 +74,9 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       legacyPendingReview,
       matchCount: details.length,
       partidosJugados: details.filter((detail) => detail.resultadoCargado).length,
+      teamTotals,
+      totalPointsTeam1,
+      totalPointsTeam2,
     };
   }), [jornadas, currentUser?.id]);
 
@@ -132,8 +163,8 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       jornada_date: jornada.scheduledDate || new Date().toISOString().slice(0, 10),
       categorias: jornada.categories,
       detalles: jornada.details,
-      puntos_local: 0,
-      puntos_visitante: 0,
+      puntos_local: jornada.totalPointsTeam1,
+      puntos_visitante: jornada.totalPointsTeam2,
       closed_at: new Date().toISOString(),
     };
     const { error: insertError } = await supabase.from("fefutin_jornada_sheets").insert(payload);
@@ -177,8 +208,8 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
           jornada_date: jornada.scheduledDate || new Date().toISOString().slice(0, 10),
           categorias: jornada.categories,
           detalles: jornada.details,
-          puntos_local: 0,
-          puntos_visitante: 0,
+          puntos_local: jornada.totalPointsTeam1,
+          puntos_visitante: jornada.totalPointsTeam2,
           closed_at: new Date().toISOString(),
         };
         const { error: insertError } = await supabase.from("fefutin_jornada_sheets").insert(payload);
@@ -207,49 +238,83 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       <p style={{ color: "#bbb", fontSize: ".78rem", margin: 0 }}>Cada planilla reúne todos los encuentros de la misma jornada y turno, aunque pertenezcan a categorías distintas. Cada partido conserva su planilla individual.</p>
       {planillas.map((jornada) => {
         const archived = savedKeys.has(jornada.jornadaKey);
+        const expanded = expandedKey === jornada.jornadaKey;
         const dateLabel = jornada.scheduledDate
           ? new Date(`${jornada.scheduledDate}T12:00:00`).toLocaleDateString("es-AR")
           : "Fecha a confirmar";
+        const pendingCount = jornada.details.filter((detail) => !detail.referee_closed).length;
         return (
-          <article key={jornada.key} style={{ padding: ".85rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171c27" }}>
-            <div style={{ textAlign: "center", color: "#fff", fontWeight: 900 }}>
+          <article key={jornada.key} style={{ padding: ".9rem", border: "1px solid #b5122a", borderRadius: "12px", background: "linear-gradient(145deg, #171c27, #090a0e)", color: "#fff" }}>
+            <div style={{ textAlign: "center", color: "#f3a0ad", fontWeight: 900, letterSpacing: ".06em" }}>
               JORNADA {jornada.journeyNumber} · {dateLabel}
             </div>
-            <small style={{ display: "block", textAlign: "center", color: "#bbb", marginTop: ".3rem" }}>{jornada.tournamentTitle} · {jornada.branch} · {jornada.turno} · {jornada.matchCount} encuentro(s) · {jornada.categories.length} categoría(s)</small>
-            <div style={{ display: "grid", gap: ".4rem", marginTop: ".7rem" }}>
-              {jornada.details.map((detail) => {
-                const assignedToThisReferee = String(detail.referee_id || "") === String(currentUser?.id || "");
-                const canOpen = assignedToThisReferee || ["admin", "directivo"].includes(String(currentUser?.role || "").toLowerCase());
-                return (
-                  <div key={detail.matchId} style={{ display: "grid", gridTemplateColumns: "minmax(0, .7fr) minmax(0, 1.7fr)", gap: ".35rem .5rem", alignItems: "center", padding: ".6rem", background: "#080b10", borderRadius: "7px", color: "#eee", fontSize: ".72rem" }}>
-                    <strong style={{ color: "#f3a0ad" }}>{detail.categoria}</strong>
-                    <span style={{ fontWeight: 800 }}>{detail.team1} <span style={{ color: "#f3a0ad" }}>{detail.score1 == null ? "—" : detail.score1} - {detail.score2 == null ? "—" : detail.score2}</span> {detail.team2}</span>
-                    <small style={{ gridColumn: "1 / -1", color: "#9ca3af" }}>
-                      {detail.scheduled_time ? `${detail.scheduled_time} · ` : ""}{detail.referee_closed ? "ENCUENTRO CERRADO" : assignedToThisReferee ? "PLANILLA PENDIENTE" : detail.referee_id ? "ASIGNADO A OTRO ÁRBITRO" : "SIN ÁRBITRO DESIGNADO"}
-                    </small>
-                    {detail.venue_address && <small style={{ gridColumn: "1 / -1", color: "#9ca3af" }}>Sede: {detail.venue_address}</small>}
-                    <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end", borderTop: "1px solid #343a40", paddingTop: ".45rem" }}>
-                      <button
-                        type="button"
-                        disabled={!onOpenMatch || !canOpen}
-                        onClick={() => onOpenMatch?.(detail)}
-                        style={{ padding: ".5rem .7rem", border: "1px solid #b5122a", borderRadius: "7px", background: detail.referee_closed ? "#242a32" : canOpen ? "#b5122a" : "#444", color: "#fff", fontWeight: 900, fontSize: ".68rem", cursor: onOpenMatch && canOpen ? "pointer" : "not-allowed", opacity: canOpen ? 1 : .6 }}
-                      >
-                        {detail.referee_closed ? "VER PLANILLA" : canOpen ? "CARGAR PLANILLA" : "SIN ACCESO"}
-                      </button>
+            <h4 style={{ margin: ".45rem 0 .25rem", textAlign: "center", color: "#fff", fontSize: "1rem" }}>{jornada.tournamentTitle}</h4>
+            <div style={{ textAlign: "center", color: "#ccc", fontSize: ".78rem" }}>{jornada.branch} · {jornada.turno}</div>
+            <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: ".4rem", margin: ".75rem 0" }}>
+              <span style={{ border: "1px solid #555", borderRadius: "999px", padding: ".3rem .6rem", fontSize: ".7rem" }}>{jornada.matchCount} encuentros</span>
+              <span style={{ border: "1px solid #555", borderRadius: "999px", padding: ".3rem .6rem", fontSize: ".7rem" }}>{jornada.categories.length} categorías</span>
+              <span style={{ border: "1px solid #555", borderRadius: "999px", padding: ".3rem .6rem", fontSize: ".7rem" }}>{jornada.partidosJugados} con resultado</span>
+              <span style={{ border: "1px solid #555", borderRadius: "999px", padding: ".3rem .6rem", fontSize: ".7rem" }}>{pendingCount} pendientes de cierre</span>
+            </div>
+            <div style={{ color: archived ? "#86efac" : jornada.legacyPendingReview ? "#fca5a5" : jornada.allClosed ? "#86efac" : "#fcd34d", textAlign: "center", fontSize: ".72rem", fontWeight: 900, marginBottom: ".7rem" }}>
+              {archived ? "PLANILLA GENERAL ARCHIVADA" : jornada.legacyPendingReview ? "HAY PARTIDOS ANTIGUOS PENDIENTES DE REVISIÓN" : jornada.allClosed ? "TODOS LOS ENCUENTROS CERRADOS" : `${jornada.assignedMatches.length} PARTIDO(S) ASIGNADO(S) A VOS`}
+            </div>
+            <button type="button" onClick={() => setExpandedKey(expanded ? "" : jornada.jornadaKey)} aria-expanded={expanded} style={{ width: "100%", padding: ".75rem", border: "1px solid #e05a70", borderRadius: "8px", background: expanded ? "#171c27" : "#b5122a", color: "#fff", fontWeight: 900, letterSpacing: ".05em" }}>
+              {expanded ? "OCULTAR PLANILLAS ▲" : "PLANILLAS · VER ENCUENTROS ▼"}
+            </button>
+            {expanded && (
+              <div style={{ display: "grid", gap: ".7rem", marginTop: ".8rem" }}>
+                <div style={{ display: "grid", gap: ".45rem" }}>
+                  {jornada.details.map((detail) => {
+                    const assignedToThisReferee = String(detail.referee_id || "") === String(currentUser?.id || "");
+                    const canOpen = assignedToThisReferee || ["admin", "directivo"].includes(String(currentUser?.role || "").toLowerCase());
+                    const winner = !detail.resultadoCargado ? "Resultado pendiente" : detail.score1 > detail.score2 ? detail.team1 : detail.score2 > detail.score1 ? detail.team2 : "Empate";
+                    const points1 = detail.resultadoCargado ? Number(detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)) : null;
+                    const points2 = detail.resultadoCargado ? Number(detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)) : null;
+                    return (
+                      <div key={detail.matchId} style={{ display: "grid", gap: ".4rem", padding: ".7rem", background: "#080b10", border: "1px solid #343a40", borderRadius: "8px" }}>
+                        <strong style={{ color: "#f3a0ad", fontSize: ".72rem" }}>{detail.categoria}</strong>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: ".45rem", textAlign: "center" }}>
+                          <strong style={{ fontSize: ".78rem", overflowWrap: "anywhere" }}>{detail.team1 || "—"}</strong>
+                          <strong style={{ color: "#fff", whiteSpace: "nowrap" }}>{detail.score1 == null ? "—" : detail.score1} - {detail.score2 == null ? "—" : detail.score2}</strong>
+                          <strong style={{ fontSize: ".78rem", overflowWrap: "anywhere" }}>{detail.team2 || "—"}</strong>
+                        </div>
+                        <small style={{ color: "#bbb", textAlign: "center" }}>
+                          {detail.resultadoCargado ? `${winner} · Puntos: ${points1} - ${points2}` : "Resultado pendiente"}
+                          {" · "}{detail.referee_closed ? "ENCUENTRO CERRADO" : assignedToThisReferee ? "PLANILLA PENDIENTE" : detail.referee_id ? "ASIGNADO A OTRO ÁRBITRO" : "SIN ÁRBITRO DESIGNADO"}
+                        </small>
+                        {detail.venue_address && <small style={{ color: "#9ca3af" }}>Sede: {detail.venue_address}</small>}
+                        <button type="button" disabled={!onOpenMatch || !canOpen} onClick={() => onOpenMatch?.(detail)} style={{ width: "100%", padding: ".6rem", border: "1px solid #b5122a", borderRadius: "7px", background: detail.referee_closed ? "#242a32" : canOpen ? "#b5122a" : "#444", color: "#fff", fontWeight: 900, fontSize: ".7rem", cursor: onOpenMatch && canOpen ? "pointer" : "not-allowed", opacity: canOpen ? 1 : .6 }}>
+                          {detail.referee_closed ? "VER PLANILLA" : canOpen ? "CARGAR PLANILLA" : "SIN ACCESO"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+                <section style={{ padding: ".8rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "9px" }}>
+                  <div style={{ color: "#f3a0ad", fontWeight: 900, fontSize: ".78rem", textAlign: "center", letterSpacing: ".06em" }}>RESUMEN GENERAL DE LA JORNADA</div>
+                  <div style={{ color: "#ccc", fontSize: ".7rem", textAlign: "center", margin: ".35rem 0 .65rem" }}>Puntaje acumulado de todos los encuentros con resultado cargado.</div>
+                  {jornada.teamTotals.length ? (
+                    <div style={{ display: "grid", gap: ".35rem" }}>
+                      {jornada.teamTotals.map((team) => (
+                        <div key={team.equipo} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: ".5rem", alignItems: "center", padding: ".45rem .55rem", background: "#20242c", borderRadius: "6px" }}>
+                          <span style={{ fontSize: ".78rem", fontWeight: 800 }}>{team.equipo}</span>
+                          <strong style={{ color: "#f3a0ad", fontSize: ".85rem" }}>{team.puntos} pts</strong>
+                          <small style={{ gridColumn: "1 / -1", color: "#aaa", fontSize: ".66rem" }}>{team.ganados} ganados · {team.empatados} empatados · {team.perdidos} perdidos</small>
+                        </div>
+                      ))}
                     </div>
+                  ) : <p style={{ margin: 0, color: "#aaa", textAlign: "center", fontSize: ".75rem" }}>Todavía no hay resultados para sumar.</p>}
+                  <div style={{ marginTop: ".65rem", display: "flex", justifyContent: "center", gap: ".5rem", flexWrap: "wrap" }}>
+                    <button type="button" onClick={() => printJornada(jornada, true)} style={{ padding: ".6rem .7rem", border: "1px solid #777", borderRadius: "7px", background: "#242a32", color: "#fff", fontWeight: 800, fontSize: ".68rem" }}>IMPRIMIR RESUMEN</button>
+                    <button type="button" onClick={() => printJornada(jornada, false)} style={{ padding: ".6rem .7rem", border: "1px solid #777", borderRadius: "7px", background: "#242a32", color: "#fff", fontWeight: 800, fontSize: ".68rem" }}>PLANILLA GENERAL</button>
                   </div>
-                );
-              })}
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", flexWrap: "wrap", marginTop: ".75rem" }}>
-              <span style={{ color: archived ? "#86efac" : jornada.legacyPendingReview ? "#fca5a5" : jornada.allClosed ? "#86efac" : "#fcd34d", fontSize: ".72rem", fontWeight: 800 }}>
-                {archived ? "PLANILLA GENERAL ARCHIVADA" : jornada.legacyPendingReview ? "HAY PARTIDOS ANTIGUOS PENDIENTES DE REVISIÓN" : jornada.allClosed ? "TODOS LOS ENCUENTROS CERRADOS" : `${jornada.assignedMatches.length} PARTIDO(S) ASIGNADO(S) A VOS`}
-              </span>
-              <button type="button" disabled={!jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey === jornada.jornadaKey || Boolean(savingKey)} onClick={() => archiveJornada(jornada)} style={{ padding: ".65rem .8rem", border: "1px solid #b5122a", borderRadius: "8px", background: archived ? "#333" : "#b5122a", color: "#fff", fontWeight: 900, opacity: !jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey ? .55 : 1 }}>
-                {archived ? "GUARDADA EN ARCHIVO" : savingKey === jornada.jornadaKey ? "GUARDANDO..." : "CERRAR Y ARCHIVAR PLANILLA"}
-              </button>
-            </div>
+                </section>
+                <button type="button" disabled={!jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey === jornada.jornadaKey || Boolean(savingKey)} onClick={() => archiveJornada(jornada)} style={{ width: "100%", padding: ".7rem", border: "1px solid #b5122a", borderRadius: "8px", background: archived ? "#333" : "#b5122a", color: "#fff", fontWeight: 900, opacity: !jornada.allClosed || !jornada.assignedMatches.length || archived || savingKey ? .55 : 1 }}>
+                  {archived ? "GUARDADA EN ARCHIVO" : savingKey === jornada.jornadaKey ? "GUARDANDO..." : "CERRAR Y ARCHIVAR PLANILLA"}
+                </button>
+              </div>
+            )}
           </article>
         );
       })}
