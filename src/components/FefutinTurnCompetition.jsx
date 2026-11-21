@@ -22,7 +22,7 @@ const buildStandings = (category) => {
   });
   const matches = (category?.rounds || []).flatMap((round) => round.matches || []);
   matches.forEach((match) => {
-    if (match.score1 == null || match.score2 == null) return;
+    if (!match.referee_closed || match.score1 == null || match.score2 == null) return;
     const local = teams.get(normalize(match.team1));
     const visitor = teams.get(normalize(match.team2));
     if (!local || !visitor) return;
