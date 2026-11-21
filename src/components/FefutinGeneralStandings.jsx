@@ -9,9 +9,10 @@ const makeStandings = (sheets, selectedCategory, clubEntries) => {
   const processed = new Set();
   const ensureTeam = (name, categoryName) => {
     const teamName = typeof name === "string" ? name : String(name?.name || name?.club_name || name?.team_name || "");
-    const category = String(categoryName || selectedCategory || "Sin categoría").trim();
+    const category = selectedCategory || "General";
     const clubKey = normalize(teamName);
-    const key = selectedCategory ? clubKey : `${normalize(category)}::${clubKey}`;
+    // En la tabla general, el mismo club suma los puntos de todas sus categorías.
+    const key = clubKey;
     if (!clubKey) return null;
     if (!standings.has(key)) standings.set(key, {
       name: teamName.trim(), category, played: 0, wins: 0, draws: 0, losses: 0,
@@ -200,13 +201,29 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
     setLoading(true);
     setLoaded(false);
     setError("");
-    supabase.from("fefutin_public_jornada_sheets").select("*")
-      .eq("turn_id", activeTurnId)
-      .order("jornada_date", { ascending: true })
+    // Los resultados se leen directamente del fixture normalizado: cada cierre
+    // digital actualiza la tabla sin esperar el archivo fotográfico de la jornada.
+    supabase.rpc("get_fefutin_turn_competition", { p_turn_id: activeTurnId })
       .then(({ data, error: queryError }) => {
         if (!active) return;
-        if (queryError) setError("No se pudieron consultar las planillas generales cerradas: " + queryError.message);
-        else setSheets(data || []);
+        if (queryError) {
+          setError("No se pudieron consultar los resultados digitales de la competencia: " + queryError.message);
+          setSheets([]);
+        } else {
+          const liveSheets = [];
+          (data?.categories || []).forEach((category) => {
+            (category.rounds || []).forEach((round) => {
+              liveSheets.push({
+                jornada_key: String(round.turn_journey_id || round.round_id),
+                detalles: (round.matches || []).map((match) => ({
+                  ...match,
+                  categoria: match.category || match.categoria || category.name,
+                })),
+              });
+            });
+          });
+          setSheets(liveSheets);
+        }
         setLoaded(true);
         setLoading(false);
       });
@@ -235,7 +252,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
   const selectedTeamMatches = selectedTeam
     ? archivedMatches.filter((match) =>
         (normalize(match.team1) === normalize(selectedTeam) || normalize(match.team2) === normalize(selectedTeam)) &&
-        normalize(match.category) === normalize(selectedTeamCategory)
+        (selectedTeamCategory === "General" || normalize(match.category) === normalize(selectedTeamCategory))
       )
     : [];
 
@@ -359,7 +376,7 @@ export function FefutinGeneralStandings({ tournaments = [], branch = "Infantil" 
             <p style={{ color: "#ddd", textAlign: "center", margin: "1rem 0 .2rem" }}>Todavía no hay equipos cargados para esta competencia y categoría.</p>
           )}
 
-          <small style={{ display: "block", color: "#aaa", marginTop: ".7rem" }}>Solo se consultan planillas generales cerradas y archivadas. No se generan equipos ni resultados ficticios.</small>
+          <small style={{ display: "block", color: "#aaa", marginTop: ".7rem" }}>Los resultados y puntos se actualizan al cerrar digitalmente cada partido. El cierre fotográfico de la jornada no es necesario para que aparezcan en la tabla.</small>
         </div>
 
       )}
