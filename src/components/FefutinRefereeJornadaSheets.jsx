@@ -467,6 +467,13 @@ il.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.sc
                       ))}
                     </div>
                   ) : <p style={{ margin: 0, color: "#aaa", textAlign: "center", fontSize: ".75rem" }}>Todavía no hay resultados para sumar.</p>}
+                  <section style={{ marginTop: ".7rem", padding: ".7rem", border: "1px solid #555", borderRadius: "7px", background: "#171c27" }}>
+                    <strong style={{ display: "block", color: "#f3a0ad", textAlign: "center", fontSize: ".74rem" }}>PUNTOS TOTALES · {jornada.branch} · {jornada.turno}</strong>
+                    <small style={{ display: "block", color: "#bbb", textAlign: "center", margin: ".25rem 0 .55rem", fontSize: ".65rem" }}>Acumulado de todas las categorías y jornadas de este turno.</small>
+                    {turnStandingsErrors[String(jornada.turnId)] ? <p role="alert" style={{ color: "#fca5a5", fontSize: ".7rem", margin: 0 }}>{turnStandingsErrors[String(jornada.turnId)]}</p> : (turnStandingsById[String(jornada.turnId)] || []).length ?
+                      <div style={{ display: "grid", gap: ".3rem" }}>{(turnStandingsById[String(jornada.turnId)] || []).map((team, index) => <div key={normalizeTeamName(team.equipo)} style={{ display: "grid", gridTemplateColumns: "24px minmax(0,1fr) auto", gap: ".4rem", alignItems: "center", padding: ".4rem", background: "#20242c", borderRadius: "5px" }}><strong style={{ color: "#f3a0ad", fontSize: ".72rem" }}>{index + 1}.</strong><span style={{ fontSize: ".74rem", fontWeight: 800 }}>{team.equipo}</span><strong style={{ color: "#f3a0ad", fontSize: ".82rem" }}>{team.puntos} pts</strong></div>)}</div>
+                      : <p style={{ color: "#aaa", fontSize: ".7rem", textAlign: "center", margin: 0 }}>Todavía no hay puntos acumulados.</p>}
+                  </section>
                   <div style={{ marginTop: ".65rem", display: "flex", justifyContent: "center", gap: ".5rem", flexWrap: "wrap" }}>
                     <button type="button" onClick={() => printJornada(jornada, true)} style={{ padding: ".6rem .7rem", border: "1px solid #777", borderRadius: "7px", background: "#242a32", color: "#fff", fontWeight: 800, fontSize: ".68rem" }}>IMPRIMIR RESUMEN</button>
                     <button type="button" onClick={() => printJornada(jornada, false)} style={{ padding: ".6rem .7rem", border: "1px solid #777", borderRadius: "7px", background: "#242a32", color: "#fff", fontWeight: 800, fontSize: ".68rem" }}>PLANILLA GENERAL</button>
