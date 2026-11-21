@@ -280,12 +280,15 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;",
     })[character]);
     const rows = jornada.details.map((detail) => {
-      const result = withResults && detail.resultadoCargado
+      // Mostrar siempre los marcadores ya cargados, incluso en la planilla oficial.
+      // Los espacios quedan reservados únicamente para partidos pendientes.
+      const hasResult = Boolean(detail.resultadoCargado);
+      const result = hasResult
         ? `${detail.score1} - ${detail.score2}`
         : withResults ? "— - —" : "_____ - _____";
       const referee = detail.referee_name || (detail.referee_id ? "Árbitro designado" : "Sin designar");
-      const winner = !withResults || !detail.resultadoCargado ? "—" : detail.score1 > detail.score2 ? detail.team1 : detail.score2 > detail.score1 ? detail.team2 : "Empate";
-      const points = withResults && detail.resultadoCargado
+      const winner = !hasResult ? "—" : detail.score1 > detail.score2 ? detail.team1 : detail.score2 > detail.score1 ? detail.team2 : "Empate";
+      const points = hasResult
         ? `${detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)} - ${detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)}`
         : "—";
       return `<tr><td>${escapeHtml(detail.categoria)}</td><td>${escapeHtml(detail.team1 || "—")}</td><td class="score">${result}</td><td>${escapeHtml(detail.team2 || "—")}</td><td>${escapeHtml(winner)}</td><td class="score">${points}</td><td>${escapeHtml(referee)}</td></tr>`;
