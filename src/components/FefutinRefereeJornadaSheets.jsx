@@ -289,9 +289,9 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       const referee = detail.referee_name || (detail.referee_id ? "Árbitro designado" : "Sin designar");
       const winner = !hasResult ? "—" : detail.score1 > detail.score2 ? detail.team1 : detail.score2 > detail.score1 ? detail.team2 : "Empate";
       const points = hasResult
-        ? `${detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)} - ${detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)}`
+        ? `${detail.team1 || "Local"}: ${detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)} pts · ${detail.team2 || "Visitante"}: ${detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)} pts`
         : "—";
-      return `<tr><td>${escapeHtml(detail.categoria)}</td><td>${escapeHtml(detail.team1 || "—")}</td><td class="score">${result}</td><td>${escapeHtml(detail.team2 || "—")}</td><td>${escapeHtml(winner)}</td><td class="score">${points}</td><td>${escapeHtml(referee)}</td></tr>`;
+      return `<tr><td>${escapeHtml(detail.categoria)}</td><td>${escapeHtml(detail.team1 || "—")}</td><td class="score">${result}</td><td>${escapeHtml(detail.team2 || "—")}</td><td>${escapeHtml(winner)}</td><td class="score">${escapeHtml(points)}</td><td>${escapeHtml(referee)}</td></tr>`;
     }).join("");
     const dateLabel = jornada.scheduledDate
       ? new Date(`${jornada.scheduledDate}T12:00:00`).toLocaleDateString("es-AR")
@@ -310,7 +310,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       <div class="meta">${escapeHtml(jornada.tournamentTitle)} · Rama ${escapeHtml(jornada.branch)} · Turno ${escapeHtml(jornada.turno)}</div>
       <div class="journey">JORNADA ${escapeHtml(jornada.journeyNumber)} · ${escapeHtml(dateLabel)}</div>
       <div class="meta">${jornada.matchCount} encuentros · ${escapeHtml(jornada.categories.join(" · "))}</div></header>
-      <table><thead><tr><th>Categoría</th><th>Local</th><th>Resultado</th><th>Visitante</th><th>Ganador</th><th>Puntos</th><th>Árbitro</th></tr></thead><tbody>${rows}</tbody></table>
+      <table><thead><tr><th>Categoría</th><th>Local</th><th>Resultado</th><th>Visitante</th><th>Ganador</th><th>Puntos por equipo</th><th>Árbitro</th></tr></thead><tbody>${rows}</tbody></table>
       ${signatures}</body></html>`);
     popup.document.close();
     window.setTimeout(() => { popup.focus(); popup.print(); }, 300);
@@ -417,7 +417,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
                           <strong style={{ fontSize: ".78rem", overflowWrap: "anywhere" }}>{detail.team2 || "—"}</strong>
                         </div>
                         <small style={{ color: "#bbb", textAlign: "center" }}>
-                          {detail.resultadoCargado ? `${winner} · Puntos: ${points1} - ${points2}` : "Resultado pendiente"}
+                          {detail.resultadoCargado ? `${winner} · ${detail.team1}: ${points1} pts · ${detail.team2}: ${points2} pts` : "Resultado pendiente"}
                           {" · "}{detail.referee_closed ? "ENCUENTRO CERRADO" : assignedToThisReferee ? "PLANILLA PENDIENTE" : detail.referee_id ? "ASIGNADO A OTRO ÁRBITRO" : "SIN ÁRBITRO DESIGNADO"}
                         </small>
                         {detail.venue_address && <small style={{ color: "#9ca3af" }}>Sede: {detail.venue_address}</small>}
