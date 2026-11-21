@@ -242,6 +242,8 @@ export function FefutinTurnCompetition({
           <section style={{ padding: ".9rem", minWidth: 0, width: "100%", boxSizing: "border-box", overflow: "hidden", background: "#171c27", border: "1px solid #444", borderRadius: "10px" }}>
             <strong style={{ display: "block", color: "#fff" }}>{activeCategory.name} · {activeCategory.format === "league" ? "TODOS CONTRA TODOS" : activeCategory.format}</strong>
             <small style={{ color: "#bbb" }}>{activeCategory.clubs?.length || 0} clubes inscriptos</small>
+            {standingsError && <p role="alert" style={{ color: "#fca5a5", fontSize: ".76rem" }}>{standingsError}</p>}
+            {!standingsError && !standings.length && <p style={{ color: "#bbb", fontSize: ".76rem", textAlign: "center" }}>La tabla general se completa automáticamente cuando se cierra y archiva la planilla oficial de cada jornada.</p>}
             {standings.length > 0 && (
               <>
               <style>{`
