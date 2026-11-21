@@ -111,7 +111,11 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
         ? `${detail.score1} - ${detail.score2}`
         : withResults ? "— - —" : "_____ - _____";
       const referee = detail.referee_name || (detail.referee_id ? "Árbitro designado" : "Sin designar");
-      return `<tr><td>${escapeHtml(detail.categoria)}</td><td>${escapeHtml(detail.team1 || "—")}</td><td class="score">${result}</td><td>${escapeHtml(detail.team2 || "—")}</td><td>${escapeHtml(referee)}</td></tr>`;
+      const winner = !withResults || !detail.resultadoCargado ? "—" : detail.score1 > detail.score2 ? detail.team1 : detail.score2 > detail.score1 ? detail.team2 : "Empate";
+      const points = withResults && detail.resultadoCargado
+        ? `${detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)} - ${detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)}`
+        : "—";
+      return `<tr><td>${escapeHtml(detail.categoria)}</td><td>${escapeHtml(detail.team1 || "—")}</td><td class="score">${result}</td><td>${escapeHtml(detail.team2 || "—")}</td><td>${escapeHtml(winner)}</td><td class="score">${points}</td><td>${escapeHtml(referee)}</td></tr>`;
     }).join("");
     const dateLabel = jornada.scheduledDate
       ? new Date(`${jornada.scheduledDate}T12:00:00`).toLocaleDateString("es-AR")
@@ -122,7 +126,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       @page{size:A4 portrait;margin:13mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#171c27;margin:0}
       header{border-bottom:4px solid #b5122a;padding-bottom:12px;margin-bottom:16px}.brand{color:#b5122a;font-weight:900;letter-spacing:3px;font-size:13px}
       h1{font-size:20px;margin:8px 0 5px}.meta{font-size:11px;color:#555}.journey{font-size:16px;font-weight:900;margin-top:10px}
-      table{width:100%;border-collapse:collapse;margin-top:16px;font-size:9px}th{background:#171c27;color:#fff;text-align:left;padding:8px 6px}
+      table{width:100%;border-collapse:collapse;margin-top:16px;font-size:8px}th{background:#171c27;color:#fff;text-align:left;padding:8px 6px}
       td{height:34px;padding:6px;border-bottom:1px solid #cfd3da}.score{text-align:center;font-weight:900;white-space:nowrap}
       .signatures{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:42px;text-align:center;font-size:11px;page-break-inside:avoid}
       @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
@@ -130,7 +134,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       <div class="meta">${escapeHtml(jornada.tournamentTitle)} · Rama ${escapeHtml(jornada.branch)} · Turno ${escapeHtml(jornada.turno)}</div>
       <div class="journey">JORNADA ${escapeHtml(jornada.journeyNumber)} · ${escapeHtml(dateLabel)}</div>
       <div class="meta">${jornada.matchCount} encuentros · ${escapeHtml(jornada.categories.join(" · "))}</div></header>
-      <table><thead><tr><th>Categoría</th><th>Local</th><th>Resultado</th><th>Visitante</th><th>Árbitro</th></tr></thead><tbody>${rows}</tbody></table>
+      <table><thead><tr><th>Categoría</th><th>Local</th><th>Resultado</th><th>Visitante</th><th>Ganador</th><th>Puntos</th><th>Árbitro</th></tr></thead><tbody>${rows}</tbody></table>
       ${signatures}</body></html>`);
     popup.document.close();
     window.setTimeout(() => { popup.focus(); popup.print(); }, 300);
