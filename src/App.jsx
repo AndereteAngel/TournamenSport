@@ -19,7 +19,6 @@ import { FefutinClubTournamentRequests, ReferenteTorneoSolicitudes } from "./com
 import { FefutinPlayerApprovals } from "./components/FefutinPlayerApprovals";
 import { FefutinTopScorers } from "./components/FefutinTopScorers";
 import { FefutinSheetArchive } from "./components/FefutinSheetArchive";
-import { FefutinGeneralStandings } from "./components/FefutinGeneralStandings";
 import { FefutinRefereeJornadaSheets } from "./components/FefutinRefereeJornadaSheets";
 import { FefutinMatchSheet } from "./components/FefutinMatchSheet";
 import { FefutinTurnCompetition } from "./components/FefutinTurnCompetition";
