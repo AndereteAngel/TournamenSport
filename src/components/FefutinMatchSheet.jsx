@@ -30,21 +30,11 @@ const getPlayerStatus = (player) => {
 };
 
 export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initialSide = "local", onClose, isReferee = false, isAdmin = false, onCloseMatch }) {
-  const [currentUserId, setCurrentUserId] = useState("");
-  useEffect(() => {
-    let active = true;
-    supabase?.auth.getUser().then(({ data }) => { if (active) setCurrentUserId(data?.user?.id || ""); });
-    return () => { active = false; };
-  }, []);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [closingMatch, setClosingMatch] = useState(false);
-  const [categoryPhotoFile, setCategoryPhotoFile] = useState(null);
-  const [uploadingCategoryPhoto, setUploadingCategoryPhoto] = useState(false);
-  const [categoryPhotoNotice, setCategoryPhotoNotice] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [sheetId, setSheetId] = useState(null);
   const [activeSide, setActiveSide] = useState(initialSide === "visitante" ? "visitante" : "local");
   const [metadata, setMetadata] = useState({
     jornada: String(match?.journey_number || match?.round || ""),
@@ -264,7 +254,6 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         const visitorSheet = (existingSheets || []).find((item) => item.lado === "visitante");
         const legacySheet = (existingSheets || []).find((item) => !item.lado || item.lado === "conjunta");
         const metadataSheet = localSheet || visitorSheet || legacySheet;
-        setSheetId(localSheet?.id || legacySheet?.id || null);
 
         if (metadataSheet) {
           setMetadata({
@@ -427,11 +416,10 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
         return sheet.id;
       };
 
-      const [localSheetId, visitorSheetId] = await Promise.all([
+      await Promise.all([
         saveSide("local", localPlayers),
         saveSide("visitante", visitorPlayers),
       ]);
-      setSheetId(localSheetId);
       setNotice("Planilla guardada correctamente.");
       return true;
     } catch (err) {
@@ -440,51 +428,6 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
       return false;
     } finally {
       setSaving(false);
-    }
-  };
-
-  const uploadCategoryPhoto = async () => {
-    if (!supabase || !currentUserId || !sheetId || !categoryPhotoFile || uploadingCategoryPhoto || !match?.referee_closed) return;
-    setUploadingCategoryPhoto(true);
-    setError("");
-    setCategoryPhotoNotice("");
-    let storagePath = "";
-    try {
-      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-      if (!allowedTypes.includes(categoryPhotoFile.type)) throw new Error("La foto debe estar en formato JPG, PNG o WEBP.");
-      if (categoryPhotoFile.size > 12 * 1024 * 1024) throw new Error("La imagen no puede superar los 12 MB.");
-      const extension = categoryPhotoFile.name.split(".").pop()?.toLowerCase() || "jpg";
-      storagePath = `${currentUserId}/categoria-${sheetId}-${Date.now()}.${extension}`;
-      const { error: uploadError } = await supabase.storage.from("fefutin-jornada-photos")
-        .upload(storagePath, categoryPhotoFile, { contentType: categoryPhotoFile.type, upsert: false });
-      if (uploadError) throw uploadError;
-      const { data: authData, error: authError } = await supabase.auth.getUser();
-      if (authError) throw authError;
-      const { error: insertError } = await supabase.from("fefutin_jornada_photos").insert({
-        tournament_id: tournament.id,
-        turn_id: match.turn_id || null,
-        turn_journey_id: match.turn_journey_id || null,
-        turno: match.turno || null,
-        journey_number: Number(match.journey_number || match.round) || null,
-        jornada_date: metadata.fecha_partido || new Date().toISOString().slice(0, 10),
-        jornada_label: metadata.jornada || null,
-        referee_id: authData.user.id,
-        referee_name: metadata.arbitro_designado || null,
-        storage_path: storagePath,
-        original_filename: categoryPhotoFile.name,
-        document_type: "category",
-        match_sheet_id: sheetId,
-        categoria: category || null,
-      });
-      if (insertError) throw insertError;
-      setCategoryPhotoFile(null);
-      setCategoryPhotoNotice("Foto de la planilla de esta categoría guardada en el archivo.");
-    } catch (uploadError) {
-      if (storagePath) await supabase.storage.from("fefutin-jornada-photos").remove([storagePath]);
-      console.error("No se pudo guardar la foto de la planilla de categoría:", uploadError);
-      setError(uploadError.message || "No se pudo guardar la foto.");
-    } finally {
-      setUploadingCategoryPhoto(false);
     }
   };
 
@@ -871,15 +814,7 @@ export function FefutinMatchSheet({ tournament, match, categoryLabel = "", initi
             {match?.referee_closed && <strong style={{color:"#166534",alignSelf:"center"}}>✓ PARTIDO CERRADO · SOLO LECTURA</strong>}
             <button type="button" onClick={()=>window.print()} style={{background:"#b5122a",color:"#fff",borderColor:"#b5122a"}}>IMPRIMIR / GUARDAR PDF</button>
           </div>
-          {match?.referee_closed && isReferee && (
-            <section className="fefutin-no-print" style={{ marginTop: 16, padding: 14, border: "1px solid #b5122a", borderRadius: 8, background: "#fff7f8" }}>
-              <strong style={{ display: "block", color: "#b5122a", marginBottom: 8 }}>FOTO DE PLANILLA FIRMADA · {category || "CATEGORÍA"}</strong>
-              <p style={{ margin: "0 0 10px", fontSize: 12 }}>Después de cerrar el partido, subí la foto de esta planilla firmada por los referentes. Quedará archivada junto a este partido y su categoría.</p>
-              <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => setCategoryPhotoFile(event.target.files?.[0] || null)} style={{ maxWidth: "100%", marginBottom: 8 }} />
-              <button type="button" onClick={uploadCategoryPhoto} disabled={!categoryPhotoFile || uploadingCategoryPhoto || !currentUserId} style={{ display: "block", padding: "9px 14px", border: 0, borderRadius: 6, background: "#b5122a", color: "#fff", fontWeight: 800, cursor: "pointer", opacity: uploadingCategoryPhoto ? .6 : 1 }}>{uploadingCategoryPhoto ? "GUARDANDO FOTO..." : "GUARDAR FOTO DE ESTA CATEGORÍA"}</button>
-              {categoryPhotoNotice && <p role="status" style={{ color: "#166534", fontWeight: 700, marginBottom: 0 }}>{categoryPhotoNotice}</p>}
-            </section>
-          )}
+
         </>}
       </div>
     </div>
