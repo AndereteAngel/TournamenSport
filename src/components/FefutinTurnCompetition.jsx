@@ -9,9 +9,10 @@ const getLocalDateValue = () => {
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 };
 
-const buildStandings = (category) => {
+const buildStandings = (category, archivedJourneys) => {
+  if (!category || !archivedJourneys?.length) return [];
   const teams = new Map();
-  (category?.clubs || []).forEach((club) => {
+  (category.clubs || []).forEach((club) => {
     const key = normalize(club.club_name);
     if (key) teams.set(key, {
       name: club.club_name,
@@ -20,24 +21,36 @@ const buildStandings = (category) => {
       goalsFor: 0, goalsAgainst: 0, points: 0,
     });
   });
-  const matches = (category?.rounds || []).flatMap((round) => round.matches || []);
-  matches.forEach((match) => {
-    if (!match.referee_closed || match.score1 == null || match.score2 == null) return;
-    const local = teams.get(normalize(match.team1));
-    const visitor = teams.get(normalize(match.team2));
+  const seenMatches = new Set();
+  const details = archivedJourneys.flatMap((journey) =>
+    Array.isArray(journey.detalles) ? journey.detalles : []
+  );
+  details.forEach((detail) => {
+    if (normalize(detail.categoria) !== normalize(category.name)) return;
+    const matchKey = detail.normalizedMatchId || detail.matchId || detail.id;
+    if (matchKey && seenMatches.has(String(matchKey))) return;
+    if (matchKey) seenMatches.add(String(matchKey));
+    if (detail.score1 == null || detail.score2 == null) return;
+    const local = teams.get(normalize(detail.team1));
+    const visitor = teams.get(normalize(detail.team2));
     if (!local || !visitor) return;
-    const score1 = Number(match.score1);
-    const score2 = Number(match.score2);
+    const score1 = Number(detail.score1);
+    const score2 = Number(detail.score2);
     if (!Number.isFinite(score1) || !Number.isFinite(score2)) return;
+    const points1 = Number(detail.puntosTeam1 ?? (score1 > score2 ? 3 : score1 < score2 ? 1 : 2));
+    const points2 = Number(detail.puntosTeam2 ?? (score2 > score1 ? 3 : score2 < score1 ? 1 : 2));
+    if (!Number.isFinite(points1) || !Number.isFinite(points2)) return;
     local.played += 1;
     visitor.played += 1;
     local.goalsFor += score1;
     local.goalsAgainst += score2;
     visitor.goalsFor += score2;
     visitor.goalsAgainst += score1;
-    if (score1 > score2) { local.wins += 1; visitor.losses += 1; local.points += 3; visitor.points += 1; }
-    else if (score2 > score1) { visitor.wins += 1; local.losses += 1; visitor.points += 3; local.points += 1; }
-    else { local.draws += 1; visitor.draws += 1; local.points += 2; visitor.points += 2; }
+    local.points += points1;
+    visitor.points += points2;
+    if (score1 > score2) { local.wins += 1; visitor.losses += 1; }
+    else if (score2 > score1) { visitor.wins += 1; local.losses += 1; }
+    else { local.draws += 1; visitor.draws += 1; }
   });
   return [...teams.values()].map((team) => ({
     ...team,
@@ -56,6 +69,8 @@ export function FefutinTurnCompetition({
   onBack,
 }) {
   const [competition, setCompetition] = useState(null);
+  const [archivedJourneys, setArchivedJourneys] = useState([]);
+  const [standingsError, setStandingsError] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedTeamName, setSelectedTeamName] = useState("");
   const [teamMatchesView, setTeamMatchesView] = useState("pending");
@@ -78,6 +93,8 @@ export function FefutinTurnCompetition({
     if (queryError) {
       setError(queryError.message || "No se pudo cargar el turno.");
       setCompetition(null);
+      setArchivedJourneys([]);
+      setStandingsError("");
     } else {
       setCompetition(data || null);
       const firstCategory = data?.categories?.[0]?.tournament_category_id;
@@ -86,6 +103,18 @@ export function FefutinTurnCompetition({
           ? current
           : firstCategory || ""
       );
+      const { data: archivedData, error: archivedError } = await supabase
+        .from("fefutin_public_jornada_sheets")
+        .select("turn_journey_id,detalles")
+        .eq("turn_id", turn.turn_id)
+        .not("turn_journey_id", "is", null);
+      if (archivedError) {
+        setArchivedJourneys([]);
+        setStandingsError("No se pudieron consultar las jornadas oficiales archivadas: " + archivedError.message);
+      } else {
+        setArchivedJourneys(archivedData || []);
+        setStandingsError("");
+      }
     }
     setLoading(false);
   }, [turn?.turn_id]);
@@ -94,7 +123,7 @@ export function FefutinTurnCompetition({
 
   const categories = competition?.categories || [];
   const activeCategory = categories.find((item) => String(item.tournament_category_id) === String(selectedCategoryId)) || categories[0] || null;
-  const standings = useMemo(() => buildStandings(activeCategory), [activeCategory]);
+  const standings = useMemo(() => buildStandings(activeCategory, archivedJourneys), [activeCategory, archivedJourneys]);
   const categoryMatches = (activeCategory?.rounds || []).flatMap((round) =>
     (round.matches || []).map((match) => ({ ...match, roundNumber: round.round_number, scheduledDate: round.scheduled_date }))
   );
