@@ -35,8 +35,8 @@ const buildStandings = (category) => {
     local.goalsAgainst += score2;
     visitor.goalsFor += score2;
     visitor.goalsAgainst += score1;
-    if (score1 > score2) { local.wins += 1; visitor.losses += 1; local.points += 3; }
-    else if (score2 > score1) { visitor.wins += 1; local.losses += 1; visitor.points += 3; }
+    if (score1 > score2) { local.wins += 1; visitor.losses += 1; local.points += 3; visitor.points += 1; }
+    else if (score2 > score1) { visitor.wins += 1; local.losses += 1; visitor.points += 3; local.points += 1; }
     else { local.draws += 1; visitor.draws += 1; local.points += 2; visitor.points += 2; }
   });
   return [...teams.values()].map((team) => ({
