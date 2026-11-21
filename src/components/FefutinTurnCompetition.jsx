@@ -71,6 +71,8 @@ export function FefutinTurnCompetition({
   const [competition, setCompetition] = useState(null);
   const [archivedJourneys, setArchivedJourneys] = useState([]);
   const [standingsError, setStandingsError] = useState("");
+  const [topScorers, setTopScorers] = useState([]);
+  const [topScorersError, setTopScorersError] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedTeamName, setSelectedTeamName] = useState("");
   const [teamMatchesView, setTeamMatchesView] = useState("pending");
@@ -95,6 +97,8 @@ export function FefutinTurnCompetition({
       setCompetition(null);
       setArchivedJourneys([]);
       setStandingsError("");
+      setTopScorers([]);
+      setTopScorersError("");
     } else {
       setCompetition(data || null);
       const firstCategory = data?.categories?.[0]?.tournament_category_id;
@@ -114,6 +118,17 @@ export function FefutinTurnCompetition({
       } else {
         setArchivedJourneys(archivedData || []);
         setStandingsError("");
+      }
+      const { data: scorerData, error: scorerError } = await supabase.rpc(
+        "get_fefutin_turn_top_scorers",
+        { p_turn_id: turn.turn_id }
+      );
+      if (scorerError) {
+        setTopScorers([]);
+        setTopScorersError("No se pudo cargar la tabla de goleadores: " + scorerError.message);
+      } else {
+        setTopScorers(scorerData || []);
+        setTopScorersError("");
       }
     }
     setLoading(false);
@@ -330,6 +345,30 @@ export function FefutinTurnCompetition({
                 </table>
               </div>
               </>
+            )}
+          </section>
+
+          <section style={{ display: "grid", gap: ".65rem", padding: ".85rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "10px" }}>
+            <strong style={{ color: "#f3a0ad", fontSize: ".82rem" }}>TABLA DE GOLEADORES · {activeCategory.name.toLocaleUpperCase("es")}</strong>
+            <small style={{ color: "#aaa", fontSize: ".7rem" }}>Se actualiza con los goles de las planillas digitales cerradas de este turno. No incluye registros de torneos anteriores.</small>
+            {topScorersError ? (
+              <p role="alert" style={{ color: "#fca5a5", fontSize: ".76rem", margin: 0 }}>{topScorersError}</p>
+            ) : (
+              <div style={{ display: "grid", gap: ".4rem" }}>
+                {topScorers.filter((item) => normalize(item.categoria) === normalize(activeCategory.name)).map((item, index) => (
+                  <div key={item.player_id + "-" + (item.club || "")} style={{ display: "grid", gridTemplateColumns: "30px minmax(0,1fr) 42px", alignItems: "center", gap: ".5rem", padding: ".55rem", border: "1px solid #3d414b", borderRadius: "7px", background: "#101010" }}>
+                    <strong style={{ color: "#f3a0ad", textAlign: "center" }}>{index + 1}</strong>
+                    <div style={{ minWidth: 0 }}>
+                      <strong style={{ display: "block", color: "#fff", fontSize: ".8rem", overflowWrap: "anywhere" }}>{item.jugador || "Jugador"}</strong>
+                      <small style={{ color: "#aaa", fontSize: ".7rem" }}>{item.club || "Sin club"}</small>
+                    </div>
+                    <strong style={{ color: "#fff", textAlign: "center", fontSize: ".95rem" }}>{item.goles}</strong>
+                  </div>
+                ))}
+                {!topScorers.some((item) => normalize(item.categoria) === normalize(activeCategory.name)) && (
+                  <p style={{ color: "#bbb", fontSize: ".76rem", textAlign: "center", margin: ".3rem 0" }}>Todavía no hay goles registrados en planillas cerradas de esta categoría.</p>
+                )}
+              </div>
             )}
           </section>
 
