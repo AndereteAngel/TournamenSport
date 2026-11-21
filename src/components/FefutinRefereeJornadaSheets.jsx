@@ -167,7 +167,6 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       const { data: existingPhotos, error: photosError } = await supabase
         .from("fefutin_jornada_photos")
         .select("match_sheet_id,document_type")
-        .eq("referee_id", currentUser.id)
         .eq("turn_journey_id", jornada.turnJourneyId);
       if (photosError) throw photosError;
       const uploadedKeys = new Set((existingPhotos || []).map((photo) =>
