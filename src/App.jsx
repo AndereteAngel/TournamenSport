@@ -5514,7 +5514,7 @@ export function TournamenSportApp() {
         <FefutinSheetArchive mode="archive" currentUser={currentUser} onBack={() => setActiveView("home")} />
       ) : activeView === "referee-normalized-match" && normalizedMatchToOpen && activeTournament ? (
         <section className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: "1rem", boxSizing: "border-box" }}>
-          <button type="button" className="tc-form-back" onClick={() => { setNormalizedMatchToOpen(null); setActiveView(normalizedMatchReturnView); }}>← Volver</button>
+          <button type="button" className="tc-form-back" onClick={async () => { setNormalizedMatchToOpen(null); await refreshRefereeJourneyData(); setActiveView(normalizedMatchReturnView); }}>← Volver</button>
           <FefutinMatchSheet
             tournament={activeTournament}
             match={normalizedMatchToOpen}
@@ -5528,7 +5528,7 @@ export function TournamenSportApp() {
               score1,
               score2,
             })}
-            onClose={() => { setNormalizedMatchToOpen(null); setActiveView(normalizedMatchReturnView); }}
+            onClose={async () => { setNormalizedMatchToOpen(null); await refreshRefereeJourneyData(); setActiveView(normalizedMatchReturnView); }}
           />
         </section>
       ) : activeView === "fefutin-turns" && activeTournament ? (
