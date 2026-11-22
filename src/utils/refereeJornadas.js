@@ -324,6 +324,8 @@ export const normalizarJornadasDeTurno = (rows, refereeId) => {
         category_id: match.category_id || null,
         team1: match.team1 || "",
         team2: match.team2 || "",
+        local_club_id: match.local_club_id || null,
+        visitor_club_id: match.visitor_club_id || null,
         score1: resultadoCargado ? score1 : null,
         score2: resultadoCargado ? score2 : null,
         resultadoCargado,

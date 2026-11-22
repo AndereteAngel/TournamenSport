@@ -1,14 +1,26 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
-const normalizeTeamName = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "");
+const normalizeTeamName = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const buildTurnStandings = (competition) => {
   const teams = new Map();
-  const getTeam = (name) => { const key = normalizeTeamName(name); if (!key) return null; if (!teams.has(key)) teams.set(key, { equipo: String(name).trim(), puntos: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0, golesFavor: 0, golesContra: 0 }); return teams.get(key); };
+  const getTeam = (clubId, name) => {
+    const label = String(name || "").trim();
+    const key = clubId ? "club:" + String(clubId) : "name:" + normalizeTeamName(label);
+    if (!label || key === "name:") return null;
+    if (!teams.has(key)) teams.set(key, { clubId: clubId || null, equipo: label, puntos: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0, golesFavor: 0, golesContra: 0 });
+    return teams.get(key);
+  };
   (competition?.categories || []).forEach((category) => (category.rounds || []).forEach((round) => (round.matches || []).forEach((match) => {
+    if (match.status !== "finalizado" && !match.referee_closed) return;
     if (match.score1 == null || match.score2 == null) return;
-    const a = Number(match.score1), b = Number(match.score2); if (!Number.isFinite(a) || !Number.isFinite(b)) return;
-    const local = getTeam(match.team1), visitor = getTeam(match.team2); if (!local || !visitor) return;
-    local.partidos++; visitor.partidos++; local.golesFavor += a; local.golesContra += b; visitor.golesFavor += b; visitor.golesContra += a;
+    const a = Number(match.score1), b = Number(match.score2);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return;
+    const local = getTeam(match.local_club_id, match.team1);
+    const visitor = getTeam(match.visitor_club_id, match.team2);
+    if (!local || !visitor) return;
+    local.partidos++; visitor.partidos++;
+    local.golesFavor += a; local.golesContra += b;
+    visitor.golesFavor += b; visitor.golesContra += a;
     if (a > b) { local.puntos += 3; local.ganados++; visitor.puntos += 1; visitor.perdidos++; }
     else if (a < b) { visitor.puntos += 3; visitor.ganados++; local.puntos += 1; local.perdidos++; }
     else { local.puntos += 2; visitor.puntos += 2; local.empatados++; visitor.empatados++; }
@@ -23,6 +35,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
   const [error, setError] = useState("");
   const [archiveLoaded, setArchiveLoaded] = useState(false);
   const [expandedKey, setExpandedKey] = useState("");
+  const [generalViewKey, setGeneralViewKey] = useState("");
   const [photoBatch, setPhotoBatch] = useState({ jornadaKey: "", targets: [], files: [], assignments: {} });
   const [preparingPhotoKey, setPreparingPhotoKey] = useState("");
   const [uploadingPhotoKey, setUploadingPhotoKey] = useState("");
@@ -45,21 +58,23 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
       String(detail.referee_id || "") === String(currentUser?.id || "")
     );
     const teamTotalsMap = new Map();
+    const getJourneyTeamKey = (clubId, name) => clubId ? "club:" + String(clubId) : "name:" + normalizeTeamName(name);
     details.forEach((detail) => {
-      if (!detail.resultadoCargado) return;
-      const addTeamPoints = (name, points) => {
+      if (!detail.resultadoCargado || !detail.referee_closed) return;
+      const addTeamPoints = (name, clubId, points) => {
         const teamName = String(name || "").trim();
-        if (!teamName) return;
-        const normalized = teamName.toLocaleLowerCase("es");
-        const current = teamTotalsMap.get(normalized) || { equipo: teamName, puntos: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0 };
+        if (!teamName) return null;
+        const key = getJourneyTeamKey(clubId, teamName);
+        const current = teamTotalsMap.get(key) || { clubId: clubId || null, equipo: teamName, puntos: 0, partidos: 0, ganados: 0, empatados: 0, perdidos: 0 };
         current.puntos += Number(points) || 0;
         current.partidos += 1;
-        teamTotalsMap.set(normalized, current);
+        teamTotalsMap.set(key, current);
+        return key;
       };
-      addTeamPoints(detail.team1, detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2));
-      addTeamPoints(detail.team2, detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2));
-      const local = teamTotalsMap.get(String(detail.team1 || "").trim().toLocaleLowerCase("es"));
-      const visitante = teamTotalsMap.get(String(detail.team2 || "").trim().toLocaleLowerCase("es"));
+      const localKey = addTeamPoints(detail.team1, detail.local_club_id, detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2));
+      const visitorKey = addTeamPoints(detail.team2, detail.visitor_club_id, detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2));
+      const local = localKey ? teamTotalsMap.get(localKey) : null;
+      const visitante = visitorKey ? teamTotalsMap.get(visitorKey) : null;
       if (local && visitante) {
         if (detail.score1 > detail.score2) { local.ganados += 1; visitante.perdidos += 1; }
         else if (detail.score1 < detail.score2) { visitante.ganados += 1; local.perdidos += 1; }
@@ -69,16 +84,10 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
     const teamTotals = [...teamTotalsMap.values()].sort((a, b) =>
       b.puntos - a.puntos || a.equipo.localeCompare(b.equipo, "es")
     );
-    const totalPointsTeam1 = details.reduce((sum, detail) => sum + (detail.resultadoCargado ? Number(deta  useEffect(() => {
-    let active = true;
-    const ids = [...new Set(planillas.map((j) => j.turnId).filter(Boolean).map(String))];
-    if (!ids.length) { setTurnStandingsById({}); setTurnStandingsErrors({}); return () => { active = false; }; }
-    Promise.all(ids.map(async (turnId) => { const { data, error } = await supabase.rpc("get_fefutin_turn_competition", { p_turn_id: turnId }); return { turnId, data, error }; }))
-      .then((results) => { if (!active) return; const next = {}, errors = {}; results.forEach(({turnId,data,error}) => { if (error) errors[turnId] = error.message || "No se pudo cargar la tabla acumulada."; else next[turnId] = buildTurnStandings(data); }); setTurnStandingsById(next); setTurnStandingsErrors(errors); });
-    return () => { active = false; };
-  }, [planillas.map((j) => j.turnId || "").filter(Boolean).sort().join("|")]);
-il.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)) : 0), 0);
-    const totalPointsTeam2 = details.reduce((sum, detail) => sum + (detail.resultadoCargado ? Number(detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)) : 0), 0);
+    const totalPointsTeam1 = details.reduce((sum, detail) =>
+      sum + (detail.resultadoCargado ? Number(detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)) : 0), 0);
+    const totalPointsTeam2 = details.reduce((sum, detail) =>
+      sum + (detail.resultadoCargado ? Number(detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)) : 0), 0);
     const legacyPendingReview = details.some((detail) => detail.legacy_pending_review);
     const allClosed = details.length > 0 && details.every((detail) => detail.referee_closed) && !legacyPendingReview;
     return {
@@ -106,6 +115,15 @@ il.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.sc
       totalPointsTeam2,
     };
   }), [jornadas, currentUser?.id]);
+
+  useEffect(() => {
+    let active = true;
+    const ids = [...new Set(planillas.map((j) => j.turnId).filter(Boolean).map(String))];
+    if (!ids.length) { setTurnStandingsById({}); setTurnStandingsErrors({}); return () => { active = false; }; }
+    Promise.all(ids.map(async (turnId) => { const { data, error } = await supabase.rpc("get_fefutin_turn_competition", { p_turn_id: turnId }); return { turnId, data, error }; }))
+      .then((results) => { if (!active) return; const next = {}, errors = {}; results.forEach(({turnId,data,error}) => { if (error) errors[turnId] = error.message || "No se pudo cargar la tabla acumulada."; else next[turnId] = buildTurnStandings(data); }); setTurnStandingsById(next); setTurnStandingsErrors(errors); });
+    return () => { active = false; };
+  }, [planillas.map((j) => j.turnId || "").filter(Boolean).sort().join("|")]);
 
   useEffect(() => {
     let active = true;
@@ -475,9 +493,67 @@ il.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.sc
                   </section>
                   <div style={{ marginTop: ".65rem", display: "flex", justifyContent: "center", gap: ".5rem", flexWrap: "wrap" }}>
                     <button type="button" onClick={() => printJornada(jornada, "summary")} style={{ padding: ".6rem .7rem", border: "1px solid #777", borderRadius: "7px", background: "#242a32", color: "#fff", fontWeight: 800, fontSize: ".68rem" }}>IMPRIMIR RESUMEN</button>
-                    <button type="button" onClick={() => printJornada(jornada, "general")} style={{ padding: ".6rem .7rem", border: "1px solid #777", borderRadius: "7px", background: "#242a32", color: "#fff", fontWeight: 800, fontSize: ".68rem" }}>PLANILLA GENERAL</button>
+                    <button type="button" onClick={() => setGeneralViewKey(generalViewKey === jornada.jornadaKey ? "" : jornada.jornadaKey)} aria-expanded={generalViewKey === jornada.jornadaKey} style={{ padding: ".6rem .7rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#b5122a", color: "#fff", fontWeight: 900, fontSize: ".68rem" }}>{generalViewKey === jornada.jornadaKey ? "CERRAR PLANILLA GENERAL" : "PLANILLA GENERAL"}</button>
                   </div>
                 </section>
+                {generalViewKey === jornada.jornadaKey && (
+                  <section style={{ display: "grid", gap: ".75rem", marginTop: ".2rem", padding: ".85rem", border: "2px solid #b5122a", borderRadius: "10px", background: "#fff", color: "#171c27" }}>
+                    <header style={{ padding: ".8rem", borderRadius: "7px", background: "#171c27", color: "#fff", textAlign: "center" }}>
+                      <div style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".18em", fontSize: ".7rem" }}>FEFUTIN</div>
+                      <strong style={{ display: "block", margin: ".25rem 0", fontSize: "1.05rem", letterSpacing: ".06em" }}>PLANILLA GENERAL DE JORNADA</strong>
+                      <div style={{ fontSize: ".72rem", color: "#e5e7eb" }}>{jornada.tournamentTitle} · {jornada.branch} · {jornada.turno}</div>
+                      <div style={{ marginTop: ".25rem", fontSize: ".75rem", fontWeight: 800 }}>JORNADA {jornada.journeyNumber} · {dateLabel}</div>
+                    </header>
+                    <div>
+                      <strong style={{ display: "block", marginBottom: ".45rem", color: "#b5122a", fontSize: ".78rem" }}>RESULTADOS DE TODAS LAS CATEGORÍAS</strong>
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: ".7rem" }}>
+                          <thead><tr style={{ background: "#171c27", color: "#fff" }}>
+                            {["Categoría", "Local", "Resultado", "Visitante", "Puntos"].map((heading) => <th key={heading} style={{ padding: ".5rem .35rem", textAlign: "center", whiteSpace: "nowrap" }}>{heading}</th>)}
+                          </tr></thead>
+                          <tbody>
+                            {jornada.details.map((detail) => {
+                              const hasResult = detail.resultadoCargado && detail.referee_closed;
+                              const points1 = hasResult ? Number(detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)) : null;
+                              const points2 = hasResult ? Number(detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)) : null;
+                              return <tr key={detail.matchId} style={{ borderBottom: "1px solid #d1d5db" }}>
+                                <td style={{ padding: ".5rem .35rem", fontWeight: 800 }}>{detail.categoria}</td>
+                                <td style={{ padding: ".5rem .35rem", textAlign: "center" }}>{detail.team1 || "—"}</td>
+                                <td style={{ padding: ".5rem .35rem", textAlign: "center", fontWeight: 900, whiteSpace: "nowrap" }}>{hasResult ? detail.score1 + " - " + detail.score2 : "Pendiente"}</td>
+                                <td style={{ padding: ".5rem .35rem", textAlign: "center" }}>{detail.team2 || "—"}</td>
+                                <td style={{ padding: ".5rem .35rem", textAlign: "center", fontWeight: 800, whiteSpace: "nowrap" }}>{hasResult ? points1 + " - " + points2 + " pts" : "—"}</td>
+                              </tr>;
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <div>
+                      <strong style={{ display: "block", marginBottom: ".45rem", color: "#b5122a", fontSize: ".78rem" }}>PUNTOS POR CLUB · ESTA JORNADA</strong>
+                      {jornada.teamTotals.length ? <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: ".72rem" }}>
+                          <thead><tr style={{ background: "#e5e7eb" }}><th style={{ padding: ".45rem", textAlign: "left" }}>Club</th><th>PTS</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th></tr></thead>
+                          <tbody>{jornada.teamTotals.map((team) => <tr key={team.clubId || normalizeTeamName(team.equipo)} style={{ borderBottom: "1px solid #d1d5db" }}>
+                            <td style={{ padding: ".45rem", fontWeight: 800 }}>{team.equipo}</td><td style={{ textAlign: "center", fontWeight: 900 }}>{team.puntos}</td><td style={{ textAlign: "center" }}>{team.partidos}</td><td style={{ textAlign: "center" }}>{team.ganados}</td><td style={{ textAlign: "center" }}>{team.empatados}</td><td style={{ textAlign: "center" }}>{team.perdidos}</td>
+                          </tr>)}</tbody>
+                        </table>
+                      </div> : <p style={{ margin: 0, fontSize: ".72rem" }}>Todavía no hay partidos cerrados para sumar.</p>}
+                    </div>
+                    <div>
+                      <strong style={{ display: "block", marginBottom: ".45rem", color: "#b5122a", fontSize: ".78rem" }}>TABLA GENERAL ACUMULADA · {jornada.branch} · {jornada.turno}</strong>
+                      <div style={{ overflowX: "auto" }}>
+                        {turnStandingsErrors[String(jornada.turnId)] ? <p role="alert" style={{ color: "#b91c1c", fontSize: ".72rem" }}>{turnStandingsErrors[String(jornada.turnId)]}</p> :
+                          (turnStandingsById[String(jornada.turnId)] || []).length ? <table style={{ width: "100%", borderCollapse: "collapse", fontSize: ".68rem" }}>
+                            <thead><tr style={{ background: "#171c27", color: "#fff" }}>{["Pos.", "Club", "PTS", "PJ", "PG", "PE", "PP", "GF", "GC", "DG"].map((heading) => <th key={heading} style={{ padding: ".45rem .3rem", whiteSpace: "nowrap" }}>{heading}</th>)}</tr></thead>
+                            <tbody>{(turnStandingsById[String(jornada.turnId)] || []).map((team, index) => <tr key={team.clubId || normalizeTeamName(team.equipo)} style={{ borderBottom: "1px solid #d1d5db" }}>
+                              <td style={{ padding: ".45rem .3rem", textAlign: "center" }}>{index + 1}</td><td style={{ padding: ".45rem .3rem", fontWeight: 800, whiteSpace: "nowrap" }}>{team.equipo}</td><td style={{ textAlign: "center", fontWeight: 900 }}>{team.puntos}</td><td style={{ textAlign: "center" }}>{team.partidos}</td><td style={{ textAlign: "center" }}>{team.ganados}</td><td style={{ textAlign: "center" }}>{team.empatados}</td><td style={{ textAlign: "center" }}>{team.perdidos}</td><td style={{ textAlign: "center" }}>{team.golesFavor}</td><td style={{ textAlign: "center" }}>{team.golesContra}</td><td style={{ textAlign: "center" }}>{team.golesFavor - team.golesContra}</td>
+                            </tr>)}</tbody>
+                          </table> : <p style={{ margin: 0, fontSize: ".72rem" }}>Todavía no hay puntos acumulados para este turno.</p>}
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => setGeneralViewKey("")} style={{ padding: ".65rem", border: 0, borderRadius: "7px", background: "#b5122a", color: "#fff", fontWeight: 900 }}>VOLVER A MIS DESIGNACIONES</button>
+                  </section>
+                )}
                 {!archived && (
                   <section style={{ display: "grid", gap: ".6rem", padding: ".8rem", background: "#080b10", border: "1px solid #b5122a", borderRadius: "9px" }}>
                     <strong style={{ color: "#f3a0ad", textAlign: "center", fontSize: ".78rem" }}>CIERRE INSTITUCIONAL · FOTOS DE LA JORNADA</strong>
