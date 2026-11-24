@@ -9,6 +9,66 @@ const getLocalDateValue = () => {
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 };
 
+const buildGeneralStandings = (competition) => {
+  const teams = new Map();
+  (competition?.categories || []).forEach((category) => {
+    (category.clubs || []).forEach((club) => {
+      const key = String(club.club_id || "");
+      if (!key) return;
+      if (!teams.has(key)) teams.set(key, {
+        clubId: key,
+        name: club.club_name,
+        logo_path: club.logo_path,
+        categories: new Set(),
+        played: 0, wins: 0, draws: 0, losses: 0,
+        goalsFor: 0, goalsAgainst: 0, points: 0,
+      });
+      teams.get(key).categories.add(category.name);
+    });
+  });
+
+  (competition?.categories || []).forEach((category) => {
+    (category.rounds || []).forEach((round) => {
+      (round.matches || []).forEach((match) => {
+        const closed = Boolean(match.referee_closed) || match.status === "finalizado";
+        if (!closed || match.score1 == null || match.score2 == null) return;
+        const local = teams.get(String(match.local_club_id || ""));
+        const visitor = teams.get(String(match.visitor_club_id || ""));
+        if (!local || !visitor) return;
+        const score1 = Number(match.score1);
+        const score2 = Number(match.score2);
+        if (!Number.isFinite(score1) || !Number.isFinite(score2)) return;
+
+        local.played += 1;
+        visitor.played += 1;
+        local.goalsFor += score1;
+        local.goalsAgainst += score2;
+        visitor.goalsFor += score2;
+        visitor.goalsAgainst += score1;
+        if (score1 > score2) {
+          local.wins += 1; visitor.losses += 1;
+          local.points += 3; visitor.points += 1;
+        } else if (score2 > score1) {
+          visitor.wins += 1; local.losses += 1;
+          visitor.points += 3; local.points += 1;
+        } else {
+          local.draws += 1; visitor.draws += 1;
+          local.points += 2; visitor.points += 2;
+        }
+      });
+    });
+  });
+
+  return [...teams.values()].map((team) => ({
+    ...team,
+    categories: [...team.categories].sort((a, b) => a.localeCompare(b, "es", { numeric: true })),
+    goalDifference: team.goalsFor - team.goalsAgainst,
+  })).sort((a, b) =>
+    b.points - a.points || b.goalDifference - a.goalDifference ||
+    b.goalsFor - a.goalsFor || a.name.localeCompare(b.name, "es")
+  );
+};
+
 const buildStandings = (category) => {
   if (!category) return [];
   const teams = new Map();
@@ -72,6 +132,7 @@ export function FefutinTurnCompetition({
   const [standingsError, setStandingsError] = useState("");
   const [topScorers, setTopScorers] = useState([]);
   const [topScorersError, setTopScorersError] = useState("");
+  const [selectedView, setSelectedView] = useState("category");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedTeamName, setSelectedTeamName] = useState("");
   const [teamMatchesView, setTeamMatchesView] = useState("pending");
@@ -126,6 +187,7 @@ export function FefutinTurnCompetition({
   const categories = competition?.categories || [];
   const activeCategory = categories.find((item) => String(item.tournament_category_id) === String(selectedCategoryId)) || categories[0] || null;
   const standings = useMemo(() => buildStandings(activeCategory), [activeCategory]);
+  const generalStandings = useMemo(() => buildGeneralStandings(competition), [competition]);
   const categoryMatches = (activeCategory?.rounds || []).flatMap((round) =>
     (round.matches || []).map((match) => ({ ...match, roundNumber: round.round_number, scheduledDate: round.scheduled_date }))
   );
@@ -230,16 +292,61 @@ export function FefutinTurnCompetition({
       )}
 
       {!!categories.length && (
-        <nav style={{ display: "flex", gap: ".5rem", overflowX: "auto", padding: ".7rem 0" }}>
+        <nav aria-label="Tablas de la competencia" style={{ display: "flex", gap: ".5rem", overflowX: "auto", padding: ".7rem 0" }}>
+          <button type="button" onClick={() => { setSelectedView("general"); setSelectedTeamName(""); }}
+            aria-pressed={selectedView === "general"}
+            style={{ flex: "0 0 auto", padding: ".65rem .9rem", border: "1px solid #b5122a", borderRadius: "8px", background: selectedView === "general" ? "#b5122a" : "#171c27", color: "#fff", fontWeight: 900 }}>
+            TABLA GRAL.
+          </button>
           {categories.map((category) => (
-            <button key={category.tournament_category_id} type="button" onClick={() => { setSelectedCategoryId(category.tournament_category_id); setSelectedTeamName(""); setTeamMatchesView("pending"); }} style={{ flex: "0 0 auto", padding: ".65rem .9rem", border: "1px solid #b5122a", borderRadius: "8px", background: activeCategory?.tournament_category_id === category.tournament_category_id ? "#b5122a" : "#171c27", color: "#fff", fontWeight: 900 }}>
+            <button key={category.tournament_category_id} type="button" onClick={() => { setSelectedView("category"); setSelectedCategoryId(category.tournament_category_id); setSelectedTeamName(""); setTeamMatchesView("pending"); }} aria-pressed={selectedView === "category" && activeCategory?.tournament_category_id === category.tournament_category_id}
+              style={{ flex: "0 0 auto", padding: ".65rem .9rem", border: "1px solid #b5122a", borderRadius: "8px", background: selectedView === "category" && activeCategory?.tournament_category_id === category.tournament_category_id ? "#b5122a" : "#171c27", color: "#fff", fontWeight: 900 }}>
               {category.name}
             </button>
           ))}
         </nav>
       )}
 
-      {activeCategory && (
+      {selectedView === "general" && (
+        <section style={{ display: "grid", gap: ".7rem", padding: ".9rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "10px", color: "#fff" }}>
+          <header style={{ textAlign: "center" }}>
+            <strong style={{ display: "block", color: "#fff", letterSpacing: ".05em" }}>TABLA GENERAL · {competition?.branch_name?.toLocaleUpperCase("es") || ""}</strong>
+            <small style={{ color: "#f3a0ad" }}>{competition?.turno?.toLocaleUpperCase("es") || ""} · TODAS LAS CATEGORÍAS</small>
+            <p style={{ color: "#bbb", fontSize: ".74rem", margin: ".4rem 0 0" }}>Cada club suma los puntos obtenidos en todas sus categorías dentro de esta rama y este turno. Los demás turnos se calculan por separado.</p>
+          </header>
+          {!generalStandings.length ? (
+            <p style={{ color: "#ddd", textAlign: "center", margin: ".5rem 0" }}>Todavía no hay clubes inscriptos en este turno.</p>
+          ) : (
+            <div style={{ overflowX: "auto", width: "100%", WebkitOverflowScrolling: "touch" }}>
+              <table style={{ width: "100%", minWidth: "650px", borderCollapse: "collapse", color: "#fff", fontSize: ".74rem" }}>
+                <thead><tr style={{ background: "#b5122a" }}>
+                  {["POS", "CLUB", "PTS", "PJ", "PG", "PE", "PP", "GF", "GC", "DIF"].map((heading) => (
+                    <th key={heading} style={{ padding: ".55rem .4rem", textAlign: heading === "CLUB" ? "left" : "center", whiteSpace: "nowrap" }}>{heading}</th>
+                  ))}
+                </tr></thead>
+                <tbody>{generalStandings.map((team, index) => (
+                  <tr key={team.clubId} style={{ borderBottom: "1px solid #454545", background: index % 2 ? "#202633" : "#11151d" }}>
+                    <td style={{ padding: ".55rem .4rem", textAlign: "center", fontWeight: 900 }}>{index + 1}</td>
+                    <td style={{ padding: ".5rem .4rem", fontWeight: 800 }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: ".45rem", minWidth: 0 }}>
+                        {team.logo_path ? <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(team.logo_path).data.publicUrl} alt={`Escudo de ${team.name}`} style={{ width: "26px", height: "26px", objectFit: "contain", flexShrink: 0 }} /> : null}
+                        <span>{team.name}</span>
+                      </span>
+                      <small style={{ display: "block", color: "#f3a0ad", fontWeight: 600, marginTop: ".2rem" }}>{team.categories.join(" · ")}</small>
+                    </td>
+                    {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, i) => (
+                      <td key={i} style={{ padding: ".55rem .4rem", textAlign: "center", whiteSpace: "nowrap", color: i === 0 ? "#f3a0ad" : "#fff", fontWeight: i === 0 ? 900 : 600 }}>{value}</td>
+                    ))}
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          )}
+          <small style={{ color: "#aaa", fontSize: ".7rem" }}>Fuente: partidos normalizados de este turno. Solo se suman resultados cerrados digitalmente. Puntuación: ganado 3 · empatado 2 · perdido 1.</small>
+        </section>
+      )}
+
+      {selectedView === "category" && activeCategory && (
         <div style={{ display: "grid", gap: ".85rem" }}>
           <section style={{ padding: ".9rem", minWidth: 0, width: "100%", boxSizing: "border-box", overflow: "hidden", background: "#171c27", border: "1px solid #444", borderRadius: "10px" }}>
             <strong style={{ display: "block", color: "#fff" }}>{activeCategory.name} · {activeCategory.format === "league" ? "TODOS CONTRA TODOS" : activeCategory.format}</strong>
