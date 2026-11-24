@@ -449,10 +449,25 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
           ? new Date(`${jornada.scheduledDate}T12:00:00`).toLocaleDateString("es-AR")
           : "Fecha a confirmar";
         const pendingCount = jornada.details.filter((detail) => !detail.referee_closed).length;
-        const journeyTopPoints = jornada.teamTotals.length ? jornada.teamTotals[0].puntos : null;
-        const journeyWinners = journeyTopPoints == null ? [] : jornada.teamTotals.filter((team) => team.puntos === journeyTopPoints);
-        const journeyCategories = [...new Set(jornada.details.map((detail) => detail.categoria || "Sin categoría"))]
-          .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+        const configuredCategories = Array.isArray(jornada.categories) ? jornada.categories : [];
+        const journeyCategories = [...new Set([
+          ...configuredCategories,
+          ...jornada.details.map((detail) => detail.categoria || "Sin categoría"),
+        ])].sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
+        const journeyMatchups = [];
+        jornada.details.forEach((detail) => {
+          const localName = String(detail.team1 || "Local").trim();
+          const visitorName = String(detail.team2 || "Visitante").trim();
+          const localKey = detail.local_club_id ? "club:" + detail.local_club_id : "name:" + normalizeTeamName(localName);
+          const visitorKey = detail.visitor_club_id ? "club:" + detail.visitor_club_id : "name:" + normalizeTeamName(visitorName);
+          const key = localKey + "::" + visitorKey;
+          let matchup = journeyMatchups.find((item) => item.key === key);
+          if (!matchup) {
+            matchup = { key, localName, visitorName, details: [] };
+            journeyMatchups.push(matchup);
+          }
+          matchup.details.push(detail);
+        });
         return (
           <article key={jornada.key} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: ".9rem", border: "1px solid #b5122a", borderRadius: "12px", background: "linear-gradient(145deg, #171c27, #090a0e)", color: "#fff" }}>
             <div style={{ textAlign: "center", color: "#f3a0ad", fontWeight: 900, letterSpacing: ".06em" }}>
@@ -552,96 +567,68 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
                       <div style={{ color: "#e5e7eb", fontSize: ".8rem", marginTop: ".2rem" }}>Turno: {jornada.turno} · Jornada {jornada.journeyNumber} · {dateLabel}</div>
                     </header>
 
-                    <section
-                      role="status"
-                      aria-live="polite"
-                      style={{
-                        display: "grid",
-                        gap: ".45rem",
-                        padding: "1rem",
-                        borderRadius: "10px",
-                        background: "#b5122a",
-                        color: "#fff",
-                        textAlign: "center",
-                        boxShadow: "0 3px 10px rgba(23,28,39,.12)",
-                      }}
-                    >
-                      <div style={{ color: "#fff", fontSize: ".76rem", fontWeight: 900, letterSpacing: ".13em" }}>🏆 RESULTADO DE LA JORNADA</div>
-                      {journeyWinners.length ? (
-                        <>
-                          <strong style={{ color: "#fff", fontSize: "clamp(1.25rem, 5vw, 1.8rem)", lineHeight: 1.2, overflowWrap: "anywhere" }}>
-                            {journeyWinners.map((team) => team.equipo).join(" · ")}
-                          </strong>
-                          <strong style={{ color: "#fff", fontSize: "1rem" }}>{journeyTopPoints} PUNTOS</strong>
-                          {journeyWinners.length > 1 && <span style={{ color: "#fff", fontSize: ".8rem" }}>Empate · ganadores compartidos</span>}
-                        </>
-                      ) : (
-                        <strong style={{ color: "#fff", fontSize: ".9rem", lineHeight: 1.4 }}>Todavía no hay partidos cerrados con puntos para definir al ganador.</strong>
-                      )}
-                    </section>
-
-                    <section style={{ display: "grid", gap: ".8rem", minWidth: 0 }}>
+                    <section style={{ display: "grid", gap: ".9rem", minWidth: 0 }}>
                       <div>
-                        <strong style={{ display: "block", color: "#171c27", fontSize: ".95rem" }}>PARTIDOS DE LA JORNADA</strong>
-                        <span style={{ display: "block", color: "#4b5563", fontSize: ".78rem", marginTop: ".15rem" }}>Resultados y puntos obtenidos por cada club.</span>
+                        <strong style={{ display: "block", color: "#171c27", fontSize: ".95rem" }}>RESUMEN DE RESULTADOS POR CATEGORÍA</strong>
+                        <span style={{ display: "block", color: "#4b5563", fontSize: ".78rem", marginTop: ".15rem" }}>Los resultados y puntos se actualizan al cerrar cada partido.</span>
                       </div>
-                      {journeyCategories.map((category) => {
-                        const categoryDetails = jornada.details.filter((detail) => (detail.categoria || "Sin categoría") === category);
-                        const categoryTotals = buildCategoryTotals(categoryDetails);
+                      {journeyMatchups.length ? journeyMatchups.map((matchup) => {
+                        let localTotal = 0;
+                        let visitorTotal = 0;
+                        const categoryRows = journeyCategories.map((category) => {
+                          const categoryDetails = matchup.details.filter((detail) =>
+                            (detail.categoria || "Sin categoría") === category
+                          );
+                          const completedDetails = categoryDetails.filter((detail) =>
+                            detail.resultadoCargado && detail.referee_closed &&
+                            Number.isFinite(Number(detail.score1)) && Number.isFinite(Number(detail.score2))
+                          );
+                          const goalsLocal = completedDetails.reduce((sum, detail) => sum + Number(detail.score1), 0);
+                          const goalsVisitor = completedDetails.reduce((sum, detail) => sum + Number(detail.score2), 0);
+                          const pointsLocal = completedDetails.reduce((sum, detail) => sum + getClosedMatchPoints(detail, "local"), 0);
+                          const pointsVisitor = completedDetails.reduce((sum, detail) => sum + getClosedMatchPoints(detail, "visitante"), 0);
+                          localTotal += pointsLocal;
+                          visitorTotal += pointsVisitor;
+                          return { category, hasResult: completedDetails.length > 0, goalsLocal, goalsVisitor, pointsLocal, pointsVisitor };
+                        });
                         return (
-                          <section key={category} style={{ display: "grid", gap: ".65rem", padding: ".85rem", border: "1px solid #d5d9df", borderRadius: "9px", background: "#fff", color: "#171c27", minWidth: 0 }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", flexWrap: "wrap", borderBottom: "1px solid #e5e7eb", paddingBottom: ".5rem" }}>
-                              <strong style={{ color: "#b5122a", fontSize: ".9rem" }}>{category.toLocaleUpperCase("es")}</strong>
-                              <span style={{ color: "#4b5563", fontSize: ".74rem" }}>{categoryDetails.length} {categoryDetails.length === 1 ? "partido" : "partidos"}</span>
+                          <section key={matchup.key} style={{ display: "grid", gap: ".55rem", padding: ".85rem", border: "1px solid #d5d9df", borderRadius: "9px", background: "#fff", color: "#171c27", minWidth: 0 }}>
+                            <strong style={{ color: "#171c27", fontSize: ".95rem", textAlign: "center", overflowWrap: "anywhere" }}>
+                              {matchup.localName} <span style={{ color: "#b5122a" }}>VS.</span> {matchup.visitorName}
+                            </strong>
+                            <div style={{ display: "grid", gridTemplateColumns: "minmax(5.2rem, 1.2fr) minmax(3.1rem, .7fr) repeat(2, minmax(3.5rem, .8fr))", gap: ".25rem", alignItems: "center", minWidth: 0, padding: ".45rem .25rem", background: "#171c27", color: "#fff", borderRadius: "6px" }}>
+                              <strong style={{ fontSize: ".64rem", color: "#fff" }}>CATEGORÍA</strong>
+                              <strong style={{ fontSize: ".62rem", color: "#fff", textAlign: "center" }}>RESULT.</strong>
+                              <strong style={{ fontSize: ".62rem", color: "#fff", textAlign: "center" }}>LOCAL</strong>
+                              <strong style={{ fontSize: ".62rem", color: "#fff", textAlign: "center" }}>VISIT.</strong>
                             </div>
-                            {categoryDetails.map((detail, index) => {
-                              const hasResult = Boolean(detail.resultadoCargado && detail.referee_closed);
-                              const localPoints = hasResult ? getClosedMatchPoints(detail, "local") : null;
-                              const visitorPoints = hasResult ? getClosedMatchPoints(detail, "visitante") : null;
-                              return (
-                                <div key={detail.matchId || detail.id || category + "-" + index} style={{ display: "grid", gap: ".55rem", padding: ".7rem", borderRadius: "8px", background: "#f1f2f4", border: "1px solid #e0e3e8", minWidth: 0 }}>
-                                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)", alignItems: "center", gap: ".45rem", minWidth: 0 }}>
-                                    <strong style={{ color: "#171c27", fontSize: ".85rem", lineHeight: 1.25, textAlign: "left", overflowWrap: "anywhere" }}>{detail.team1 || "Local"}</strong>
-                                    <strong style={{ color: "#171c27", fontSize: "1.1rem", whiteSpace: "nowrap", padding: ".2rem .45rem", borderRadius: "6px", background: "#fff" }}>
-                                      {hasResult ? String(detail.score1) + " - " + String(detail.score2) : "VS"}
-                                    </strong>
-                                    <strong style={{ color: "#171c27", fontSize: ".85rem", lineHeight: 1.25, textAlign: "right", overflowWrap: "anywhere" }}>{detail.team2 || "Visitante"}</strong>
-                                  </div>
-                                  {hasResult ? (
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".5rem" }}>
-                                      <div style={{ padding: ".45rem", borderRadius: "6px", background: "#fff", border: "1px solid #d9dde3", textAlign: "center" }}>
-                                        <strong style={{ display: "block", color: "#171c27", fontSize: ".78rem" }}>{localPoints} PTS</strong>
-                                        <span style={{ color: "#4b5563", fontSize: ".68rem" }}>Local</span>
-                                      </div>
-                                      <div style={{ padding: ".45rem", borderRadius: "6px", background: "#fff", border: "1px solid #d9dde3", textAlign: "center" }}>
-                                        <strong style={{ display: "block", color: "#171c27", fontSize: ".78rem" }}>{visitorPoints} PTS</strong>
-                                        <span style={{ color: "#4b5563", fontSize: ".68rem" }}>Visitante</span>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div style={{ color: "#8a4b08", fontSize: ".75rem", fontWeight: 700, textAlign: "center" }}>
-                                      {detail.referee_closed ? "Partido cerrado sin resultado válido" : "Pendiente de cierre"}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
-                            {categoryTotals.length > 0 && (
-                              <div style={{ paddingTop: ".2rem" }}>
-                                <strong style={{ display: "block", color: "#374151", fontSize: ".76rem", marginBottom: ".35rem" }}>PUNTAJE DE ESTA CATEGORÍA</strong>
-                                <div style={{ display: "grid", gap: ".25rem" }}>
-                                  {categoryTotals.map((team, index) => (
-                                    <div key={team.clubId || normalizeTeamName(team.equipo)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", padding: ".4rem .5rem", borderRadius: "5px", background: index === 0 ? "#fff0f2" : "#f7f7f8", color: "#171c27" }}>
-                                      <span style={{ fontSize: ".78rem", fontWeight: 700, overflowWrap: "anywhere" }}>{index + 1}. {team.equipo}</span>
-                                      <strong style={{ color: "#b5122a", fontSize: ".8rem", whiteSpace: "nowrap" }}>{team.puntos} pts</strong>
-                                    </div>
-                                  ))}
-                                </div>
+                            {categoryRows.map((row) => (
+                              <div key={row.category} style={{ display: "grid", gridTemplateColumns: "minmax(5.2rem, 1.2fr) minmax(3.1rem, .7fr) repeat(2, minmax(3.5rem, .8fr))", gap: ".25rem", alignItems: "center", minWidth: 0, padding: ".5rem .25rem", borderBottom: "1px solid #e5e7eb" }}>
+                                <strong style={{ color: "#171c27", fontSize: ".75rem", overflowWrap: "anywhere" }}>{row.category}</strong>
+                                <strong style={{ color: row.hasResult ? "#171c27" : "#9ca3af", fontSize: ".8rem", textAlign: "center", whiteSpace: "nowrap" }}>
+                                  {row.hasResult ? row.goalsLocal + " - " + row.goalsVisitor : "—"}
+                                </strong>
+                                <strong style={{ color: row.hasResult ? "#b5122a" : "#9ca3af", fontSize: ".75rem", textAlign: "center", whiteSpace: "nowrap" }}>
+                                  {row.hasResult ? row.pointsLocal + " pts" : "—"}
+                                </strong>
+                                <strong style={{ color: row.hasResult ? "#b5122a" : "#9ca3af", fontSize: ".75rem", textAlign: "center", whiteSpace: "nowrap" }}>
+                                  {row.hasResult ? row.pointsVisitor + " pts" : "—"}
+                                </strong>
                               </div>
-                            )}
+                            ))}
+                            <div style={{ display: "grid", gridTemplateColumns: "minmax(5.2rem, 1.2fr) minmax(3.1rem, .7fr) repeat(2, minmax(3.5rem, .8fr))", gap: ".25rem", alignItems: "center", padding: ".65rem .25rem", borderTop: "2px solid #b5122a", background: "#fff0f2", borderRadius: "5px" }}>
+                              <strong style={{ color: "#171c27", fontSize: ".78rem" }}>TOTAL</strong>
+                              <span />
+                              <strong style={{ color: "#b5122a", fontSize: ".82rem", textAlign: "center" }}>{localTotal} pts</strong>
+                              <strong style={{ color: "#b5122a", fontSize: ".82rem", textAlign: "center" }}>{visitorTotal} pts</strong>
+                            </div>
                           </section>
                         );
-                      })}
+                      }) : (
+                        <section style={{ padding: ".9rem", border: "1px solid #d5d9df", borderRadius: "9px", background: "#fff", color: "#4b5563", textAlign: "center", fontSize: ".8rem" }}>
+                          Todavía no hay enfrentamientos cargados para esta jornada.
+                        </section>
+                      )}
                     </section>
 
                     <section style={{ display: "grid", gap: ".55rem", padding: ".9rem", borderRadius: "9px", background: "#171c27", color: "#fff" }}>
