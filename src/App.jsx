@@ -5591,8 +5591,8 @@ export function TournamenSportApp() {
           onBack={async () => { await refreshRefereeJourneyData(); setActiveView("fefutin-turns"); }}
         />
       ) : activeView === "referee-designations" && isArbitro ? (
-        <div className="tc-form-screen" style={{ padding: "1rem", minHeight: "70vh" }}>
-          <section style={{ width: "100%", maxWidth: "900px", margin: "auto", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff" }}>
+        <div className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box", padding: "clamp(.6rem, 2vw, 1rem)", minHeight: "70vh" }}>
+          <section style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", margin: "0 auto", padding: "clamp(.75rem, 2vw, 1rem)", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", color: "#fff" }}>
             <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>← Volver</button>
             <h2 style={{ color: "#fff", margin: "1rem 0 .35rem", letterSpacing: ".06em" }}>MIS DESIGNACIONES</h2>
             <p style={{ color: "#ccc", fontSize: ".82rem", marginTop: 0 }}>Tus jornadas asignadas, todos sus encuentros y las planillas que tenés que completar.</p>
