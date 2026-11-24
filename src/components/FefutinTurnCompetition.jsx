@@ -9,11 +9,11 @@ const getLocalDateValue = () => {
   return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 };
 
-const buildStandings = (category, archivedJourneys) => {
-  if (!category || !archivedJourneys?.length) return [];
+const buildStandings = (category) => {
+  if (!category) return [];
   const teams = new Map();
   (category.clubs || []).forEach((club) => {
-    const key = normalize(club.club_name);
+    const key = club.club_id ? String(club.club_id) : normalize(club.club_name);
     if (key) teams.set(key, {
       name: club.club_name,
       logo_path: club.logo_path,
@@ -21,37 +21,37 @@ const buildStandings = (category, archivedJourneys) => {
       goalsFor: 0, goalsAgainst: 0, points: 0,
     });
   });
-  const seenMatches = new Set();
-  const details = archivedJourneys.flatMap((journey) =>
-    Array.isArray(journey.detalles) ? journey.detalles : []
-  );
-  details.forEach((detail) => {
-    if (normalize(detail.categoria) !== normalize(category.name)) return;
-    const matchKey = detail.normalizedMatchId || detail.matchId || detail.id;
-    if (matchKey && seenMatches.has(String(matchKey))) return;
-    if (detail.score1 == null || detail.score2 == null) return;
-    if (matchKey) seenMatches.add(String(matchKey));
-    const local = teams.get(normalize(detail.team1));
-    const visitor = teams.get(normalize(detail.team2));
-    if (!local || !visitor) return;
-    const score1 = Number(detail.score1);
-    const score2 = Number(detail.score2);
-    if (!Number.isFinite(score1) || !Number.isFinite(score2)) return;
-    const points1 = Number(detail.puntosTeam1 ?? (score1 > score2 ? 3 : score1 < score2 ? 1 : 2));
-    const points2 = Number(detail.puntosTeam2 ?? (score2 > score1 ? 3 : score2 < score1 ? 1 : 2));
-    if (!Number.isFinite(points1) || !Number.isFinite(points2)) return;
-    local.played += 1;
-    visitor.played += 1;
-    local.goalsFor += score1;
-    local.goalsAgainst += score2;
-    visitor.goalsFor += score2;
-    visitor.goalsAgainst += score1;
-    local.points += points1;
-    visitor.points += points2;
-    if (score1 > score2) { local.wins += 1; visitor.losses += 1; }
-    else if (score2 > score1) { visitor.wins += 1; local.losses += 1; }
-    else { local.draws += 1; visitor.draws += 1; }
+
+  const rounds = category.rounds || [];
+  rounds.forEach((round) => {
+    (round.matches || []).forEach((match) => {
+      const isClosed = Boolean(match.referee_closed) || match.status === "finalizado";
+      if (!isClosed || match.score1 == null || match.score2 == null) return;
+      const localKey = match.local_club_id ? String(match.local_club_id) : normalize(match.team1);
+      const visitorKey = match.visitor_club_id ? String(match.visitor_club_id) : normalize(match.team2);
+      const local = teams.get(localKey);
+      const visitor = teams.get(visitorKey);
+      if (!local || !visitor) return;
+      const score1 = Number(match.score1);
+      const score2 = Number(match.score2);
+      if (!Number.isFinite(score1) || !Number.isFinite(score2)) return;
+
+      const points1 = score1 > score2 ? 3 : score1 < score2 ? 1 : 2;
+      const points2 = score2 > score1 ? 3 : score2 < score1 ? 1 : 2;
+      local.played += 1;
+      visitor.played += 1;
+      local.goalsFor += score1;
+      local.goalsAgainst += score2;
+      visitor.goalsFor += score2;
+      visitor.goalsAgainst += score1;
+      local.points += points1;
+      visitor.points += points2;
+      if (score1 > score2) { local.wins += 1; visitor.losses += 1; }
+      else if (score2 > score1) { visitor.wins += 1; local.losses += 1; }
+      else { local.draws += 1; visitor.draws += 1; }
+    });
   });
+
   return [...teams.values()].map((team) => ({
     ...team,
     goalDifference: team.goalsFor - team.goalsAgainst,
@@ -69,7 +69,6 @@ export function FefutinTurnCompetition({
   onBack,
 }) {
   const [competition, setCompetition] = useState(null);
-  const [archivedJourneys, setArchivedJourneys] = useState([]);
   const [standingsError, setStandingsError] = useState("");
   const [topScorers, setTopScorers] = useState([]);
   const [topScorersError, setTopScorersError] = useState("");
@@ -95,7 +94,6 @@ export function FefutinTurnCompetition({
     if (queryError) {
       setError(queryError.message || "No se pudo cargar el turno.");
       setCompetition(null);
-      setArchivedJourneys([]);
       setStandingsError("");
       setTopScorers([]);
       setTopScorersError("");
@@ -107,18 +105,7 @@ export function FefutinTurnCompetition({
           ? current
           : firstCategory || ""
       );
-      const { data: archivedData, error: archivedError } = await supabase
-        .from("fefutin_public_jornada_sheets")
-        .select("turn_journey_id,detalles")
-        .eq("turn_id", turn.turn_id)
-        .not("turn_journey_id", "is", null);
-      if (archivedError) {
-        setArchivedJourneys([]);
-        setStandingsError("No se pudieron consultar las jornadas oficiales archivadas: " + archivedError.message);
-      } else {
-        setArchivedJourneys(archivedData || []);
-        setStandingsError("");
-      }
+      setStandingsError("");
       const { data: scorerData, error: scorerError } = await supabase.rpc(
         "get_fefutin_turn_top_scorers",
         { p_turn_id: turn.turn_id }
@@ -138,7 +125,7 @@ export function FefutinTurnCompetition({
 
   const categories = competition?.categories || [];
   const activeCategory = categories.find((item) => String(item.tournament_category_id) === String(selectedCategoryId)) || categories[0] || null;
-  const standings = useMemo(() => buildStandings(activeCategory, archivedJourneys), [activeCategory, archivedJourneys]);
+  const standings = useMemo(() => buildStandings(activeCategory), [activeCategory]);
   const categoryMatches = (activeCategory?.rounds || []).flatMap((round) =>
     (round.matches || []).map((match) => ({ ...match, roundNumber: round.round_number, scheduledDate: round.scheduled_date }))
   );
@@ -258,7 +245,7 @@ export function FefutinTurnCompetition({
             <strong style={{ display: "block", color: "#fff" }}>{activeCategory.name} · {activeCategory.format === "league" ? "TODOS CONTRA TODOS" : activeCategory.format}</strong>
             <small style={{ color: "#bbb" }}>{activeCategory.clubs?.length || 0} clubes inscriptos</small>
             {standingsError && <p role="alert" style={{ color: "#fca5a5", fontSize: ".76rem" }}>{standingsError}</p>}
-            {!standingsError && !standings.length && <p style={{ color: "#bbb", fontSize: ".76rem", textAlign: "center" }}>La tabla general se completa automáticamente cuando se cierra y archiva la planilla oficial de cada jornada.</p>}
+            {!standingsError && !standings.length && <p style={{ color: "#bbb", fontSize: ".76rem", textAlign: "center" }}>La tabla se actualiza con los resultados de los partidos normalizados al cerrarse digitalmente cada encuentro.</p>}
             {standings.length > 0 && (
               <>
               <style>{`
