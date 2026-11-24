@@ -4,7 +4,6 @@ import { supabase } from "../supabaseClient";
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos los estados" },
   { value: "pendiente_alta", label: "Pendientes de activar" },
-  { value: "activo_pendiente", label: "Activos · Pendientes de verificación" },
   { value: "habilitado", label: "Activos · Habilitados" },
   { value: "no_habilitado", label: "No habilitados" },
   { value: "rechazado", label: "Rechazados" },
@@ -14,16 +13,14 @@ const getStatus = (player) => {
   if (player.approval_status === "pendiente") return "pendiente_alta";
   if (player.approval_status === "rechazado") return "rechazado";
   if (player.approval_status === "aprobado") {
-    if (player.carnet_status === "habilitado") return "habilitado";
     if (player.carnet_status === "no_habilitado") return "no_habilitado";
-    return "activo_pendiente";
+    return "habilitado";
   }
   return "pendiente_alta";
 };
 
 const statusLabel = (status) => ({
   pendiente_alta: "PENDIENTE DE ACTIVAR",
-  activo_pendiente: "ACTIVO · PENDIENTE DE VERIFICACIÓN",
   habilitado: "ACTIVO · HABILITADO",
   no_habilitado: "NO HABILITADO",
   rechazado: "RECHAZADO",
@@ -31,7 +28,6 @@ const statusLabel = (status) => ({
 
 const statusColor = (status) => ({
   pendiente_alta: "#fcd34d",
-  activo_pendiente: "#93c5fd",
   habilitado: "#86efac",
   no_habilitado: "#fca5a5",
   rechazado: "#fca5a5",
@@ -163,7 +159,7 @@ export function FefutinPlayerApprovals() {
   };
 
   const decide = async (player) => {
-    if (!window.confirm(`¿Confirmás activar a ${player.first_name} ${player.last_name}? Se generará su carnet FEFUTIN con estado PENDIENTE.`)) return;
+    if (!window.confirm(`¿Confirmás habilitar a ${player.first_name} ${player.last_name}? Se generará su carnet FEFUTIN y quedará HABILITADO para competir.`)) return;
     setWorkingId(player.player_entry_id);
     setError("");
     setMessage("");
@@ -180,10 +176,10 @@ export function FefutinPlayerApprovals() {
       // El jugador permanece en el buzón y cambia de estado dentro de su tarjeta.
       setPlayers((current) => current.map((item) =>
         item.player_entry_id === player.player_entry_id
-          ? { ...item, approval_status: "aprobado", carnet_number: data, carnet_status: "pendiente" }
+          ? { ...item, approval_status: "aprobado", carnet_number: data, carnet_status: "habilitado" }
           : item
       ));
-      setMessage(`${player.first_name} ${player.last_name} quedó activo. Su carnet está pendiente de verificación arbitral.`);
+      setMessage(`${player.first_name} ${player.last_name} quedó ACTIVADO y HABILITADO para competir. Se generó su carnet FEFUTIN.`);
     }
     setWorkingId(null);
   };
@@ -232,7 +228,7 @@ export function FefutinPlayerApprovals() {
         <div>
           <h3 style={{ color: "#fff", margin: 0 }}>BUZÓN DE SOLICITUDES Y ACTIVACIONES</h3>
           <p style={{ color: "#aaa", fontSize: ".82rem", margin: ".3rem 0 0" }}>
-            Todos los llamados quedan registrados. Al activar un jugador, pasa a su estado correspondiente sin desaparecer del buzón.
+            Todos los llamados quedan registrados. Al habilitar un jugador, se genera su carnet y queda habilitado para competir.
           </p>
         </div>
         <button type="button" className="tc-form-back" onClick={load} disabled={loading}>↻ Actualizar</button>
@@ -286,7 +282,7 @@ export function FefutinPlayerApprovals() {
                       <span style={{ color: "#ddd", background: "#333", borderRadius: "20px", padding: ".3rem .55rem", fontSize: ".7rem" }}>{card.players.length} jugador{card.players.length === 1 ? "" : "es"}</span>
                       {Object.entries(counts).map(([status, count]) => (
                         <span key={status} style={{ color: statusColor(status), background: "#111", border: "1px solid #444", borderRadius: "20px", padding: ".3rem .55rem", fontSize: ".68rem" }}>
-                          {count} {status === "pendiente_alta" ? "por activar" : status === "activo_pendiente" ? "por verificar" : status === "habilitado" ? "habilitados" : status === "rechazado" ? "rechazados" : "no habilitados"}
+                          {count} {status === "pendiente_alta" ? "por activar" : status === "habilitado" ? "habilitados" : status === "rechazado" ? "rechazados" : "no habilitados"}
                         </span>
                       ))}
                     </div>
@@ -319,7 +315,7 @@ export function FefutinPlayerApprovals() {
                             <button type="button" className="cr-btn-gold" disabled={busy} onClick={() => decide(player)} style={{ whiteSpace: "nowrap", padding: ".55rem .75rem", fontSize: ".75rem" }}>
                               {busy ? "Procesando..." : "ACTIVAR"}
                             </button>
-                          ) : status === "activo_pendiente" || status === "habilitado" ? (
+                          ) : status === "habilitado" ? (
                             <button
                               type="button"
                               disabled={busy}
