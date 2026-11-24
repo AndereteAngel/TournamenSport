@@ -19,11 +19,9 @@ const buildGeneralStandings = (competition) => {
         clubId: key,
         name: club.club_name,
         logo_path: club.logo_path,
-        categories: new Set(),
         played: 0, wins: 0, draws: 0, losses: 0,
         goalsFor: 0, goalsAgainst: 0, points: 0,
       });
-      teams.get(key).categories.add(category.name);
     });
   });
 
@@ -61,7 +59,6 @@ const buildGeneralStandings = (competition) => {
 
   return [...teams.values()].map((team) => ({
     ...team,
-    categories: [...team.categories].sort((a, b) => a.localeCompare(b, "es", { numeric: true })),
     goalDifference: team.goalsFor - team.goalsAgainst,
   })).sort((a, b) =>
     b.points - a.points || b.goalDifference - a.goalDifference ||
@@ -332,7 +329,6 @@ export function FefutinTurnCompetition({
                         {team.logo_path ? <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(team.logo_path).data.publicUrl} alt={`Escudo de ${team.name}`} style={{ width: "26px", height: "26px", objectFit: "contain", flexShrink: 0 }} /> : null}
                         <span>{team.name}</span>
                       </span>
-                      <small style={{ display: "block", color: "#f3a0ad", fontWeight: 600, marginTop: ".2rem" }}>{team.categories.join(" · ")}</small>
                     </td>
                     {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, i) => (
                       <td key={i} style={{ padding: ".55rem .4rem", textAlign: "center", whiteSpace: "nowrap", color: i === 0 ? "#f3a0ad" : "#fff", fontWeight: i === 0 ? 900 : 600 }}>{value}</td>
