@@ -529,100 +529,142 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
                 </section>
 
                 {generalViewKey === jornada.jornadaKey && (
-                  <section style={{ display: "grid", gap: ".85rem", width: "100%", minWidth: 0, boxSizing: "border-box", marginTop: ".2rem", padding: "clamp(.65rem, 2vw, 1rem)", border: "2px solid #b5122a", borderRadius: "10px", background: "#fff", color: "#171c27" }}>
-                    <header style={{ padding: ".9rem", borderRadius: "7px", background: "#171c27", color: "#fff", textAlign: "center" }}>
-                      <div style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".18em", fontSize: ".7rem" }}>FEFUTIN</div>
-                      <strong style={{ display: "block", margin: ".25rem 0", fontSize: "clamp(1rem, 3vw, 1.2rem)", letterSpacing: ".06em" }}>RESUMEN GENERAL DE JORNADA</strong>
-                      <div style={{ fontSize: ".78rem", color: "#e5e7eb" }}>{jornada.tournamentTitle} · {jornada.branch} · {jornada.turno}</div>
-                      <div style={{ marginTop: ".25rem", fontSize: ".75rem", fontWeight: 800 }}>JORNADA {jornada.journeyNumber} · {dateLabel}</div>
+                  <section
+                    aria-label="Planilla general digital de la jornada"
+                    style={{
+                      display: "grid",
+                      gap: "1rem",
+                      width: "100%",
+                      minWidth: 0,
+                      boxSizing: "border-box",
+                      marginTop: ".25rem",
+                      padding: "clamp(.75rem, 2.5vw, 1.2rem)",
+                      border: "1px solid #cbd0d8",
+                      borderRadius: "12px",
+                      background: "#f4f5f7",
+                      color: "#171c27",
+                    }}
+                  >
+                    <header style={{ padding: "1rem", borderRadius: "9px", background: "#171c27", color: "#fff", textAlign: "center" }}>
+                      <div style={{ color: "#ffb6c1", fontWeight: 900, letterSpacing: ".16em", fontSize: ".72rem" }}>FEFUTIN</div>
+                      <strong style={{ display: "block", margin: ".3rem 0", fontSize: "clamp(1.05rem, 3.5vw, 1.35rem)" }}>PLANILLA GENERAL DE JORNADA</strong>
+                      <div style={{ color: "#fff", fontSize: ".86rem", lineHeight: 1.5 }}>{jornada.tournamentTitle} · {jornada.branch}</div>
+                      <div style={{ color: "#e5e7eb", fontSize: ".8rem", marginTop: ".2rem" }}>Turno: {jornada.turno} · Jornada {jornada.journeyNumber} · {dateLabel}</div>
                     </header>
 
-                    <section style={{ display: "grid", gap: ".35rem", padding: ".9rem", border: "2px solid #b5122a", borderRadius: "9px", background: "#fff5f6", textAlign: "center" }}>
-                      <div style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".7rem" }}>🏆 GANADOR DE LA JORNADA</div>
+                    <section
+                      role="status"
+                      aria-live="polite"
+                      style={{
+                        display: "grid",
+                        gap: ".45rem",
+                        padding: "1rem",
+                        borderRadius: "10px",
+                        background: "#b5122a",
+                        color: "#fff",
+                        textAlign: "center",
+                        boxShadow: "0 3px 10px rgba(23,28,39,.12)",
+                      }}
+                    >
+                      <div style={{ color: "#fff", fontSize: ".76rem", fontWeight: 900, letterSpacing: ".13em" }}>🏆 RESULTADO DE LA JORNADA</div>
                       {journeyWinners.length ? (
                         <>
-                          <strong style={{ color: "#171c27", fontSize: "clamp(1.05rem, 4vw, 1.4rem)", overflowWrap: "anywhere" }}>{journeyWinners.map((team) => team.equipo).join(" · ")}</strong>
-                          <strong style={{ color: "#b5122a", fontSize: "1.35rem" }}>{journeyTopPoints} PTS</strong>
-                          {journeyWinners.length > 1 && <small style={{ color: "#555" }}>Empate en el primer puesto · ganadores compartidos</small>}
+                          <strong style={{ color: "#fff", fontSize: "clamp(1.25rem, 5vw, 1.8rem)", lineHeight: 1.2, overflowWrap: "anywhere" }}>
+                            {journeyWinners.map((team) => team.equipo).join(" · ")}
+                          </strong>
+                          <strong style={{ color: "#fff", fontSize: "1rem" }}>{journeyTopPoints} PUNTOS</strong>
+                          {journeyWinners.length > 1 && <span style={{ color: "#fff", fontSize: ".8rem" }}>Empate · ganadores compartidos</span>}
                         </>
-                      ) : <strong style={{ color: "#555", fontSize: ".85rem" }}>Todavía no hay encuentros cerrados con puntos para definir al ganador.</strong>}
+                      ) : (
+                        <strong style={{ color: "#fff", fontSize: ".9rem", lineHeight: 1.4 }}>Todavía no hay partidos cerrados con puntos para definir al ganador.</strong>
+                      )}
                     </section>
 
-                    <div style={{ display: "grid", gap: ".7rem" }}>
-                      <strong style={{ color: "#b5122a", fontSize: ".82rem", letterSpacing: ".04em" }}>RESULTADOS Y PUNTOS POR CATEGORÍA</strong>
+                    <section style={{ display: "grid", gap: ".8rem", minWidth: 0 }}>
+                      <div>
+                        <strong style={{ display: "block", color: "#171c27", fontSize: ".95rem" }}>PARTIDOS DE LA JORNADA</strong>
+                        <span style={{ display: "block", color: "#4b5563", fontSize: ".78rem", marginTop: ".15rem" }}>Resultados y puntos obtenidos por cada club.</span>
+                      </div>
                       {journeyCategories.map((category) => {
                         const categoryDetails = jornada.details.filter((detail) => (detail.categoria || "Sin categoría") === category);
                         const categoryTotals = buildCategoryTotals(categoryDetails);
                         return (
-                          <section key={category} style={{ display: "grid", gap: ".55rem", padding: ".75rem", border: "1px solid #d1d5db", borderRadius: "8px", background: "#fff", minWidth: 0 }}>
-                            <strong style={{ color: "#b5122a", fontSize: ".82rem", textAlign: "center" }}>{category.toLocaleUpperCase("es")}</strong>
-                            <div style={{ display: "grid", gap: ".45rem" }}>
-                              {categoryDetails.map((detail) => {
-                                const hasResult = Boolean(detail.resultadoCargado && detail.referee_closed);
-                                const localPoints = hasResult ? getClosedMatchPoints(detail, "local") : null;
-                                const visitorPoints = hasResult ? getClosedMatchPoints(detail, "visitante") : null;
-                                return (
-                                  <div key={detail.matchId} style={{ display: "grid", gap: ".3rem", padding: ".6rem", borderRadius: "7px", background: "#f3f4f6", minWidth: 0 }}>
-                                    <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)", alignItems: "center", gap: ".35rem", textAlign: "center" }}>
-                                      <strong style={{ fontSize: ".76rem", overflowWrap: "anywhere" }}>{detail.team1 || "Local"}</strong>
-                                      <strong style={{ color: "#171c27", fontSize: ".9rem", whiteSpace: "nowrap" }}>{hasResult ? detail.score1 + " - " + detail.score2 : "Pendiente"}</strong>
-                                      <strong style={{ fontSize: ".76rem", overflowWrap: "anywhere" }}>{detail.team2 || "Visitante"}</strong>
-                                    </div>
-                                    <small style={{ color: hasResult ? "#374151" : "#9a3412", textAlign: "center", fontSize: ".68rem" }}>
-                                      {hasResult ? (detail.team1 || "Local") + ": " + localPoints + " pts · " + (detail.team2 || "Visitante") + ": " + visitorPoints + " pts" : detail.referee_closed ? "Encuentro cerrado sin resultado válido" : "Pendiente de cierre"}
-                                    </small>
-                                  </div>
-                                );
-                              })}
+                          <section key={category} style={{ display: "grid", gap: ".65rem", padding: ".85rem", border: "1px solid #d5d9df", borderRadius: "9px", background: "#fff", color: "#171c27", minWidth: 0 }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", flexWrap: "wrap", borderBottom: "1px solid #e5e7eb", paddingBottom: ".5rem" }}>
+                              <strong style={{ color: "#b5122a", fontSize: ".9rem" }}>{category.toLocaleUpperCase("es")}</strong>
+                              <span style={{ color: "#4b5563", fontSize: ".74rem" }}>{categoryDetails.length} {categoryDetails.length === 1 ? "partido" : "partidos"}</span>
                             </div>
-                            <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: ".55rem" }}>
-                              <strong style={{ display: "block", color: "#171c27", fontSize: ".72rem", marginBottom: ".4rem" }}>PUNTOS ACUMULADOS DE LA CATEGORÍA</strong>
-                              {categoryTotals.length ? (
-                                <div style={{ display: "grid", gap: ".3rem" }}>
+                            {categoryDetails.map((detail, index) => {
+                              const hasResult = Boolean(detail.resultadoCargado && detail.referee_closed);
+                              const localPoints = hasResult ? getClosedMatchPoints(detail, "local") : null;
+                              const visitorPoints = hasResult ? getClosedMatchPoints(detail, "visitante") : null;
+                              return (
+                                <div key={detail.matchId || detail.id || category + "-" + index} style={{ display: "grid", gap: ".55rem", padding: ".7rem", borderRadius: "8px", background: "#f1f2f4", border: "1px solid #e0e3e8", minWidth: 0 }}>
+                                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)", alignItems: "center", gap: ".45rem", minWidth: 0 }}>
+                                    <strong style={{ color: "#171c27", fontSize: ".85rem", lineHeight: 1.25, textAlign: "left", overflowWrap: "anywhere" }}>{detail.team1 || "Local"}</strong>
+                                    <strong style={{ color: "#171c27", fontSize: "1.1rem", whiteSpace: "nowrap", padding: ".2rem .45rem", borderRadius: "6px", background: "#fff" }}>
+                                      {hasResult ? String(detail.score1) + " - " + String(detail.score2) : "VS"}
+                                    </strong>
+                                    <strong style={{ color: "#171c27", fontSize: ".85rem", lineHeight: 1.25, textAlign: "right", overflowWrap: "anywhere" }}>{detail.team2 || "Visitante"}</strong>
+                                  </div>
+                                  {hasResult ? (
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".5rem" }}>
+                                      <div style={{ padding: ".45rem", borderRadius: "6px", background: "#fff", border: "1px solid #d9dde3", textAlign: "center" }}>
+                                        <strong style={{ display: "block", color: "#171c27", fontSize: ".78rem" }}>{localPoints} PTS</strong>
+                                        <span style={{ color: "#4b5563", fontSize: ".68rem" }}>Local</span>
+                                      </div>
+                                      <div style={{ padding: ".45rem", borderRadius: "6px", background: "#fff", border: "1px solid #d9dde3", textAlign: "center" }}>
+                                        <strong style={{ display: "block", color: "#171c27", fontSize: ".78rem" }}>{visitorPoints} PTS</strong>
+                                        <span style={{ color: "#4b5563", fontSize: ".68rem" }}>Visitante</span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div style={{ color: "#8a4b08", fontSize: ".75rem", fontWeight: 700, textAlign: "center" }}>
+                                      {detail.referee_closed ? "Partido cerrado sin resultado válido" : "Pendiente de cierre"}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                            {categoryTotals.length > 0 && (
+                              <div style={{ paddingTop: ".2rem" }}>
+                                <strong style={{ display: "block", color: "#374151", fontSize: ".76rem", marginBottom: ".35rem" }}>PUNTAJE DE ESTA CATEGORÍA</strong>
+                                <div style={{ display: "grid", gap: ".25rem" }}>
                                   {categoryTotals.map((team, index) => (
-                                    <div key={team.clubId || normalizeTeamName(team.equipo)} style={{ display: "grid", gridTemplateColumns: "24px minmax(0,1fr) auto", gap: ".4rem", alignItems: "center", padding: ".4rem .5rem", borderRadius: "5px", background: index === 0 ? "#fff0f2" : "#f3f4f6" }}>
-                                      <strong style={{ color: "#b5122a", fontSize: ".72rem" }}>{index + 1}.</strong>
-                                      <span style={{ fontSize: ".74rem", fontWeight: 800, overflowWrap: "anywhere" }}>{team.equipo}</span>
-                                      <strong style={{ color: "#b5122a", fontSize: ".8rem" }}>{team.puntos} pts</strong>
+                                    <div key={team.clubId || normalizeTeamName(team.equipo)} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".5rem", padding: ".4rem .5rem", borderRadius: "5px", background: index === 0 ? "#fff0f2" : "#f7f7f8", color: "#171c27" }}>
+                                      <span style={{ fontSize: ".78rem", fontWeight: 700, overflowWrap: "anywhere" }}>{index + 1}. {team.equipo}</span>
+                                      <strong style={{ color: "#b5122a", fontSize: ".8rem", whiteSpace: "nowrap" }}>{team.puntos} pts</strong>
                                     </div>
                                   ))}
                                 </div>
-                              ) : <p style={{ margin: 0, color: "#6b7280", fontSize: ".7rem" }}>Todavía no hay puntos de encuentros cerrados en esta categoría.</p>}
-                            </div>
+                              </div>
+                            )}
                           </section>
                         );
                       })}
-                    </div>
+                    </section>
 
-                    <section style={{ display: "grid", gap: ".45rem", padding: ".8rem", borderRadius: "8px", background: "#171c27", color: "#fff" }}>
-                      <strong style={{ color: "#f3a0ad", textAlign: "center", fontSize: ".78rem" }}>PUNTAJE TOTAL DE LA JORNADA · TODAS LAS CATEGORÍAS</strong>
-                      {jornada.teamTotals.length ? jornada.teamTotals.map((team, index) => (
-                        <div key={team.clubId || normalizeTeamName(team.equipo)} style={{ display: "grid", gridTemplateColumns: "24px minmax(0,1fr) auto", gap: ".45rem", alignItems: "center", padding: ".45rem .5rem", borderRadius: "5px", background: index === 0 ? "rgba(181,18,42,.35)" : "#252b35" }}>
-                          <strong style={{ color: "#f3a0ad", fontSize: ".72rem" }}>{index + 1}.</strong>
-                          <span style={{ fontSize: ".76rem", fontWeight: 800, overflowWrap: "anywhere" }}>{team.equipo}</span>
-                          <strong style={{ color: "#fff", fontSize: ".85rem" }}>{team.puntos} pts</strong>
+                    <section style={{ display: "grid", gap: ".55rem", padding: ".9rem", borderRadius: "9px", background: "#171c27", color: "#fff" }}>
+                      <strong style={{ color: "#fff", fontSize: ".9rem" }}>TABLA GENERAL DEL TURNO</strong>
+                      <span style={{ color: "#e5e7eb", fontSize: ".76rem", lineHeight: 1.4 }}>Acumulado de todas las jornadas de {jornada.branch} · {jornada.turno}.</span>
+                      {turnStandingsErrors[String(jornada.turnId)] ? (
+                        <p role="alert" style={{ color: "#fecaca", fontSize: ".78rem", margin: 0 }}>{turnStandingsErrors[String(jornada.turnId)]}</p>
+                      ) : (turnStandingsById[String(jornada.turnId)] || []).length ? (
+                        <div style={{ display: "grid", gap: ".35rem" }}>
+                          {(turnStandingsById[String(jornada.turnId)] || []).map((team, index) => (
+                            <div key={team.clubId || normalizeTeamName(team.equipo)} style={{ display: "grid", gridTemplateColumns: "28px minmax(0,1fr) auto", alignItems: "center", gap: ".5rem", padding: ".55rem .6rem", borderRadius: "6px", background: index === 0 ? "#b5122a" : "#252b35", color: "#fff" }}>
+                              <strong style={{ color: "#fff", fontSize: ".8rem" }}>{index + 1}.</strong>
+                              <span style={{ color: "#fff", fontSize: ".82rem", fontWeight: 800, overflowWrap: "anywhere" }}>{team.equipo}</span>
+                              <strong style={{ color: "#fff", fontSize: ".9rem", whiteSpace: "nowrap" }}>{team.puntos} pts</strong>
+                            </div>
+                          ))}
                         </div>
-                      )) : <p style={{ margin: 0, color: "#ddd", textAlign: "center", fontSize: ".72rem" }}>Todavía no hay puntos acumulados.</p>}
+                      ) : (
+                        <p style={{ color: "#fff", fontSize: ".78rem", margin: 0 }}>Todavía no hay puntos acumulados para este turno.</p>
+                      )}
                     </section>
 
-                    <section style={{ display: "grid", gap: ".45rem" }}>
-                      <strong style={{ color: "#b5122a", fontSize: ".8rem" }}>TABLA GENERAL ACUMULADA · {jornada.branch} · {jornada.turno}</strong>
-                      <small style={{ color: "#555", fontSize: ".68rem" }}>Puntos de todas las jornadas y categorías del turno.</small>
-                      {turnStandingsErrors[String(jornada.turnId)] ? <p role="alert" style={{ color: "#b91c1c", fontSize: ".72rem" }}>{turnStandingsErrors[String(jornada.turnId)]}</p> :
-                        (turnStandingsById[String(jornada.turnId)] || []).length ? (
-                          <div style={{ display: "grid", gap: ".3rem" }}>
-                            {(turnStandingsById[String(jornada.turnId)] || []).map((team, index) => (
-                              <div key={team.clubId || normalizeTeamName(team.equipo)} style={{ display: "grid", gridTemplateColumns: "24px minmax(0,1fr) auto", gap: ".4rem", alignItems: "center", padding: ".45rem .5rem", border: "1px solid #e5e7eb", borderRadius: "5px" }}>
-                                <strong style={{ color: "#b5122a", fontSize: ".72rem" }}>{index + 1}.</strong>
-                                <span style={{ fontSize: ".73rem", fontWeight: 800, overflowWrap: "anywhere" }}>{team.equipo}</span>
-                                <strong style={{ color: "#171c27", fontSize: ".8rem" }}>{team.puntos} pts</strong>
-                              </div>
-                            ))}
-                          </div>
-                        ) : <p style={{ margin: 0, fontSize: ".72rem", color: "#555" }}>Todavía no hay puntos acumulados para este turno.</p>}
-                    </section>
-
-                    <button type="button" onClick={() => setGeneralViewKey("")} style={{ width: "100%", padding: ".7rem", border: 0, borderRadius: "7px", background: "#b5122a", color: "#fff", fontWeight: 900 }}>VOLVER A MIS DESIGNACIONES</button>
+                    <button type="button" onClick={() => setGeneralViewKey("")} style={{ width: "100%", padding: ".8rem", border: 0, borderRadius: "7px", background: "#b5122a", color: "#fff", fontWeight: 900, fontSize: ".85rem" }}>VOLVER A MIS DESIGNACIONES</button>
                   </section>
                 )}
                 {!archived && (
