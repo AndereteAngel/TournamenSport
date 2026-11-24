@@ -1,6 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 const normalizeTeamName = (value) => String(value || "").trim().toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+const getClosedMatchPoints = (detail, side) => {
+  if (!detail?.resultadoCargado || !detail?.referee_closed) return 0;
+  const score1 = Number(detail.score1);
+  const score2 = Number(detail.score2);
+  if (!Number.isFinite(score1) || !Number.isFinite(score2)) return 0;
+  if (side === "local") return Number(detail.puntosTeam1 ?? (score1 > score2 ? 3 : score1 < score2 ? 1 : 2));
+  return Number(detail.puntosTeam2 ?? (score2 > score1 ? 3 : score2 < score1 ? 1 : 2));
+};
+
+const buildCategoryTotals = (details) => {
+  const totals = new Map();
+  const add = (name, clubId, points) => {
+    const equipo = String(name || "").trim();
+    if (!equipo) return;
+    const key = clubId ? "club:" + String(clubId) : "name:" + normalizeTeamName(equipo);
+    const current = totals.get(key) || { clubId: clubId || null, equipo, puntos: 0 };
+    current.puntos += points;
+    totals.set(key, current);
+  };
+  details.forEach((detail) => {
+    if (!detail.resultadoCargado || !detail.referee_closed) return;
+    add(detail.team1, detail.local_club_id, getClosedMatchPoints(detail, "local"));
+    add(detail.team2, detail.visitor_club_id, getClosedMatchPoints(detail, "visitante"));
+  });
+  return [...totals.values()].sort((a, b) => b.puntos - a.puntos || a.equipo.localeCompare(b.equipo, "es"));
+};
 const buildTurnStandings = (competition) => {
   const teams = new Map();
   const getTeam = (clubId, name) => {
@@ -412,7 +439,7 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
   }
 
   return (
-    <section style={{ display: "grid", gap: ".75rem", margin: "1rem 0" }}>
+    <section style={{ display: "grid", gap: ".75rem", margin: "1rem 0", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
       <h3 style={{ margin: ".2rem 0", color: "#fff", fontSize: ".9rem", letterSpacing: ".05em" }}>PLANILLAS GENERALES POR JORNADA</h3>
       <p style={{ color: "#bbb", fontSize: ".78rem", margin: 0 }}>Cada planilla reúne todos los encuentros de la misma jornada y turno, aunque pertenezcan a categorías distintas. Cada partido conserva su planilla individual.</p>
       {planillas.map((jornada) => {
@@ -422,8 +449,12 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
           ? new Date(`${jornada.scheduledDate}T12:00:00`).toLocaleDateString("es-AR")
           : "Fecha a confirmar";
         const pendingCount = jornada.details.filter((detail) => !detail.referee_closed).length;
+        const journeyTopPoints = jornada.teamTotals.length ? jornada.teamTotals[0].puntos : null;
+        const journeyWinners = journeyTopPoints == null ? [] : jornada.teamTotals.filter((team) => team.puntos === journeyTopPoints);
+        const journeyCategories = [...new Set(jornada.details.map((detail) => detail.categoria || "Sin categoría"))]
+          .sort((a, b) => a.localeCompare(b, "es", { numeric: true }));
         return (
-          <article key={jornada.key} style={{ padding: ".9rem", border: "1px solid #b5122a", borderRadius: "12px", background: "linear-gradient(145deg, #171c27, #090a0e)", color: "#fff" }}>
+          <article key={jornada.key} style={{ width: "100%", minWidth: 0, boxSizing: "border-box", padding: ".9rem", border: "1px solid #b5122a", borderRadius: "12px", background: "linear-gradient(145deg, #171c27, #090a0e)", color: "#fff" }}>
             <div style={{ textAlign: "center", color: "#f3a0ad", fontWeight: 900, letterSpacing: ".06em" }}>
               JORNADA {jornada.journeyNumber} · {dateLabel}
             </div>
@@ -496,62 +527,102 @@ export function FefutinRefereeJornadaSheets({ jornadas = [], currentUser, onOpen
                     <button type="button" onClick={() => setGeneralViewKey(generalViewKey === jornada.jornadaKey ? "" : jornada.jornadaKey)} aria-expanded={generalViewKey === jornada.jornadaKey} style={{ padding: ".6rem .7rem", border: "1px solid #b5122a", borderRadius: "7px", background: "#b5122a", color: "#fff", fontWeight: 900, fontSize: ".68rem" }}>{generalViewKey === jornada.jornadaKey ? "CERRAR PLANILLA GENERAL" : "PLANILLA GENERAL"}</button>
                   </div>
                 </section>
+
                 {generalViewKey === jornada.jornadaKey && (
-                  <section style={{ display: "grid", gap: ".75rem", marginTop: ".2rem", padding: ".85rem", border: "2px solid #b5122a", borderRadius: "10px", background: "#fff", color: "#171c27" }}>
-                    <header style={{ padding: ".8rem", borderRadius: "7px", background: "#171c27", color: "#fff", textAlign: "center" }}>
+                  <section style={{ display: "grid", gap: ".85rem", width: "100%", minWidth: 0, boxSizing: "border-box", marginTop: ".2rem", padding: "clamp(.65rem, 2vw, 1rem)", border: "2px solid #b5122a", borderRadius: "10px", background: "#fff", color: "#171c27" }}>
+                    <header style={{ padding: ".9rem", borderRadius: "7px", background: "#171c27", color: "#fff", textAlign: "center" }}>
                       <div style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".18em", fontSize: ".7rem" }}>FEFUTIN</div>
-                      <strong style={{ display: "block", margin: ".25rem 0", fontSize: "1.05rem", letterSpacing: ".06em" }}>PLANILLA GENERAL DE JORNADA</strong>
-                      <div style={{ fontSize: ".72rem", color: "#e5e7eb" }}>{jornada.tournamentTitle} · {jornada.branch} · {jornada.turno}</div>
+                      <strong style={{ display: "block", margin: ".25rem 0", fontSize: "clamp(1rem, 3vw, 1.2rem)", letterSpacing: ".06em" }}>RESUMEN GENERAL DE JORNADA</strong>
+                      <div style={{ fontSize: ".78rem", color: "#e5e7eb" }}>{jornada.tournamentTitle} · {jornada.branch} · {jornada.turno}</div>
                       <div style={{ marginTop: ".25rem", fontSize: ".75rem", fontWeight: 800 }}>JORNADA {jornada.journeyNumber} · {dateLabel}</div>
                     </header>
-                    <div>
-                      <strong style={{ display: "block", marginBottom: ".45rem", color: "#b5122a", fontSize: ".78rem" }}>RESULTADOS DE TODAS LAS CATEGORÍAS</strong>
-                      <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: ".7rem" }}>
-                          <thead><tr style={{ background: "#171c27", color: "#fff" }}>
-                            {["Categoría", "Local", "Resultado", "Visitante", "Puntos"].map((heading) => <th key={heading} style={{ padding: ".5rem .35rem", textAlign: "center", whiteSpace: "nowrap" }}>{heading}</th>)}
-                          </tr></thead>
-                          <tbody>
-                            {jornada.details.map((detail) => {
-                              const hasResult = detail.resultadoCargado && detail.referee_closed;
-                              const points1 = hasResult ? Number(detail.puntosTeam1 ?? (detail.score1 > detail.score2 ? 3 : detail.score1 < detail.score2 ? 1 : 2)) : null;
-                              const points2 = hasResult ? Number(detail.puntosTeam2 ?? (detail.score2 > detail.score1 ? 3 : detail.score2 < detail.score1 ? 1 : 2)) : null;
-                              return <tr key={detail.matchId} style={{ borderBottom: "1px solid #d1d5db" }}>
-                                <td style={{ padding: ".5rem .35rem", fontWeight: 800 }}>{detail.categoria}</td>
-                                <td style={{ padding: ".5rem .35rem", textAlign: "center" }}>{detail.team1 || "—"}</td>
-                                <td style={{ padding: ".5rem .35rem", textAlign: "center", fontWeight: 900, whiteSpace: "nowrap" }}>{hasResult ? detail.score1 + " - " + detail.score2 : "Pendiente"}</td>
-                                <td style={{ padding: ".5rem .35rem", textAlign: "center" }}>{detail.team2 || "—"}</td>
-                                <td style={{ padding: ".5rem .35rem", textAlign: "center", fontWeight: 800, whiteSpace: "nowrap" }}>{hasResult ? points1 + " - " + points2 + " pts" : "—"}</td>
-                              </tr>;
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
+
+                    <section style={{ display: "grid", gap: ".35rem", padding: ".9rem", border: "2px solid #b5122a", borderRadius: "9px", background: "#fff5f6", textAlign: "center" }}>
+                      <div style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".7rem" }}>🏆 GANADOR DE LA JORNADA</div>
+                      {journeyWinners.length ? (
+                        <>
+                          <strong style={{ color: "#171c27", fontSize: "clamp(1.05rem, 4vw, 1.4rem)", overflowWrap: "anywhere" }}>{journeyWinners.map((team) => team.equipo).join(" · ")}</strong>
+                          <strong style={{ color: "#b5122a", fontSize: "1.35rem" }}>{journeyTopPoints} PTS</strong>
+                          {journeyWinners.length > 1 && <small style={{ color: "#555" }}>Empate en el primer puesto · ganadores compartidos</small>}
+                        </>
+                      ) : <strong style={{ color: "#555", fontSize: ".85rem" }}>Todavía no hay encuentros cerrados con puntos para definir al ganador.</strong>}
+                    </section>
+
+                    <div style={{ display: "grid", gap: ".7rem" }}>
+                      <strong style={{ color: "#b5122a", fontSize: ".82rem", letterSpacing: ".04em" }}>RESULTADOS Y PUNTOS POR CATEGORÍA</strong>
+                      {journeyCategories.map((category) => {
+                        const categoryDetails = jornada.details.filter((detail) => (detail.categoria || "Sin categoría") === category);
+                        const categoryTotals = buildCategoryTotals(categoryDetails);
+                        return (
+                          <section key={category} style={{ display: "grid", gap: ".55rem", padding: ".75rem", border: "1px solid #d1d5db", borderRadius: "8px", background: "#fff", minWidth: 0 }}>
+                            <strong style={{ color: "#b5122a", fontSize: ".82rem", textAlign: "center" }}>{category.toLocaleUpperCase("es")}</strong>
+                            <div style={{ display: "grid", gap: ".45rem" }}>
+                              {categoryDetails.map((detail) => {
+                                const hasResult = Boolean(detail.resultadoCargado && detail.referee_closed);
+                                const localPoints = hasResult ? getClosedMatchPoints(detail, "local") : null;
+                                const visitorPoints = hasResult ? getClosedMatchPoints(detail, "visitante") : null;
+                                return (
+                                  <div key={detail.matchId} style={{ display: "grid", gap: ".3rem", padding: ".6rem", borderRadius: "7px", background: "#f3f4f6", minWidth: 0 }}>
+                                    <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)", alignItems: "center", gap: ".35rem", textAlign: "center" }}>
+                                      <strong style={{ fontSize: ".76rem", overflowWrap: "anywhere" }}>{detail.team1 || "Local"}</strong>
+                                      <strong style={{ color: "#171c27", fontSize: ".9rem", whiteSpace: "nowrap" }}>{hasResult ? detail.score1 + " - " + detail.score2 : "Pendiente"}</strong>
+                                      <strong style={{ fontSize: ".76rem", overflowWrap: "anywhere" }}>{detail.team2 || "Visitante"}</strong>
+                                    </div>
+                                    <small style={{ color: hasResult ? "#374151" : "#9a3412", textAlign: "center", fontSize: ".68rem" }}>
+                                      {hasResult ? (detail.team1 || "Local") + ": " + localPoints + " pts · " + (detail.team2 || "Visitante") + ": " + visitorPoints + " pts" : detail.referee_closed ? "Encuentro cerrado sin resultado válido" : "Pendiente de cierre"}
+                                    </small>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <div style={{ borderTop: "1px solid #e5e7eb", paddingTop: ".55rem" }}>
+                              <strong style={{ display: "block", color: "#171c27", fontSize: ".72rem", marginBottom: ".4rem" }}>PUNTOS ACUMULADOS DE LA CATEGORÍA</strong>
+                              {categoryTotals.length ? (
+                                <div style={{ display: "grid", gap: ".3rem" }}>
+                                  {categoryTotals.map((team, index) => (
+                                    <div key={team.clubId || normalizeTeamName(team.equipo)} style={{ display: "grid", gridTemplateColumns: "24px minmax(0,1fr) auto", gap: ".4rem", alignItems: "center", padding: ".4rem .5rem", borderRadius: "5px", background: index === 0 ? "#fff0f2" : "#f3f4f6" }}>
+                                      <strong style={{ color: "#b5122a", fontSize: ".72rem" }}>{index + 1}.</strong>
+                                      <span style={{ fontSize: ".74rem", fontWeight: 800, overflowWrap: "anywhere" }}>{team.equipo}</span>
+                                      <strong style={{ color: "#b5122a", fontSize: ".8rem" }}>{team.puntos} pts</strong>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : <p style={{ margin: 0, color: "#6b7280", fontSize: ".7rem" }}>Todavía no hay puntos de encuentros cerrados en esta categoría.</p>}
+                            </div>
+                          </section>
+                        );
+                      })}
                     </div>
-                    <div>
-                      <strong style={{ display: "block", marginBottom: ".45rem", color: "#b5122a", fontSize: ".78rem" }}>PUNTOS POR CLUB · ESTA JORNADA</strong>
-                      {jornada.teamTotals.length ? <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: ".72rem" }}>
-                          <thead><tr style={{ background: "#e5e7eb" }}><th style={{ padding: ".45rem", textAlign: "left" }}>Club</th><th>PTS</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th></tr></thead>
-                          <tbody>{jornada.teamTotals.map((team) => <tr key={team.clubId || normalizeTeamName(team.equipo)} style={{ borderBottom: "1px solid #d1d5db" }}>
-                            <td style={{ padding: ".45rem", fontWeight: 800 }}>{team.equipo}</td><td style={{ textAlign: "center", fontWeight: 900 }}>{team.puntos}</td><td style={{ textAlign: "center" }}>{team.partidos}</td><td style={{ textAlign: "center" }}>{team.ganados}</td><td style={{ textAlign: "center" }}>{team.empatados}</td><td style={{ textAlign: "center" }}>{team.perdidos}</td>
-                          </tr>)}</tbody>
-                        </table>
-                      </div> : <p style={{ margin: 0, fontSize: ".72rem" }}>Todavía no hay partidos cerrados para sumar.</p>}
-                    </div>
-                    <div>
-                      <strong style={{ display: "block", marginBottom: ".45rem", color: "#b5122a", fontSize: ".78rem" }}>TABLA GENERAL ACUMULADA · {jornada.branch} · {jornada.turno}</strong>
-                      <div style={{ overflowX: "auto" }}>
-                        {turnStandingsErrors[String(jornada.turnId)] ? <p role="alert" style={{ color: "#b91c1c", fontSize: ".72rem" }}>{turnStandingsErrors[String(jornada.turnId)]}</p> :
-                          (turnStandingsById[String(jornada.turnId)] || []).length ? <table style={{ width: "100%", borderCollapse: "collapse", fontSize: ".68rem" }}>
-                            <thead><tr style={{ background: "#171c27", color: "#fff" }}>{["Pos.", "Club", "PTS", "PJ", "PG", "PE", "PP", "GF", "GC", "DG"].map((heading) => <th key={heading} style={{ padding: ".45rem .3rem", whiteSpace: "nowrap" }}>{heading}</th>)}</tr></thead>
-                            <tbody>{(turnStandingsById[String(jornada.turnId)] || []).map((team, index) => <tr key={team.clubId || normalizeTeamName(team.equipo)} style={{ borderBottom: "1px solid #d1d5db" }}>
-                              <td style={{ padding: ".45rem .3rem", textAlign: "center" }}>{index + 1}</td><td style={{ padding: ".45rem .3rem", fontWeight: 800, whiteSpace: "nowrap" }}>{team.equipo}</td><td style={{ textAlign: "center", fontWeight: 900 }}>{team.puntos}</td><td style={{ textAlign: "center" }}>{team.partidos}</td><td style={{ textAlign: "center" }}>{team.ganados}</td><td style={{ textAlign: "center" }}>{team.empatados}</td><td style={{ textAlign: "center" }}>{team.perdidos}</td><td style={{ textAlign: "center" }}>{team.golesFavor}</td><td style={{ textAlign: "center" }}>{team.golesContra}</td><td style={{ textAlign: "center" }}>{team.golesFavor - team.golesContra}</td>
-                            </tr>)}</tbody>
-                          </table> : <p style={{ margin: 0, fontSize: ".72rem" }}>Todavía no hay puntos acumulados para este turno.</p>}
-                      </div>
-                    </div>
-                    <button type="button" onClick={() => setGeneralViewKey("")} style={{ padding: ".65rem", border: 0, borderRadius: "7px", background: "#b5122a", color: "#fff", fontWeight: 900 }}>VOLVER A MIS DESIGNACIONES</button>
+
+                    <section style={{ display: "grid", gap: ".45rem", padding: ".8rem", borderRadius: "8px", background: "#171c27", color: "#fff" }}>
+                      <strong style={{ color: "#f3a0ad", textAlign: "center", fontSize: ".78rem" }}>PUNTAJE TOTAL DE LA JORNADA · TODAS LAS CATEGORÍAS</strong>
+                      {jornada.teamTotals.length ? jornada.teamTotals.map((team, index) => (
+                        <div key={team.clubId || normalizeTeamName(team.equipo)} style={{ display: "grid", gridTemplateColumns: "24px minmax(0,1fr) auto", gap: ".45rem", alignItems: "center", padding: ".45rem .5rem", borderRadius: "5px", background: index === 0 ? "rgba(181,18,42,.35)" : "#252b35" }}>
+                          <strong style={{ color: "#f3a0ad", fontSize: ".72rem" }}>{index + 1}.</strong>
+                          <span style={{ fontSize: ".76rem", fontWeight: 800, overflowWrap: "anywhere" }}>{team.equipo}</span>
+                          <strong style={{ color: "#fff", fontSize: ".85rem" }}>{team.puntos} pts</strong>
+                        </div>
+                      )) : <p style={{ margin: 0, color: "#ddd", textAlign: "center", fontSize: ".72rem" }}>Todavía no hay puntos acumulados.</p>}
+                    </section>
+
+                    <section style={{ display: "grid", gap: ".45rem" }}>
+                      <strong style={{ color: "#b5122a", fontSize: ".8rem" }}>TABLA GENERAL ACUMULADA · {jornada.branch} · {jornada.turno}</strong>
+                      <small style={{ color: "#555", fontSize: ".68rem" }}>Puntos de todas las jornadas y categorías del turno.</small>
+                      {turnStandingsErrors[String(jornada.turnId)] ? <p role="alert" style={{ color: "#b91c1c", fontSize: ".72rem" }}>{turnStandingsErrors[String(jornada.turnId)]}</p> :
+                        (turnStandingsById[String(jornada.turnId)] || []).length ? (
+                          <div style={{ display: "grid", gap: ".3rem" }}>
+                            {(turnStandingsById[String(jornada.turnId)] || []).map((team, index) => (
+                              <div key={team.clubId || normalizeTeamName(team.equipo)} style={{ display: "grid", gridTemplateColumns: "24px minmax(0,1fr) auto", gap: ".4rem", alignItems: "center", padding: ".45rem .5rem", border: "1px solid #e5e7eb", borderRadius: "5px" }}>
+                                <strong style={{ color: "#b5122a", fontSize: ".72rem" }}>{index + 1}.</strong>
+                                <span style={{ fontSize: ".73rem", fontWeight: 800, overflowWrap: "anywhere" }}>{team.equipo}</span>
+                                <strong style={{ color: "#171c27", fontSize: ".8rem" }}>{team.puntos} pts</strong>
+                              </div>
+                            ))}
+                          </div>
+                        ) : <p style={{ margin: 0, fontSize: ".72rem", color: "#555" }}>Todavía no hay puntos acumulados para este turno.</p>}
+                    </section>
+
+                    <button type="button" onClick={() => setGeneralViewKey("")} style={{ width: "100%", padding: ".7rem", border: 0, borderRadius: "7px", background: "#b5122a", color: "#fff", fontWeight: 900 }}>VOLVER A MIS DESIGNACIONES</button>
                   </section>
                 )}
                 {!archived && (
