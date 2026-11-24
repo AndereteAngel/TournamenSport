@@ -60,7 +60,8 @@ begin
   end if;
 
   insert into public.fefutin_players (
-    dni, first_name, last_name, birth_date, photo_path, approved_by
+    dni, first_name, last_name, birth_date, photo_path, approved_by,
+    carnet_status, verification_status
   )
   values (
     v_roster_player.dni,
@@ -68,13 +69,16 @@ begin
     v_roster_player.last_name,
     v_roster_player.birth_date,
     v_roster_player.photo_path,
-    auth.uid()
+    auth.uid(),
+    'habilitado', 'habilitado'
   )
   on conflict (dni) do update set
     first_name = excluded.first_name,
     last_name = excluded.last_name,
     birth_date = excluded.birth_date,
-    photo_path = coalesce(excluded.photo_path, public.fefutin_players.photo_path)
+    photo_path = coalesce(excluded.photo_path, public.fefutin_players.photo_path),
+    carnet_status = 'habilitado',
+    verification_status = 'habilitado'
   where public.fefutin_players.status = 'aprobado'
   returning id, carnet_number, status
     into v_registry_id, v_carnet, v_registry_status;
