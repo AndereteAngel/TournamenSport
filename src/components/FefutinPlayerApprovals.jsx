@@ -3,7 +3,7 @@ import { supabase } from "../supabaseClient";
 
 const STATUS_OPTIONS = [
   { value: "todos", label: "Todos los estados" },
-  { value: "pendiente_alta", label: "Pendientes de activar" },
+  { value: "pendiente_alta", label: "Pendientes de habilitación" },
   { value: "habilitado", label: "Activos · Habilitados" },
   { value: "no_habilitado", label: "No habilitados" },
   { value: "rechazado", label: "Rechazados" },
@@ -20,7 +20,7 @@ const getStatus = (player) => {
 };
 
 const statusLabel = (status) => ({
-  pendiente_alta: "PENDIENTE DE ACTIVAR",
+  pendiente_alta: "PENDIENTE DE HABILITACIÓN",
   habilitado: "ACTIVO · HABILITADO",
   no_habilitado: "NO HABILITADO",
   rechazado: "RECHAZADO",
