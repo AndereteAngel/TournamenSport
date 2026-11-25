@@ -2,18 +2,21 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 
 const statusLabel = {
-  pendiente: "PENDIENTE",
-  en_proceso: "EN PROCESO",
   habilitado: "HABILITADO",
   no_habilitado: "NO HABILITADO",
 };
 
 const statusColor = {
-  pendiente: "#facc15",
-  en_proceso: "#93c5fd",
   habilitado: "#86efac",
   no_habilitado: "#fca5a5",
 };
+
+// La organización trabaja con dos estados operativos. Todo jugador que
+// todavía no fue aprobado o no tiene habilitación explícita queda no habilitado.
+const getOperationalStatus = (player) =>
+  player?.approval_status === "aprobado" && player?.carnet_status === "habilitado"
+    ? "habilitado"
+    : "no_habilitado";
 
 export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId = null, embedded = false }) {
   const [participations, setParticipations] = useState([]);
@@ -87,11 +90,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
       const searchFields = embedded ? [player.first_name, player.last_name, player.dni, player.carnet_number] : [player.first_name, player.last_name, player.dni, player.carnet_number, player.club_name];
       const matchesSearch = !query || searchFields.some((value) => String(value || "").toLocaleLowerCase("es").includes(query));
       const matchesCategory = categoryFilter === "todas" || player.category_label === categoryFilter;
-      const playerStatus = player.approval_status === "pendiente"
-        ? "pendiente"
-        : player.approval_status === "rechazado"
-          ? "rechazado"
-          : (player.carnet_status || "pendiente");
+      const playerStatus = getOperationalStatus(player);
       const matchesStatus = statusFilter === "todos" || playerStatus === statusFilter;
       return matchesSearch && matchesCategory && matchesStatus;
     });
@@ -105,7 +104,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
   const logoUrl = selectedPlayer?.logo_path
     ? supabase.storage.from("fefutin-clubs").getPublicUrl(selectedPlayer.logo_path).data.publicUrl
     : "";
-  const verificationStatus = selectedPlayer?.carnet_status || "pendiente";
+  const verificationStatus = getOperationalStatus(selectedPlayer);
 
   useEffect(() => {
     if (selectedPlayer && selectedPlayer.carnet_number !== selectedKey) {
@@ -178,14 +177,11 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
             </select>
           </label>
           <label style={{ display: "grid", gap: ".35rem", color: "#eee", fontSize: ".76rem", fontWeight: 800 }}>
-            {embedded ? "Estado de inscripción / carnet" : "Estado del carnet"}
+            {embedded ? "Estado de habilitación" : "Estado del carnet"}
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} style={fieldStyle}>
               <option value="todos">Todos los estados</option>
-              <option value="pendiente">Pendiente</option>
-              <option value="en_proceso">En proceso</option>
               <option value="habilitado">Habilitado</option>
               <option value="no_habilitado">No habilitado</option>
-              {embedded && <option value="rechazado">Rechazado</option>}
             </select>
           </label>
           <button type="button" onClick={() => { setSearch(""); setCategoryFilter("todas"); setStatusFilter("todos"); }} style={{ alignSelf: "end", border: "1px solid #b5122a", borderRadius: "8px", padding: ".7rem .9rem", background: "#171c27", color: "#fff", fontWeight: 800, cursor: "pointer" }}>Limpiar filtros</button>
@@ -217,16 +213,8 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                 </tr></thead>
                 <tbody>
                   {filteredPlayers.map((player, index) => {
-                    const playerStatus = player.approval_status === "pendiente"
-                      ? "PENDIENTE DE APROBACIÓN"
-                      : player.approval_status === "rechazado"
-                        ? "RECHAZADO"
-                        : statusLabel[player.carnet_status || "pendiente"] || "PENDIENTE";
-                    const playerStatusColor = player.approval_status === "rechazado"
-                      ? "#fca5a5"
-                      : player.approval_status === "pendiente"
-                        ? "#facc15"
-                        : statusColor[player.carnet_status || "pendiente"] || "#ddd";
+                    const playerStatus = getOperationalStatus(player);
+                    const playerStatusColor = statusColor[playerStatus];
                     return (
                       <tr key={player.id || player.carnet_number || index} style={{ borderTop: "1px solid #333" }}>
                         <td style={{ padding: ".55rem", color: "#fca5a5", fontWeight: 900 }}>{index + 1}</td>
@@ -235,7 +223,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                         <td style={{ padding: ".55rem", whiteSpace: "nowrap" }}>{player.dni || "—"}</td>
                         <td style={{ padding: ".55rem" }}>{player.category_label || "—"}</td>
                         <td style={{ padding: ".55rem", whiteSpace: "nowrap" }}>
-                          {player.carnet_number ? <button type="button" onClick={() => { setSelectedKey(player.carnet_number); setCarnetAlertOpen(true); }} style={{ border: 0, background: "transparent", color: "#fff", textDecoration: "underline", cursor: "pointer", fontWeight: 800 }}>{player.carnet_number}</button> : "Pendiente"}
+                          {player.carnet_number ? <button type="button" onClick={() => { setSelectedKey(player.carnet_number); setCarnetAlertOpen(true); }} style={{ border: 0, background: "transparent", color: "#fff", textDecoration: "underline", cursor: "pointer", fontWeight: 800 }}>{player.carnet_number}</button> : "SIN EMITIR"}
                         </td>
                         <td style={{ padding: ".55rem", color: playerStatusColor, fontSize: ".7rem", fontWeight: 900, whiteSpace: "nowrap" }}>{playerStatus}</td>
                       </tr>
@@ -290,7 +278,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                     </div>
                     <div>
                       <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>ESTADO DE HABILITACIÓN</p>
-                      <p style={{ color: statusColor[verificationStatus] || "#facc15", fontSize: ".82rem", fontWeight: 900, margin: ".15rem 0 0" }}>{statusLabel[verificationStatus] || "PENDIENTE"}</p>
+                      <p style={{ color: statusColor[verificationStatus] || "#facc15", fontSize: ".82rem", fontWeight: 900, margin: ".15rem 0 0" }}>{statusLabel[verificationStatus]}</p>
                     </div>
                   </div>
                 </div>
@@ -445,7 +433,7 @@ export function PlayerCarnets({ currentUser, canManage = false, onBack, clubId =
                     </div>
                     <div>
                       <p style={{ color: "#aaa", fontSize: ".62rem", fontWeight: 800, letterSpacing: ".08em", margin: 0 }}>ESTADO DE HABILITACIÓN</p>
-                      <p style={{ color: statusColor[verificationStatus] || "#facc15", fontSize: ".82rem", fontWeight: 900, margin: ".15rem 0 0" }}>{statusLabel[verificationStatus] || "PENDIENTE"}</p>
+                      <p style={{ color: statusColor[verificationStatus] || "#facc15", fontSize: ".82rem", fontWeight: 900, margin: ".15rem 0 0" }}>{statusLabel[verificationStatus]}</p>
                     </div>
                   </div>
                 </div>
