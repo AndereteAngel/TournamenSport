@@ -37,15 +37,7 @@ export function FefutinPayments({ currentUser, onBack }) {
     setLoading(true);
     setError("");
     const [chargeResult, paymentResult, conceptResult] = await Promise.all([
-      supabase
-        .from("fefutin_player_charges")
-        .select(`
-          id, club_id, amount, currency, status, created_at, paid_at, concept_name,
-          player:fefutin_club_roster_players!inner(first_name,last_name,approval_status,
-            roster:fefutin_club_rosters(category_label)),
-          club:fefutin_clubs!inner(name)
-        `)
-        .order("created_at", { ascending: false }),
+      supabase.rpc("get_fefutin_payment_charge_overview"),
       supabase
         .from("fefutin_payments")
         .select("id,amount,currency,status,initiated_at,paid_at")
@@ -230,9 +222,9 @@ export function FefutinPayments({ currentUser, onBack }) {
         ) : (
           <div style={{ display: "grid", gap: ".65rem" }}>
             {charges.map((charge) => {
-              const player = Array.isArray(charge.player) ? charge.player[0] : charge.player;
-              const club = Array.isArray(charge.club) ? charge.club[0] : charge.club;
-              const roster = Array.isArray(player?.roster) ? player.roster[0] : player?.roster;
+              const player = { first_name: charge.player_first_name, last_name: charge.player_last_name };
+              const club = { name: charge.club_name };
+              const roster = { category_label: charge.category_label };
               const paid = charge.status === "pagado";
               return (
                 <article key={charge.id} style={{ display: "grid", gridTemplateColumns: isReferente && charge.status === "pendiente" ? "auto minmax(0,1fr) auto" : "minmax(0,1fr) auto", gap: ".5rem .8rem", alignItems: "center", padding: ".8rem", borderRadius: 10, background: "#202938", border: "1px solid #394456" }}>
