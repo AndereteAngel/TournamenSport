@@ -28,6 +28,7 @@ export function FefutinPayments({ currentUser, onBack }) {
   const [selectedChargeIds, setSelectedChargeIds] = useState([]);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [checkoutReturn] = useState(() => new URLSearchParams(window.location.search).get("fefutin_payment"));
 
   const isAdminOrDirectivo = ["admin", "directivo"].includes(currentUser?.role);
   const isReferente = currentUser?.role === "referente";
@@ -71,6 +72,7 @@ export function FefutinPayments({ currentUser, onBack }) {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (checkoutReturn) load(); }, [checkoutReturn, load]);
 
   const totals = useMemo(() => {
     const pending = charges.filter((item) => item.status === "pendiente");
@@ -153,6 +155,11 @@ export function FefutinPayments({ currentUser, onBack }) {
       </div>
 
       {error && <div role="alert" style={{ ...card, borderColor: "#b5122a", color: "#ffd5dc", marginBottom: "1rem" }}>{error}</div>}
+      {checkoutReturn && (
+        <div role="status" style={{ ...card, borderColor: "#d39b35", color: "#ffe2a8", marginBottom: "1rem" }}>
+          Volviste de Mercado Pago. Estamos verificando la acreditación; el estado se actualizará cuando recibamos la confirmación segura del servidor.
+        </div>
+      )}
 
       <section style={{ ...card, marginBottom: "1rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
         <div>

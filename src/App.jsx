@@ -2517,7 +2517,7 @@ export function TournamenSportApp() {
   const [authInput, setAuthInput] = useState({ email: "", password: "" });
   const [authMode, setAuthMode] = useState("login");
   const [registerInput, setRegisterInput] = useState({ username: "", requestedRole: "arbitro" });
-  const [activeView, setActiveView] = useState("home");
+  const [activeView, setActiveView] = useState(() => new URLSearchParams(window.location.search).has("fefutin_payment") ? "fefutin-payments" : "home");
   const [managementInboxTab, setManagementInboxTab] = useState(null);
   const [showWhoWeAre, setShowWhoWeAre] = useState(false);
   const [showWelcome, setShowWelcome] = useState(true);

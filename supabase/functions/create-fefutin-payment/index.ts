@@ -72,6 +72,14 @@ Deno.serve(async (req: Request) => {
     return json({ error: paymentError?.message || "No se pudo preparar el pago." }, 400);
   }
 
+  if (!userData.user.email) {
+    await admin.from("fefutin_payments").update({
+      status: "rejected",
+      provider_status: "missing_payer_email",
+    }).eq("id", paymentData.payment_id);
+    return json({ error: "Tu cuenta no tiene un correo electrónico asociado. Contactá a administración para actualizarlo." }, 400);
+  }
+
   const amount = Number(paymentData.amount);
   if (!Number.isFinite(amount) || amount <= 0) {
     await admin.from("fefutin_payments").update({
@@ -90,6 +98,14 @@ Deno.serve(async (req: Request) => {
     description: "Fichajes de jugadores FEFUTIN",
     expiration_time: "P1D",
     payer: { email: userData.user.email },
+    config: {
+      online: {
+        success_url: "https://prueba-fefutin--tournamentsport.netlify.app/?fefutin_payment=success",
+        failure_url: "https://prueba-fefutin--tournamentsport.netlify.app/?fefutin_payment=failure",
+        pending_url: "https://prueba-fefutin--tournamentsport.netlify.app/?fefutin_payment=pending",
+        auto_return: "all",
+      },
+    },
     items: paymentData.items,
   };
 
