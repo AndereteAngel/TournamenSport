@@ -17,7 +17,7 @@ import { ReferenteInscripcion } from "./components/ReferenteInscripcion";
 import { ReferenteEquipos } from "./components/ReferenteEquipos";
 import { FefutinClubTournamentRequests, ReferenteTorneoSolicitudes } from "./components/FefutinClubTournamentRequests";
 import { FefutinPlayerApprovals } from "./components/FefutinPlayerApprovals";
-import { FefutinPayments } from "./components/FefutinPayments";
+import { FefutinPayments, FefutinPaymentsHomeCard } from "./components/FefutinPayments";
 import { FefutinTopScorers } from "./components/FefutinTopScorers";
 import { FefutinSheetArchive } from "./components/FefutinSheetArchive";
 import { FefutinRefereeJornadaSheets } from "./components/FefutinRefereeJornadaSheets";
@@ -5727,6 +5727,12 @@ export function TournamenSportApp() {
         <FefutinPayments currentUser={currentUser} onBack={handleGoHome} />
       ) : activeView === "home" ? (
         <div className="tc-home-screen">
+        {["admin", "directivo", "referente"].includes(currentUser?.role) && (
+          <FefutinPaymentsHomeCard
+            currentUser={currentUser}
+            onOpen={() => setActiveView("fefutin-payments")}
+          />
+        )}
         <div
           className="cr-card tc-home-panel"
           style={{

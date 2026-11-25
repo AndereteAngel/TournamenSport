@@ -204,3 +204,107 @@ export function FefutinPayments({ currentUser, onBack }) {
     </main>
   );
 }
+
+export function FefutinPaymentsHomeCard({ currentUser, onOpen }) {
+  const [summary, setSummary] = useState({ count: 0, amount: 0 });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const loadSummary = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    const { data, error: queryError } = await supabase
+      .from("fefutin_player_charges")
+      .select("id,amount,status");
+
+    if (queryError) {
+      setError("No se pudo consultar el estado de los pagos.");
+      setSummary({ count: 0, amount: 0 });
+    } else {
+      const pending = (data || []).filter((charge) => charge.status === "pendiente");
+      setSummary({
+        count: pending.length,
+        amount: pending.reduce((total, charge) => total + Number(charge.amount || 0), 0),
+      });
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    loadSummary();
+    const handleFocus = () => loadSummary();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [loadSummary]);
+
+  return (
+    <section aria-label="Acceso a pagos y compras" style={{
+      width: "100%",
+      maxWidth: "980px",
+      margin: "0 auto 1rem",
+      padding: "1rem",
+      boxSizing: "border-box",
+      border: "2px solid #b5122a",
+      borderRadius: "14px",
+      background: "linear-gradient(135deg, #202938 0%, #111722 100%)",
+      color: "#fff",
+      fontFamily: "'Montserrat', sans-serif",
+      boxShadow: "0 8px 22px rgba(0,0,0,.22)",
+    }}>
+      <button type="button" onClick={onOpen} style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: ".85rem",
+        width: "100%",
+        padding: 0,
+        border: 0,
+        background: "transparent",
+        color: "inherit",
+        textAlign: "left",
+        cursor: "pointer",
+      }}>
+        <span style={{ display: "flex", alignItems: "center", gap: ".8rem", minWidth: 0 }}>
+          <span aria-hidden="true" style={{
+            width: "44px", height: "44px", flex: "0 0 44px",
+            display: "grid", placeItems: "center", borderRadius: "11px",
+            background: "#b5122a", color: "#fff", fontSize: "1.35rem",
+          }}>▣</span>
+          <span style={{ minWidth: 0 }}>
+            <strong style={{ display: "block", fontSize: "1rem", lineHeight: 1.25 }}>PAGOS Y COMPRAS</strong>
+            <span style={{ display: "block", color: "#cbd5e1", fontSize: ".76rem", marginTop: ".2rem" }}>
+              Fichajes, deudas y movimientos del club
+            </span>
+          </span>
+        </span>
+        <span aria-hidden="true" style={{ color: "#f3a0ad", fontSize: "1.5rem", fontWeight: 900 }}>›</span>
+      </button>
+
+      <div style={{
+        marginTop: ".85rem",
+        padding: ".75rem .85rem",
+        borderRadius: "10px",
+        background: error ? "#3b2028" : summary.count > 0 ? "#4a1d29" : "#202f3d",
+        border: "1px solid " + (summary.count > 0 || error ? "#d64a61" : "#526174"),
+      }}>
+        {loading ? (
+          <span style={{ color: "#e2e8f0", fontSize: ".8rem" }}>Consultando pagos pendientes…</span>
+        ) : error ? (
+          <span role="status" style={{ color: "#ffd1d8", fontSize: ".8rem", fontWeight: 700 }}>{error}</span>
+        ) : summary.count > 0 ? (
+          <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".7rem", flexWrap: "wrap" }}>
+            <span style={{ color: "#fff", fontSize: ".82rem", fontWeight: 900 }}>
+              ⚠ Tenés {summary.count} {summary.count === 1 ? "fichaje pendiente" : "fichajes pendientes"}. Entrá para revisar y gestionar el pago.
+            </span>
+            <strong style={{ color: "#fff", fontSize: "1rem", whiteSpace: "nowrap" }}>{money(summary.amount)}</strong>
+          </span>
+        ) : (
+          <span style={{ color: "#cbd5e1", fontSize: ".8rem", fontWeight: 700 }}>
+            No hay cargos pendientes de pago{currentUser?.role === "referente" ? " para tu club" : ""}.
+          </span>
+        )}
+      </div>
+    </section>
+  );
+}
+
