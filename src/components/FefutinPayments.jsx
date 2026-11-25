@@ -25,8 +25,12 @@ export function FefutinPayments({ currentUser, onBack }) {
   const [concept, setConcept] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedChargeIds, setSelectedChargeIds] = useState([]);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
 
   const isAdminOrDirectivo = ["admin", "directivo"].includes(currentUser?.role);
+  const isReferente = currentUser?.role === "referente";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,6 +62,8 @@ export function FefutinPayments({ currentUser, onBack }) {
       setCharges([]);
     } else {
       setCharges(chargeResult.data || []);
+      const pendingIds = new Set((chargeResult.data || []).filter((item) => item.status === "pendiente").map((item) => item.id));
+      setSelectedChargeIds((current) => current.filter((id) => pendingIds.has(id)));
     }
     if (!paymentResult.error) setPayments(paymentResult.data || []);
     if (!conceptResult.error) setConcept(conceptResult.data || null);
@@ -79,6 +85,43 @@ export function FefutinPayments({ currentUser, onBack }) {
       exceptionalCount: exceptional.length,
     };
   }, [charges]);
+
+  const pendingCharges = useMemo(
+    () => charges.filter((item) => item.status === "pendiente"),
+    [charges]
+  );
+  const selectedAmount = useMemo(
+    () => pendingCharges.filter((item) => selectedChargeIds.includes(item.id))
+      .reduce((sum, item) => sum + Number(item.amount || 0), 0),
+    [pendingCharges, selectedChargeIds]
+  );
+
+  const toggleCharge = (chargeId) => {
+    setSelectedChargeIds((current) => current.includes(chargeId)
+      ? current.filter((id) => id !== chargeId)
+      : [...current, chargeId]);
+  };
+
+  const toggleAllPending = () => {
+    const allSelected = pendingCharges.length > 0
+      && pendingCharges.every((item) => selectedChargeIds.includes(item.id));
+    setSelectedChargeIds(allSelected ? [] : pendingCharges.map((item) => item.id));
+  };
+
+  const startCheckout = async () => {
+    if (!isReferente || selectedChargeIds.length === 0 || checkoutLoading) return;
+    setCheckoutLoading(true);
+    setCheckoutError("");
+    const { data, error: invokeError } = await supabase.functions.invoke("create-fefutin-payment", {
+      body: { charge_ids: selectedChargeIds },
+    });
+    if (invokeError || !data?.checkout_url) {
+      setCheckoutError(data?.error || invokeError?.message || "No se pudo iniciar el pago. Intentá nuevamente.");
+      setCheckoutLoading(false);
+      return;
+    }
+    window.location.assign(data.checkout_url);
+  };
 
   const card = {
     background: "#171C27",
@@ -138,6 +181,37 @@ export function FefutinPayments({ currentUser, onBack }) {
         ))}
       </section>
 
+      {isReferente && pendingCharges.length > 0 && (
+        <section style={{ ...card, marginBottom: "1rem", border: "1px solid #b5122a" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap" }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "1rem" }}>Pagar fichajes pendientes</h2>
+              <p style={{ margin: ".3rem 0 0", color: "#c4cad4", fontSize: ".78rem" }}>
+                Seleccioná uno o varios jugadores para pagar juntos con Mercado Pago
+              </p>
+            </div>
+            <button type="button" onClick={toggleAllPending} disabled={checkoutLoading}
+              style={{ border: "1px solid #697386", borderRadius: 8, background: "#263244", color: "#fff", padding: ".55rem .7rem", fontWeight: 800, fontSize: ".75rem" }}>
+              {pendingCharges.every((item) => selectedChargeIds.includes(item.id)) ? "Quitar selección" : "Seleccionar todos"}
+            </button>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: ".75rem", flexWrap: "wrap", marginTop: ".9rem" }}>
+            <div>
+              <div style={{ color: "#b9c1ce", fontSize: ".7rem", fontWeight: 800 }}>SELECCIONADOS: {selectedChargeIds.length}</div>
+              <strong style={{ color: "#ffd1d8", fontSize: "1.25rem" }}>{money(selectedAmount)}</strong>
+            </div>
+            <button type="button" onClick={startCheckout} disabled={checkoutLoading || selectedChargeIds.length === 0}
+              style={{ border: 0, borderRadius: 9, background: checkoutLoading || selectedChargeIds.length === 0 ? "#596273" : "#009ee3", color: "#fff", padding: ".8rem 1rem", fontWeight: 900, cursor: checkoutLoading || selectedChargeIds.length === 0 ? "not-allowed" : "pointer" }}>
+              {checkoutLoading ? "Preparando pago…" : "PAGAR CON MERCADO PAGO"}
+            </button>
+          </div>
+          {checkoutError && <p role="alert" style={{ color: "#ffd1d8", background: "#48212a", borderRadius: 8, padding: ".65rem", margin: ".8rem 0 0", fontSize: ".8rem" }}>{checkoutError}</p>}
+          <p style={{ color: "#aeb7c5", fontSize: ".7rem", margin: ".65rem 0 0" }}>
+            La deuda solo se marcará como pagada cuando Mercado Pago confirme la acreditación al servidor
+          </p>
+        </section>
+      )}
+
       <section style={{ ...card, marginBottom: "1rem" }}>
         <h2 style={{ margin: "0 0 .8rem", fontSize: "1.05rem" }}>Fichajes y deudas por jugador</h2>
         {loading ? (
@@ -154,7 +228,17 @@ export function FefutinPayments({ currentUser, onBack }) {
               const roster = Array.isArray(player?.roster) ? player.roster[0] : player?.roster;
               const paid = charge.status === "pagado";
               return (
-                <article key={charge.id} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto", gap: ".5rem .8rem", alignItems: "center", padding: ".8rem", borderRadius: 10, background: "#202938", border: "1px solid #394456" }}>
+                <article key={charge.id} style={{ display: "grid", gridTemplateColumns: isReferente && charge.status === "pendiente" ? "auto minmax(0,1fr) auto" : "minmax(0,1fr) auto", gap: ".5rem .8rem", alignItems: "center", padding: ".8rem", borderRadius: 10, background: "#202938", border: "1px solid #394456" }}>
+                  {isReferente && charge.status === "pendiente" && (
+                    <input
+                      type="checkbox"
+                      aria-label={`Seleccionar fichaje de ${player?.first_name || "jugador"} ${player?.last_name || ""}`}
+                      checked={selectedChargeIds.includes(charge.id)}
+                      onChange={() => toggleCharge(charge.id)}
+                      disabled={checkoutLoading}
+                      style={{ width: "20px", height: "20px", accentColor: "#b5122a" }}
+                    />
+                  )}
                   <div style={{ minWidth: 0 }}>
                     <div style={{ color: "#fff", fontWeight: 900, overflowWrap: "anywhere" }}>{player?.last_name || ""}, {player?.first_name || "Jugador"}</div>
                     <div style={{ color: "#bdc6d3", fontSize: ".76rem", marginTop: ".2rem" }}>{club?.name || "Club"} · {roster?.category_label || "Categoría sin dato"}</div>
@@ -177,7 +261,7 @@ export function FefutinPayments({ currentUser, onBack }) {
         <div style={card}>
           <h2 style={{ margin: "0 0 .45rem", fontSize: "1rem" }}>Mercado Pago</h2>
           <p style={{ color: "#c4cad4", fontSize: ".82rem", lineHeight: 1.5, margin: 0 }}>
-            La conexión de cobro online se habilitará cuando configuremos las credenciales privadas y la notificación segura de Mercado Pago. Ningún pago se marcará como acreditado solo por volver desde la página de pago.
+            Los pagos se realizan en el checkout seguro de Mercado Pago. La acreditación se confirma mediante una notificación firmada y una consulta de la orden en el servidor.
           </p>
         </div>
         <div style={card}>
