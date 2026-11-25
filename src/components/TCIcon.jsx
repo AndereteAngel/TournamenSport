@@ -6,6 +6,7 @@ const paths = {
   clipboard: <><rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5.5V4h6v1.5M9 10h6M9 14h6M9 18h3"/></>,
   medal: <><path d="M6.5 2h4.2l1.3 7.2-3.4-1.7L5.7 9.4z" fill="currentColor" fillOpacity=".88" stroke="none"/><path d="M13.3 2h4.2l1 7.4-2.9-1.9-3.4 1.7z" fill="currentColor" fillOpacity=".62" stroke="none"/><circle cx="12" cy="15" r="6.6" fill="currentColor" fillOpacity=".18"/><circle cx="12" cy="15" r="5.25"/><path d="m12 11.7.95 1.95 2.15.31-1.55 1.51.37 2.13L12 16.59l-1.92 1.01.37-2.13-1.55-1.51 2.15-.31z" fill="currentColor" stroke="none"/></>,
   home: <><path d="m3 11 9-8 9 8"/><path d="M5.5 10v10h13V10M9.5 20v-6h5v6"/></>,
+  wallet: <><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 9h18"/><path d="M16 14h.01"/></>,
   menu: <><path d="M2.5 6h19M2.5 12h19M2.5 18h19"/></>,
   trophy: <><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 13v5M8 21h8M9 18h6"/></>,
   bolt: <path d="m13 2-9 12h7l-1 8 10-13h-7z"/>,
