@@ -120,70 +120,6 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
     loadParticipations();
   }, [loadParticipations]);
 
-  // La ficha administrativa consulta participaciones normalizadas por turno.
-  // No depende del padrón permanente ni de las tablas legacy de equipos.
-  useEffect(() => {
-    let cancelled = false;
-    const loadClubTournamentSummaries = async () => {
-      if (mode !== "equipos" || selectedSection !== "torneos" || !activeClubId) {
-        setClubTournamentSummaries([]);
-        setLoadingClubTournamentSummaries(false);
-        return;
-      }
-
-      setLoadingClubTournamentSummaries(true);
-      setError("");
-      try {
-        const { data: turnRows, error: turnsError } = await supabase.rpc("get_fefutin_tournament_turn_ids");
-        if (turnsError) throw turnsError;
-
-        const competitions = await Promise.all((turnRows || []).map(async (turn) => {
-          const { data, error: competitionError } = await supabase.rpc("get_fefutin_turn_competition", {
-            p_turn_id: turn.id,
-          });
-          if (competitionError) throw competitionError;
-          return data;
-        }));
-
-        if (cancelled) return;
-        const summaries = (competitions || [])
-          .filter(Boolean)
-          .map((competition) => {
-            const categories = (Array.isArray(competition.categories) ? competition.categories : [])
-              .filter((category) => (Array.isArray(category.clubs) ? category.clubs : [])
-                .some((clubItem) => String(clubItem.club_id) === String(activeClubId)));
-            return {
-              tournament_id: competition.tournament_id,
-              tournament_title: competition.tournament_title || "Torneo FEFUTIN",
-              branch_name: competition.branch_name || "Rama sin identificar",
-              turno: competition.turno || "Turno sin identificar",
-              turn_status: competition.turn_status || "",
-              categories: categories.map((category) => category.name).filter(Boolean),
-            };
-          })
-          .filter((item) => item.categories.length > 0)
-          .sort((a, b) =>
-            String(a.tournament_title).localeCompare(String(b.tournament_title), "es") ||
-            String(a.branch_name).localeCompare(String(b.branch_name), "es") ||
-            String(a.turno).localeCompare(String(b.turno), "es")
-          );
-
-        setClubTournamentSummaries(summaries);
-      } catch (loadError) {
-        if (!cancelled) {
-          console.error("Error al cargar torneos del club:", loadError);
-          setClubTournamentSummaries([]);
-          setError(loadError.message || "No se pudieron cargar los torneos de este club.");
-        }
-      } finally {
-        if (!cancelled) setLoadingClubTournamentSummaries(false);
-      }
-    };
-
-    loadClubTournamentSummaries();
-    return () => { cancelled = true; };
-  }, [mode, selectedSection, activeClubId]);
-
   const updatePlayer = (participationId, playerId, field, value) => {
     setRowsByParticipation((previous) => ({
       ...previous,
@@ -382,6 +318,70 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
     ? (selectedClubId || currentUser?.clubId || clubs[0]?.club_id || null)
     : selectedClubId;
   const selectedClub = clubs.find((item) => item.club_id === activeClubId) || (clubProfile?.club_id === activeClubId ? clubProfile : null);
+
+  // La ficha administrativa consulta participaciones normalizadas por turno.
+  // No depende del padrón permanente ni de las tablas legacy de equipos.
+  useEffect(() => {
+    let cancelled = false;
+    const loadClubTournamentSummaries = async () => {
+      if (mode !== "equipos" || selectedSection !== "torneos" || !activeClubId) {
+        setClubTournamentSummaries([]);
+        setLoadingClubTournamentSummaries(false);
+        return;
+      }
+
+      setLoadingClubTournamentSummaries(true);
+      setError("");
+      try {
+        const { data: turnRows, error: turnsError } = await supabase.rpc("get_fefutin_tournament_turn_ids");
+        if (turnsError) throw turnsError;
+
+        const competitions = await Promise.all((turnRows || []).map(async (turn) => {
+          const { data, error: competitionError } = await supabase.rpc("get_fefutin_turn_competition", {
+            p_turn_id: turn.id,
+          });
+          if (competitionError) throw competitionError;
+          return data;
+        }));
+
+        if (cancelled) return;
+        const summaries = (competitions || [])
+          .filter(Boolean)
+          .map((competition) => {
+            const categories = (Array.isArray(competition.categories) ? competition.categories : [])
+              .filter((category) => (Array.isArray(category.clubs) ? category.clubs : [])
+                .some((clubItem) => String(clubItem.club_id) === String(activeClubId)));
+            return {
+              tournament_id: competition.tournament_id,
+              tournament_title: competition.tournament_title || "Torneo FEFUTIN",
+              branch_name: competition.branch_name || "Rama sin identificar",
+              turno: competition.turno || "Turno sin identificar",
+              turn_status: competition.turn_status || "",
+              categories: categories.map((category) => category.name).filter(Boolean),
+            };
+          })
+          .filter((item) => item.categories.length > 0)
+          .sort((a, b) =>
+            String(a.tournament_title).localeCompare(String(b.tournament_title), "es") ||
+            String(a.branch_name).localeCompare(String(b.branch_name), "es") ||
+            String(a.turno).localeCompare(String(b.turno), "es")
+          );
+
+        setClubTournamentSummaries(summaries);
+      } catch (loadError) {
+        if (!cancelled) {
+          console.error("Error al cargar torneos del club:", loadError);
+          setClubTournamentSummaries([]);
+          setError(loadError.message || "No se pudieron cargar los torneos de este club.");
+        }
+      } finally {
+        if (!cancelled) setLoadingClubTournamentSummaries(false);
+      }
+    };
+
+    loadClubTournamentSummaries();
+    return () => { cancelled = true; };
+  }, [mode, selectedSection, activeClubId]);
   const club = selectedClub || participations[0] || clubProfile;
   const visibleParticipations = mode === "equipos" && activeClubId
     ? participations.filter((item) => item.club_id === activeClubId)
