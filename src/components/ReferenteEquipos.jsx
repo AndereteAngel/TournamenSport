@@ -46,6 +46,8 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   const [editingPlayer, setEditingPlayer] = useState(null);
   const [selectedClubId, setSelectedClubId] = useState(null);
   const [clubProfile, setClubProfile] = useState(null);
+  const [clubTournamentSummaries, setClubTournamentSummaries] = useState([]);
+  const [loadingClubTournamentSummaries, setLoadingClubTournamentSummaries] = useState(false);
   const [selectedSection, setSelectedSection] = useState(null);
   const [tournamentSearch, setTournamentSearch] = useState("");
   const [tournamentCategory, setTournamentCategory] = useState("todas");
@@ -117,6 +119,70 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
   useEffect(() => {
     loadParticipations();
   }, [loadParticipations]);
+
+  // La ficha administrativa consulta participaciones normalizadas por turno.
+  // No depende del padrón permanente ni de las tablas legacy de equipos.
+  useEffect(() => {
+    let cancelled = false;
+    const loadClubTournamentSummaries = async () => {
+      if (mode !== "equipos" || selectedSection !== "torneos" || !activeClubId) {
+        setClubTournamentSummaries([]);
+        setLoadingClubTournamentSummaries(false);
+        return;
+      }
+
+      setLoadingClubTournamentSummaries(true);
+      setError("");
+      try {
+        const { data: turnRows, error: turnsError } = await supabase.rpc("get_fefutin_tournament_turn_ids");
+        if (turnsError) throw turnsError;
+
+        const competitions = await Promise.all((turnRows || []).map(async (turn) => {
+          const { data, error: competitionError } = await supabase.rpc("get_fefutin_turn_competition", {
+            p_turn_id: turn.id,
+          });
+          if (competitionError) throw competitionError;
+          return data;
+        }));
+
+        if (cancelled) return;
+        const summaries = (competitions || [])
+          .filter(Boolean)
+          .map((competition) => {
+            const categories = (Array.isArray(competition.categories) ? competition.categories : [])
+              .filter((category) => (Array.isArray(category.clubs) ? category.clubs : [])
+                .some((clubItem) => String(clubItem.club_id) === String(activeClubId)));
+            return {
+              tournament_id: competition.tournament_id,
+              tournament_title: competition.tournament_title || "Torneo FEFUTIN",
+              branch_name: competition.branch_name || "Rama sin identificar",
+              turno: competition.turno || "Turno sin identificar",
+              turn_status: competition.turn_status || "",
+              categories: categories.map((category) => category.name).filter(Boolean),
+            };
+          })
+          .filter((item) => item.categories.length > 0)
+          .sort((a, b) =>
+            String(a.tournament_title).localeCompare(String(b.tournament_title), "es") ||
+            String(a.branch_name).localeCompare(String(b.branch_name), "es") ||
+            String(a.turno).localeCompare(String(b.turno), "es")
+          );
+
+        setClubTournamentSummaries(summaries);
+      } catch (loadError) {
+        if (!cancelled) {
+          console.error("Error al cargar torneos del club:", loadError);
+          setClubTournamentSummaries([]);
+          setError(loadError.message || "No se pudieron cargar los torneos de este club.");
+        }
+      } finally {
+        if (!cancelled) setLoadingClubTournamentSummaries(false);
+      }
+    };
+
+    loadClubTournamentSummaries();
+    return () => { cancelled = true; };
+  }, [mode, selectedSection, activeClubId]);
 
   const updatePlayer = (participationId, playerId, field, value) => {
     setRowsByParticipation((previous) => ({
@@ -379,7 +445,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
         >
           {mode === "equipos" && selectedSection ? currentUser?.role === "referente" ? "← Volver a MI CLUB" : "← Volver a la ficha del club" : mode === "equipos" && activeClubId && currentUser?.role !== "referente" ? "← Volver a clubes" : "← Volver al inicio"}
         </button>
-        {selectedSection !== "torneos" && <>
+        <>
         <p style={{ color: "#b5122a", fontWeight: 900, letterSpacing: ".12em", fontSize: ".72rem", margin: "1.25rem 0 .35rem" }}>
           {isManager ? "GESTIÓN DE CLUBES" : "ÁREA DEL REFERENTE"}
         </p>
@@ -409,7 +475,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
 
         {loading ? (
           <p style={{ color: "#ddd", textAlign: "center", padding: "2rem" }}>Cargando clubes y categorías...</p>
-        ) : participations.length === 0 && !(mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && ["menu", "inscripcion", "registrados"].includes(rosterView)) ? (
+        ) : participations.length === 0 && !(mode === "equipos" && selectedSection === "torneos") && !(mode === "equipos" && selectedSection === "listas" && currentUser?.role === "referente" && ["menu", "inscripcion", "registrados"].includes(rosterView)) ? (
           <div style={{ border: "1px dashed #555", borderRadius: "10px", padding: "1.5rem", textAlign: "center", color: "#ddd", marginTop: "1rem" }}>
             <strong>No hay categorías registradas todavía.</strong>
             <p style={{ color: "#aaa", marginBottom: 0 }}>Podés crear las categorías permanentes desde LISTAS DE BUENA FE. No necesitás estar inscripto en un torneo.</p>
@@ -485,6 +551,55 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
                   </button>
                 ))}
               </div>
+            ) : mode === "equipos" && selectedSection === "torneos" ? (
+              <section style={{ display: "grid", gap: ".85rem", width: "100%", marginTop: "1.25rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: ".8rem", padding: ".85rem", border: "1px solid #444", borderRadius: "10px", background: "#171c27" }}>
+                  {club?.logo_path && <img src={supabase.storage.from("fefutin-clubs").getPublicUrl(club.logo_path).data.publicUrl} alt={`Escudo de ${club.club_name}`} style={{ width: "58px", height: "58px", objectFit: "contain", borderRadius: "8px", background: "#fff" }} />}
+                  <div style={{ minWidth: 0 }}>
+                    <strong style={{ color: "#fff", display: "block" }}>{club?.club_name || "Club seleccionado"}</strong>
+                    <span style={{ color: "#ccc", fontSize: ".78rem" }}>Participaciones aprobadas en torneos FEFUTIN</span>
+                  </div>
+                </div>
+                {loadingClubTournamentSummaries ? (
+                  <p style={{ color: "#ddd", textAlign: "center", padding: "1.5rem" }}>Cargando torneos del club...</p>
+                ) : clubTournamentSummaries.length === 0 ? (
+                  <div style={{ border: "1px dashed #666", borderRadius: "10px", padding: "1.4rem 1rem", textAlign: "center", background: "#111" }}>
+                    <strong style={{ color: "#fff" }}>Este club todavía no tiene torneos aprobados</strong>
+                    <p style={{ color: "#bbb", margin: ".45rem 0 0", fontSize: ".84rem" }}>Cuando se apruebe su participación en una rama y turno, el torneo aparecerá en esta sección.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,250px),1fr))", gap: ".85rem" }}>
+                    {clubTournamentSummaries.map((item, index) => (
+                      <article key={`${item.tournament_id}-${item.branch_name}-${item.turno}-${index}`} style={{ minWidth: 0, border: "1px solid #b5122a", borderRadius: "12px", padding: "1rem", background: "linear-gradient(145deg,#202633 0%,#111 70%)", boxShadow: "0 5px 16px rgba(0,0,0,.2)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: ".5rem" }}>
+                          <span style={{ color: "#ffb3bf", fontSize: ".68rem", fontWeight: 900, letterSpacing: ".08em" }}>TORNEO FEFUTIN</span>
+                          <span style={{ color: "#86efac", border: "1px solid #39734d", borderRadius: "20px", padding: ".2rem .45rem", fontSize: ".62rem", fontWeight: 900, whiteSpace: "nowrap" }}>PARTICIPA</span>
+                        </div>
+                        <h3 style={{ color: "#fff", fontSize: "1.05rem", lineHeight: 1.25, margin: ".65rem 0" }}>{item.tournament_title}</h3>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: ".5rem", marginBottom: ".8rem" }}>
+                          <div style={{ background: "#090d15", borderRadius: "8px", padding: ".55rem" }}>
+                            <span style={{ display: "block", color: "#aaa", fontSize: ".62rem", fontWeight: 800 }}>RAMA</span>
+                            <strong style={{ color: "#fff", fontSize: ".8rem" }}>{item.branch_name}</strong>
+                          </div>
+                          <div style={{ background: "#090d15", borderRadius: "8px", padding: ".55rem" }}>
+                            <span style={{ display: "block", color: "#aaa", fontSize: ".62rem", fontWeight: 800 }}>TURNO</span>
+                            <strong style={{ color: "#fff", fontSize: ".8rem" }}>{item.turno}</strong>
+                          </div>
+                        </div>
+                        <div style={{ borderTop: "1px solid #444", paddingTop: ".7rem" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: ".5rem", alignItems: "center", marginBottom: ".45rem" }}>
+                            <strong style={{ color: "#ffb3bf", fontSize: ".72rem" }}>CATEGORÍAS INSCRIPTAS</strong>
+                            <span style={{ color: "#fff", background: "#b5122a", borderRadius: "20px", padding: ".15rem .45rem", fontSize: ".68rem", fontWeight: 900 }}>{item.categories.length}</span>
+                          </div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: ".4rem" }}>
+                            {item.categories.map((category) => <span key={category} style={{ color: "#fff", background: "#303744", border: "1px solid #505969", borderRadius: "7px", padding: ".35rem .5rem", fontSize: ".75rem", fontWeight: 700 }}>{category}</span>)}
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
             ) : mode === "equipos" && selectedSection === "carnets" ? (
               <div style={{ marginTop: "1.25rem" }}>
                 <PlayerCarnets currentUser={currentUser} canManage={isManager} clubId={activeClubId} embedded />
@@ -830,7 +945,7 @@ export function ReferenteEquipos({ currentUser, mode = "equipos", onBack, onOpen
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1.25rem" }}>
           <button type="button" className="tc-form-back" onClick={loadParticipations} disabled={loading}>↻ Actualizar</button>
         </div>
-        </>}
+        </>
         {isRegistrationScreen && (
           <>
             <button
