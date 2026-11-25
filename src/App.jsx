@@ -17,6 +17,7 @@ import { ReferenteInscripcion } from "./components/ReferenteInscripcion";
 import { ReferenteEquipos } from "./components/ReferenteEquipos";
 import { FefutinClubTournamentRequests, ReferenteTorneoSolicitudes } from "./components/FefutinClubTournamentRequests";
 import { FefutinPlayerApprovals } from "./components/FefutinPlayerApprovals";
+import { FefutinPayments } from "./components/FefutinPayments";
 import { FefutinTopScorers } from "./components/FefutinTopScorers";
 import { FefutinSheetArchive } from "./components/FefutinSheetArchive";
 import { FefutinRefereeJornadaSheets } from "./components/FefutinRefereeJornadaSheets";
@@ -5143,6 +5144,8 @@ export function TournamenSportApp() {
           pendingAccessCount={pendingAccessRequests.length}
           onGoAccessRequests={() => { setAccessActionError(""); setActiveView("access-requests"); }}
           onGoStats={() => setActiveView("stats")}
+          canAccessPayments={["admin", "directivo", "referente"].includes(currentUser?.role)}
+          onGoPayments={() => setActiveView("fefutin-payments")}
           isArbitro={isArbitro}
           onGoMyCarnet={() => setActiveView("referee-carnets")}
           onGoCarnetDirectory={() => setActiveView("referee-carnet-directory")}
@@ -5720,6 +5723,8 @@ export function TournamenSportApp() {
             openTournament(tournament);
           }}
         />
+      ) : activeView === "fefutin-payments" && ["admin", "directivo", "referente"].includes(currentUser?.role) ? (
+        <FefutinPayments currentUser={currentUser} onBack={handleGoHome} />
       ) : activeView === "home" ? (
         <div className="tc-home-screen">
         <div

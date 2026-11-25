@@ -17,6 +17,8 @@ export function Navbar({
   pendingAccessCount = 0,
   onGoAccessRequests,
   onGoStats,
+  canAccessPayments = false,
+  onGoPayments,
   onAdminClick,
   onLogout,
 }) {
@@ -270,6 +272,11 @@ export function Navbar({
             <TCIcon name="chart" size={17} /> <span>Estadísticas</span>
           </button>
         )}
+        {canAccessPayments && (
+          <button type="button" onClick={onGoPayments} style={medalButtonStyle}>
+            <TCIcon name="wallet" size={17} /> <span>Pagos y compras</span>
+          </button>
+        )}
 
 
 
@@ -415,6 +422,11 @@ export function Navbar({
           {isAdmin && (
             <button type="button" onClick={() => { setMenuOpen(false); onGoStats?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem" }}>
               <TCIcon name="chart" size={17} /> <span>Estadísticas</span>
+            </button>
+          )}
+          {canAccessPayments && (
+            <button type="button" onClick={() => { setMenuOpen(false); onGoPayments?.(); }} style={{ ...medalButtonStyle, padding: "0.7rem", fontSize: "0.8rem" }}>
+              <TCIcon name="wallet" size={17} /> <span>Pagos y compras</span>
             </button>
           )}
 

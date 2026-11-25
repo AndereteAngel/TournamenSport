@@ -159,27 +159,76 @@ export function FefutinPlayerApprovals() {
   };
 
   const decide = async (player) => {
-    if (!window.confirm(`¿Confirmás habilitar a ${player.first_name} ${player.last_name}? Se generará su carnet FEFUTIN y quedará HABILITADO para competir.`)) return;
     setWorkingId(player.player_entry_id);
     setError("");
     setMessage("");
 
-    const { data, error: rpcError } = await supabase.rpc("decide_fefutin_player", {
+    const { data: charge, error: chargeError } = await supabase
+      .from("fefutin_player_charges")
+      .select("id, amount, status")
+      .eq("roster_player_id", player.player_entry_id)
+      .maybeSingle();
+
+    if (chargeError || !charge) {
+      setError(chargeError?.message || "No encontramos el cargo de fichaje de este jugador. No se puede aprobar hasta revisar la deuda.");
+      setWorkingId(null);
+      return;
+    }
+
+    let rpcName = "decide_fefutin_player";
+    let rpcArgs = {
       p_player_entry_id: player.player_entry_id,
       p_approve: true,
-    });
+    };
+
+    if (charge.status !== "pagado") {
+      const amount = new Intl.NumberFormat("es-AR", {
+        style: "currency",
+        currency: charge.currency || "ARS",
+        maximumFractionDigits: 0,
+      }).format(Number(charge.amount || 0));
+      const reason = window.prompt(
+        `El fichaje de este jugador todavía adeuda ${amount}. Si decidís aprobarlo por excepción, la deuda seguirá pendiente. Indicá el motivo:`
+      );
+      if (reason === null) {
+        setWorkingId(null);
+        return;
+      }
+      if (reason.trim().length < 5) {
+        setError("La excepción necesita un motivo de al menos 5 caracteres.");
+        setWorkingId(null);
+        return;
+      }
+      if (!window.confirm(`¿Confirmás aprobar por excepción? La deuda de ${amount} NO se cancela y seguirá pendiente para el club.`)) {
+        setWorkingId(null);
+        return;
+      }
+      rpcName = "decide_fefutin_player_with_exception";
+      rpcArgs = {
+        p_player_entry_id: player.player_entry_id,
+        p_reason: reason.trim(),
+      };
+    } else if (!window.confirm(`¿Confirmás habilitar a ${player.first_name} ${player.last_name}? El fichaje está saldado; se generará su carnet FEFUTIN.`)) {
+      setWorkingId(null);
+      return;
+    }
+
+    const { data, error: rpcError } = await supabase.rpc(rpcName, rpcArgs);
 
     if (rpcError) {
       console.error("Error al activar jugador:", rpcError);
       setError(rpcError.message || "No se pudo activar al jugador.");
     } else {
-      // El jugador permanece en el buzón y cambia de estado dentro de su tarjeta.
       setPlayers((current) => current.map((item) =>
         item.player_entry_id === player.player_entry_id
           ? { ...item, approval_status: "aprobado", carnet_number: data, carnet_status: "habilitado" }
           : item
       ));
-      setMessage(`${player.first_name} ${player.last_name} quedó ACTIVADO y HABILITADO para competir. Se generó su carnet FEFUTIN.`);
+      setMessage(
+        charge.status === "pagado"
+          ? `${player.first_name} ${player.last_name} quedó ACTIVADO y HABILITADO. El fichaje está saldado y se generó su carnet FEFUTIN.`
+          : `${player.first_name} ${player.last_name} quedó ACTIVADO por excepción. La deuda de fichaje sigue pendiente y quedó registrado el motivo.`
+      );
     }
     setWorkingId(null);
   };
