@@ -247,7 +247,6 @@ export function FefutinTurnCompetition({
 
   return (
     <section className="tc-form-screen tc-fefutin-competition-screen" style={{ width: "100%", maxWidth: "100%", padding: 0, boxSizing: "border-box", color: "#fff" }}>
-      <button type="button" className="tc-form-back" onClick={onBack}>← Volver a los turnos</button>
       <header className="tc-fefutin-screen-hero" style={{ margin: "1rem 0", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", textAlign: "center" }}>
         <small style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN · {competition?.branch_name || turn?.branch_name || ""}</small>
         <h2 style={{ margin: ".35rem 0", color: "#fff" }}>{competition?.tournament_title || tournament?.title || "Torneo"} · {competition?.turno || turn?.turno}</h2>
@@ -439,26 +438,30 @@ export function FefutinTurnCompetition({
             )}
           </section>
 
-          <section className="tc-fefutin-scorers" style={{ display: "grid", gap: ".55rem", padding: ".75rem .85rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "10px" }}>
-            <button type="button" onClick={() => setTopScorersExpanded((expanded) => !expanded)} aria-expanded={topScorersExpanded} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", width: "100%", padding: ".2rem 0", border: 0, background: "transparent", color: "#f3a0ad", fontSize: ".82rem", fontWeight: 900, textAlign: "left", cursor: "pointer" }}>
-              <span>TABLA DE GOLEADORES · {activeCategory.name.toLocaleUpperCase("es")}</span>
-              <span style={{ flexShrink: 0, color: "#fff", fontSize: ".7rem" }}>{topScorersExpanded ? "MINIMIZAR ▲" : "VER GOLEADORES ▼"}</span>
+          <section className="tc-fefutin-scorers" style={{ position: "relative", display: "grid", gap: ".75rem", padding: ".9rem", background: "linear-gradient(145deg, #202938 0%, #171c27 52%, #111720 100%)", border: "1px solid #3b4657", borderLeft: "3px solid #b5122a", borderRadius: "12px", boxShadow: "0 8px 22px rgba(0,0,0,.18)", overflow: "hidden" }}>
+            <button type="button" onClick={() => setTopScorersExpanded((expanded) => !expanded)} aria-expanded={topScorersExpanded} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".7rem", width: "100%", padding: ".15rem 0", border: 0, background: "transparent", color: "#fff", textAlign: "left", cursor: "pointer" }}>
+              <span style={{ display: "grid", gap: ".22rem", minWidth: 0 }}>
+                <span style={{ color: "#f3a0ad", fontSize: ".62rem", fontWeight: 900, letterSpacing: ".14em" }}>GOLES · RENDIMIENTO INDIVIDUAL</span>
+                <strong style={{ fontSize: ".88rem", letterSpacing: ".025em" }}>TABLA DE GOLEADORES</strong>
+                <small style={{ color: "#aeb8c7", fontSize: ".7rem", fontWeight: 600 }}>{activeCategory.name.toLocaleUpperCase("es")}</small>
+              </span>
+              <span style={{ flexShrink: 0, display: "inline-flex", alignItems: "center", gap: ".35rem", padding: ".48rem .62rem", border: "1px solid #75404a", borderRadius: "7px", background: "rgba(181,18,42,.12)", color: "#f3a0ad", fontSize: ".65rem", fontWeight: 900, letterSpacing: ".035em" }}>{topScorersExpanded ? "MINIMIZAR ▲" : "VER GOLEADORES ▼"}</span>
             </button>
             {topScorersExpanded && (
               <>
-                <small style={{ color: "#aaa", fontSize: ".7rem" }}>Se actualiza con los goles de las planillas digitales cerradas de este turno. No incluye registros de torneos anteriores.</small>
+                <small style={{ color: "#aeb8c7", fontSize: ".7rem", lineHeight: 1.45, padding: ".55rem .65rem", borderRadius: "7px", background: "rgba(255,255,255,.035)", border: "1px solid rgba(255,255,255,.07)" }}>Se actualiza con los goles de las planillas digitales cerradas de este turno. No incluye registros de torneos anteriores.</small>
                 {topScorersError ? (
                   <p role="alert" style={{ color: "#fca5a5", fontSize: ".76rem", margin: 0 }}>{topScorersError}</p>
                 ) : (
                   <div style={{ display: "grid", gap: ".4rem" }}>
                     {topScorers.filter((item) => normalize(item.categoria) === normalize(activeCategory.name)).map((item, index) => (
-                      <div key={item.player_id + "-" + (item.club || "")} style={{ display: "grid", gridTemplateColumns: "30px minmax(0,1fr) 42px", alignItems: "center", gap: ".5rem", padding: ".55rem", border: "1px solid #3d414b", borderRadius: "7px", background: "#101010" }}>
-                        <strong style={{ color: "#f3a0ad", textAlign: "center" }}>{index + 1}</strong>
+                      <div key={item.player_id + "-" + (item.club || "")} style={{ display: "grid", gridTemplateColumns: "32px minmax(0,1fr) 48px", alignItems: "center", gap: ".6rem", padding: ".65rem .7rem", border: index === 0 ? "1px solid #8b6d3d" : "1px solid rgba(174,184,199,.16)", borderRadius: "9px", background: index === 0 ? "linear-gradient(100deg, rgba(181,18,42,.16), rgba(32,41,56,.92) 48%)" : "rgba(10,14,21,.58)" }}>
+                        <strong style={{ display: "grid", placeItems: "center", width: "27px", height: "27px", margin: "auto", borderRadius: "8px", background: index === 0 ? "#b5122a" : "rgba(174,184,199,.1)", color: index === 0 ? "#fff" : "#c4ccd8", fontSize: ".78rem", textAlign: "center" }}>{index + 1}</strong>
                         <div style={{ minWidth: 0 }}>
                           <strong style={{ display: "block", color: "#fff", fontSize: ".8rem", overflowWrap: "anywhere" }}>{item.jugador || "Jugador"}</strong>
                           <small style={{ color: "#aaa", fontSize: ".7rem" }}>{item.club || "Sin club"}</small>
                         </div>
-                        <strong style={{ color: "#fff", textAlign: "center", fontSize: ".95rem" }}>{item.goles}</strong>
+                        <strong style={{ display: "grid", placeItems: "center", minHeight: "34px", borderRadius: "8px", background: "rgba(181,18,42,.16)", color: "#fff", border: "1px solid rgba(181,18,42,.38)", textAlign: "center", fontSize: "1rem" }}>{item.goles}<small style={{ color: "#f3a0ad", fontSize: ".52rem", letterSpacing: ".08em" }}>GOLES</small></strong>
                       </div>
                     ))}
                     {!topScorers.some((item) => normalize(item.categoria) === normalize(activeCategory.name)) && (
@@ -523,6 +526,9 @@ export function FefutinTurnCompetition({
       {!categories.length && <p style={{ color: "#bbb", textAlign: "center" }}>Este turno todavía no tiene categorías configuradas.</p>}
       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "1rem" }}>
         <button type="button" onClick={loadCompetition} disabled={loading} className="tc-form-back">↻ Actualizar turno</button>
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: ".65rem", paddingBottom: ".5rem" }}>
+        <button type="button" className="tc-form-back" onClick={onBack} style={{ width: "auto", minWidth: "0", padding: ".58rem .9rem", borderRadius: "8px", fontSize: ".76rem" }}>← Volver a los turnos</button>
       </div>
     </section>
   );
