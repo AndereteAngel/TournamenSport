@@ -425,7 +425,7 @@ export function FefutinTurnCompetition({
                           </span>
                         </td>
                         {[team.points, team.played, team.wins, team.draws, team.losses, team.goalsFor, team.goalsAgainst, team.goalDifference].map((value, i) => (
-                          <td key={i} style={{ padding: ".55rem .5rem", textAlign: "center", whiteSpace: "nowrap", ...(i === 0 ? { position: "sticky", left: "174px", zIndex: 3, width: "52px", minWidth: "52px", boxSizing: "border-box", background: "#171c27", color: "#f3a0ad", fontWeight: 900, fontSize: ".86rem" } : {}), ...(i === 1 ? { position: "sticky", left: "226px", zIndex: 3, width: "48px", minWidth: "48px", boxSizing: "border-box", background: "#171c27", color: "#fff", fontWeight: 900 } : {}) }}>{value}</td>
+                          <td key={i} style={{ padding: ".55rem .4rem", textAlign: "center", whiteSpace: "nowrap", color: i === 0 ? "#f3a0ad" : "#fff", fontWeight: i === 0 ? 900 : 600, background: index % 2 ? "#202633" : "#11151d" }}>{value}</td>
                         ))}
                       </tr>
                     ))}
