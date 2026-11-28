@@ -6870,6 +6870,34 @@ export function TournamenSportApp() {
           </button>
         </div>
       )}
+
+      <footer className="fefutin-global-footer" aria-label="Información institucional de FEFUTIN">
+        <div className="fefutin-footer-brand">
+          <img
+            src="https://fefutin.wordpress.com/wp-content/uploads/2017/03/fefutin-logo-grande1.png?h=184&w=166"
+            alt="Escudo oficial de FEFUTIN"
+            loading="lazy"
+          />
+          <div>
+            <strong>FEFUTIN</strong>
+            <span>LIGA DE FÚTBOL FORMATIVO</span>
+          </div>
+        </div>
+        <p className="fefutin-footer-fair-play">
+          COMPETIR CON PASIÓN. RESPETAR CON ORGULLO.
+          <span>EL FÚTBOL NOS UNE.</span>
+        </p>
+        <div className="fefutin-footer-details">
+          <span>Baby fútbol · Femenino · Futsal · Séniors</span>
+          <span>La Plata · Buenos Aires <em>— dato ilustrativo</em></span>
+          <span>Contacto institucional: próximamente</span>
+        </div>
+        <div className="fefutin-footer-bottom">
+          <span>© 2026 FEFUTIN</span>
+          <span>DEPORTE · RESPETO · FORMACIÓN</span>
+          <span>Datos institucionales provisionales</span>
+        </div>
+      </footer>
     </div>
   );
 }
