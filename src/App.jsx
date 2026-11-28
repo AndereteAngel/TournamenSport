@@ -5535,14 +5535,14 @@ export function TournamenSportApp() {
           />
         </section>
       ) : activeView === "fefutin-turns" && activeTournament ? (
-        <section className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: "1rem", boxSizing: "border-box", color: "#fff" }}>
+        <section className="tc-form-screen tc-fefutin-turns" style={{ width: "100%", maxWidth: "100%", padding: "1rem", boxSizing: "border-box", color: "#fff" }}>
           <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>← Volver</button>
-          <header style={{ margin: "1rem 0", padding: "1.1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", textAlign: "center" }}>
+          <header className="tc-fefutin-screen-hero" style={{ margin: "1rem 0", padding: "1.1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", textAlign: "center" }}>
             <small style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN · {getTournamentDivision(activeTournament).toLocaleUpperCase("es")}</small>
             <h2 style={{ color: "#fff", margin: ".4rem 0", letterSpacing: ".04em" }}>TORNEOS DE {getTournamentDivision(activeTournament).toLocaleUpperCase("es")}</h2>
             <p style={{ color: "#bbb", margin: 0, fontSize: ".86rem" }}>Seleccioná el turno para continuar.</p>
           </header>
-          <div style={{ display: "grid", gap: ".7rem" }}>
+          <div className="tc-fefutin-turn-grid" style={{ display: "grid", gap: ".7rem" }}>
             {canManageTournaments && ["Semanal", "Fin de semana"]
               .filter((turno) => !fefutinTurnsForActiveTournament.some((turn) => turn.turno === turno))
               .map((turno) => (
@@ -5568,13 +5568,13 @@ export function TournamenSportApp() {
                     setFefutinTurnsForActiveTournament(data || []);
                     showNotice(`Se creó el turno ${turno} con las categorías de la rama. Las inscripciones comienzan vacías.`);
                   }}
-                  style={{ padding: ".8rem", border: "1px dashed #b5122a", borderRadius: "9px", background: "#111", color: "#ffb3bf", fontWeight: 900 }}
+                  className="tc-fefutin-create-turn" style={{ padding: ".8rem", border: "1px dashed #b5122a", borderRadius: "9px", background: "#111", color: "#ffb3bf", fontWeight: 900 }}
                 >
                   + CREAR TURNO {turno.toLocaleUpperCase("es")}
                 </button>
               ))}
             {fefutinTurnsForActiveTournament.map((turn) => (
-              <button key={turn.turn_id} type="button" onClick={() => { setActiveFefutinTurn(turn); setActiveView("fefutin-turn-competition"); }} style={{ display: "grid", gap: ".4rem", padding: "1rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171c27", color: "#fff", textAlign: "left" }}>
+              <button key={turn.turn_id} type="button" className="tc-fefutin-turn-card" onClick={() => { setActiveFefutinTurn(turn); setActiveView("fefutin-turn-competition"); }} style={{ display: "grid", gap: ".4rem", padding: "1rem", border: "1px solid #b5122a", borderRadius: "10px", background: "#171c27", color: "#fff", textAlign: "left" }}>
                 <strong style={{ color: "#f3a0ad", fontSize: "1rem" }}>{turn.turno}</strong>
                 <span style={{ color: "#ddd", fontSize: ".82rem" }}>{(turn.categories || []).map((category) => category.name).join(" · ") || "Sin categorías configuradas"}</span>
                 <small style={{ color: "#aaa" }}>Estado: {turn.turn_status}</small>
@@ -5631,12 +5631,12 @@ export function TournamenSportApp() {
         </div>
       ) : activeView === "division-tournaments" ? (
         <main className="tc-form-screen tc-division-tournaments-screen" style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box", padding: "1rem", color: "#fff" }}>
-          <section style={{ width: "100%", maxWidth: "760px", margin: "0 auto", padding: "clamp(1rem, 4vw, 1.5rem)", boxSizing: "border-box", background: "#090909", border: "1px solid #b5122a", borderRadius: "18px" }}>
+          <section className="tc-fefutin-division-shell" style={{ width: "100%", maxWidth: "760px", margin: "0 auto", padding: "clamp(1rem, 4vw, 1.5rem)", boxSizing: "border-box", background: "#090909", border: "1px solid #b5122a", borderRadius: "18px" }}>
             <button type="button" className="tc-form-back" onClick={() => setActiveView("home")}>
               <span aria-hidden="true">←</span> Volver
             </button>
 
-            <header style={{ margin: ".5rem 0 1.4rem", padding: "1.2rem .75rem", textAlign: "center", background: "linear-gradient(120deg, #171c27 0%, #101116 72%, rgba(181,18,42,.34) 100%)", border: "1px solid rgba(181,18,42,.7)", borderRadius: "14px" }}>
+            <header className="tc-fefutin-screen-hero" style={{ margin: ".5rem 0 1.4rem", padding: "1.2rem .75rem", textAlign: "center", background: "linear-gradient(120deg, #171c27 0%, #101116 72%, rgba(181,18,42,.34) 100%)", border: "1px solid rgba(181,18,42,.7)", borderRadius: "14px" }}>
               <small style={{ display: "block", color: "#f3a0ad", fontWeight: 900, letterSpacing: ".14em", fontSize: ".72rem" }}>FEFUTIN · {tournamentDivisionFilter.toLocaleUpperCase("es")}</small>
               <h1 style={{ margin: ".55rem 0 .4rem", color: "#fff", fontSize: "clamp(1.35rem, 5vw, 2rem)", lineHeight: 1.15, letterSpacing: ".025em" }}>TORNEOS DE {tournamentDivisionFilter.toLocaleUpperCase("es")}</h1>
               <p style={{ margin: 0, color: "#c8c8ce", fontSize: ".9rem", lineHeight: 1.5 }}>Seleccioná una competencia para continuar.</p>
@@ -5649,11 +5649,11 @@ export function TournamenSportApp() {
               }
 
               return (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 245px), 1fr))", gap: ".85rem" }}>
+                <div className="tc-fefutin-tournament-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 245px), 1fr))", gap: ".85rem" }}>
                   {branchTournaments.map((t) => {
                     const category = getTournamentCategory(t);
                     return (
-                      <article key={t.displayKey || t.id} style={{ minWidth: 0, position: "relative", padding: "1rem", background: "linear-gradient(145deg, #20212a, #111216)", border: "1px solid rgba(255,255,255,.72)", borderLeft: "4px solid #b5122a", borderRadius: "13px", boxShadow: "0 8px 20px rgba(0,0,0,.24)" }}>
+                      <article key={t.displayKey || t.id} className="tc-fefutin-tournament-card" style={{ minWidth: 0, position: "relative", padding: "1rem", background: "linear-gradient(145deg, #20212a, #111216)", border: "1px solid rgba(255,255,255,.72)", borderLeft: "4px solid #b5122a", borderRadius: "13px", boxShadow: "0 8px 20px rgba(0,0,0,.24)" }}>
                         <small style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".08em" }}>COMPETENCIA</small>
                         <h2 style={{ margin: ".45rem 0", color: "#fff", fontSize: "1.12rem", lineHeight: 1.25, overflowWrap: "anywhere" }}>{t.title || "Torneo sin nombre"}</h2>
                         <p style={{ margin: "0 0 .85rem", color: "#ddd", fontSize: ".9rem" }}>Categoría: {category}</p>

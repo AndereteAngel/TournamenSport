@@ -246,9 +246,9 @@ export function FefutinTurnCompetition({
   }
 
   return (
-    <section className="tc-form-screen" style={{ width: "100%", maxWidth: "100%", padding: 0, boxSizing: "border-box", color: "#fff" }}>
+    <section className="tc-form-screen tc-fefutin-competition-screen" style={{ width: "100%", maxWidth: "100%", padding: 0, boxSizing: "border-box", color: "#fff" }}>
       <button type="button" className="tc-form-back" onClick={onBack}>← Volver a los turnos</button>
-      <header style={{ margin: "1rem 0", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", textAlign: "center" }}>
+      <header className="tc-fefutin-screen-hero" style={{ margin: "1rem 0", padding: "1rem", background: "#101010", border: "1px solid #b5122a", borderRadius: "12px", textAlign: "center" }}>
         <small style={{ color: "#f3a0ad", fontWeight: 900, letterSpacing: ".12em" }}>FEFUTIN · {competition?.branch_name || turn?.branch_name || ""}</small>
         <h2 style={{ margin: ".35rem 0", color: "#fff" }}>{competition?.tournament_title || tournament?.title || "Torneo"} · {competition?.turno || turn?.turno}</h2>
         {(competition?.turn_status || turn?.turn_status) === "en_curso" ? (
@@ -290,7 +290,7 @@ export function FefutinTurnCompetition({
       )}
 
       {!!categories.length && (
-        <nav aria-label="Tablas de la competencia" style={{ display: "flex", gap: ".5rem", overflowX: "auto", padding: ".7rem 0" }}>
+        <nav className="tc-fefutin-competition-tabs" aria-label="Tablas de la competencia" style={{ display: "flex", gap: ".5rem", overflowX: "auto", padding: ".7rem 0" }}>
           <button type="button" onClick={() => { setSelectedView("general"); setSelectedTeamName(""); }}
             aria-pressed={selectedView === "general"}
             style={{ flex: "0 0 auto", padding: ".65rem .9rem", border: "1px solid #b5122a", borderRadius: "8px", background: selectedView === "general" ? "#b5122a" : "#171c27", color: "#fff", fontWeight: 900 }}>

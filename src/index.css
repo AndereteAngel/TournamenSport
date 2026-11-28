@@ -7258,3 +7258,145 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     animation-delay: 0ms !important;
   }
 }
+
+
+/* =========================================
+   FEFUTIN · SISTEMA VISUAL DE COMPETENCIAS
+   Torneos, turnos y disciplinas
+========================================= */
+.tc-fefutin-division-shell,
+.tc-fefutin-turns {
+  width: min(100%, 920px) !important;
+  margin-inline: auto !important;
+}
+.tc-fefutin-division-shell {
+  max-width: 920px !important;
+  padding: clamp(.85rem, 3vw, 1.35rem) !important;
+  background: linear-gradient(155deg, #171c27 0%, #0d1017 72%, #180b10 100%) !important;
+  border: 1px solid rgba(181,18,42,.72) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 18px 42px rgba(0,0,0,.28);
+}
+.tc-fefutin-turns {
+  padding: clamp(.65rem, 2.5vw, 1.1rem) !important;
+}
+.tc-fefutin-screen-hero {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(115deg, #202938 0%, #121722 62%, #3a101b 100%) !important;
+  border: 1px solid rgba(181,18,42,.8) !important;
+  border-left: 4px solid #b5122a !important;
+  border-radius: 14px !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 10px 25px rgba(0,0,0,.2);
+}
+.tc-fefutin-screen-hero h1,
+.tc-fefutin-screen-hero h2 {
+  color: #fff !important;
+  font-family: "Bebas Neue", "Barlow Condensed", "Arial Narrow", sans-serif;
+  font-size: clamp(1.8rem, 6vw, 2.65rem) !important;
+  line-height: 1.02 !important;
+  letter-spacing: .055em !important;
+  text-shadow: 0 3px 18px rgba(0,0,0,.42);
+}
+.tc-fefutin-screen-hero p {
+  color: #e1e5ec !important;
+}
+.tc-fefutin-tournament-grid,
+.tc-fefutin-turn-grid {
+  gap: .8rem !important;
+}
+.tc-fefutin-tournament-card,
+.tc-fefutin-turn-card {
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  padding: 1rem !important;
+  background: linear-gradient(145deg, #222b3a 0%, #151a24 68%, #241018 100%) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-left: 4px solid #b5122a !important;
+  border-radius: 13px !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.22);
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.tc-fefutin-tournament-card:hover,
+.tc-fefutin-turn-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(243,160,173,.75) !important;
+  box-shadow: 0 12px 26px rgba(0,0,0,.3), 0 0 0 1px rgba(181,18,42,.2);
+}
+.tc-fefutin-tournament-card h2,
+.tc-fefutin-turn-card strong {
+  color: #fff !important;
+  font-family: "Outfit", "Montserrat", sans-serif;
+  letter-spacing: .025em;
+}
+.tc-fefutin-tournament-card p,
+.tc-fefutin-turn-card span {
+  color: #d9dee8 !important;
+  line-height: 1.45;
+}
+.tc-fefutin-create-turn {
+  min-height: 48px;
+  border: 1px dashed rgba(243,160,173,.75) !important;
+  border-radius: 11px !important;
+  background: rgba(181,18,42,.1) !important;
+  color: #ffdce2 !important;
+  letter-spacing: .045em;
+}
+.tc-fefutin-competition-screen {
+  width: min(100%, 980px) !important;
+  margin-inline: auto !important;
+  padding: 0 clamp(.65rem, 2.5vw, 1rem) 1.2rem !important;
+}
+.tc-fefutin-competition-tabs {
+  scrollbar-width: thin;
+  scrollbar-color: #b5122a #171c27;
+  padding: .75rem .1rem !important;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+.tc-fefutin-competition-tabs button {
+  min-height: 43px;
+  border-radius: 9px !important;
+  font-size: .76rem;
+  letter-spacing: .035em;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.tc-fefutin-competition-screen table {
+  font-variant-numeric: tabular-nums;
+}
+.tc-fefutin-competition-screen button:focus-visible,
+.tc-fefutin-tournament-card button:focus-visible,
+.tc-fefutin-turn-card:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .tc-fefutin-division-shell,
+  .tc-fefutin-turns {
+    padding: .65rem !important;
+    border-radius: 14px !important;
+  }
+  .tc-fefutin-screen-hero {
+    margin-block: .65rem 1rem !important;
+    padding: 1rem .7rem !important;
+  }
+  .tc-fefutin-tournament-card,
+  .tc-fefutin-turn-card {
+    padding: .9rem !important;
+  }
+  .tc-fefutin-competition-screen {
+    padding-inline: .55rem !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tc-fefutin-tournament-card,
+  .tc-fefutin-turn-card {
+    transition: none !important;
+  }
+  .tc-fefutin-tournament-card:hover,
+  .tc-fefutin-turn-card:hover {
+    transform: none;
+  }
+}
