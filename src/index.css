@@ -7017,3 +7017,187 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
     gap: .3rem;
   }
 }
+
+
+/* =========================================================
+   FEFUTIN · BIENVENIDA CINEMATOGRÁFICA + FOOTER SIN TARJETA
+   Presentación solamente: no altera flujos, roles ni datos.
+   ========================================================= */
+#root .fefutin-welcome {
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(18px, 5vw, 42px);
+  background:
+    radial-gradient(ellipse at 50% 38%, rgba(181,18,42,.24) 0%, rgba(181,18,42,.07) 34%, transparent 66%),
+    radial-gradient(ellipse at 50% 100%, rgba(67,83,111,.19), transparent 55%),
+    linear-gradient(145deg, #080b12 0%, #111824 48%, #090b11 100%) !important;
+}
+#root .fefutin-welcome::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .36;
+  background:
+    linear-gradient(transparent 96%, rgba(255,255,255,.035) 100%),
+    linear-gradient(90deg, transparent 96%, rgba(255,255,255,.025) 100%);
+  background-size: 100% 5px, 5px 100%;
+  mask-image: linear-gradient(to bottom, transparent, #000 24%, #000 78%, transparent);
+}
+#root .fefutin-welcome::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: min(86vw, 620px);
+  aspect-ratio: 1;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.045);
+  box-shadow: 0 0 0 34px rgba(255,255,255,.018), 0 0 0 75px rgba(255,255,255,.012), 0 0 100px rgba(181,18,42,.12);
+  pointer-events: none;
+}
+#root .fefutin-welcome-panel {
+  position: relative;
+  z-index: 3;
+  width: min(100%, 560px);
+  padding: clamp(18px, 4vw, 34px) 18px;
+  gap: 0;
+  border: 0 !important;
+  border-top: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  animation: fefutin-welcome-arrive .9s cubic-bezier(.2,.75,.25,1) both;
+}
+#root .fefutin-welcome-logo {
+  width: clamp(126px, 29vw, 184px);
+  height: clamp(126px, 29vw, 184px);
+  margin: 0 0 clamp(20px, 4vh, 34px);
+  padding: 7px;
+  border-radius: 50%;
+  object-fit: contain;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.5), 0 0 0 9px rgba(181,18,42,.13), 0 0 55px rgba(181,18,42,.3);
+  animation: fefutin-crest-arrive 1.05s .12s cubic-bezier(.16,1,.3,1) both;
+}
+#root .fefutin-welcome-kicker {
+  color: #f0a6b2 !important;
+  font: 700 clamp(.66rem, 2vw, .82rem)/1.3 "Outfit", sans-serif !important;
+  letter-spacing: .24em !important;
+  text-transform: uppercase;
+  animation: fefutin-copy-arrive .65s .32s both;
+}
+#root .fefutin-welcome-panel h1 {
+  margin: 8px 0 0 !important;
+  color: #fff !important;
+  font: 400 clamp(4rem, 16vw, 7.4rem)/.88 "Bebas Neue", sans-serif !important;
+  letter-spacing: .105em !important;
+  text-shadow: 0 5px 28px rgba(0,0,0,.5), 0 0 32px rgba(181,18,42,.2);
+  animation: fefutin-title-arrive .85s .42s cubic-bezier(.16,1,.3,1) both;
+}
+#root .fefutin-welcome-panel p {
+  margin: 18px 0 32px !important;
+  color: #d9dee8 !important;
+  font: 500 clamp(.95rem, 3.2vw, 1.16rem)/1.45 "Outfit", sans-serif !important;
+  letter-spacing: .045em;
+  animation: fefutin-copy-arrive .7s .58s both;
+}
+#root .fefutin-welcome-panel button {
+  position: relative;
+  overflow: hidden;
+  width: min(100%, 280px);
+  padding: 16px 24px;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  border-radius: 999px !important;
+  background: linear-gradient(110deg, #c51b38, #8f1027 72%, #6f0d20) !important;
+  color: #fff !important;
+  font: 700 .88rem "Outfit", sans-serif !important;
+  letter-spacing: .17em !important;
+  box-shadow: 0 10px 28px rgba(181,18,42,.28), inset 0 1px 0 rgba(255,255,255,.18) !important;
+  transition: transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s ease, filter .28s ease !important;
+  animation: fefutin-button-arrive .7s .76s both;
+}
+#root .fefutin-welcome-panel button::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  bottom: -60%;
+  left: -45%;
+  width: 28%;
+  transform: rotate(22deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+  transition: left .6s ease;
+}
+#root .fefutin-welcome-panel button:hover:not(:disabled) {
+  transform: translateY(-3px) scale(1.025);
+  filter: brightness(1.1);
+  box-shadow: 0 15px 34px rgba(181,18,42,.4), inset 0 1px 0 rgba(255,255,255,.2) !important;
+}
+#root .fefutin-welcome-panel button:hover:not(:disabled)::after { left: 125%; }
+#root .fefutin-welcome-panel button:active:not(:disabled) { transform: scale(.975); }
+#root .fefutin-football-rain { z-index: 2; }
+#root .fefutin-football-rain span {
+  filter: drop-shadow(0 5px 12px rgba(0,0,0,.72)) drop-shadow(0 0 8px rgba(181,18,42,.32));
+}
+@keyframes fefutin-welcome-arrive {
+  from { opacity: 0; transform: translateY(22px) scale(.975); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes fefutin-crest-arrive {
+  from { opacity: 0; transform: translateY(18px) scale(.82) rotate(-8deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+@keyframes fefutin-title-arrive {
+  from { opacity: 0; transform: translateY(20px); letter-spacing: .2em; }
+  to { opacity: 1; transform: translateY(0); letter-spacing: .105em; }
+}
+@keyframes fefutin-copy-arrive {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fefutin-button-arrive {
+  from { opacity: 0; transform: translateY(14px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* El footer deja de ser una card: separador de borde a borde y texto debajo. */
+#root .fefutin-global-footer {
+  width: 100vw !important;
+  max-width: none !important;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 1.2rem 0 0 !important;
+  padding: 1.15rem clamp(16px, 4vw, 42px) 1rem !important;
+  overflow: visible;
+  border: 0 !important;
+  border-top: 1px solid rgba(181,18,42,.85) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: linear-gradient(180deg, rgba(23,28,39,.98), rgba(13,17,25,.98)) !important;
+}
+#root .fefutin-global-footer::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #b5122a 15%, #e45b70 50%, #b5122a 85%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .fefutin-welcome-panel,
+  #root .fefutin-welcome-logo,
+  #root .fefutin-welcome-kicker,
+  #root .fefutin-welcome-panel h1,
+  #root .fefutin-welcome-panel p,
+  #root .fefutin-welcome-panel button {
+    animation: none !important;
+    transition: none !important;
+  }
+  #root .fefutin-welcome-panel button:hover:not(:disabled),
+  #root .fefutin-welcome-panel button:active:not(:disabled) { transform: none !important; }
+}
