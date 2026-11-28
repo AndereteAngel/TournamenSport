@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Bebas+Neue&family=Montserrat:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 
 /* =========================================================
    RESET GENERAL
@@ -6482,4 +6482,126 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   }
   #root .tc-division-carousel-arrow-left { left: 2px; }
   #root .tc-division-carousel-arrow-right { right: 2px; }
+}
+
+
+/* =========================================================
+   FEFUTIN IDENTITY · FIRST VISUAL PASS
+   Scoped to the home screen. Keeps tournament and admin logic untouched.
+========================================================= */
+.tc-home-screen .tc-home-panel-art {
+  position: relative !important;
+  isolation: isolate;
+  border: 1px solid rgba(181, 18, 42, .72) !important;
+  background:
+    radial-gradient(circle at 78% 48%, rgba(181,18,42,.28), transparent 34%),
+    linear-gradient(112deg, #171c27 0%, #111722 58%, #2b101a 100%) !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+.tc-home-screen .tc-home-panel-art > div {
+  position: relative !important;
+  z-index: 3 !important;
+}
+
+.tc-home-screen .tc-home-panel-art > div > span {
+  font-family: "Bebas Neue", sans-serif !important;
+  font-size: clamp(1.45rem, 4vw, 2.25rem) !important;
+  line-height: .95 !important;
+  letter-spacing: .09em !important;
+  color: #fff !important;
+  text-shadow: 0 2px 14px rgba(0,0,0,.7) !important;
+}
+
+.tc-home-screen .tc-home-panel-art > div > strong {
+  font-family: "Outfit", sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: .11em !important;
+  color: #ffdce1 !important;
+}
+
+.tc-home-screen .tc-home-division-card,
+.tc-home-screen .tc-home-tournament-card,
+.tc-home-screen .tc-home-action {
+  font-family: "Outfit", sans-serif !important;
+  transition:
+    transform .24s cubic-bezier(.2,.75,.25,1),
+    box-shadow .24s ease,
+    border-color .24s ease,
+    filter .24s ease !important;
+}
+
+.tc-home-screen .tc-home-division-card {
+  border-color: rgba(255,255,255,.68) !important;
+  box-shadow: 0 7px 20px rgba(0,0,0,.3), 0 0 0 1px rgba(181,18,42,.12);
+}
+
+.tc-home-screen .tc-home-division-card:hover {
+  transform: translateY(-4px) scale(1.012);
+  border-color: #ff8798 !important;
+  box-shadow: 0 13px 26px rgba(0,0,0,.4), 0 0 20px rgba(181,18,42,.2);
+}
+
+.tc-home-screen .tc-home-division-card span,
+.tc-home-screen .tc-home-tournaments-heading h3 {
+  font-family: "Barlow Condensed", sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: .075em !important;
+}
+
+/* Primera animación de identidad: pelota que cruza la cabecera.
+   Es decorativa, no intercepta toques y respeta reducir movimiento. */
+.tc-home-screen .tc-home-panel-art::before {
+  content: "⚽";
+  position: absolute;
+  z-index: 4;
+  top: 54%;
+  right: -3.2rem;
+  display: block;
+  font-family: system-ui, sans-serif;
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 0 9px rgba(255,255,255,.38))
+          drop-shadow(-13px 0 15px rgba(181,18,42,.72));
+  animation: fefutin-ball-sweep 7.2s cubic-bezier(.45,.05,.55,.95) infinite;
+}
+
+@keyframes fefutin-ball-sweep {
+  0% {
+    opacity: 0;
+    transform: translate3d(0,-50%,0) rotate(0deg) scale(.72);
+  }
+  9% { opacity: 1; }
+  82% {
+    opacity: 1;
+    transform: translate3d(calc(-100vw - 8rem),-50%,0) rotate(-620deg) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(-100vw - 10rem),-50%,0) rotate(-760deg) scale(.82);
+  }
+}
+
+@media (max-width: 600px) {
+  .tc-home-screen .tc-home-panel-art::before {
+    font-size: 2rem;
+    animation-duration: 8.2s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-home-screen .tc-home-panel-art::before {
+    animation: none !important;
+    opacity: .9;
+    right: .7rem;
+    top: auto;
+    bottom: .55rem;
+    transform: none;
+  }
+  .tc-home-screen .tc-home-division-card,
+  .tc-home-screen .tc-home-tournament-card,
+  .tc-home-screen .tc-home-action {
+    transition: none !important;
+  }
 }
