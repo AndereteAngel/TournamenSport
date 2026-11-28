@@ -7201,3 +7201,60 @@ body { background-image:radial-gradient(circle at 50% 12%, #191919 0%, #080808 5
   #root .fefutin-welcome-panel button:hover:not(:disabled),
   #root .fefutin-welcome-panel button:active:not(:disabled) { transform: none !important; }
 }
+
+
+/* Ajuste de bienvenida: título nítido + suelta de pelotas en primer plano. */
+#root .fefutin-welcome-panel h1 {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  text-shadow:
+    0 2px 0 rgba(0,0,0,.8),
+    0 5px 22px rgba(0,0,0,.9),
+    0 0 2px #fff,
+    0 0 24px rgba(255,255,255,.28) !important;
+  paint-order: stroke fill;
+  -webkit-text-stroke: 1px rgba(255,255,255,.28);
+}
+#root .fefutin-football-rain {
+  z-index: 5 !important;
+  overflow: visible !important;
+}
+#root .fefutin-football-rain::before {
+  content: "";
+  position: absolute;
+  top: -3vh;
+  left: 50%;
+  width: min(72vw, 440px);
+  height: 105px;
+  transform: translateX(-50%);
+  clip-path: polygon(12% 0, 88% 0, 100% 100%, 0 100%);
+  background:
+    linear-gradient(180deg, rgba(73,82,98,.98), rgba(28,34,46,.98) 68%, rgba(12,15,22,.98));
+  border-bottom: 4px solid rgba(181,18,42,.95);
+  box-shadow: 0 18px 45px rgba(0,0,0,.6);
+  filter: drop-shadow(0 0 18px rgba(181,18,42,.3));
+}
+#root .fefutin-football-rain::after {
+  content: "";
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  width: min(56vw, 320px);
+  height: 36px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(181,18,42,.42), rgba(181,18,42,.08) 48%, transparent 72%);
+  filter: blur(8px);
+}
+#root .fefutin-football-rain span {
+  z-index: 1;
+  filter:
+    drop-shadow(0 7px 12px rgba(0,0,0,.85))
+    drop-shadow(0 0 10px rgba(181,18,42,.42));
+}
+@media (prefers-reduced-motion: reduce) {
+  #root .fefutin-football-rain span {
+    animation-duration: .01ms !important;
+    animation-delay: 0ms !important;
+  }
+}
