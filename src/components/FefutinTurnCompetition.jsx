@@ -343,8 +343,8 @@ export function FefutinTurnCompetition({
       )}
 
       {selectedView === "category" && activeCategory && (
-        <div style={{ display: "grid", gap: ".85rem" }}>
-          <section className="tc-fefutin-category-standings" style={{ padding: ".9rem", minWidth: 0, width: "100%", boxSizing: "border-box", overflow: "hidden", background: "#171c27", border: "1px solid #444", borderRadius: "10px" }}>
+        <div style={{ display: "grid", gridColumn: "1 / -1", justifySelf: "stretch", alignSelf: "stretch", gap: ".85rem", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
+          <section className="tc-fefutin-category-standings" style={{ display: "grid", gridColumn: "1 / -1", justifySelf: "stretch", width: "100%", maxWidth: "none", minWidth: 0, padding: ".9rem", boxSizing: "border-box", overflow: "hidden", background: "#171c27", border: "1px solid #444", borderRadius: "10px" }}>
             <strong style={{ display: "block", color: "#fff" }}>{activeCategory.name} · {activeCategory.format === "league" ? "TODOS CONTRA TODOS" : activeCategory.format}</strong>
             <small style={{ color: "#bbb" }}>{activeCategory.clubs?.length || 0} clubes inscriptos</small>
             {standingsError && <p role="alert" style={{ color: "#fca5a5", fontSize: ".76rem" }}>{standingsError}</p>}
@@ -373,8 +373,9 @@ export function FefutinTurnCompetition({
                 style={{
                   display: "block",
                   width: "100%",
-                  maxWidth: "100%",
+                  maxWidth: "none",
                   minWidth: 0,
+                  justifySelf: "stretch",
                   boxSizing: "border-box",
                   overflowX: "scroll",
                   overflowY: "hidden",
@@ -384,7 +385,7 @@ export function FefutinTurnCompetition({
                   touchAction: "pan-x",
                 }}
               >
-                <table style={{ width: "100%", minWidth: "650px", borderCollapse: "collapse", tableLayout: "auto", fontSize: ".74rem", color: "#fff" }}>
+                <table style={{ width: "100%", minWidth: "100%", borderCollapse: "collapse", tableLayout: "auto", fontSize: ".74rem", color: "#fff" }}>
                   <thead>
                     <tr style={{ background: "#b5122a" }}>
                       {["POS", "CLUB", "PTS", "PJ", "PG", "PE", "PP", "GF", "GC", "DIF"].map((name) => (
