@@ -306,7 +306,7 @@ export function FefutinTurnCompetition({
       )}
 
       {selectedView === "general" && (
-        <section style={{ display: "grid", gap: ".7rem", padding: ".9rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "10px", color: "#fff" }}>
+        <section className="tc-fefutin-general-standings" style={{ display: "grid", gap: ".7rem", padding: ".9rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "10px", color: "#fff" }}>
           <header style={{ textAlign: "center" }}>
             <strong style={{ display: "block", color: "#fff", letterSpacing: ".05em" }}>TABLA GENERAL · {competition?.branch_name?.toLocaleUpperCase("es") || ""}</strong>
             <small style={{ color: "#f3a0ad" }}>{competition?.turno?.toLocaleUpperCase("es") || ""} · TODAS LAS CATEGORÍAS</small>
@@ -315,7 +315,7 @@ export function FefutinTurnCompetition({
           {!generalStandings.length ? (
             <p style={{ color: "#ddd", textAlign: "center", margin: ".5rem 0" }}>Todavía no hay clubes inscriptos en este turno.</p>
           ) : (
-            <div style={{ overflowX: "auto", width: "100%", WebkitOverflowScrolling: "touch" }}>
+            <div className={`tc-fefutin-general-table ${standingsExpanded ? "is-expanded" : "is-compact"}`} style={{ overflowX: "auto", width: "100%", WebkitOverflowScrolling: "touch" }}>
               <table style={{ width: "100%", minWidth: "650px", borderCollapse: "collapse", color: "#fff", fontSize: ".74rem" }}>
                 <thead><tr style={{ background: "#b5122a" }}>
                   {["POS", "CLUB", "PTS", "PJ", "PG", "PE", "PP", "GF", "GC", "DIF"].map((heading) => (
@@ -323,7 +323,7 @@ export function FefutinTurnCompetition({
                   ))}
                 </tr></thead>
                 <tbody>{generalStandings.map((team, index) => (
-                  <tr key={team.clubId} style={{ borderBottom: "1px solid #454545", background: index % 2 ? "#202633" : "#11151d" }}>
+                  <tr key={team.clubId} className="tc-fefutin-standings-row" style={{ borderBottom: "1px solid #454545", background: index % 2 ? "#202633" : "#11151d" }}>
                     <td style={{ padding: ".55rem .4rem", textAlign: "center", fontWeight: 900 }}>{index + 1}</td>
                     <td style={{ padding: ".5rem .4rem", fontWeight: 800 }}>
                       <span style={{ display: "flex", alignItems: "center", gap: ".45rem", minWidth: 0 }}>
@@ -339,13 +339,13 @@ export function FefutinTurnCompetition({
               </table>
             </div>
           )}
-          <small style={{ color: "#aaa", fontSize: ".7rem" }}>Fuente: partidos normalizados de este turno. Solo se suman resultados cerrados digitalmente. Puntuación: ganado 3 · empatado 2 · perdido 1.</small>
+          <div className="tc-fefutin-table-actions"><small>Los puntos se actualizan al cierre digital de cada partido.</small><button type="button" onClick={() => setStandingsExpanded((expanded) => !expanded)} aria-expanded={standingsExpanded}>{standingsExpanded ? "OCULTAR ESTADÍSTICAS ▲" : "VER TABLA COMPLETA ▼"}</button></div>
         </section>
       )}
 
       {selectedView === "category" && activeCategory && (
         <div style={{ display: "grid", gap: ".85rem" }}>
-          <section style={{ padding: ".9rem", minWidth: 0, width: "100%", boxSizing: "border-box", overflow: "hidden", background: "#171c27", border: "1px solid #444", borderRadius: "10px" }}>
+          <section className="tc-fefutin-category-standings" style={{ padding: ".9rem", minWidth: 0, width: "100%", boxSizing: "border-box", overflow: "hidden", background: "#171c27", border: "1px solid #444", borderRadius: "10px" }}>
             <strong style={{ display: "block", color: "#fff" }}>{activeCategory.name} · {activeCategory.format === "league" ? "TODOS CONTRA TODOS" : activeCategory.format}</strong>
             <small style={{ color: "#bbb" }}>{activeCategory.clubs?.length || 0} clubes inscriptos</small>
             {standingsError && <p role="alert" style={{ color: "#fca5a5", fontSize: ".76rem" }}>{standingsError}</p>}
@@ -439,7 +439,7 @@ export function FefutinTurnCompetition({
             )}
           </section>
 
-          <section style={{ display: "grid", gap: ".55rem", padding: ".75rem .85rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "10px" }}>
+          <section className="tc-fefutin-scorers" style={{ display: "grid", gap: ".55rem", padding: ".75rem .85rem", background: "#171c27", border: "1px solid #b5122a", borderRadius: "10px" }}>
             <button type="button" onClick={() => setTopScorersExpanded((expanded) => !expanded)} aria-expanded={topScorersExpanded} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: ".6rem", width: "100%", padding: ".2rem 0", border: 0, background: "transparent", color: "#f3a0ad", fontSize: ".82rem", fontWeight: 900, textAlign: "left", cursor: "pointer" }}>
               <span>TABLA DE GOLEADORES · {activeCategory.name.toLocaleUpperCase("es")}</span>
               <span style={{ flexShrink: 0, color: "#fff", fontSize: ".7rem" }}>{topScorersExpanded ? "MINIMIZAR ▲" : "VER GOLEADORES ▼"}</span>
@@ -470,7 +470,7 @@ export function FefutinTurnCompetition({
             )}
           </section>
 
-          <section style={{ display: "grid", gap: ".65rem", padding: ".85rem", background: "#101010", border: "1px solid #444", borderRadius: "10px" }}>
+          <section className="tc-fefutin-team-filter" style={{ display: "grid", gap: ".65rem", padding: ".85rem", background: "#101010", border: "1px solid #444", borderRadius: "10px" }}>
             <strong style={{ color: "#f3a0ad", fontSize: ".82rem" }}>CONSULTAR PARTIDOS POR EQUIPO</strong>
             <select value={selectedTeamName} onChange={(event) => setSelectedTeamName(event.target.value)} aria-label="Elegir equipo para filtrar sus partidos" style={{ width: "100%", boxSizing: "border-box", padding: ".7rem", borderRadius: "8px", background: "#fff", color: "#171c27", fontWeight: 700 }}>
               <option value="">Todos los equipos · ver fixture completo</option>
@@ -489,7 +489,7 @@ export function FefutinTurnCompetition({
 
           {selectedTeamName && filteredRounds.length === 0 && <p style={{ color: "#bbb", textAlign: "center" }}>{teamMatchesView === "pending" ? "Este equipo no tiene partidos pendientes." : "Este equipo todavía no tiene partidos disputados."}</p>}
           {filteredRounds.map((round) => (
-            <section key={round.round_id} style={{ padding: ".85rem", background: "#101010", border: "1px solid #444", borderRadius: "10px" }}>
+            <section key={round.round_id} className="tc-fefutin-round" style={{ padding: ".85rem", background: "#101010", border: "1px solid #444", borderRadius: "10px" }}>
               <strong style={{ color: "#f3a0ad" }}>JORNADA {round.round_number} · {round.scheduled_date ? new Date(`${round.scheduled_date}T12:00:00`).toLocaleDateString("es-AR") : "Fecha a confirmar"}</strong>
               <div style={{ display: "grid", gap: ".5rem", marginTop: ".6rem" }}>
                 {(round.matches || []).map((match) => {
@@ -499,7 +499,7 @@ export function FefutinTurnCompetition({
                   const awayLogo = awayClub?.logo_path ? supabase.storage.from("fefutin-clubs").getPublicUrl(awayClub.logo_path).data.publicUrl : null;
                   const hasResult = match.score1 != null && match.score2 != null;
                   return (
-                    <div key={match.id} style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)", gap: ".55rem", alignItems: "center", padding: ".75rem .6rem", background: "#171c27", border: "1px solid #333", borderRadius: "9px" }}>
+                    <div key={match.id} className="tc-fefutin-match-card" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) auto minmax(0,1fr)", gap: ".55rem", alignItems: "center", padding: ".75rem .6rem", background: "#171c27", border: "1px solid #333", borderRadius: "9px" }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: ".4rem", minWidth: 0 }}>
                         {homeLogo ? <img src={homeLogo} alt={`Escudo de ${match.team1}`} loading="lazy" style={{ width: "30px", height: "30px", objectFit: "contain", flexShrink: 0 }} /> : <span aria-hidden="true" style={{ width: "30px", textAlign: "center", flexShrink: 0 }}>⚽</span>}
                         <strong style={{ fontSize: ".78rem", lineHeight: 1.2, overflowWrap: "anywhere" }}>{match.team1}</strong>
